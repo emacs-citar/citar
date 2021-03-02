@@ -1,7 +1,26 @@
-- name: Emacs Lisp check
-  uses: leotaku/elisp-check@master
-    with:
-    check: melpa
-    file: 'bibtex-actions.el'
-    ignore_warnings: false
-    warnings_as_errors: false
+name: Elisp check
+
+on:
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        emacs_version:
+          - 26.3
+          - 27.1
+          - snapshot
+        ignore_warnings:
+          - true
+        include:
+          - emacs_version: snapshot
+            ignore_warnings: false
+    steps:
+    - uses: actions/checkout@v2
+    - uses: purcell/setup-emacs@master
+      with:
+        version: ${{ matrix.emacs_version }}
+    - uses: leotaku/elisp-check@master
