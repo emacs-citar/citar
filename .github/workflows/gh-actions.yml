@@ -1,0 +1,7 @@
+- name: Emacs Lisp check
+  uses: leotaku/elisp-check@master
+    with:
+    check: melpa
+    file: 'bibtex-actions.el'
+    ignore_warnings: false
+    warnings_as_errors: false
