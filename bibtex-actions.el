@@ -79,7 +79,7 @@ NAME which extracts the keys from the selected candidates and
 passes them to ACTION."
   (let* ((old-name (symbol-name action))
          (mid-name (substring old-name 17 (length old-name)))
-         (new-name (intern (concat "bibtex-actions" mid-name))))
+         (new-name (intern (downcase (concat "bibtex-actions" mid-name)))))
     `(defun ,new-name (cand)
        ,doc
        (interactive (list (bibtex-actions--read)))
