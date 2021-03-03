@@ -13,3 +13,27 @@ Here's a screenshot with selectrum and embark.
 
 ## Installation
 
+
+## Usage
+
+You have a few different ways to interact with these commands.
+
+### `M-x`
+
+Simply do `M-x` and select the command that you want, enter the terms to find the item you are looking for, and hit return. 
+This runs the default action: the command you invoked.
+
+### Access an alternate action via `embark-act`
+
+If while browsing you instead would rather edit that record, and you have embark installed and configured, this is where `embark-act` comes in. 
+Simply input the keybinding for `embark-act` (in my case `C-o`), and select the alternate action.
+
+### Use `embark-collect-snapshot`
+
+A final option, that can be very useful: run `embark-collect-snapshot` (`S`) from `embark-act`. 
+This will select the candidate subset, and open it in a separate buffer. 
+From there, you can run the same options discussed above using `embark-act` (which is also bound to `a` in the collect buffer).
+
+So, for example, say you are working on a paper. 
+You hold the complete superset of items you are interested in citing at some point in that buffer. 
+From there, you can run different actions on the candidates at will, rather than search individually for each item you want to cite.
