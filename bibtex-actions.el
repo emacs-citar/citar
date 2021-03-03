@@ -23,6 +23,7 @@
 
 (defvar bibtex-actions-map
   (let ((map (make-sparse-keymap)))
+    (define-key map (kbd "o") 'bibtex-actions-open-any)
     (define-key map (kbd "p") 'bibtex-actions-open-pdf)
     (define-key map (kbd "u") 'bibtex-actions-open-url-or-doi)
     (define-key map (kbd "c") 'bibtex-actions-insert-citation)
