@@ -16,7 +16,7 @@
 ;;; Commentary:
 ;;
 ;;  This package turns bibtex-completion functions into completing-read-based
-;;  Emacs commands. When used with selectrum/icomplete-vertical, embark, and
+;;  Emacs commands.  When used with selectrum/icomplete-vertical, embark, and
 ;;  marginalia, it provides similar functionality to helm-bibtex and ivy-bibtex:
 ;;  quick filtering and selecting of bibliographic entries from the minibuffer,
 ;;  and the option to run different commands against them.
@@ -27,9 +27,9 @@
 
 (defvar bibtex-actions-map
   (let ((map (make-sparse-keymap)))
-    (define-key map (kbd "o") 'bibtex-actions-open-any)
+    (define-key map (kbd "o") 'bibtex-actions-open)
     (define-key map (kbd "p") 'bibtex-actions-open-pdf)
-    (define-key map (kbd "u") 'bibtex-actions-open-url-or-doi)
+    (define-key map (kbd "u") 'bibtex-actions-open-link)
     (define-key map (kbd "c") 'bibtex-actions-insert-citation)
     (define-key map (kbd "r") 'bibtex-actions-insert-reference)
     (define-key map (kbd "k") 'bibtex-actions-insert-key)
@@ -76,15 +76,16 @@
      (car candidate) 'display (bibtex-completion-format-entry candidate (1- (frame-width))))
     (cdr (assoc "=key=" candidate)))))
 
-(defmacro bibtex-actions-define-action (action doc)
+(defmacro bibtex-actions-define-action (action doc &optional alt-name)
   "A macro to create commands from bibtex-completion functions.
 It takes the ACTION and the DOC to create another function named
 NAME which extracts the keys from the selected candidates and
-passes them to ACTION."
+passes them to ACTION.  Where ALT-NAME is present, use that instead."
   (let* ((old-name (symbol-name action))
          (mid-name (substring old-name 17 (length old-name)))
-         (new-name (intern (downcase (concat "bibtex-actions" mid-name)))))
-    `(defun ,new-name (cand)
+         (new-name (intern (concat "bibtex-actions" mid-name)))
+         (name (or alt-name new-name)))
+    `(defun ,name (cand)
        ,doc
        (interactive (list (bibtex-actions--read)))
        (,action (list cand)))))
@@ -94,7 +95,8 @@ passes them to ACTION."
  "Open the PDFs associated with the BibTeX entry.
 If multiple PDFs are found, ask for the one to open using
 ‘completing-read’. If no PDF is found, try to open a URL or DOI
-in the browser instead.")
+in the browser instead."
+ bibtex-actions-open)
 
 (bibtex-actions-define-action
  bibtex-completion-open-pdf
@@ -105,7 +107,8 @@ If multiple PDFs are found, ask for the one to open using
 (bibtex-actions-define-action
  bibtex-completion-open-url-or-doi
  "Open the URL or DOI associated with a BibTeX entry in a
- browser.")
+ browser."
+ bibtex-actions-open-link)
 
 (bibtex-actions-define-action
  bibtex-completion-insert-citation
@@ -125,7 +128,8 @@ If multiple PDFs are found, ask for the one to open using
 
 (bibtex-actions-define-action
  bibtex-completion-add-PDF-attachment
- "Attach the PDF of a BibTeX entry where available.")
+ "Attach the PDF of a BibTeX entry where available."
+ bibtex-actions-add-pdf-attachment)
 
 (bibtex-actions-define-action
  bibtex-completion-edit-notes
