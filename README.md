@@ -18,6 +18,12 @@ Here's a screenshot with selectrum and embark.
 
 ## Installation
 
+If you happen to be using Doom Emacs, you can just add this to your `package.el` file:
+
+``` emacs-lisp
+(package! bibtex-actions 
+  :recipe (:host github :repo "bdarcus/bibtex-actions"))
+```
 
 ## Configuration
 
