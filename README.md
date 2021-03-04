@@ -41,6 +41,22 @@ To access these commands from `embark-act`, set this variable.
 (setf (alist-get 'bibtex embark-keymap-alist) 'bibtex-actions-map)
 ```
 
+## Configuration
+
+Since all of the command logic resides in bibtex-completion, that is where to look for different configuration options. 
+
+The only thing, however, that you _must_ configure is where to find your bib file(s). 
+
+``` emacs-lisp
+(setq bibtex-completion-bibliography "~/bib/references.bib")
+```
+
+To access these commands from `embark-act`, set this variable.
+
+``` emacs-lisp
+(setf (alist-get 'bibtex embark-keymap-alist) 'bibtex-actions-map)
+```
+
 ## Usage
 
 You have a few different ways to interact with these commands.
