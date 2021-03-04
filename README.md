@@ -2,6 +2,10 @@
 
 THIS IS AN EXPERIMENT ATM
 
+- [What is it?](#what-is-it)
+- [Installation](#installation)
+- [Usage](#usage)
+
 ## What is it?
 
 This package turns bibtex-completion functions into completing-read-based Emacs commands. 
