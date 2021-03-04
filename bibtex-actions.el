@@ -16,7 +16,7 @@
 ;;; Commentary:
 ;;
 ;;  This package turns bibtex-completion functions into completing-read-based
-;;  Emacs commands. When used with selectrum/icomplete-vertical, embark, and
+;;  Emacs commands.  When used with selectrum/icomplete-vertical, embark, and
 ;;  marginalia, it provides similar functionality to helm-bibtex and ivy-bibtex:
 ;;  quick filtering and selecting of bibliographic entries from the minibuffer,
 ;;  and the option to run different commands against them.
@@ -80,7 +80,7 @@
   "A macro to create commands from bibtex-completion functions.
 It takes the ACTION and the DOC to create another function named
 NAME which extracts the keys from the selected candidates and
-passes them to ACTION. Where ALT-NAME is present, use that instead."
+passes them to ACTION.  Where ALT-NAME is present, use that instead."
   (let* ((old-name (symbol-name action))
          (mid-name (substring old-name 17 (length old-name)))
          (new-name (intern (concat "bibtex-actions" mid-name)))
