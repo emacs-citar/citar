@@ -24,7 +24,6 @@ If you happen to be using Doom Emacs, you can just add this to your `package.el`
 (package! bibtex-actions 
   :recipe (:host github :repo "bdarcus/bibtex-actions"))
 ```
-
 ## Configuration
 
 Since all of the command logic resides in bibtex-completion, that is where to look for different configuration options. 
