@@ -92,7 +92,7 @@ passes them to ACTION.  Where ALT-NAME is present, use that instead."
 
 (bibtex-actions-define-action
  bibtex-completion-open-any
- "Open the PDFs associated with the BibTeX entry.
+ "Open the PDFs, or the URL or DOI link, associated with the BibTeX entry.
 If multiple PDFs are found, ask for the one to open using
 ‘completing-read’. If no PDF is found, try to open a URL or DOI
 in the browser instead."
