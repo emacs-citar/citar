@@ -4,6 +4,7 @@ THIS IS AN EXPERIMENT ATM
 
 - [What is it?](#what-is-it)
 - [Installation](#installation)
+- [Configuration](#configuration)
 - [Usage](#usage)
 
 ## What is it?
@@ -17,6 +18,22 @@ Here's a screenshot with selectrum and embark.
 
 ## Installation
 
+
+## Configuration
+
+Since all of the command logic resides in bibtex-completion, that is where to look for different configuration options. 
+
+The only thing, however, that you _must_ configure is where to find your bib file(s). 
+
+``` emacs-lisp
+(setq bibtex-completion-bibliography "~/bib/references.bib")
+```
+
+To access these commands from `embark-act`, set this variable.
+
+``` emacs-lisp
+(setf (alist-get 'bibtex embark-keymap-alist) 'bibtex-actions-map)
+```
 
 ## Usage
 
