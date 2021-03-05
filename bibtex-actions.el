@@ -92,7 +92,7 @@ passes them to ACTION.  Where ALT-NAME is present, use that instead."
 
 (bibtex-actions-define-action
  bibtex-completion-open-any
- "Open the PDFs, or the URL or DOI link, associated with the BibTeX entry.
+ "Open PDF, or URL or DOI link.
 If multiple PDFs are found, ask for the one to open using
 ‘completing-read’. If no PDF is found, try to open a URL or DOI
 in the browser instead."
@@ -100,47 +100,49 @@ in the browser instead."
 
 (bibtex-actions-define-action
  bibtex-completion-open-pdf
- "Open the PDFs associated with the BibTeX entry.
+ "Open PDF.
 If multiple PDFs are found, ask for the one to open using
 ‘completing-read’.")
 
 (bibtex-actions-define-action
  bibtex-completion-open-url-or-doi
- "Open the URL or DOI associated with a BibTeX entry in a browser."
+ "Open URL or DOI in a browser."
  bibtex-actions-open-link)
 
 (bibtex-actions-define-action
  bibtex-completion-insert-citation
- "Insert citation for BibTeX entry at point.")
+ "Insert citation.")
 
 (bibtex-actions-define-action
  bibtex-completion-insert-reference
- "Insert reference for BibTeX entry at point.")
+ "Insert formatted reference.")
 
 (bibtex-actions-define-action
  bibtex-completion-insert-key
- "Insert key for BibTeX entry at point.")
+ "Insert BibTeX key.")
 
 (bibtex-actions-define-action
  bibtex-completion-insert-bibtex
- "Insert entry for BibTeX entry at point.")
+ "Insert BibTeX entry.")
 
 (bibtex-actions-define-action
  bibtex-completion-add-PDF-attachment
- "Attach the PDF of a BibTeX entry where available."
+ "Attach PDF to email."
  bibtex-actions-add-pdf-attachment)
 
 (bibtex-actions-define-action
  bibtex-completion-edit-notes
- "Open the notes associated with a BibTeX entry using 'bibtex-completion-edit-notes-function'.")
+ "Open notes."
+ bibtex-actions-open-notes)
 
 (bibtex-actions-define-action
  bibtex-completion-show-entry
- "Show the selected entry in the relevant BibTeX file.")
+ "Open BibTeX entry."
+ bibtex-actions-open-entry)
 
 (bibtex-actions-define-action
  bibtex-completion-add-pdf-to-library
- "Add a PDF to the library for the selected BibTeX entry.
+ "Add PDF to library.
 The PDF can be added either from an open buffer, a file, or a
 URL.")
 
