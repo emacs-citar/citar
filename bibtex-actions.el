@@ -132,11 +132,13 @@ If multiple PDFs are found, ask for the one to open using
 
 (bibtex-actions-define-action
  bibtex-completion-edit-notes
- "Open notes.")
+ "Open notes."
+ bibtex-actions-open-notes)
 
 (bibtex-actions-define-action
  bibtex-completion-show-entry
- "Open entry.")
+ "Open entry."
+ bibtex-actions-open-entry)
 
 (bibtex-actions-define-action
  bibtex-completion-add-pdf-to-library
