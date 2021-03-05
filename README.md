@@ -50,6 +50,10 @@ You have a few different ways to interact with these commands.
 Simply do `M-x` and select the command that you want, enter the terms to find the item you are looking for, and hit return. 
 This runs the default action: the command you invoked.
 
+Here's the view, using marginalia for annotations.
+
+![commands available from M-x](images/m-x.png)
+
 ### Access an alternate action via `embark-act`
 
 If while browsing you instead would rather edit that record, and you have embark installed and configured, this is where `embark-act` comes in. 
