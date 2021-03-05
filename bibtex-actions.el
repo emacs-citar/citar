@@ -106,8 +106,7 @@ If multiple PDFs are found, ask for the one to open using
 
 (bibtex-actions-define-action
  bibtex-completion-open-url-or-doi
- "Open the URL or DOI associated with a BibTeX entry in a
- browser."
+ "Open the URL or DOI associated with a BibTeX entry in a browser."
  bibtex-actions-open-link)
 
 (bibtex-actions-define-action
