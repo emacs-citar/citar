@@ -100,13 +100,13 @@ in the browser instead."
 
 (bibtex-actions-define-action
  bibtex-completion-open-pdf
- "Open the PDF.
+ "Open PDF.
 If multiple PDFs are found, ask for the one to open using
 ‘completing-read’.")
 
 (bibtex-actions-define-action
  bibtex-completion-open-url-or-doi
- "Open the URL or DOI in a browser."
+ "Open URL or DOI in a browser."
  bibtex-actions-open-link)
 
 (bibtex-actions-define-action
@@ -115,15 +115,15 @@ If multiple PDFs are found, ask for the one to open using
 
 (bibtex-actions-define-action
  bibtex-completion-insert-reference
- "Insert reference.")
+ "Insert formatted reference.")
 
 (bibtex-actions-define-action
  bibtex-completion-insert-key
- "Insert key.")
+ "Insert BibTeX key.")
 
 (bibtex-actions-define-action
  bibtex-completion-insert-bibtex
- "Insert entry.")
+ "Insert BibTeX entry.")
 
 (bibtex-actions-define-action
  bibtex-completion-add-PDF-attachment
@@ -137,12 +137,12 @@ If multiple PDFs are found, ask for the one to open using
 
 (bibtex-actions-define-action
  bibtex-completion-show-entry
- "Open entry."
+ "Open BibTeX entry."
  bibtex-actions-open-entry)
 
 (bibtex-actions-define-action
  bibtex-completion-add-pdf-to-library
- "Add a PDF to library.
+ "Add PDF to library.
 The PDF can be added either from an open buffer, a file, or a
 URL.")
 
