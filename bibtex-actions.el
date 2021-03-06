@@ -6,7 +6,7 @@
 ;; Author: Maxime Treca <https://github.com/mtreca>
 ;; Created: February 27, 2021
 ;; Modified: March 3, 2021
-;; Version: 0.0.2
+;; Version: v0.1
 ;; Keywords: bib, files
 ;; Homepage: https://github.com/bdarcus/bibtex-actions
 ;; Package-Requires: ((emacs "26.3") (bibtex-completion "1.0"))
@@ -25,6 +25,8 @@
 
 (require 'bibtex-completion)
 
+;;; Keymap
+
 (defvar bibtex-actions-map
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "o") 'bibtex-actions-open)
@@ -40,6 +42,8 @@
     (define-key map (kbd "l") 'bibtex-actions-add-pdf-to-library)
     map)
   "Keymap for 'bibtex-actions'.")
+
+;;; Completion functions
 
 ;; one can reset the backend function using fset; maybe there's a
 ;; more elegant way to do this?
@@ -75,6 +79,8 @@
     (propertize
      (car candidate) 'display (bibtex-completion-format-entry candidate (1- (frame-width))))
     (cdr (assoc "=key=" candidate)))))
+
+;;; Command wrappers for bibtex-completion functions
 
 (defun bibtex-actions-open (keys)
  "Open PDF, or URL or DOI link.
