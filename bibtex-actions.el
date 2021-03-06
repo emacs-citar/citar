@@ -78,14 +78,14 @@
 
 (defun bibtex-actions-open (keys)
  "Open PDF, or URL or DOI link.
-Opens the PDF(s) associated with the KEYS. If multiple PDFs are
-found, ask for the one to open using ‘completing-read’. If no PDF
-is found, try to open a URL or DOI in the browser instead."
+Opens the PDF(s) associated with the KEYS.  If multiple PDFs are
+found, ask for the one to open using ‘completing-read’.  If no
+PDF is found, try to open a URL or DOI in the browser instead."
   (interactive (list (bibtex-actions--read)))
   (bibtex-completion-open-any (list keys)))
 
-(defun bibtex-actions-open-pdf (key)
- "Open PDF associated with the KEY.
+(defun bibtex-actions-open-pdf (keys)
+ "Open PDF associated with the KEYS.
 If multiple PDFs are found, ask for the one to open using
 ‘completing-read’."
   (interactive (list (bibtex-actions--read)))
