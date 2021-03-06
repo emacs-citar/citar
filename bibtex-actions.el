@@ -5,7 +5,7 @@
 ;; Author: Bruce D'Arcus <https://github.com/bdarcus>, Maxime Treca <https://github.com/mtreca>
 ;; Created: February 27, 2021
 ;; Modified: March 3, 2021
-;; Version: v0.0
+;; Version: 0.0
 ;; Keywords: bib, files
 ;; Homepage: https://github.com/bdarcus/bibtex-actions
 ;; Package-Requires: ((emacs "26.3") (bibtex-completion "1.0"))
