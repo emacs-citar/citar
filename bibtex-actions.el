@@ -67,19 +67,22 @@
   (bibtex-actions-read-backend))
 
 (defun bibtex-actions--completing-read ()
-  "Read bibtex-completion entries for completion using 'completing-read'."
+  "Read bibtex-completion entries for completion using 'completing-read-multiple'."
+  ;; Note: the candidate string we use is very long, which is a bit awkward when
+  ;; dealing with TAB completion style multi selection interfaces."
   (bibtex-completion-init)
-  (when-let ((candidates (bibtex-actions--get-candidates))
+  (when-let ((crm-separator "\\s-*&\\s-*")
+             (candidates (bibtex-actions--get-candidates))
              (chosen
-              (completing-read
+              (completing-read-multiple
                "BibTeX entries: "
                (lambda (string predicate action)
                  (if (eq action 'metadata)
                      '(metadata
-                       ;; (annotation-function . bibtex-completion--annotation)
+                       ;; TODO (annotation-function . bibtex-completion--annotation)
                        (category . bibtex))
                    (complete-with-action action candidates string predicate))))))
-    (cdr (assoc chosen candidates))))
+    (mapcar (lambda (choice) (cdr (assoc choice candidates))) chosen)))
 
 (defun bibtex-actions--get-candidates ()
   "Return all keys from 'bibtex-completion-candidates'."
@@ -100,61 +103,61 @@ Opens the PDF(s) associated with the KEYS.  If multiple PDFs are
 found, ask for the one to open using ‘completing-read’.  If no
 PDF is found, try to open a URL or DOI in the browser instead."
   (interactive (list (bibtex-actions--read)))
-  (bibtex-completion-open-any (list keys)))
+  (bibtex-completion-open-any keys))
 
 (defun bibtex-actions-open-pdf (keys)
  "Open PDF associated with the KEYS.
 If multiple PDFs are found, ask for the one to open using
 ‘completing-read’."
   (interactive (list (bibtex-actions--read)))
-  (bibtex-completion-open-pdf (list keys)))
+  (bibtex-completion-open-pdf keys))
 
 (defun bibtex-actions-open-link (keys)
  "Open URL or DOI link associated with the KEYS in a browser."
  (interactive (list (bibtex-actions--read)))
- (bibtex-completion-open-url-or-doi (list keys)))
+ (bibtex-completion-open-url-or-doi keys))
 
 (defun bibtex-actions-insert-citation (keys)
  "Insert citation for the KEYS."
  (interactive (list (bibtex-actions--read)))
- (bibtex-completion-insert-citation (list keys)))
+ (bibtex-completion-insert-citation keys))
 
 (defun bibtex-actions-insert-reference (keys)
  "Insert formatted reference(s) associated with the KEYS."
   (interactive (list (bibtex-actions--read)))
-  (bibtex-completion-insert-reference (list keys)))
+  (bibtex-completion-insert-reference keys))
 
 (defun bibtex-actions-insert-key (keys)
  "Insert BibTeX KEYS."
  (interactive (list (bibtex-actions--read)))
- (bibtex-completion-insert-key (list keys)))
+ (bibtex-completion-insert-key keys))
 
 (defun bibtex-actions-insert-bibtex (keys)
  "Insert BibTeX entry associated with the KEYS."
  (interactive (list (bibtex-actions--read)))
- (bibtex-completion-insert-bibtex (list keys)))
+ (bibtex-completion-insert-bibtex keys))
 
 (defun bibtex-actions-add-pdf-attachment (keys)
  "Attach PDF(s) associated with the KEYS to email."
  (interactive (list (bibtex-actions--read)))
- (bibtex-completion-add-PDF-attachment (list keys)))
+ (bibtex-completion-add-PDF-attachment keys))
 
 (defun bibtex-actions-open-notes (keys)
  "Open notes associated with the KEYS."
  (interactive (list (bibtex-actions--read)))
- (bibtex-completion-edit-notes (list keys)))
+ (bibtex-completion-edit-notes keys))
 
 (defun bibtex-actions-open-entry (keys)
  "Open BibTeX entry associated with the KEYS."
  (interactive (list (bibtex-actions--read)))
- (bibtex-completion-show-entry (list keys)))
+ (bibtex-completion-show-entry keys))
 
 (defun bibtex-actions-add-pdf-to-library (keys)
  "Add PDF associated with the KEYS to library.
 The PDF can be added either from an open buffer, a file, or a
 URL."
   (interactive (list (bibtex-actions--read)))
-  (bibtex-completion-add-pdf-to-library (list keys)))
+  (bibtex-completion-add-pdf-to-library keys))
 
 (provide 'bibtex-actions)
 ;;; bibtex-actions.el ends here
