@@ -134,17 +134,17 @@ If multiple PDFs are found, ask for the one to open using
  (interactive (list (bibtex-actions--read)))
  (bibtex-completion-insert-bibtex (list keys)))
 
-(defun bibtex-actions-add-PDF-attachment (keys)
+(defun bibtex-actions-add-pdf-attachment (keys)
  "Attach PDF(s) associated with the KEYS to email."
  (interactive (list (bibtex-actions--read)))
  (bibtex-completion-add-PDF-attachment (list keys)))
 
-(defun bibtex-actions-open-notes (keys)
+(defun bibtex-actions-edit-notes (keys)
  "Open notes associated with the KEYS."
  (interactive (list (bibtex-actions--read)))
  (bibtex-completion-edit-notes (list keys)))
 
-(defun bibtex-actions-open-entry (keys)
+(defun bibtex-actions-show-entry (keys)
  "Open BibTeX entry associated with the KEYS."
  (interactive (list (bibtex-actions--read)))
  (bibtex-completion-show-entry (list keys)))
