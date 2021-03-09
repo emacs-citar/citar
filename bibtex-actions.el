@@ -48,7 +48,7 @@
     (define-key map (kbd "r") 'bibtex-actions-insert-reference)
     (define-key map (kbd "k") 'bibtex-actions-insert-key)
     (define-key map (kbd "b") 'bibtex-actions-insert-bibtex)
-    (define-key map (kbd "a") 'bibtex-actions-add-PDF-attachment)
+    (define-key map (kbd "a") 'bibtex-actions-add-pdf-attachment)
     (define-key map (kbd "e") 'bibtex-actions-open-notes)
     (define-key map (kbd "s") 'bibtex-actions-open-entry)
     (define-key map (kbd "l") 'bibtex-actions-add-pdf-to-library)
