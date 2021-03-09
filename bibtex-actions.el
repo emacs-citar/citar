@@ -49,8 +49,8 @@
     (define-key map (kbd "k") 'bibtex-actions-insert-key)
     (define-key map (kbd "b") 'bibtex-actions-insert-bibtex)
     (define-key map (kbd "a") 'bibtex-actions-add-pdf-attachment)
-    (define-key map (kbd "e") 'bibtex-actions-edit-notes)
-    (define-key map (kbd "s") 'bibtex-actions-show-entry)
+    (define-key map (kbd "e") 'bibtex-actions-open-notes)
+    (define-key map (kbd "s") 'bibtex-actions-open-entry)
     (define-key map (kbd "l") 'bibtex-actions-add-pdf-to-library)
     map)
   "Keymap for 'bibtex-actions'.")
@@ -134,7 +134,7 @@ If multiple PDFs are found, ask for the one to open using
  (interactive (list (bibtex-actions--read)))
  (bibtex-completion-insert-bibtex (list keys)))
 
-(defun bibtex-actions-add-PDF-attachment (keys)
+(defun bibtex-actions-add-pdf-attachment (keys)
  "Attach PDF(s) associated with the KEYS to email."
  (interactive (list (bibtex-actions--read)))
  (bibtex-completion-add-PDF-attachment (list keys)))
