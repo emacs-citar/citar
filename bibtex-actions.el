@@ -37,6 +37,8 @@
 
 (require 'bibtex-completion)
 
+(defvar crm-separator)
+
 ;;; Keymap
 
 (defvar bibtex-actions-map
