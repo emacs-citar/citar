@@ -37,6 +37,10 @@
 
 (require 'bibtex-completion)
 
+;; REVIEW: is this the correct way to ensure we use the custom separator in
+;;         'bibtex-actions--completing-read'?
+(defvar crm-separator)
+
 ;;; Keymap
 
 (defvar bibtex-actions-map
