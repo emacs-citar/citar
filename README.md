@@ -61,6 +61,13 @@ Here's the view, using marginalia for annotations.
 
 ![commands available from M-x](images/m-x.png)
 
+A note on multiple candidate selection:
+
+These commands do allow you to select multiple items, with two caveats:
+
+1. For this to work correctly, you _must_ use the ampersand (`&`) as `crm-separator` to separate the candidates.
+2. We use very long candidate strings, so if you use a completion system that requires you to `TAB`-complete, the experience is less-than-ideal.
+
 ### Access an alternate action via `embark-act`
 
 If while browsing you instead would rather edit that record, and you have embark installed and configured, this is where `embark-act` comes in. 
