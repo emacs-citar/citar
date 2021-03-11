@@ -6,6 +6,7 @@ THIS IS AN EXPERIMENT ATM
 - [Installation](#installation)
 - [Configuration](#configuration)
 - [Usage](#usage)
+- [Comparisons](#comparisons)
 
 ## What is it?
 
@@ -82,3 +83,13 @@ From there, you can run the same options discussed above using `embark-act` (whi
 So, for example, say you are working on a paper. 
 You hold the complete superset of items you are interested in citing at some point in that buffer. 
 From there, you can run different actions on the candidates at will, rather than search individually for each item you want to cite.
+
+## Comparisons
+
+This is inspired by `helm-bibtex` and `ivy-bibtex`, but is based on `completing-read`. In comparison:
+
+
+- like `helm-bibtex`, but unlike `ivy-bibtex`, `bibtex-actions` has support for multi-selection of candidates
+- `helm-bibtex` and `ivy-bibtex` provide a single command, and the actions are accessed from there; `bibtex-actions` provides all of its actions as standard commands, available from `M-x`, without a single entry point.
+- `bibtex-actions` is based on `completing-read-multiple`, with a single dependency, and works with different completion systems (though in practice is best supported in `selectrum`) and supporting packages that are `completing-read` compliant; `helm-bibtex` and `ivy-bibtex` are based on `helm` and `ivy` respectively
+
