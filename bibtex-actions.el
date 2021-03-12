@@ -61,8 +61,7 @@
 
 ;;; Completion functions
 
-;; one can reset the backend function using fset; maybe there's a
-;; more elegant way to do this?
+;; REVIEW: does this design make sense?
 (fset 'bibtex-actions-read-backend `bibtex-actions--completing-read)
 
 (defun bibtex-actions-read ()
