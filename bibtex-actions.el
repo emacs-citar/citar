@@ -61,18 +61,9 @@
 
 ;;; Completion functions
 
-;; REVIEW: does this design make sense?
-(fset 'bibtex-actions-read-backend `bibtex-actions--completing-read)
-
 (defun bibtex-actions-read ()
-  "Select BibTeX entries in completion system."
-  ;; define a completion function that defaults to completing-read, but can be overridden
-  (bibtex-actions-read-backend))
-
-(defun bibtex-actions--completing-read ()
   "Read bibtex-completion entries for completion using 'completing-read-multiple'."
-  ;; Note: the candidate string we use is very long, which is a bit awkward when
-  ;; dealing with TAB completion style multi selection interfaces."
+
   (bibtex-completion-init)
   (when-let ((crm-separator "\\s-*&\\s-*")
              (candidates (bibtex-actions--get-candidates))
@@ -94,6 +85,8 @@
    collect
    (cons
     ;; Here use one string for display, and the other for search.
+    ;; The candidate string we use is very long, which is a bit awkward
+    ;; when using TAB-completion style multi selection interfaces.
     (propertize
      (car candidate) 'display (bibtex-completion-format-entry candidate (1- (frame-width))))
     (cdr (assoc "=key=" candidate)))))
