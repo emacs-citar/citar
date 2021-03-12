@@ -1,11 +1,12 @@
 ;;; bibtex-actions.el --- Description -*- lexical-binding: t; -*-
 ;;
-;; Copyright (C) 2021 Bruce D'Arcus, Maxime Treca
+;; Copyright (C) 2021 Bruce D'Arcus
 ;;
-;; Author: Bruce D'Arcus <https://github.com/bdarcus>, Maxime Treca <https://github.com/mtreca>
+;; Author: Bruce D'Arcus <https://github.com/bdarcus>
+;; Maintainer: Bruce D'Arcus <https://github.com/bdarcus>
 ;; Created: February 27, 2021
 ;; License: GPL-3.0-or-later
-;; Version: 0.0
+;; Version: 0.1
 ;; Keywords: bib, files
 ;; Homepage: https://github.com/bdarcus/bibtex-actions
 ;; Package-Requires: ((emacs "26.3") (bibtex-completion "1.0"))
