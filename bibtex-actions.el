@@ -63,14 +63,14 @@
 
 ;; one can reset the backend function using fset; maybe there's a
 ;; more elegant way to do this?
-(fset 'bibtex-actions-read-backend `bibtex-actions-completing-read)
+(fset 'bibtex-actions-read-backend `bibtex-actions--completing-read)
 
 (defun bibtex-actions-read ()
   "Select BibTeX entries in completion system."
   ;; define a completion function that defaults to completing-read, but can be overridden
   (bibtex-actions-read-backend))
 
-(defun bibtex-actions-completing-read ()
+(defun bibtex-actions--completing-read ()
   "Read bibtex-completion entries for completion using 'completing-read-multiple'."
   ;; Note: the candidate string we use is very long, which is a bit awkward when
   ;; dealing with TAB completion style multi selection interfaces."
