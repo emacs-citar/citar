@@ -64,7 +64,6 @@
 
 (defun bibtex-actions-read ()
   "Read bibtex-completion entries for completion using 'completing-read-multiple'."
-
   (bibtex-completion-init)
   (when-let ((crm-separator "\\s-*&\\s-*")
              (candidates (bibtex-actions--get-candidates))
@@ -89,7 +88,8 @@
     ;; The candidate string we use is very long, which is a bit awkward
     ;; when using TAB-completion style multi selection interfaces.
     (propertize
-     (car candidate) 'display (bibtex-completion-format-entry candidate (1- (frame-width))))
+     (car candidate) 'display (bibtex-completion-format-entry
+     candidate (1- (frame-width)))) ; allow this to be configurable?
     (cdr (assoc "=key=" candidate)))))
 
 ;;; Command wrappers for bibtex-completion functions
