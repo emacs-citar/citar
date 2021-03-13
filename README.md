@@ -1,7 +1,5 @@
 # BibTeX Actions
 
-THIS IS AN EXPERIMENT ATM
-
 - [What is it?](#what-is-it)
 - [Installation](#installation)
 - [Configuration](#configuration)
@@ -35,7 +33,7 @@ If you happen to be using Doom Emacs, you can just add this to your `package.el`
 
 ## Configuration
 
-Since all of the command logic resides in bibtex-completion, that is where to look for different configuration options. 
+Since all of the command logic resides in bibtex-completion, that is where to look for different [configuration options][bt-config]. 
 
 The only thing, however, that you _must_ configure is where to find your bib file(s). 
 
@@ -93,3 +91,4 @@ This is inspired by `helm-bibtex` and `ivy-bibtex`, but is based on `completing-
 - `helm-bibtex` and `ivy-bibtex` provide a single command, and the actions are accessed from there; `bibtex-actions` provides all of its actions as standard commands, available from `M-x`, without a single entry point.
 - `bibtex-actions` is based on `completing-read-multiple`, with a single dependency, and works with different completion systems (though in practice is best supported in `selectrum`) and supporting packages that are `completing-read` compliant; `helm-bibtex` and `ivy-bibtex` are based on `helm` and `ivy` respectively
 
+[bt-config]: https://github.com/tmalsburg/helm-bibtex#basic-configuration-recommended
