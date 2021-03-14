@@ -73,7 +73,7 @@
                (lambda (string predicate action)
                  (if (eq action 'metadata)
                      '(metadata
-                       ;; TODO (annotation-function . bibtex-completion--annotation)
+                       ;; TODO (affixation-function . bibtex-actions--affixation)
                        (category . bibtex))
                    (complete-with-action action candidates string predicate))))))
     (mapcar (lambda (choice) (cdr (assoc choice candidates))) chosen)))
