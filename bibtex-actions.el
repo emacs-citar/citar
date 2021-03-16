@@ -76,7 +76,8 @@
                        ;; TODO (affixation-function . bibtex-actions--affixation)
                        (category . bibtex))
                    (complete-with-action action candidates string predicate))))))
-    (mapcar (lambda (choice) (cdr (assoc choice candidates))) chosen)))
+    (cl-loop for choice in chosen
+             collect (cdr (assoc choice candidates)))))
 
 (defun bibtex-actions--get-candidates ()
   "Return all keys from 'bibtex-completion-candidates'."
