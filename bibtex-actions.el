@@ -37,6 +37,7 @@
 ;;; Code:
 
 (require 'bibtex-completion)
+(require 'all-the-icons)
 
 ;; REVIEW: is this the correct way to ensure we use the custom separator in
 ;;         'bibtex-actions--completing-read'?
@@ -73,14 +74,15 @@
                (lambda (string predicate action)
                  (if (eq action 'metadata)
                      '(metadata
-                       ;; TODO (affixation-function . bibtex-actions--affixation)
+                       (affixation-function . bibtex-actions--affixation)
                        (category . bibtex))
                    (complete-with-action action candidates string predicate))))))
     (cl-loop for choice in chosen
-             collect (cdr (assoc choice candidates)))))
+             ;; collect citation keys of selected candidate(s)
+             collect (cdr (assoc "=key=" (cdr (assoc choice candidates)))))))
 
 (defun bibtex-actions--get-candidates ()
-  "Return all keys from 'bibtex-completion-candidates'."
+  "Propertize the candidates from 'bibtex-completion-candidates'."
   (cl-loop
    for candidate in (bibtex-completion-candidates)
    collect
@@ -91,7 +93,24 @@
     (propertize
      (car candidate) 'display (bibtex-completion-format-entry
      candidate (1- (frame-width)))) ; allow this to be configurable?
-    (cdr (assoc "=key=" candidate)))))
+    (cdr candidate))))
+
+(defun bibtex-actions--affixation (cands)
+  "Add affixes to CANDS."
+  (cl-loop
+   for candidate in cands
+   collect
+   (let ((pdf
+          ;; FIX: why doesn't this work????!!!!
+          (if (string-match bibtex-completion-pdf-symbol candidate)
+              (all-the-icons-icon-for-file "foo.pdf" :face 'all-the-icons-lred)))
+         (link
+          (if "link"
+              (all-the-icons-faicon "external-link-square" :v-adjust 0.02)))
+         (note
+          (if (string-match bibtex-completion-notes-symbol candidate)
+              (all-the-icons-icon-for-file "foo.txt"))))
+   (list candidate (concat pdf " " note " " link "	") "	XYZ"))))
 
 ;;; Command wrappers for bibtex-completion functions
 
