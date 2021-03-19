@@ -61,6 +61,14 @@
     map)
   "Keymap for 'bibtex-actions'.")
 
+;;; Faces
+
+(defface all-the-icons-off
+  '((((background dark)) :foreground "#282c34")
+    (((background light)) :foreground "#843031"))
+  "Face for obscuring icons"
+  :group 'all-the-icons-faces)
+
 ;;; Completion functions
 
 (defun bibtex-actions-read ()
@@ -103,13 +111,16 @@
    (let ((pdf
           ;; FIX: why doesn't this work????!!!!
           (if (string-match bibtex-completion-pdf-symbol candidate)
-              (all-the-icons-icon-for-file "foo.pdf" :face 'all-the-icons-lred)))
+              (all-the-icons-icon-for-file "foo.pdf" :face 'all-the-icons-lred)
+            (all-the-icons-icon-for-file "foo.pdf" :face 'all-the-icons-off)))
          (link
           (if "link"
-              (all-the-icons-faicon "external-link-square" :v-adjust 0.02)))
+              (all-the-icons-faicon "external-link-square" :v-adjust 0.02)
+            (all-the-icons-faicon "external-link-square" :v-adjust 0.02 :face 'all-the-icons-off)))
          (note
           (if (string-match bibtex-completion-notes-symbol candidate)
-              (all-the-icons-icon-for-file "foo.txt"))))
+              (all-the-icons-icon-for-file "foo.txt")
+            (all-the-icons-icon-for-file "foo.txt" :face 'all-the-icons-off))))
    (list candidate (concat pdf " " note " " link "	") "	XYZ"))))
 
 ;;; Command wrappers for bibtex-completion functions
