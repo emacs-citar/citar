@@ -73,11 +73,19 @@ editor names."
   :group 'bibtex-actions
   :type '(alist :key-type symbol :value-type string))
 
+(defcustom bibtex-actions-link-symbol "🔗"
+  "Symbol to indicate a DOI or URL link is available for a publication.
+This should be a single character."
+  :group 'bibtex-actions
+  :type 'string)
+
 (defcustom bibtex-actions-icon
-  `((pdf .      (,bibtex-completion-pdf-symbol . " "))
-    (note .     (,bibtex-completion-notes-symbol . " "))
-    (link .     ("L" . " ")))
-  "Configuration alist specifying which symbol or icon to pick for a bib entry."
+  `((pdf .      (bibtex-completion-pdf-symbol . " "))
+    (note .     (bibtex-completion-notes-symbol . " "))
+    (link .     (bibtex-actions-link-symbol . " ")))
+  "Configuration alist specifying which symbol or icon to pick for a bib entry.
+This leaves room for configurations where the absense of an item
+may be indicated with the same icon but a different face."
   :group 'bibtex-actions
   :type '(alist :key-type string
                 :value-type (choice (string :tag "Icon"))))
@@ -127,7 +135,7 @@ editor names."
                  (if (eq action 'metadata)
                      '(metadata
                        (when bibtex-actions-rich-ui
-                              (affixation-function . bibtex-actions--affixation))
+                         (affixation-function . bibtex-actions--affixation))
                        (category . bibtex))
                    (complete-with-action action candidates string predicate))))))
     (cl-loop for choice in chosen
