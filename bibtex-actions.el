@@ -177,7 +177,7 @@ may be indicated with the same icon but a different face."
                 (cdr (cdr (assoc 'note bibtex-actions-icon))))))
    (list candidate (concat
                     (s-join bibtex-actions-icon-separator
-                            (list pdf note link))"	")"	XYZ"))))
+                            (list pdf note link))"	") ""))))
 
 (defun bibtex-actions--make-suffix (entry)
   "Create the formatted ENTRY suffix string for the 'rich-ui'."
