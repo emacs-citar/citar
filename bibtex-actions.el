@@ -80,9 +80,9 @@ This should be a single character."
   :type 'string)
 
 (defcustom bibtex-actions-icon
-  `((pdf .      (bibtex-completion-pdf-symbol . " "))
-    (note .     (bibtex-completion-notes-symbol . " "))
-    (link .     (bibtex-actions-link-symbol . " ")))
+  `((pdf .      (,bibtex-completion-pdf-symbol . " "))
+    (note .     (,bibtex-completion-notes-symbol . " "))
+    (link .     (,bibtex-actions-link-symbol . " ")))
   "Configuration alist specifying which symbol or icon to pick for a bib entry.
 This leaves room for configurations where the absense of an item
 may be indicated with the same icon but a different face."
@@ -133,9 +133,9 @@ may be indicated with the same icon but a different face."
                "BibTeX entries: "
                (lambda (string predicate action)
                  (if (eq action 'metadata)
-                     '(metadata
-                       (when bibtex-actions-rich-ui
-                         (affixation-function . bibtex-actions--affixation))
+                     `(metadata
+                       ,(when bibtex-actions-rich-ui
+                          '(affixation-function . bibtex-actions--affixation))
                        (category . bibtex))
                    (complete-with-action action candidates string predicate))))))
     (cl-loop for choice in chosen
