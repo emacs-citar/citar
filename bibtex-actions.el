@@ -49,18 +49,19 @@
   :group 'bibtex-actions
   :type 'boolean)
 
+(defcustom bibtex-actions-icon
+  `((pdf .      ("P" . " "))
+    (note .     ("N" . " "))
+    (link .     ("L" . " "))
+    :type 'alist)
+  "Configuration alist specifying which icon to pick for a bib entry.")
+
 (defcustom bibtex-actions-icon-separator " "
   "When using rich UI, the padding between prefix icons."
   :group 'bibtex-actions
   :type 'string)
 
 (when bibtex-actions-rich-ui
-  (require 'all-the-icons)
-  (defface bibtex-actions-icon-dim
-    '((((background dark)) :foreground "#282c34")
-      (((background light)) :foreground "#fafafa"))
-    "Face for obscuring/dimming icons"
-    :group 'all-the-icons-faces)
   (setq bibtex-completion-display-formats
         '((t . "${author:24}   ${title:64}   ${year:4}"))))
 
@@ -99,10 +100,7 @@
                (lambda (string predicate action)
                  (if (eq action 'metadata)
                      '(metadata
-                       ;; FIX
-                       ;(if bibtex-actions-rich-ui
-                           (affixation-function . bibtex-actions--affixation)
-                           ;)
+                       (affixation-function . bibtex-actions--affixation)
                        (category . bibtex))
                    (complete-with-action action candidates string predicate))))))
     (cl-loop for choice in chosen
@@ -132,19 +130,16 @@
   (cl-loop
    for candidate in cands
    collect
-   (let ((pdf
-          ;; FIX: why doesn't this work????!!!!
-          (if (string-match "has:pdf" candidate)
-              (all-the-icons-icon-for-file "foo.pdf" :face 'all-the-icons-dred)
-            (all-the-icons-icon-for-file "foo.pdf" :face 'bibtex-actions-icon-dim)))
-         (link
-          (if (string-match "has:link" candidate)
-              (all-the-icons-faicon "external-link-square" :v-adjust 0.02 :face 'all-the-icons-dpurple)
-            (all-the-icons-faicon "external-link-square" :v-adjust 0.02 :face 'bibtex-actions-icon-dim)))
+   (let ((pdf (if (string-match "has:pdf" candidate)
+                  (car (cdr (assoc 'pdf bibtex-actions-icon)))
+                (cdr (cdr (assoc 'pdf bibtex-actions-icon)))))
+         (link (if (string-match "has:link" candidate)
+                  (car (cdr (assoc 'link bibtex-actions-icon)))
+                (cdr (cdr (assoc 'link bibtex-actions-icon)))))
          (note
           (if (string-match "has:note" candidate)
-              (all-the-icons-icon-for-file "foo.txt")
-            (all-the-icons-icon-for-file "foo.txt" :face 'bibtex-actions-icon-dim))))
+                  (car (cdr (assoc 'note bibtex-actions-icon)))
+                (cdr (cdr (assoc 'note bibtex-actions-icon))))))
    (list candidate (concat
                     (s-join bibtex-actions-icon-separator
                             (list pdf note link))"	")"	XYZ"))))
