@@ -100,8 +100,9 @@
                  (if (eq action 'metadata)
                      '(metadata
                        ;; FIX
-                       (if bibtex-actions-rich-ui
-                           (affixation-function . bibtex-actions--affixation))
+                       ;(if bibtex-actions-rich-ui
+                           (affixation-function . bibtex-actions--affixation)
+                           ;)
                        (category . bibtex))
                    (complete-with-action action candidates string predicate))))))
     (cl-loop for choice in chosen
@@ -113,10 +114,10 @@
   (cl-loop
    for candidate in (bibtex-completion-candidates)
    collect
-   (let* ((pdf (if (assoc "=has-pdf=" (cdr candidate)) "=pdf"))
-          (note (if (assoc "=has-note=" (cdr candidate)) "=note"))
-          (link (if (assoc "doi" (cdr candidate)) "=link"))
-          (add (s-join "," (list pdf note link))))
+   (let* ((pdf (if (assoc "=has-pdf=" (cdr candidate)) " has:pdf"))
+          (note (if (assoc "=has-note=" (cdr candidate)) "has:note"))
+          (link (if (assoc "doi" (cdr candidate)) "has:link"))
+          (add (s-join " " (list pdf note link))))
    (cons
     ;; Here use one string for display, and the other for search.
     ;; The candidate string we use is very long, which is a bit awkward
@@ -133,15 +134,15 @@
    collect
    (let ((pdf
           ;; FIX: why doesn't this work????!!!!
-          (if (string-match "=pdf" candidate)
+          (if (string-match "has:pdf" candidate)
               (all-the-icons-icon-for-file "foo.pdf" :face 'all-the-icons-dred)
             (all-the-icons-icon-for-file "foo.pdf" :face 'bibtex-actions-icon-dim)))
          (link
-          (if (string-match "=link" candidate)
+          (if (string-match "has:link" candidate)
               (all-the-icons-faicon "external-link-square" :v-adjust 0.02 :face 'all-the-icons-dpurple)
             (all-the-icons-faicon "external-link-square" :v-adjust 0.02 :face 'bibtex-actions-icon-dim)))
          (note
-          (if (string-match "=note" candidate)
+          (if (string-match "has:note" candidate)
               (all-the-icons-icon-for-file "foo.txt")
             (all-the-icons-icon-for-file "foo.txt" :face 'bibtex-actions-icon-dim))))
    (list candidate (concat
