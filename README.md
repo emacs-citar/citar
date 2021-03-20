@@ -54,6 +54,8 @@ To access these commands from `embark-act`, set this variable.
 The UI exploits the new affixation functionality in Emacs 28. 
 By default, this UI is plain text, but it can be configured to use icons instead. 
 
+![rich UI with icons screenshot](images/rich-ui-icons.png)
+
 Here's how to configure it to use `all-the-icons`:
 
 ``` emacs-lisp
