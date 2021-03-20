@@ -44,16 +44,40 @@
 ;;         'bibtex-actions--completing-read'?
 (defvar crm-separator)
 
-(defcustom bibtex-actions-rich-ui nil
-  "Adds prefix icons and secondary metadata for suffix UI."
+(defcustom bibtex-actions-rich-ui t
+  "Adds prefix symbols or icons and secondary metadata for suffix UI.
+Affixation was first introduced in Emacs 28, and will be ignored
+in previous versions."
   :group 'bibtex-actions
   :type 'boolean)
 
+(defcustom bibtex-actions-suffix-display-formats
+  '((t . "${=type=:7} ${tags:24}"))
+  "Alist for displaying entries in the suffix of the results list.
+This mirrors 'bibtex-completion-display-formats'. The key of each
+element of this list is either a BibTeX entry type (in which case
+the format string applies to entries of this type only) or t (in
+which case the format string applies to all other entry types).
+The value is the format string. In the format string, expressions
+like \"${author:36}\", \"${title:*}\", etc, are expanded to the
+value of the corresponding field. An expression like
+\"${author:N}\" is truncated to a width of N characters, whereas
+an expression like \"${title:*}\" is truncated to the remaining
+width in the results window. Three special fields are available:
+\"=type=\" holds the BibTeX entry type, \"=has-pdf=\" holds
+`bibtex-completion-pdf-symbol' if the entry has a PDF file, and
+\"=has-notes=\" holds `bibtex-completion-notes-symbol' if the
+entry has a notes file. The \"author\" field is expanded to
+either the author names or, if the entry has no author field, the
+editor names."
+  :group 'bibtex-actions
+  :type '(alist :key-type symbol :value-type string))
+
 (defcustom bibtex-actions-icon
-  `((pdf .      ("P" . " "))
-    (note .     ("N" . " "))
+  `((pdf .      (,bibtex-completion-pdf-symbol . " "))
+    (note .     (,bibtex-completion-notes-symbol . " "))
     (link .     ("L" . " ")))
-  "Configuration alist specifying which icon to pick for a bib entry."
+  "Configuration alist specifying which symbol or icon to pick for a bib entry."
   :group 'bibtex-actions
   :type '(alist :key-type string
                 :value-type (choice (string :tag "Icon"))))
@@ -102,7 +126,8 @@
                (lambda (string predicate action)
                  (if (eq action 'metadata)
                      '(metadata
-                       (affixation-function . bibtex-actions--affixation)
+                       (where (,bibtex-actions-rich-ui)
+                              (affixation-function . bibtex-actions--affixation))
                        (category . bibtex))
                    (complete-with-action action candidates string predicate))))))
     (cl-loop for choice in chosen
