@@ -54,10 +54,15 @@
   :group 'bibtex-actions
   :type 'string)
 
-(if bibtex-actions-rich-ui
-    (require 'all-the-icons)
+(when bibtex-actions-rich-ui
+  (require 'all-the-icons)
+  (defface bibtex-actions-icon-dim
+    '((((background dark)) :foreground "#282c34")
+      (((background light)) :foreground "#fafafa"))
+    "Face for obscuring/dimming icons"
+    :group 'all-the-icons-faces)
   (setq bibtex-completion-display-formats
-         '((t . "${author:24}   ${title:64}   ${year:4}"))))
+        '((t . "${author:24}   ${title:64}   ${year:4}"))))
 
 ;;; Keymap
 
@@ -79,11 +84,7 @@
 
 ;;; Faces
 
-(defface all-the-icons-dim
-  '((((background dark)) :foreground "#282c34")
-    (((background light)) :foreground "#fafafa"))
-  "Face for obscuring/dimming icons"
-  :group 'all-the-icons-faces)
+
 
 ;;; Completion functions
 
@@ -134,15 +135,15 @@
           ;; FIX: why doesn't this work????!!!!
           (if (string-match "=pdf" candidate)
               (all-the-icons-icon-for-file "foo.pdf" :face 'all-the-icons-dred)
-            (all-the-icons-icon-for-file "foo.pdf" :face 'all-the-icons-dim)))
+            (all-the-icons-icon-for-file "foo.pdf" :face 'bibtex-actions-icon-dim)))
          (link
           (if (string-match "=link" candidate)
               (all-the-icons-faicon "external-link-square" :v-adjust 0.02 :face 'all-the-icons-dpurple)
-            (all-the-icons-faicon "external-link-square" :v-adjust 0.02 :face 'all-the-icons-dim)))
+            (all-the-icons-faicon "external-link-square" :v-adjust 0.02 :face 'bibtex-actions-icon-dim)))
          (note
           (if (string-match "=note" candidate)
               (all-the-icons-icon-for-file "foo.txt")
-            (all-the-icons-icon-for-file "foo.txt" :face 'all-the-icons-dim))))
+            (all-the-icons-icon-for-file "foo.txt" :face 'bibtex-actions-icon-dim))))
    (list candidate (concat
                     (s-join bibtex-actions-icon-separator
                             (list pdf note link))"	")"	XYZ"))))
