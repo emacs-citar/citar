@@ -148,6 +148,11 @@
                     (s-join bibtex-actions-icon-separator
                             (list pdf note link))"	")"	XYZ"))))
 
+(defun bibtex-actions--make-suffix (entry)
+  "Create the formatted ENTRY suffix string for the 'rich-ui'."
+    ;;TODO make use of 'bibtex-completion' so as simple and flexible as possible.
+    )
+
 ;;; Command wrappers for bibtex-completion functions
 
 (defun bibtex-actions-open (keys)
