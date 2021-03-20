@@ -52,9 +52,11 @@
 (defcustom bibtex-actions-icon
   `((pdf .      ("P" . " "))
     (note .     ("N" . " "))
-    (link .     ("L" . " "))
-    :type 'alist)
-  "Configuration alist specifying which icon to pick for a bib entry.")
+    (link .     ("L" . " ")))
+  "Configuration alist specifying which icon to pick for a bib entry."
+  :group 'bibtex-actions
+  :type '(alist :key-type string
+                :value-type (choice (string :tag "Icon"))))
 
 (defcustom bibtex-actions-icon-separator " "
   "When using rich UI, the padding between prefix icons."
