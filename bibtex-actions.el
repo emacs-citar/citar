@@ -37,11 +37,27 @@
 ;;; Code:
 
 (require 'bibtex-completion)
-(require 'all-the-icons)
+
+;;; Variables
 
 ;; REVIEW: is this the correct way to ensure we use the custom separator in
 ;;         'bibtex-actions--completing-read'?
 (defvar crm-separator)
+
+(defcustom bibtex-actions-rich-ui nil
+  "Adds prefix icons and secondary metadata for suffix UI."
+  :group 'bibtex-actions
+  :type 'boolean)
+
+(defcustom bibtex-actions-icon-separator " "
+  "When using rich UI, the padding between prefix icons."
+  :group 'bibtex-actions
+  :type 'string)
+
+(if bibtex-actions-rich-ui
+    (require 'all-the-icons)
+  (setq bibtex-completion-display-formats
+         '((t . "${author:24}   ${title:64}   ${year:4}"))))
 
 ;;; Keymap
 
@@ -63,10 +79,10 @@
 
 ;;; Faces
 
-(defface all-the-icons-off
+(defface all-the-icons-dim
   '((((background dark)) :foreground "#282c34")
-    (((background light)) :foreground "#843031"))
-  "Face for obscuring icons"
+    (((background light)) :foreground "#fafafa"))
+  "Face for obscuring/dimming icons"
   :group 'all-the-icons-faces)
 
 ;;; Completion functions
@@ -82,7 +98,9 @@
                (lambda (string predicate action)
                  (if (eq action 'metadata)
                      '(metadata
-                       (affixation-function . bibtex-actions--affixation)
+                       ;; FIX
+                       (if bibtex-actions-rich-ui
+                           (affixation-function . bibtex-actions--affixation))
                        (category . bibtex))
                    (complete-with-action action candidates string predicate))))))
     (cl-loop for choice in chosen
@@ -94,14 +112,18 @@
   (cl-loop
    for candidate in (bibtex-completion-candidates)
    collect
+   (let* ((pdf (if (assoc "=has-pdf=" (cdr candidate)) "=pdf"))
+          (note (if (assoc "=has-note=" (cdr candidate)) "=note"))
+          (link (if (assoc "doi" (cdr candidate)) "=link"))
+          (add (s-join "," (list pdf note link))))
    (cons
     ;; Here use one string for display, and the other for search.
     ;; The candidate string we use is very long, which is a bit awkward
     ;; when using TAB-completion style multi selection interfaces.
     (propertize
-     (car candidate) 'display (bibtex-completion-format-entry
-     candidate (1- (frame-width)))) ; allow this to be configurable?
-    (cdr candidate))))
+     (s-append add (car candidate)) 'display (bibtex-completion-format-entry
+     candidate (1- (frame-width))))
+    (cdr candidate)))))
 
 (defun bibtex-actions--affixation (cands)
   "Add affixes to CANDS."
@@ -110,18 +132,20 @@
    collect
    (let ((pdf
           ;; FIX: why doesn't this work????!!!!
-          (if (string-match bibtex-completion-pdf-symbol candidate)
-              (all-the-icons-icon-for-file "foo.pdf" :face 'all-the-icons-lred)
-            (all-the-icons-icon-for-file "foo.pdf" :face 'all-the-icons-off)))
+          (if (string-match "=pdf" candidate)
+              (all-the-icons-icon-for-file "foo.pdf" :face 'all-the-icons-dred)
+            (all-the-icons-icon-for-file "foo.pdf" :face 'all-the-icons-dim)))
          (link
-          (if "link"
-              (all-the-icons-faicon "external-link-square" :v-adjust 0.02)
-            (all-the-icons-faicon "external-link-square" :v-adjust 0.02 :face 'all-the-icons-off)))
+          (if (string-match "=link" candidate)
+              (all-the-icons-faicon "external-link-square" :v-adjust 0.02 :face 'all-the-icons-dpurple)
+            (all-the-icons-faicon "external-link-square" :v-adjust 0.02 :face 'all-the-icons-dim)))
          (note
-          (if (string-match bibtex-completion-notes-symbol candidate)
+          (if (string-match "=note" candidate)
               (all-the-icons-icon-for-file "foo.txt")
-            (all-the-icons-icon-for-file "foo.txt" :face 'all-the-icons-off))))
-   (list candidate (concat pdf " " note " " link "	") "	XYZ"))))
+            (all-the-icons-icon-for-file "foo.txt" :face 'all-the-icons-dim))))
+   (list candidate (concat
+                    (s-join bibtex-actions-icon-separator
+                            (list pdf note link))"	")"	XYZ"))))
 
 ;;; Command wrappers for bibtex-completion functions
 
