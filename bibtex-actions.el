@@ -126,7 +126,7 @@ editor names."
                (lambda (string predicate action)
                  (if (eq action 'metadata)
                      '(metadata
-                       (where (,bibtex-actions-rich-ui)
+                       (when bibtex-actions-rich-ui
                               (affixation-function . bibtex-actions--affixation))
                        (category . bibtex))
                    (complete-with-action action candidates string predicate))))))
