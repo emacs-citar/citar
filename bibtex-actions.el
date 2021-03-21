@@ -54,22 +54,7 @@ in previous versions."
 (defcustom bibtex-actions-suffix-display-formats
   '((t . "${=type=:7} ${tags:24}"))
   "Alist for displaying entries in the suffix of the results list.
-This mirrors 'bibtex-completion-display-formats'. The key of each
-element of this list is either a BibTeX entry type (in which case
-the format string applies to entries of this type only) or t (in
-which case the format string applies to all other entry types).
-The value is the format string. In the format string, expressions
-like \"${author:36}\", \"${title:*}\", etc, are expanded to the
-value of the corresponding field. An expression like
-\"${author:N}\" is truncated to a width of N characters, whereas
-an expression like \"${title:*}\" is truncated to the remaining
-width in the results window. Three special fields are available:
-\"=type=\" holds the BibTeX entry type, \"=has-pdf=\" holds
-`bibtex-completion-pdf-symbol' if the entry has a PDF file, and
-\"=has-notes=\" holds `bibtex-completion-notes-symbol' if the
-entry has a notes file. The \"author\" field is expanded to
-either the author names or, if the entry has no author field, the
-editor names."
+This is intended to mirror 'bibtex-completion-display-formats'."
   :group 'bibtex-actions
   :type '(alist :key-type symbol :value-type string))
 
