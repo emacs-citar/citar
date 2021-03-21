@@ -33,6 +33,8 @@ If you happen to be using Doom Emacs, you can just add this to your `package.el`
 
 ## Configuration
 
+### Basic
+
 Since all of the command logic resides in bibtex-completion, that is where to look for different [configuration options][bt-config]. 
 
 The only thing, however, that you _must_ configure is where to find your bib file(s). 
@@ -45,6 +47,32 @@ To access these commands from `embark-act`, set this variable.
 
 ``` emacs-lisp
 (setf (alist-get 'bibtex embark-keymap-alist) 'bibtex-actions-map)
+```
+
+### Rich UI
+
+The UI exploits the new affixation functionality in Emacs 28. 
+By default, this UI is plain text, but it can be configured to use icons instead. 
+
+![rich UI with icons screenshot](images/rich-ui-icons.png)
+
+Here's how to configure it to use `all-the-icons`:
+
+``` emacs-lisp
+(setq bibtex-actions-icon
+  `((pdf . (,(all-the-icons-icon-for-file "foo.pdf" :face 'all-the-icons-dred) .
+            ,(all-the-icons-icon-for-file "foo.pdf" :face 'bibtex-actions-icon-dim)))
+    (note . (,(all-the-icons-icon-for-file "foo.txt") .
+            ,(all-the-icons-icon-for-file "foo.txt" :face 'bibtex-actions-icon-dim)))        
+    (link . 
+        (,(all-the-icons-faicon "external-link-square" :v-adjust 0.02 :face 'all-the-icons-dpurple) .
+        ,(all-the-icons-faicon "external-link-square" :v-adjust 0.02 :face 'bibtex-actions-icon-dim)))))
+;; Here we define a face to dim non 'active' icons, but preserve alignment
+(defface bibtex-actions-icon-dim
+    '((((background dark)) :foreground "#282c34")
+     (((background light)) :foreground "#fafafa"))
+     "Face for obscuring/dimming icons"
+     :group 'all-the-icons-faces)
 ```
 
 ## Usage

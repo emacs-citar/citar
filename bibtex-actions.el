@@ -38,9 +38,51 @@
 
 (require 'bibtex-completion)
 
+;;; Variables
+
 ;; REVIEW: is this the correct way to ensure we use the custom separator in
 ;;         'bibtex-actions--completing-read'?
 (defvar crm-separator)
+
+(defcustom bibtex-actions-rich-ui t
+  "Adds prefix symbols or icons and secondary metadata for suffix UI.
+Affixation was first introduced in Emacs 28, and will be ignored
+in previous versions."
+  :group 'bibtex-actions
+  :type 'boolean)
+
+(defcustom bibtex-actions-suffix-display-formats
+  '((t . "${=type=:7} ${tags:24}"))
+  "Alist for displaying entries in the suffix of the results list.
+This is intended to mirror 'bibtex-completion-display-formats'."
+  :group 'bibtex-actions
+  :type '(alist :key-type symbol :value-type string))
+
+(defcustom bibtex-actions-link-symbol "🔗"
+  "Symbol to indicate a DOI or URL link is available for a publication.
+This should be a single character."
+  :group 'bibtex-actions
+  :type 'string)
+
+(defcustom bibtex-actions-icon
+  `((pdf .      (,bibtex-completion-pdf-symbol . " "))
+    (note .     (,bibtex-completion-notes-symbol . " "))
+    (link .     (,bibtex-actions-link-symbol . " ")))
+  "Configuration alist specifying which symbol or icon to pick for a bib entry.
+This leaves room for configurations where the absense of an item
+may be indicated with the same icon but a different face."
+  :group 'bibtex-actions
+  :type '(alist :key-type string
+                :value-type (choice (string :tag "Icon"))))
+
+(defcustom bibtex-actions-icon-separator " "
+  "When using rich UI, the padding between prefix icons."
+  :group 'bibtex-actions
+  :type 'string)
+
+(when bibtex-actions-rich-ui
+  (setq bibtex-completion-display-formats
+        '((t . "${author:24}   ${title:64}   ${year:4}"))))
 
 ;;; Keymap
 
@@ -60,6 +102,10 @@
     map)
   "Keymap for 'bibtex-actions'.")
 
+;;; Faces
+
+
+
 ;;; Completion functions
 
 (defun bibtex-actions-read ()
@@ -72,26 +118,56 @@
                "BibTeX entries: "
                (lambda (string predicate action)
                  (if (eq action 'metadata)
-                     '(metadata
-                       ;; TODO (affixation-function . bibtex-actions--affixation)
+                     `(metadata
+                       ,(when bibtex-actions-rich-ui
+                          '(affixation-function . bibtex-actions--affixation))
                        (category . bibtex))
                    (complete-with-action action candidates string predicate))))))
     (cl-loop for choice in chosen
-             collect (cdr (assoc choice candidates)))))
+             ;; collect citation keys of selected candidate(s)
+             collect (cdr (assoc "=key=" (cdr (assoc choice candidates)))))))
 
 (defun bibtex-actions--get-candidates ()
-  "Return all keys from 'bibtex-completion-candidates'."
+  "Propertize the candidates from 'bibtex-completion-candidates'."
   (cl-loop
    for candidate in (bibtex-completion-candidates)
    collect
+   (let* ((pdf (if (assoc "=has-pdf=" (cdr candidate)) " has:pdf"))
+          (note (if (assoc "=has-note=" (cdr candidate)) "has:note"))
+          (link (if (assoc "doi" (cdr candidate)) "has:link"))
+          (add (s-join " " (list pdf note link))))
    (cons
     ;; Here use one string for display, and the other for search.
     ;; The candidate string we use is very long, which is a bit awkward
     ;; when using TAB-completion style multi selection interfaces.
     (propertize
-     (car candidate) 'display (bibtex-completion-format-entry
-     candidate (1- (frame-width)))) ; allow this to be configurable?
-    (cdr (assoc "=key=" candidate)))))
+     (s-append add (car candidate)) 'display (bibtex-completion-format-entry
+     candidate (1- (frame-width))))
+    (cdr candidate)))))
+
+(defun bibtex-actions--affixation (cands)
+  "Add affixes to CANDS."
+  (cl-loop
+   for candidate in cands
+   collect
+   (let ((pdf (if (string-match "has:pdf" candidate)
+                  (car (cdr (assoc 'pdf bibtex-actions-icon)))
+                (cdr (cdr (assoc 'pdf bibtex-actions-icon)))))
+         (link (if (string-match "has:link" candidate)
+                  (car (cdr (assoc 'link bibtex-actions-icon)))
+                (cdr (cdr (assoc 'link bibtex-actions-icon)))))
+         (note
+          (if (string-match "has:note" candidate)
+                  (car (cdr (assoc 'note bibtex-actions-icon)))
+                (cdr (cdr (assoc 'note bibtex-actions-icon))))))
+   (list candidate (concat
+                    (s-join bibtex-actions-icon-separator
+                            (list pdf note link))"	") ""))))
+
+(defun bibtex-actions--make-suffix (entry)
+  "Create the formatted ENTRY suffix string for the 'rich-ui'."
+    ;;TODO make use of 'bibtex-completion' so as simple and flexible as possible.
+    )
 
 ;;; Command wrappers for bibtex-completion functions
 
