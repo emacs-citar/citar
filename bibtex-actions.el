@@ -135,7 +135,7 @@ key associated with each one."
    (let* ((pdf (if (assoc "=has-pdf=" (cdr candidate)) " has:pdf"))
           (note (if (assoc "=has-note=" (cdr candidate)) "has:note"))
           (link (if (assoc "doi" (cdr candidate)) "has:link"))
-          (add (s-trim (s-join " " (list pdf note link)))))
+          (add (s-trim-right (s-join " " (list pdf note link)))))
    (cons
     ;; Here use one string for display, and the other for search.
     ;; The candidate string we use is very long, which is a bit awkward
