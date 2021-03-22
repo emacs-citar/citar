@@ -126,18 +126,24 @@ may be indicated with the same icon but a different face."
              collect (cdr (assoc choice candidates)))))
 
 (defun bibtex-actions--get-candidates ()
-  "Return all keys from 'bibtex-completion-candidates'."
+  "Prepare candidates from 'bibtex-completion-candidates'.
+This both propertizes the candidates for display, and grabs the
+key associated with each one."
   (cl-loop
    for candidate in (bibtex-completion-candidates)
    collect
+   (let* ((pdf (if (assoc "=has-pdf=" (cdr candidate)) " has:pdf"))
+          (note (if (assoc "=has-note=" (cdr candidate)) "has:note"))
+          (link (if (assoc "doi" (cdr candidate)) "has:link"))
+          (add (s-trim (s-join " " (list pdf note link)))))
    (cons
     ;; Here use one string for display, and the other for search.
     ;; The candidate string we use is very long, which is a bit awkward
     ;; when using TAB-completion style multi selection interfaces.
     (propertize
-     (car candidate) 'display (bibtex-completion-format-entry
-     candidate (1- (frame-width)))) ; allow this to be configurable?
-    (cdr (assoc "=key=" candidate)))))
+     (s-append add (car candidate)) 'display (bibtex-completion-format-entry
+     candidate (1- (frame-width))))
+    (cdr (assoc "=key=" candidate))))))
 
 (defun bibtex-actions--affixation (cands)
   "Add affixes to CANDS."
