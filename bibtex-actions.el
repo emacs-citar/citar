@@ -145,7 +145,7 @@ key associated with each one."
     (propertize
      (s-append add (car candidate)) 'display (bibtex-completion-format-entry
      candidate (1- (frame-width))))
-    (cdr (assoc "=key=" candidate))))
+    (cdr (assoc "=key=" candidate))))))
 
 (defun bibtex-actions--affixation (cands)
   "Add affixes to CANDS."
