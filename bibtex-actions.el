@@ -51,12 +51,12 @@ in previous versions."
   :group 'bibtex-actions
   :type 'boolean)
 
-(defcustom bibtex-actions-suffix-display-formats
-  '((t . "${=type=:7} ${tags:24}"))
-  "Alist for displaying entries in the suffix of the results list.
-This is intended to mirror 'bibtex-completion-display-formats'."
-  :group 'bibtex-actions
-  :type '(alist :key-type symbol :value-type string))
+;(defcustom bibtex-actions-suffix-display-formats
+;  '((t . "${=type=:7} ${tags:24}"))
+;  "Alist for displaying entries in the suffix of the results list.
+; This is intended to mirror 'bibtex-completion-display-formats'."
+;  :group 'bibtex-actions
+;  :type '(alist :key-type symbol :value-type string))
 
 (defcustom bibtex-actions-link-symbol "🔗"
   "Symbol to indicate a DOI or URL link is available for a publication.
@@ -82,7 +82,7 @@ may be indicated with the same icon but a different face."
 
 (when bibtex-actions-rich-ui
   (setq bibtex-completion-display-formats
-        '((t . "${author:24}   ${title:64}   ${year:4}"))))
+        '((t . "${author:20}   ${title:48}   ${year:4}"))))
 
 ;;; Keymap
 
@@ -125,10 +125,12 @@ may be indicated with the same icon but a different face."
                    (complete-with-action action candidates string predicate))))))
     (cl-loop for choice in chosen
              ;; collect citation keys of selected candidate(s)
-             collect (cdr (assoc "=key=" (cdr (assoc choice candidates)))))))
+             collect (cdr (assoc choice candidates)))))
 
 (defun bibtex-actions--get-candidates ()
-  "Propertize the candidates from 'bibtex-completion-candidates'."
+  "Prepare candidates from 'bibtex-completion-candidates'.
+This both propertizes the candidates for display, and grabs the
+key associated with each one."
   (cl-loop
    for candidate in (bibtex-completion-candidates)
    collect
@@ -143,7 +145,7 @@ may be indicated with the same icon but a different face."
     (propertize
      (s-append add (car candidate)) 'display (bibtex-completion-format-entry
      candidate (1- (frame-width))))
-    (cdr candidate)))))
+    (cdr (assoc "=key=" candidate))))
 
 (defun bibtex-actions--affixation (cands)
   "Add affixes to CANDS."
@@ -164,10 +166,11 @@ may be indicated with the same icon but a different face."
                     (s-join bibtex-actions-icon-separator
                             (list pdf note link))"	") ""))))
 
-(defun bibtex-actions--make-suffix (entry)
-  "Create the formatted ENTRY suffix string for the 'rich-ui'."
-    ;;TODO make use of 'bibtex-completion' so as simple and flexible as possible.
-    )
+;(defun bibtex-actions--make-suffix (entry)
+;  "Create the formatted ENTRY suffix string for the 'rich-ui'."
+;    ;;TODO unclear if needed, or how to do it if it is.
+;    ;; may need change in bibtex-completion-format-entry
+;    )
 
 ;;; Command wrappers for bibtex-completion functions
 
