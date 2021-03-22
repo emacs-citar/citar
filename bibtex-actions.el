@@ -123,6 +123,7 @@ may be indicated with the same icon but a different face."
                        (category . bibtex))
                    (complete-with-action action candidates string predicate))))))
     (cl-loop for choice in chosen
+             ;; collect citation keys of selected candidate(s)
              collect (cdr (assoc choice candidates)))))
 
 (defun bibtex-actions--get-candidates ()
