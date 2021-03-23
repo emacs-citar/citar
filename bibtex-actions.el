@@ -51,12 +51,13 @@ in previous versions."
   :group 'bibtex-actions
   :type 'boolean)
 
-;(defcustom bibtex-actions-suffix-display-formats
-;  '((t . "${=type=:7} ${tags:24}"))
-;  "Alist for displaying entries in the suffix of the results list.
-; This is intended to mirror 'bibtex-completion-display-formats'."
-;  :group 'bibtex-actions
-;  :type '(alist :key-type symbol :value-type string))
+(defface bibtex-actions-suffix
+  '((t :inherit completions-annotations))
+  "Face used to highlight suffixes in `bibtex-actions' candidates."
+  :group 'bibtex-actions)
+
+(defvar bibtex-actions-suffix-format
+  "(${citekey}) ${reftype}:${tags}")
 
 (defcustom bibtex-actions-link-symbol "🔗"
   "Symbol to indicate a DOI or URL link is available for a publication.
@@ -102,10 +103,6 @@ may be indicated with the same icon but a different face."
     map)
   "Keymap for 'bibtex-actions'.")
 
-;;; Faces
-
-
-
 ;;; Completion functions
 (defun bibtex-actions-read ()
   "Read bibtex-completion entries for completion using 'completing-read-multiple'."
@@ -136,15 +133,22 @@ key associated with each one."
    (let* ((pdf (if (assoc "=has-pdf=" (cdr candidate)) " has:pdf"))
           (note (if (assoc "=has-note=" (cdr candidate)) "has:note"))
           (link (if (assoc "doi" (cdr candidate)) "has:link"))
-          (add (s-trim-right (s-join " " (list pdf note link)))))
+          (add (s-trim-right (s-join " " (list pdf note link))))
+          (tags (bibtex-completion-get-value "tags" candidate (or "")))
+          (reftype (bibtex-completion-get-value "=type=" candidate))
+          (citekey (bibtex-completion-get-value "=key=" candidate))
+          (suffix (s-lex-format "		(${citekey}, ${reftype}) ${tags}")))
    (cons
     ;; Here use one string for display, and the other for search.
     ;; The candidate string we use is very long, which is a bit awkward
     ;; when using TAB-completion style multi selection interfaces.
     (propertize
-     (s-append add (car candidate)) 'display (bibtex-completion-format-entry
-     candidate (1- (frame-width))))
-    (cdr (assoc "=key=" candidate))))))
+     (s-append add (car candidate))
+     'display (bibtex-completion-format-entry candidate (1- (frame-width)))
+     ;; Embed the suffix string as a custom property, for use in the affixation
+     ;; function.
+     'bibtex-actions-suffix suffix)
+    citekey))))
 
 (defun bibtex-actions--affixation (cands)
   "Add affixes to CANDS."
@@ -160,10 +164,13 @@ key associated with each one."
          (note
           (if (string-match "has:note" candidate)
                   (car (cdr (assoc 'note bibtex-actions-icon)))
-                (cdr (cdr (assoc 'note bibtex-actions-icon))))))
+                (cdr (cdr (assoc 'note bibtex-actions-icon)))))
+         ; grab the custom suffix property
+         (suffix (propertize (get-text-property 1 'bibtex-actions-suffix candidate)
+                             'face 'bibtex-actions-suffix)))
    (list candidate (concat
                     (s-join bibtex-actions-icon-separator
-                            (list pdf note link))"	") ""))))
+                            (list pdf note link))"	") suffix))))
 
 ;(defun bibtex-actions--make-suffix (entry)
 ;  "Create the formatted ENTRY suffix string for the 'rich-ui'."
