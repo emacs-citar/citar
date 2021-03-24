@@ -134,7 +134,8 @@ key associated with each one."
           (note (if (assoc "=has-note=" (cdr candidate)) "has:note"))
           (link (if (assoc "doi" (cdr candidate)) "has:link"))
           (add (s-trim-right (s-join " " (list pdf note link))))
-          (tags (bibtex-completion-get-value "tags" candidate (or "")))
+          (tags (or (bibtex-completion-get-value "tags" candidate)
+                    (bibtex-completion-get-value "keywords" candidate) ""))
           (reftype (bibtex-completion-get-value "=type=" candidate))
           (citekey (bibtex-completion-get-value "=key=" candidate))
           (suffix (s-lex-format "		(${citekey}, ${reftype}) ${tags}")))
@@ -170,7 +171,7 @@ key associated with each one."
                              'face 'bibtex-actions-suffix)))
    (list candidate (concat
                     (s-join bibtex-actions-icon-separator
-                            (list pdf note link))"	") suffix))))
+                            (list pdf note))"	") suffix))))
 
 ;(defun bibtex-actions--make-suffix (entry)
 ;  "Create the formatted ENTRY suffix string for the 'rich-ui'."
