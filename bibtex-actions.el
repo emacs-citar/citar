@@ -56,9 +56,6 @@ in previous versions."
   "Face used to highlight suffixes in `bibtex-actions' candidates."
   :group 'bibtex-actions)
 
-(defvar bibtex-actions-suffix-format
-  "(${citekey}) ${reftype}:${tags}")
-
 (defcustom bibtex-actions-link-symbol "🔗"
   "Symbol to indicate a DOI or URL link is available for a publication.
 This should be a single character."
@@ -83,7 +80,9 @@ may be indicated with the same icon but a different face."
 
 (when bibtex-actions-rich-ui
   (setq bibtex-completion-display-formats
-        '((t . "${author:20}   ${title:48}   ${year:4}"))))
+        '((t . "${author:20}   ${title:48}   ${year:4}")))
+  (setq bibtex-completion-display-formats-suffix
+        '((t . "${=type=}"))))
 
 ;;; Keymap
 
@@ -133,12 +132,11 @@ key associated with each one."
    (let* ((pdf (if (assoc "=has-pdf=" (cdr candidate)) " has:pdf"))
           (note (if (assoc "=has-note=" (cdr candidate)) "has:note"))
           (link (if (assoc "doi" (cdr candidate)) "has:link"))
-          (add (s-trim-right (s-join " " (list pdf note link))))
-          (tags (or (bibtex-completion-get-value "tags" candidate)
-                    (bibtex-completion-get-value "keywords" candidate) ""))
-          (reftype (bibtex-completion-get-value "=type=" candidate))
           (citekey (bibtex-completion-get-value "=key=" candidate))
-          (suffix (s-lex-format "		(${citekey}, ${reftype}) ${tags}")))
+          (add (s-trim-right (s-join " " (list pdf note link))))
+          ; TODO: add separation between target and suffix
+          (suffix  (bibtex-completion-format-entry candidate (1- (frame-width))
+                        bibtex-completion-display-formats-suffix-internal)))
    (cons
     ;; Here use one string for display, and the other for search.
     ;; The candidate string we use is very long, which is a bit awkward
