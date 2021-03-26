@@ -82,7 +82,8 @@ may be indicated with the same icon but a different face."
   (setq bibtex-completion-display-formats
         '((t . "${author:20}   ${title:48}   ${year:4}")))
   (setq bibtex-completion-display-formats-suffix
-        '((t . "${=type=}"))))
+        '((t . "          ${=key=:15}    ${=type=:12}    ${tags:30}"))))
+
 
 ;;; Keymap
 
@@ -135,7 +136,7 @@ key associated with each one."
           (citekey (bibtex-completion-get-value "=key=" candidate))
           (add (s-trim-right (s-join " " (list pdf note link))))
           ; TODO: add separation between target and suffix
-          (suffix  (bibtex-completion-format-entry candidate (1- (frame-width))
+          (suffix (bibtex-completion-format-entry candidate (1- (frame-width))
                         bibtex-completion-display-formats-suffix-internal)))
    (cons
     ;; Here use one string for display, and the other for search.
