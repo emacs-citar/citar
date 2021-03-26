@@ -137,7 +137,7 @@ key associated with each one."
           (add (s-trim-right (s-join " " (list pdf note link))))
           ; TODO: add separation between target and suffix
           (suffix (bibtex-completion-format-entry candidate (1- (frame-width))
-                        bibtex-completion-display-formats-suffix-internal)))
+                        bibtex-completion-display-formats-suffix)))
    (cons
     ;; Here use one string for display, and the other for search.
     ;; The candidate string we use is very long, which is a bit awkward
