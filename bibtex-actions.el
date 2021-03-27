@@ -82,7 +82,7 @@ may be indicated with the same icon but a different face."
   (setq bibtex-completion-display-formats
         '((t . "${author:20}   ${title:48}   ${year:4}")))
   (setq bibtex-completion-display-formats-suffix
-        '((t . "          ${=key=:15}    ${=type=:12}    ${tags:30}"))))
+        '((t . "          ${=key=:15}    ${=type=:12}    ${tags:*}"))))
 
 
 ;;; Keymap
