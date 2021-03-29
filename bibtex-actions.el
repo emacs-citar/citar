@@ -56,13 +56,24 @@ in previous versions."
   "Face used to highlight suffixes in `bibtex-actions' candidates."
   :group 'bibtex-actions)
 
+(defcustom bibtex-actions-display-templates
+  ; prefix will only work with rich ui, and on Emacs 28
+  ; 'main' is the default entry display string
+  '((prefix . ((t . "${=has-pdf=:1} ${=has-note=:1}  ")))
+    (main   . ((t . "${author:20}   ${title:48}   ${year:4}")))
+    (suffix . ((t . "          ${=key=:15}    ${=type=:12}    ${tags:*}"))))
+  "Configures display formatting for 'target', 'prefix' and 'suffix'.
+The latter two are optional, but are used in the 'rich ui'."
+    :group 'bibtex-actions
+    :type  '(alist :key-type symbol :value-type function))
+
 (defcustom bibtex-actions-link-symbol "🔗"
   "Symbol to indicate a DOI or URL link is available for a publication.
 This should be a single character."
   :group 'bibtex-actions
   :type 'string)
 
-(defcustom bibtex-actions-icon
+(defcustom bibtex-actions-symbols
   `((pdf .      (,bibtex-completion-pdf-symbol . " "))
     (note .     (,bibtex-completion-notes-symbol . " "))
     (link .     (,bibtex-actions-link-symbol . " ")))
@@ -71,7 +82,7 @@ This leaves room for configurations where the absense of an item
 may be indicated with the same icon but a different face."
   :group 'bibtex-actions
   :type '(alist :key-type string
-                :value-type (choice (string :tag "Icon"))))
+                :value-type (choice (string :tag "Symbol"))))
 
 (defcustom bibtex-actions-icon-separator " "
   "When using rich UI, the padding between prefix icons."
@@ -80,9 +91,9 @@ may be indicated with the same icon but a different face."
 
 (when bibtex-actions-rich-ui
   (setq bibtex-completion-display-formats
-        '((t . "${author:20}   ${title:48}   ${year:4}")))
-  (setq bibtex-completion-display-formats-suffix
-        '((t . "          ${=key=:15}    ${=type=:12}    ${tags:*}"))))
+        '((t . "${author:20}   ${title:48}   ${year:4}"))))
+  ;(setq bibtex-completion-display-formats-suffix
+  ;      '((t . "          ${=key=:15}    ${=type=:12}    ${tags:*}"))))
 
 
 ;;; Keymap
@@ -115,6 +126,7 @@ may be indicated with the same icon but a different face."
                (lambda (string predicate action)
                  (if (eq action 'metadata)
                      `(metadata
+                       ; TODO add annotation-function?
                        ,(when bibtex-actions-rich-ui
                           '(affixation-function . bibtex-actions--affixation))
                        (category . bibtex))
@@ -122,6 +134,11 @@ may be indicated with the same icon but a different face."
     (cl-loop for choice in chosen
              ;; collect citation keys of selected candidate(s)
              collect (cdr (assoc choice candidates)))))
+
+(defun bibtex-actions--get-template (template-name)
+  "Use the TEMPLATE-NAME to grab the associated template."
+  (cadadr
+   (assoc template-name bibtex-actions-display-templates)))
 
 (defun bibtex-actions--get-candidates ()
   "Prepare candidates from 'bibtex-completion-candidates'.
@@ -136,15 +153,23 @@ key associated with each one."
           (citekey (bibtex-completion-get-value "=key=" candidate))
           (add (s-trim-right (s-join " " (list pdf note link))))
           ; TODO: add separation between target and suffix
-          (suffix (bibtex-completion-format-entry candidate (1- (frame-width))
-                        bibtex-completion-display-formats-suffix)))
+          (suffix
+           (bibtex-actions--format-entry
+            candidate
+            (1- (frame-width))
+            (bibtex-actions--get-template 'suffix))))
    (cons
     ;; Here use one string for display, and the other for search.
     ;; The candidate string we use is very long, which is a bit awkward
     ;; when using TAB-completion style multi selection interfaces.
     (propertize
      (s-append add (car candidate))
-     'display (bibtex-completion-format-entry candidate (1- (frame-width)))
+     ; TODO should width be configurable?
+     'display
+     (bibtex-actions--format-entry
+      candidate
+      (1- (frame-width))
+      (bibtex-actions--get-template 'main))
      ;; Embed the suffix string as a custom property, for use in the affixation
      ;; function.
      'bibtex-actions-suffix suffix)
@@ -156,27 +181,84 @@ key associated with each one."
    for candidate in cands
    collect
    (let ((pdf (if (string-match "has:pdf" candidate)
-                  (car (cdr (assoc 'pdf bibtex-actions-icon)))
-                (cdr (cdr (assoc 'pdf bibtex-actions-icon)))))
-         (link (if (string-match "has:link" candidate)
-                  (car (cdr (assoc 'link bibtex-actions-icon)))
-                (cdr (cdr (assoc 'link bibtex-actions-icon)))))
+                  (cadr (assoc 'pdf bibtex-actions-symbols))
+                (cddr (assoc 'pdf bibtex-actions-symbols))))
+         ;(link (if (string-match "has:link" candidate)
+         ;         (cadr (assoc 'link bibtex-actions-symbols))
+         ;       (cddr (assoc 'link bibtex-actions-symbols))))
          (note
           (if (string-match "has:note" candidate)
-                  (car (cdr (assoc 'note bibtex-actions-icon)))
-                (cdr (cdr (assoc 'note bibtex-actions-icon)))))
+                  (cadr (assoc 'note bibtex-actions-symbols))
+                (cddr (assoc 'note bibtex-actions-symbols))))
          ; grab the custom suffix property
-         (suffix (propertize (get-text-property 1 'bibtex-actions-suffix candidate)
-                             'face 'bibtex-actions-suffix)))
+         (suffix
+          (propertize
+           (get-text-property 1 'bibtex-actions-suffix candidate)
+           'face 'bibtex-actions-suffix)))
    (list candidate (concat
                     (s-join bibtex-actions-icon-separator
                             (list pdf note))"	") suffix))))
 
-;(defun bibtex-actions--make-suffix (entry)
-;  "Create the formatted ENTRY suffix string for the 'rich-ui'."
-;    ;;TODO unclear if needed, or how to do it if it is.
-;    ;; may need change in bibtex-completion-format-entry
-;    )
+(defun bibtex-actions--process-display-formats (formats)
+  "Pre-calculate minimal widths needed by the FORMATS strings for various entry types."
+  ; adapted from bibtex-completion
+  (cl-loop
+   for format in formats
+   collect
+   (let* ((format-string (cdr format))
+          (fields-width 0)
+          (string-width
+           (string-width
+            (s-format format-string
+                      (lambda (field)
+                        (setq fields-width
+                              (+ fields-width
+                                 (string-to-number
+                                  (or (cadr (split-string field ":"))
+                                      ""))))
+                        "")))))
+     (-cons* (car format) format-string (+ fields-width string-width)))))
+
+(defun bibtex-actions--format-entry (entry width template)
+  "Formats a BibTeX ENTRY for display in results list.
+WIDTH is the width of the results list, and the display format is governed by
+TEMPLATE."
+  ; adapted from bibtex-completion
+  (let* ((processed-template
+          (bibtex-actions--process-display-formats template))
+         (format
+          (or
+           ; if there's a template specific to the type, use that
+           (assoc-string
+            (bibtex-completion-get-value "=type=" entry) template 'case-fold)
+           ; if not, use the generic template
+           (assoc t processed-template)))
+         (format-string (cadr format)))
+    (s-format
+     format-string
+     (lambda (field)
+       (let* ((field (split-string field ":"))
+              (field-name (car field))
+              (field-width (cadr field))
+              (field-value (bibtex-completion-get-value field-name entry)))
+         (when (and (string= field-name "author")
+                    (not field-value))
+           (setq field-value (bibtex-completion-get-value "editor" entry)))
+         (when (and (string= field-name "year")
+                    (not field-value))
+           (setq field-value (car (split-string (bibtex-completion-get-value "date" entry "") "-"))))
+         (setq field-value (bibtex-completion-clean-string (or field-value " ")))
+         (when (member field-name '("author" "editor"))
+           (setq field-value (bibtex-completion-shorten-authors field-value)))
+         (if (not field-width)
+             field-value
+           (setq field-width (string-to-number field-width))
+           (truncate-string-to-width
+            field-value
+            (if (> field-width 0)
+                field-width
+              (- width (cddr format)))
+            0 ?\s)))))))
 
 ;;; Command wrappers for bibtex-completion functions
 
