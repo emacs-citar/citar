@@ -80,9 +80,9 @@ may be indicated with the same icon but a different face."
 
 (when bibtex-actions-rich-ui
   (setq bibtex-completion-display-formats
-        '((t . "${author:20}   ${title:48}   ${year:4}"))))
-  ;(setq bibtex-completion-display-formats-suffix
-  ;      '((t . "          ${=key=:15}    ${=type=:12}    ${tags:*}"))))
+        '((t . "${author:20}   ${title:48}   ${year:4}")))
+  (setq bibtex-completion-display-formats-suffix
+        '((t . "          ${=key=:15}    ${=type=:12}    ${tags:*}"))))
 
 
 ;;; Keymap
@@ -134,20 +134,10 @@ key associated with each one."
           (note (if (assoc "=has-note=" (cdr candidate)) "has:note"))
           (link (if (assoc "doi" (cdr candidate)) "has:link"))
           (citekey (bibtex-completion-get-value "=key=" candidate))
-          (reftype (bibtex-completion-get-value "=type=" candidate))
-          (keywords (or
-                     (bibtex-completion-get-value "tags" candidate)
-                     (bibtex-completion-get-value "keywords" candidate) ""))
           (add (s-trim-right (s-join " " (list pdf note link))))
-          ; TODO: uncomment pending merge of
-          ;    https://github.com/tmalsburg/helm-bibtex/pull/367
-          ; (suffix (bibtex-completion-format-entry candidate (1- (frame-width))
-          ;            bibtex-completion-display-formats-suffix)))
-          (suffix
-           (concat "     "
-            (truncate-string-to-width citekey 25 0 ?\s )
-            (truncate-string-to-width reftype 20 0 ?\s )
-            (truncate-string-to-width keywords 30 0 ?\s ))))
+          ; TODO: add separation between target and suffix
+          (suffix (bibtex-completion-format-entry candidate (1- (frame-width))
+                        bibtex-completion-display-formats-suffix)))
    (cons
     ;; Here use one string for display, and the other for search.
     ;; The candidate string we use is very long, which is a bit awkward
