@@ -125,7 +125,7 @@ may be indicated with the same icon but a different face."
                        (category . bibtex))
                    (complete-with-action action candidates string predicate))))))
     (cl-loop for choice in chosen
-             ;; collect citation keys of selected candidate(s)
+             ;; Collect citation keys of selected candidate(s).
              collect (cdr (assoc choice candidates)))))
 
 (defun bibtex-actions--get-candidates ()
@@ -140,7 +140,6 @@ key associated with each one."
           (link (if (assoc "doi" (cdr candidate)) "has:link"))
           (citekey (bibtex-completion-get-value "=key=" candidate))
           (add (s-trim-right (s-join " " (list pdf note link))))
-          ; TODO: add separation between target and suffix
           (suffix
            (bibtex-actions--format-entry
             candidate
@@ -152,7 +151,6 @@ key associated with each one."
     ;; when using TAB-completion style multi selection interfaces.
     (propertize
      (s-append add (car candidate))
-     ; TODO should width be configurable?
      'display
      (bibtex-actions--format-entry
       candidate
@@ -178,7 +176,6 @@ key associated with each one."
           (if (string-match "has:note" candidate)
                   (cadr (assoc 'note bibtex-actions-symbols))
                 (cddr (assoc 'note bibtex-actions-symbols))))
-         ; grab the custom suffix property
          (suffix
           (bibtex-actions--annotation candidate)))
    (list candidate (concat
@@ -188,17 +185,18 @@ key associated with each one."
 (defun bibtex-actions--annotation (candidate)
   "Add annotation to CANDIDATE, where affixation is not available."
   (propertize
+   ;; Grab the custom suffix property from the candidate.
    (get-text-property 1 'bibtex-actions-suffix candidate)
    'face 'bibtex-actions-suffix))
 
 ;;; Formatting functions
-;;; NOTE this section will be removed, or dramatically simplified, if and
-;;; when this PR is merged:
-;;;   https://github.com/tmalsburg/helm-bibtex/pull/367
+;;  NOTE this section will be removed, or dramatically simplified, if and
+;;  when this PR is merged:
+;;    https://github.com/tmalsburg/helm-bibtex/pull/367
 
 (defun bibtex-actions--process-display-formats (formats)
   "Pre-calculate minimal widths needed by the FORMATS strings for various entry types."
-  ; adapted from bibtex-completion
+  ;; Adapted from bibtex-completion.
   (cl-loop
    for format in formats
    collect
@@ -220,15 +218,15 @@ key associated with each one."
   "Formats a BibTeX ENTRY for display in results list.
 WIDTH is the width of the results list, and the display format is governed by
 TEMPLATE."
-  ; adapted from bibtex-completion
+  ;; Adapted from bibtex-completion.
   (let* ((processed-template
           (bibtex-actions--process-display-formats template))
          (format
           (or
-           ; if there's a template specific to the type, use that
+           ;; If there's a template specific to the type, use that.
            (assoc-string
             (bibtex-completion-get-value "=type=" entry) template 'case-fold)
-           ; if not, use the generic template
+           ;; Otherwise, use the generic template.
            (assoc t processed-template)))
          (format-string (cadr format)))
     (s-format
