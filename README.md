@@ -51,15 +51,30 @@ To access these commands from `embark-act`, set this variable.
 
 ### Rich UI
 
-The UI exploits the new affixation functionality in Emacs 28. 
-By default, this UI is plain text, but it can be configured to use icons instead. 
+The UI exploits the new affixation functionality in Emacs 28, and annotation for earlier versions. 
+There are three sections of the browsing UI. 
+
+1. the prefix, only available in Emacs 28, and holding the symbols to indicate the presence of PDFs or notes associated with the entries.
+2. the main display, which by default shows author, title, and date.
+3. the suffix, which by default shows citekey, reference type, and (if present) tags or keywords.
+
+![UI sections](images/ui-segments.png)
+
+You can configure both of the last two just as you do with bibtex-completion.
+
+``` emacs-lisp
+(setq bibtex-actions-display-template '((t . " ${title=:*}")))
+(setq bibtex-actions-display-template-suffix '((t . "          ${=key=:15}")))
+```
+
+By default, this UI is plain text, but you can configure it to use icons instead. 
 
 ![rich UI with icons screenshot](images/rich-ui-icons.png)
 
 Here's how to configure it to use `all-the-icons`:
 
 ``` emacs-lisp
-(setq bibtex-actions-icon
+(setq bibtex-actions-symbols
   `((pdf . (,(all-the-icons-icon-for-file "foo.pdf" :face 'all-the-icons-dred) .
             ,(all-the-icons-icon-for-file "foo.pdf" :face 'bibtex-actions-icon-dim)))
     (note . (,(all-the-icons-icon-for-file "foo.txt") .
