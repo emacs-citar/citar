@@ -7,7 +7,7 @@
 ;; Created: February 27, 2021
 ;; License: GPL-3.0-or-later
 ;; Version: 0.2
-;; Keywords: bib, files
+;; Keywords: bibtex, text, citations
 ;; Homepage: https://github.com/bdarcus/bibtex-actions
 ;; Package-Requires: ((emacs "26.3") (bibtex-completion "1.0"))
 ;;
