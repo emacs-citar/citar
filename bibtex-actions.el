@@ -56,16 +56,24 @@ in previous versions."
   "Face used to highlight suffixes in `bibtex-actions' candidates."
   :group 'bibtex-actions)
 
-(defcustom bibtex-actions-display-templates
+(defcustom bibtex-actions-display-template
   ; prefix will only work with rich ui, and on Emacs 28
   ; 'main' is the default entry display string
-  '((prefix . ((t . "${=has-pdf=:1} ${=has-note=:1}  ")))
-    (main   . ((t . "${author:20}   ${title:48}   ${year:4}")))
-    (suffix . ((t . "          ${=key=:15}    ${=type=:12}    ${tags:*}"))))
+  '((t . "${author:20}   ${title:48}   ${year:4}"))
   "Configures display formatting for 'target', 'prefix' and 'suffix'.
 The latter two are optional, but are used in the 'rich ui'."
     :group 'bibtex-actions
     :type  '(alist :key-type symbol :value-type function))
+
+(defcustom bibtex-actions-display-template-suffix
+  ; prefix will only work with rich ui, and on Emacs 28
+  ; 'main' is the default entry display string
+  '((t . "          ${=key=:15}    ${=type=:12}    ${tags:*}"))
+  "Configures display formatting for 'target', 'prefix' and 'suffix'.
+The latter two are optional, but are used in the 'rich ui'."
+    :group 'bibtex-actions
+    :type  '(alist :key-type symbol :value-type function))
+
 
 (defcustom bibtex-actions-link-symbol "🔗"
   "Symbol to indicate a DOI or URL link is available for a publication.
@@ -135,11 +143,6 @@ may be indicated with the same icon but a different face."
              ;; collect citation keys of selected candidate(s)
              collect (cdr (assoc choice candidates)))))
 
-(defun bibtex-actions--get-template (template-name)
-  "Use the TEMPLATE-NAME to grab the associated template."
-  (cadadr
-   (assoc template-name bibtex-actions-display-templates)))
-
 (defun bibtex-actions--get-candidates ()
   "Prepare candidates from 'bibtex-completion-candidates'.
 This both propertizes the candidates for display, and grabs the
@@ -157,7 +160,7 @@ key associated with each one."
            (bibtex-actions--format-entry
             candidate
             (1- (frame-width))
-            (bibtex-actions--get-template 'suffix))))
+            bibtex-actions-display-template-suffix)))
    (cons
     ;; Here use one string for display, and the other for search.
     ;; The candidate string we use is very long, which is a bit awkward
@@ -169,7 +172,7 @@ key associated with each one."
      (bibtex-actions--format-entry
       candidate
       (1- (frame-width))
-      (bibtex-actions--get-template 'main))
+      bibtex-actions-display-template)
      ;; Embed the suffix string as a custom property, for use in the affixation
      ;; function.
      'bibtex-actions-suffix suffix)
