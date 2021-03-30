@@ -60,8 +60,7 @@ in previous versions."
   ; prefix will only work with rich ui, and on Emacs 28
   ; 'main' is the default entry display string
   '((t . "${author:20}   ${title:48}   ${year:4}"))
-  "Configures display formatting for 'target', 'prefix' and 'suffix'.
-The latter two are optional, but are used in the 'rich ui'."
+  "Configures display formatting for the BibTeX entry."
     :group 'bibtex-actions
     :type  '(alist :key-type symbol :value-type function))
 
@@ -69,11 +68,9 @@ The latter two are optional, but are used in the 'rich ui'."
   ; prefix will only work with rich ui, and on Emacs 28
   ; 'main' is the default entry display string
   '((t . "          ${=key=:15}    ${=type=:12}    ${tags:*}"))
-  "Configures display formatting for 'target', 'prefix' and 'suffix'.
-The latter two are optional, but are used in the 'rich ui'."
+  "Configures display formatting for the BibTeX entry suffix."
     :group 'bibtex-actions
     :type  '(alist :key-type symbol :value-type function))
-
 
 (defcustom bibtex-actions-link-symbol "🔗"
   "Symbol to indicate a DOI or URL link is available for a publication.
@@ -82,7 +79,7 @@ This should be a single character."
   :type 'string)
 
 (defcustom bibtex-actions-symbols
-  `((pdf .      (,bibtex-completion-pdf-symbol . " "))
+  `((pdf  .     (,bibtex-completion-pdf-symbol . " "))
     (note .     (,bibtex-completion-notes-symbol . " "))
     (link .     (,bibtex-actions-link-symbol . " ")))
   "Configuration alist specifying which symbol or icon to pick for a bib entry.
@@ -96,13 +93,6 @@ may be indicated with the same icon but a different face."
   "When using rich UI, the padding between prefix icons."
   :group 'bibtex-actions
   :type 'string)
-
-(when bibtex-actions-rich-ui
-  (setq bibtex-completion-display-formats
-        '((t . "${author:20}   ${title:48}   ${year:4}"))))
-  ;(setq bibtex-completion-display-formats-suffix
-  ;      '((t . "          ${=key=:15}    ${=type=:12}    ${tags:*}"))))
-
 
 ;;; Keymap
 
