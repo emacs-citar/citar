@@ -57,16 +57,12 @@ in previous versions."
   :group 'bibtex-actions)
 
 (defcustom bibtex-actions-display-template
-  ; prefix will only work with rich ui, and on Emacs 28
-  ; 'main' is the default entry display string
   '((t . "${author:20}   ${title:48}   ${year:4}"))
   "Configures display formatting for the BibTeX entry."
     :group 'bibtex-actions
     :type  '(alist :key-type symbol :value-type function))
 
 (defcustom bibtex-actions-display-template-suffix
-  ; prefix will only work with rich ui, and on Emacs 28
-  ; 'main' is the default entry display string
   '((t . "          ${=key=:15}    ${=type=:12}    ${tags:*}"))
   "Configures display formatting for the BibTeX entry suffix."
     :group 'bibtex-actions
