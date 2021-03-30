@@ -124,9 +124,8 @@ may be indicated with the same icon but a different face."
                (lambda (string predicate action)
                  (if (eq action 'metadata)
                      `(metadata
-                       ; TODO add annotation-function?
-                       ,(when bibtex-actions-rich-ui
-                          '(affixation-function . bibtex-actions--affixation))
+                       (affixation-function . bibtex-actions--affixation)
+                       (annotation-function . bibtex-actions--annotation)
                        (category . bibtex))
                    (complete-with-action action candidates string predicate))))))
     (cl-loop for choice in chosen
@@ -185,12 +184,21 @@ key associated with each one."
                 (cddr (assoc 'note bibtex-actions-symbols))))
          ; grab the custom suffix property
          (suffix
-          (propertize
-           (get-text-property 1 'bibtex-actions-suffix candidate)
-           'face 'bibtex-actions-suffix)))
+          (bibtex-actions--annotation candidate)))
    (list candidate (concat
                     (s-join bibtex-actions-icon-separator
                             (list pdf note))"	") suffix))))
+
+(defun bibtex-actions--annotation (candidate)
+  "Add annotation to CANDIDATE, where affixation is not available."
+  (propertize
+   (get-text-property 1 'bibtex-actions-suffix candidate)
+   'face 'bibtex-actions-suffix))
+
+;;; Formatting functions
+;;; NOTE this section will be removed, or dramatically simplified, if and
+;;; when this PR is merged:
+;;;   https://github.com/tmalsburg/helm-bibtex/pull/367
 
 (defun bibtex-actions--process-display-formats (formats)
   "Pre-calculate minimal widths needed by the FORMATS strings for various entry types."
