@@ -43,13 +43,6 @@
 ;;         'bibtex-actions--completing-read'?
 (defvar crm-separator)
 
-(defcustom bibtex-actions-rich-ui t
-  "Adds prefix symbols or icons and secondary metadata for suffix UI.
-Affixation was first introduced in Emacs 28, and will be ignored
-in previous versions."
-  :group 'bibtex-actions
-  :type 'boolean)
-
 (defface bibtex-actions-suffix
   '((t :inherit completions-annotations))
   "Face used to highlight suffixes in `bibtex-actions' candidates."
