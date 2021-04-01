@@ -119,7 +119,7 @@ may be indicated with the same icon but a different face."
                (lambda (string predicate action)
                  (if (eq action 'metadata)
                      `(metadata
-                       ;(affixation-function . bibtex-actions--affixation)
+                       (affixation-function . bibtex-actions--affixation)
                        ;(annotation-function . bibtex-actions--annotation)
                        (category . bibtex))
                    (complete-with-action action candidates string predicate))))))
@@ -150,16 +150,15 @@ key associated with each one."
             (1- (frame-width))
             bibtex-actions-display-template-suffix)))
    (cons
-    (s-trim
-     (concat
-      ;; We need all of these searchable:
-      ;;   1. the display-string variable to be displayed
-      ;;   2. the suffix-string variable to be displayed with a different face
-      ;;   3. the 'add' variable to be hidden
-      (propertize display-string) " "
-      (propertize suffix-string 'face 'bibtex-actions-suffix) " "
-      (propertize add 'invisible t)))
-   citekey))))
+    (concat
+     ;; We need all of these searchable:
+     ;;   1. the display-string variable to be displayed
+     ;;   2. the suffix-string variable to be displayed with a different face
+     ;;   3. the 'add' variable to be hidden
+     (propertize display-string) " "
+     (propertize suffix-string 'face 'bibtex-actions-suffix) " "
+     (propertize add 'invisible t))
+    citekey))))
 
 (defun bibtex-actions--affixation (cands)
   "Add affixes to CANDS."
@@ -176,8 +175,7 @@ key associated with each one."
           (if (string-match "has:note" candidate)
                   (cadr (assoc 'note bibtex-actions-symbols))
                 (cddr (assoc 'note bibtex-actions-symbols))))
-         (suffix
-          (bibtex-actions--annotation candidate)))
+         (suffix ""))
    (list candidate (concat
                     (s-join bibtex-actions-icon-separator
                             (list pdf note))"	") suffix))))
