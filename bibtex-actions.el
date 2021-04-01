@@ -151,8 +151,8 @@ key associated with each one."
    (cons
     (concat
      ;; We need all of these searchable:
-     ;;   1. the display-string variable to be displayed
-     ;;   2. the suffix-string variable to be displayed with a different face
+     ;;   1. the 'display-string' variable to be displayed
+     ;;   2. the 'suffix-string' variable to be displayed with a different face
      ;;   3. the 'add' variable to be hidden
      (propertize display-string) " "
      (propertize suffix-string 'face 'bibtex-actions-suffix) " "
