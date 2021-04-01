@@ -119,8 +119,8 @@ may be indicated with the same icon but a different face."
                (lambda (string predicate action)
                  (if (eq action 'metadata)
                      `(metadata
-                       (affixation-function . bibtex-actions--affixation)
-                       (annotation-function . bibtex-actions--annotation)
+                       ;(affixation-function . bibtex-actions--affixation)
+                       ;(annotation-function . bibtex-actions--annotation)
                        (category . bibtex))
                    (complete-with-action action candidates string predicate))))))
     (cl-loop for choice in chosen
@@ -139,26 +139,27 @@ key associated with each one."
           (link (if (assoc "doi" (cdr candidate)) "has:link"))
           (citekey (bibtex-completion-get-value "=key=" candidate))
           (add (s-trim-right (s-join " " (list pdf note link))))
-          (suffix
+          (display-string
+           (bibtex-actions--format-entry
+            candidate
+            (1- (frame-width))
+            bibtex-actions-display-template))
+          (suffix-string
            (bibtex-actions--format-entry
             candidate
             (1- (frame-width))
             bibtex-actions-display-template-suffix)))
    (cons
-    ;; Here use one string for display, and the other for search.
-    ;; The candidate string we use is very long, which is a bit awkward
-    ;; when using TAB-completion style multi selection interfaces.
-    (propertize
-     (bibtex-actions--format-entry
-      candidate
-      (1- (frame-width))
-      bibtex-actions-display-template)
-     ;'invisible
-     ;(s-append add (car candidate))
-     ;; Embed the suffix string as a custom property, for use in the affixation
-     ;; function.
-     'bibtex-actions-suffix suffix)
-    citekey))))
+    (s-trim
+     (concat
+      ;; We need all of these searchable:
+      ;;   1. the display-string variable to be displayed
+      ;;   2. the suffix-string variable to be displayed with a different face
+      ;;   3. the 'add' variable to be hidden
+      (propertize display-string) " "
+      (propertize suffix-string 'face 'bibtex-actions-suffix) " "
+      (propertize add 'invisible t)))
+   citekey))))
 
 (defun bibtex-actions--affixation (cands)
   "Add affixes to CANDS."
