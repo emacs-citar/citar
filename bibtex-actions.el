@@ -149,14 +149,15 @@ key associated with each one."
             (1- (frame-width))
             bibtex-actions-display-template-suffix)))
    (cons
-    (concat
-     ;; We need all of these searchable:
-     ;;   1. the 'display-string' variable to be displayed
-     ;;   2. the 'suffix-string' variable to be displayed with a different face
-     ;;   3. the 'add' variable to be hidden
-     (propertize display-string) " "
-     (propertize suffix-string 'face 'bibtex-actions-suffix) " "
-     (propertize add 'invisible t))
+    (s-trim-right
+     (concat
+      ;; We need all of these searchable:
+      ;;   1. the 'display-string' variable to be displayed
+      ;;   2. the 'suffix-string' variable to be displayed with a different face
+      ;;   3. the 'add' variable to be hidden
+      (propertize display-string) " "
+      (propertize suffix-string 'face 'bibtex-actions-suffix) " "
+      (propertize add 'invisible t)))
     citekey))))
 
 (defun bibtex-actions--affixation (cands)
