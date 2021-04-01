@@ -120,7 +120,6 @@ may be indicated with the same icon but a different face."
                  (if (eq action 'metadata)
                      `(metadata
                        (affixation-function . bibtex-actions--affixation)
-                       ;(annotation-function . bibtex-actions--annotation)
                        (category . bibtex))
                    (complete-with-action action candidates string predicate))))))
     (cl-loop for choice in chosen
@@ -161,7 +160,7 @@ key associated with each one."
     citekey))))
 
 (defun bibtex-actions--affixation (cands)
-  "Add affixes to CANDS."
+  "Add affixation prefix to CANDS."
   (cl-loop
    for candidate in cands
    collect
@@ -179,13 +178,6 @@ key associated with each one."
    (list candidate (concat
                     (s-join bibtex-actions-icon-separator
                             (list pdf note))"	") suffix))))
-
-(defun bibtex-actions--annotation (candidate)
-  "Add annotation to CANDIDATE, where affixation is not available."
-  (propertize
-   ;; Grab the custom suffix property from the candidate.
-   (get-text-property 1 'bibtex-actions-suffix candidate)
-   'face 'bibtex-actions-suffix))
 
 ;;; Formatting functions
 ;;  NOTE this section will be removed, or dramatically simplified, if and
