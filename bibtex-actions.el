@@ -149,12 +149,12 @@ key associated with each one."
     ;; The candidate string we use is very long, which is a bit awkward
     ;; when using TAB-completion style multi selection interfaces.
     (propertize
-     (s-append add (car candidate))
-     'display
      (bibtex-actions--format-entry
       candidate
       (1- (frame-width))
       bibtex-actions-display-template)
+     ;'invisible
+     ;(s-append add (car candidate))
      ;; Embed the suffix string as a custom property, for use in the affixation
      ;; function.
      'bibtex-actions-suffix suffix)
