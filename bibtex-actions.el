@@ -120,7 +120,6 @@ may be indicated with the same icon but a different face."
                  (if (eq action 'metadata)
                      `(metadata
                        (affixation-function . bibtex-actions--affixation)
-                       (annotation-function . bibtex-actions--annotation)
                        (category . bibtex))
                    (complete-with-action action candidates string predicate))))))
     (cl-loop for choice in chosen
@@ -139,29 +138,29 @@ key associated with each one."
           (link (if (assoc "doi" (cdr candidate)) "has:link"))
           (citekey (bibtex-completion-get-value "=key=" candidate))
           (add (s-trim-right (s-join " " (list pdf note link))))
-          (suffix
+          (display-string
+           (bibtex-actions--format-entry
+            candidate
+            (1- (frame-width))
+            bibtex-actions-display-template))
+          (suffix-string
            (bibtex-actions--format-entry
             candidate
             (1- (frame-width))
             bibtex-actions-display-template-suffix)))
    (cons
-    ;; Here use one string for display, and the other for search.
-    ;; The candidate string we use is very long, which is a bit awkward
-    ;; when using TAB-completion style multi selection interfaces.
-    (propertize
-     (s-append add (car candidate))
-     'display
-     (bibtex-actions--format-entry
-      candidate
-      (1- (frame-width))
-      bibtex-actions-display-template)
-     ;; Embed the suffix string as a custom property, for use in the affixation
-     ;; function.
-     'bibtex-actions-suffix suffix)
+    (concat
+     ;; We need all of these searchable:
+     ;;   1. the 'display-string' variable to be displayed
+     ;;   2. the 'suffix-string' variable to be displayed with a different face
+     ;;   3. the 'add' variable to be hidden
+     (propertize display-string) " "
+     (propertize suffix-string 'face 'bibtex-actions-suffix) " "
+     (propertize add 'invisible t))
     citekey))))
 
 (defun bibtex-actions--affixation (cands)
-  "Add affixes to CANDS."
+  "Add affixation prefix to CANDS."
   (cl-loop
    for candidate in cands
    collect
@@ -175,18 +174,10 @@ key associated with each one."
           (if (string-match "has:note" candidate)
                   (cadr (assoc 'note bibtex-actions-symbols))
                 (cddr (assoc 'note bibtex-actions-symbols))))
-         (suffix
-          (bibtex-actions--annotation candidate)))
+         (suffix ""))
    (list candidate (concat
                     (s-join bibtex-actions-icon-separator
                             (list pdf note))"	") suffix))))
-
-(defun bibtex-actions--annotation (candidate)
-  "Add annotation to CANDIDATE, where affixation is not available."
-  (propertize
-   ;; Grab the custom suffix property from the candidate.
-   (get-text-property 1 'bibtex-actions-suffix candidate)
-   'face 'bibtex-actions-suffix))
 
 ;;; Formatting functions
 ;;  NOTE this section will be removed, or dramatically simplified, if and
