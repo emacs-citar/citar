@@ -51,12 +51,14 @@ To access these commands from `embark-act`, set this variable.
 
 ### Rich UI
 
-The UI exploits the new affixation functionality in Emacs 28, and annotation for earlier versions. 
 There are three sections of the browsing UI. 
 
-1. the prefix, only available in Emacs 28, and holding the symbols to indicate the presence of PDFs or notes associated with the entries.
-2. the main display, which by default shows author, title, and date.
-3. the suffix, which by default shows citekey, reference type, and (if present) tags or keywords.
+1. The prefix, exploiting the affixation feature only available starting with Emacs 28, and holding the symbols to indicate the presence of PDFs or notes associated with the entries.
+2. The main display, which by default shows author, title, and date.
+3. The suffix, which by default shows citekey, reference type, and (if present) tags or keywords.
+
+You can search against all of the above content. 
+For the prefix, you can filter for associated PDFs or notes using `has:pdf` or `has:note` respectively (and at least with my setup, even the `:p` or `:n` shorthand).
 
 ![UI sections](images/ui-segments.png)
 
