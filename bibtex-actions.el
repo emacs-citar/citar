@@ -40,7 +40,7 @@
 ;;; Variables
 
 ;; REVIEW: is this the correct way to ensure we use the custom separator in
-;;         'bibtex-actions--completing-read'?
+;;         'bibtex-actions-read'?
 (defvar crm-separator)
 
 (defface bibtex-actions-suffix
