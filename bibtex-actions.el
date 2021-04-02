@@ -144,6 +144,8 @@ key associated with each one."
           ;; text to allow it to be searched.
           (candidate-hidden (s-trim-right (s-join " " (list pdf note link)))))
    (cons
+    ;; If we don't trim the trailing whitespace, 'completing-read-multiple' will
+    ;; get confused when there are multiple selected candidates.
     (s-trim-right
      (concat
       ;; We need all of these searchable:
