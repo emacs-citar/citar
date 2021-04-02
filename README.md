@@ -48,6 +48,14 @@ To access these commands from `embark-act`, set this variable.
 ``` emacs-lisp
 (setf (alist-get 'bibtex embark-keymap-alist) 'bibtex-actions-map)
 ```
+### Completion styles
+
+One of the beauties of the new suite of completing-read packages is the flexibility. 
+You can read more about this at the [selectrum README][select], but here's an example using orderless with its [style dispatchers][ordeless-dispatchers].
+
+![orderless matching](images/orderless.png)
+
+In this case, that search string is searching for all items without either a PDF or note associated with them, and then includes a "the" initialism, and a flex search on "abc".
 
 ### Rich UI
 
@@ -137,3 +145,5 @@ This is inspired by `helm-bibtex` and `ivy-bibtex`, but is based on `completing-
 - `bibtex-actions` is based on `completing-read-multiple`, with a single dependency, and works with different completion systems (though in practice is best supported in `selectrum`) and supporting packages that are `completing-read` compliant; `helm-bibtex` and `ivy-bibtex` are based on `helm` and `ivy` respectively
 
 [bt-config]: https://github.com/tmalsburg/helm-bibtex#basic-configuration-recommended
+[ordeless-dispatchers]: https://github.com/oantolin/orderless#style-dispatchers
+[select]: https://github.com/raxod502/selectrum#usage
