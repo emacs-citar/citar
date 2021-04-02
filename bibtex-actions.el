@@ -140,6 +140,8 @@ key associated with each one."
             candidate
             (1- (frame-width))
             bibtex-actions-display-template-suffix))
+          ;; We display this content already using symbols; here we add back
+          ;; text to allow it to be searched.
           (candidate-hidden (s-trim-right (s-join " " (list pdf note link)))))
    (cons
     (s-trim-right
