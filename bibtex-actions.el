@@ -77,8 +77,8 @@ may be indicated with the same icon but a different face."
   :type '(alist :key-type string
                 :value-type (choice (string :tag "Symbol"))))
 
-(defcustom bibtex-actions-icon-separator " "
-  "When using rich UI, the padding between prefix icons."
+(defcustom bibtex-actions-symbol-separator " "
+  "The padding between prefix symbols."
   :group 'bibtex-actions
   :type 'string)
 
@@ -174,7 +174,7 @@ key associated with each one."
                 (cddr (assoc 'note bibtex-actions-symbols))))
          (suffix ""))
    (list candidate (concat
-                    (s-join bibtex-actions-icon-separator
+                    (s-join bibtex-actions-symbol-separator
                             (list pdf note))"	") suffix))))
 
 ;;; Formatting functions
