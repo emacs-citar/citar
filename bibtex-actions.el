@@ -120,7 +120,7 @@ may be indicated with the same icon but a different face."
              collect (cdr (assoc choice candidates)))))
 
 (defun bibtex-actions--get-candidates ()
-  "Prepare candidates from 'bibtex-completion-candidates'.
+  "Transform candidates from 'bibtex-completion-candidates'.
 This both propertizes the candidates for display, and grabs the
 key associated with each one."
   (cl-loop
@@ -130,27 +130,29 @@ key associated with each one."
           (note (if (assoc "=has-note=" (cdr candidate)) "has:note"))
           (link (if (assoc "doi" (cdr candidate)) "has:link"))
           (citekey (bibtex-completion-get-value "=key=" candidate))
-          (add (s-trim-right (s-join " " (list pdf note link))))
-          (display-string
+          (candidate-main
            (bibtex-actions--format-entry
             candidate
             (1- (frame-width))
             bibtex-actions-display-template))
-          (suffix-string
+          (candidate-suffix
            (bibtex-actions--format-entry
             candidate
             (1- (frame-width))
-            bibtex-actions-display-template-suffix)))
+            bibtex-actions-display-template-suffix))
+          ;; We display this content already using symbols; here we add back
+          ;; text to allow it to be searched.
+          (candidate-hidden (s-trim-right (s-join " " (list pdf note link)))))
    (cons
     (s-trim-right
      (concat
       ;; We need all of these searchable:
-      ;;   1. the 'display-string' variable to be displayed
-      ;;   2. the 'suffix-string' variable to be displayed with a different face
-      ;;   3. the 'add' variable to be hidden
-      (propertize display-string) " "
-      (propertize suffix-string 'face 'bibtex-actions-suffix) " "
-      (propertize add 'invisible t)))
+      ;;   1. the 'candidate-main' variable to be displayed
+      ;;   2. the 'candidate-suffix' variable to be displayed with a different face
+      ;;   3. the 'candidate-hidden' variable to be hidden
+      (propertize candidate-main) " "
+      (propertize candidate-suffix 'face 'bibtex-actions-suffix) " "
+      (propertize candidate-hidden 'invisible t)))
     citekey))))
 
 (defun bibtex-actions--affixation (cands)
