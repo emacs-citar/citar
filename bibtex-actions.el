@@ -211,7 +211,7 @@ TEMPLATE."
           (or
            ;; If there's a template specific to the type, use that.
            (assoc-string
-            (bibtex-completion-get-value "=type=" entry) template 'case-fold)
+            (bibtex-completion-get-value "=type=" entry) processed-template 'case-fold)
            ;; Otherwise, use the generic template.
            (assoc t processed-template)))
          (format-string (cadr format)))
