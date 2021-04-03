@@ -141,8 +141,9 @@ key associated with each one."
             (1- (frame-width))
             bibtex-actions-display-template-suffix))
           ;; We display this content already using symbols; here we add back
-          ;; text to allow it to be searched.
-          (candidate-hidden (s-trim-right (s-join " " (list pdf note link)))))
+          ;; text to allow it to be searched, and citekey to ensure uniqueness
+          ;; of the candidate.
+          (candidate-hidden (s-join " " (list pdf note link citekey))))
    (cons
     ;; If we don't trim the trailing whitespace, 'completing-read-multiple' will
     ;; get confused when there are multiple selected candidates.
