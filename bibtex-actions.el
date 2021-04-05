@@ -46,15 +46,19 @@
   "Face used to highlight suffixes in `bibtex-actions' candidates."
   :group 'bibtex-actions)
 
-(defcustom bibtex-actions-display-template
+(defcustom bibtex-actions-template
   '((t . "${author:20}   ${title:48}   ${year:4}"))
-  "Configures display formatting for the BibTeX entry."
+  "Configures formatting for the BibTeX entry.
+When combined with the suffix, the same string is used for
+display and for search."
     :group 'bibtex-actions
     :type  '(alist :key-type symbol :value-type function))
 
-(defcustom bibtex-actions-display-template-suffix
+(defcustom bibtex-actions-template-suffix
   '((t . "          ${=key=:15}    ${=type=:12}    ${tags:*}"))
-  "Configures display formatting for the BibTeX entry suffix."
+  "Configures formatting for the BibTeX entry suffix.
+When combined wiht the main template, the same string is used for
+display and for search."
     :group 'bibtex-actions
     :type  '(alist :key-type symbol :value-type function))
 
@@ -132,12 +136,12 @@ key associated with each one."
            (bibtex-actions--format-entry
             candidate
             (1- (frame-width))
-            bibtex-actions-display-template))
+            bibtex-actions-template))
           (candidate-suffix
            (bibtex-actions--format-entry
             candidate
             (1- (frame-width))
-            bibtex-actions-display-template-suffix))
+            bibtex-actions-template-suffix))
           ;; We display this content already using symbols; here we add back
           ;; text to allow it to be searched, and citekey to ensure uniqueness
           ;; of the candidate.
