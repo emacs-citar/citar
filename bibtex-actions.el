@@ -39,10 +39,6 @@
 
 ;;; Variables
 
-;; REVIEW: is this the correct way to ensure we use the custom separator in
-;;         'bibtex-actions-read'?
-(defvar crm-separator)
-
 (defface bibtex-actions-suffix
   '((t :inherit completions-annotations))
   "Face used to highlight suffixes in `bibtex-actions' candidates."

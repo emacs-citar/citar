@@ -17,18 +17,12 @@ Here's a screenshot with selectrum and embark.
 
 ## Installation
 
-The easiest way to install ATM is via straight, like so:
-
-``` emacs-lisp
-(straight-use-package
- '(bibtex-actions :host github :repo "bdarcus/bibtex-actions"))
- ```
+Bibtex-actions is available for installation from [MELPA][melpa].
 
 If you happen to be using Doom Emacs, you can just add this to your `package.el` file:
 
 ``` emacs-lisp
-(package! bibtex-actions 
-  :recipe (:host github :repo "bdarcus/bibtex-actions"))
+(package! bibtex-actions)
 ```
 
 ## Configuration
@@ -147,3 +141,4 @@ This is inspired by `helm-bibtex` and `ivy-bibtex`, but is based on `completing-
 [bt-config]: https://github.com/tmalsburg/helm-bibtex#basic-configuration-recommended
 [ordeless-dispatchers]: https://github.com/oantolin/orderless#style-dispatchers
 [select]: https://github.com/raxod502/selectrum#usage
+[melpa]: https://melpa.org
