@@ -1,3 +1,6 @@
+
+[![MELPA](https://melpa.org/packages/bibtex-actions-badge.svg)](https://melpa.org/#/bibtex-actions)
+
 # BibTeX Actions
 
 - [What is it?](#what-is-it)
