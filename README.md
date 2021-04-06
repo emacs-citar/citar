@@ -141,7 +141,24 @@ This is inspired by `helm-bibtex` and `ivy-bibtex`, but is based on `completing-
 - `helm-bibtex` and `ivy-bibtex` provide a single command, and the actions are accessed from there; `bibtex-actions` provides all of its actions as standard commands, available from `M-x`, without a single entry point.
 - `bibtex-actions` is based on `completing-read-multiple`, with a single dependency, and works with different completion systems (though in practice is best supported in `selectrum`) and supporting packages that are `completing-read` compliant; `helm-bibtex` and `ivy-bibtex` are based on `helm` and `ivy` respectively
 
+## Acknowledgements
+
+The ideas in this project were initially worked out in a [conversation][idea-issue] with [Maxime Tréca][mtreca] and [Daniel Mendler][minad]. 
+Daniel, author of [consult][consult] and [marginalia][marginalia], helped us understand the possibilties of the new suite of completing-read packages, while Maxime came up with an [initial prototype][idea-pr].
+
+This code takes those ideas and reimplements them to fill out the feature set, and also optimize the code clarity and performance.
+
+Along the way, [Clemens Radermacher][clemens] and [Omar Antolín][omar] helped with some of the intricacies of completing-read and elisp.
+
 [bt-config]: https://github.com/tmalsburg/helm-bibtex#basic-configuration-recommended
 [ordeless-dispatchers]: https://github.com/oantolin/orderless#style-dispatchers
 [select]: https://github.com/raxod502/selectrum#usage
 [melpa]: https://melpa.org
+[mtreca]: https://github.com/mtreca
+[minad]: https://github.com/minad
+[clemens]: https://github.com/clemera
+[omar]: https://github.com/oantolin
+[consult]: https://github.com/minad/consult
+[marginalia]: https://github.com/minad/marginalia
+[idea-issue]: https://github.com/tmalsburg/helm-bibtex/issues/353
+[idea-pr]: https://github.com/tmalsburg/helm-bibtex/pull/355
