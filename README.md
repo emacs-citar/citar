@@ -8,6 +8,7 @@
 - [Configuration](#configuration)
 - [Usage](#usage)
 - [Comparisons](#comparisons)
+- [Acknowledgements](#acknowledgements)
 
 ## What is it?
 
