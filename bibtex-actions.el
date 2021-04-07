@@ -105,7 +105,7 @@ may be indicated with the same icon but a different face."
 ;;; Completion functions
 (defun bibtex-actions-read ()
   "Read bibtex-completion entries for completion using 'completing-read-multiple'."
-  (bibtex-completion-init)
+  (bibtex-actions--init)
   (when-let ((crm-separator "\\s-*&\\s-*")
              (candidates (bibtex-actions--get-candidates))
              (chosen
@@ -184,6 +184,38 @@ key associated with each one."
 ;;  NOTE this section will be removed, or dramatically simplified, if and
 ;;  when this PR is merged:
 ;;    https://github.com/tmalsburg/helm-bibtex/pull/367
+
+(defun bibtex-actions--init ()
+  "Check that the files and directories specified by the user actually exist."
+
+  (let ((watch-these (bibtex-completion-normalize-bibliography)))
+
+    ;; Add PDF and notes paths to watch list.
+    ;; Could also make this configurable, if there was any concern
+    ;; about performance implications and such?
+    (cl-pushnew 'watch-these bibtex-completion-library-path)
+    (cl-pushnew 'watch-these bibtex-completion-notes-path)
+
+    ;; Remove current watch-descriptors:
+    (mapc (lambda (watch-descriptor)
+            (file-notify-rm-watch watch-descriptor))
+          bibtex-completion-file-watch-descriptors)
+    (setq bibtex-completion-file-watch-descriptors nil)
+
+    ;; Check that all specified files or directories exist and add
+    ;; watches for automatic reloading of the bibliography when a file
+    ;; or directory is changed:
+    (mapc
+     (lambda (path)
+       (if (f-exists? path)
+           (let ((watch-descriptor
+                  (file-notify-add-watch
+                   path '(change)
+                   (lambda () (bibtex-completion-candidates)))))
+             (setq bibtex-completion-file-watch-descriptors
+                   (cons watch-descriptor bibtex-completion-file-watch-descriptors)))
+           (user-error "%s path could not be found" path)))
+     (-flatten watch-these))))
 
 (defun bibtex-actions--process-display-formats (formats)
   "Pre-calculate minimal widths needed by the FORMATS strings for various entry types."
