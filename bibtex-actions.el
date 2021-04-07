@@ -187,14 +187,12 @@ key associated with each one."
 
 (defun bibtex-actions--init ()
   "Check that the files and directories specified by the user actually exist."
-
+  ;; Adapted from bibtex-completion.
   (let ((watch-these (bibtex-completion-normalize-bibliography)))
 
     ;; Add PDF and notes paths to watch list.
-    ;; Could also make this configurable, if there was any concern
-    ;; about performance implications and such?
-    (cl-pushnew 'watch-these bibtex-completion-library-path)
-    (cl-pushnew 'watch-these bibtex-completion-notes-path)
+    (push bibtex-completion-library-path watch-these)
+    (push bibtex-completion-notes-path watch-these)
 
     ;; Remove current watch-descriptors:
     (mapc (lambda (watch-descriptor)
