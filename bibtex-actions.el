@@ -1,4 +1,4 @@
-;;; bibtex-actions.el --- Description -*- lexical-binding: t; -*-
+;;; bibtex-actions.el --- Biblographic commands based on completing-read -*- lexical-binding: t; -*-
 ;;
 ;; Copyright (C) 2021 Bruce D'Arcus
 ;;
