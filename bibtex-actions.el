@@ -185,20 +185,25 @@ key associated with each one."
 ;;  when this PR is merged:
 ;;    https://github.com/tmalsburg/helm-bibtex/pull/367
 
+(defvar bibtex-actions--file-watch-descriptors nil
+  "List of path watches monitoring for changes.")
+
 (defun bibtex-actions--init ()
   "Check that the files and directories specified by the user actually exist."
-  ;; Adapted from bibtex-completion.
+
   (let ((watch-these (bibtex-completion-normalize-bibliography)))
 
     ;; Add PDF and notes paths to watch list.
-    (push bibtex-completion-library-path watch-these)
-    (push bibtex-completion-notes-path watch-these)
+    (when bibtex-completion-library-path
+        (push bibtex-completion-library-path watch-these))
+    (when bibtex-completion-notes-path
+        (push bibtex-completion-notes-path watch-these))
 
     ;; Remove current watch-descriptors:
     (mapc (lambda (watch-descriptor)
             (file-notify-rm-watch watch-descriptor))
-          bibtex-completion-file-watch-descriptors)
-    (setq bibtex-completion-file-watch-descriptors nil)
+          bibtex-actions--file-watch-descriptors)
+    (setq bibtex-actions--file-watch-descriptors nil)
 
     ;; Check that all specified files or directories exist and add
     ;; watches for automatic reloading of the bibliography when a file
@@ -209,10 +214,10 @@ key associated with each one."
            (let ((watch-descriptor
                   (file-notify-add-watch
                    path '(change)
-                   (lambda () (bibtex-completion-candidates)))))
-             (setq bibtex-completion-file-watch-descriptors
-                   (cons watch-descriptor bibtex-completion-file-watch-descriptors)))
-           (user-error "%s path could not be found" path)))
+                   (lambda (_event) (bibtex-completion-candidates)))))
+             (setq bibtex-actions--file-watch-descriptors
+                   (cons watch-descriptor bibtex-actions--file-watch-descriptors)))
+         (user-error "%s path could not be found" path)))
      (-flatten watch-these))))
 
 (defun bibtex-actions--process-display-formats (formats)
