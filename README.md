@@ -151,6 +151,8 @@ This code takes those ideas and reimplements them to fill out the feature set, a
 
 Along the way, [Clemens Radermacher][clemens] and [Omar Antolín][omar] helped with some of the intricacies of completing-read and elisp.
 
+And, of course, thanks to [Titus von der Malburg][titus] for creating and maintaining bibtex-completion and helm-bibtex and ivy-bibtex.
+
 [bt-config]: https://github.com/tmalsburg/helm-bibtex#basic-configuration-recommended
 [ordeless-dispatchers]: https://github.com/oantolin/orderless#style-dispatchers
 [select]: https://github.com/raxod502/selectrum#usage
@@ -159,6 +161,7 @@ Along the way, [Clemens Radermacher][clemens] and [Omar Antolín][omar] helped w
 [minad]: https://github.com/minad
 [clemens]: https://github.com/clemera
 [omar]: https://github.com/oantolin
+[titus]: https://github.com/tmalsburg
 [consult]: https://github.com/minad/consult
 [marginalia]: https://github.com/minad/marginalia
 [idea-issue]: https://github.com/tmalsburg/helm-bibtex/issues/353
