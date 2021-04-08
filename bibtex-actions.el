@@ -131,7 +131,7 @@ key associated with each one."
    (let* ((pdf (if (assoc "=has-pdf=" (cdr candidate)) " has:pdf"))
           (note (if (assoc "=has-note=" (cdr candidate)) "has:note"))
           (link (if (or (assoc "doi" (cdr candidate))
-                        (assoc "url" (cdr candidate)) "has:link")))
+                        (assoc "url" (cdr candidate))) "has:link"))
           (citekey (bibtex-completion-get-value "=key=" candidate))
           (candidate-main
            (bibtex-actions--format-entry
