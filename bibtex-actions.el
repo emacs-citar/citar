@@ -214,7 +214,7 @@ key associated with each one."
            (let ((watch-descriptor
                   (file-notify-add-watch
                    path '(change)
-                   (lambda (_event) (bibtex-completion-candidates)))))
+                   'bibtex-completion-candidates)))
              (setq bibtex-actions--file-watch-descriptors
                    (cons watch-descriptor bibtex-actions--file-watch-descriptors)))
          (user-error "%s path could not be found" path)))
