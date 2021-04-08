@@ -170,8 +170,8 @@ key associated with each one."
                   (cadr (assoc 'pdf bibtex-actions-symbols))
                 (cddr (assoc 'pdf bibtex-actions-symbols))))
          (link (if (string-match "has:link" candidate)
-                  (cadr (assoc 'link bibtex-actions-symbols))
-                (cddr (assoc 'link bibtex-actions-symbols))))
+                   (cadr (assoc 'link bibtex-actions-symbols))
+                 (cddr (assoc 'link bibtex-actions-symbols))))
          (note
           (if (string-match "has:note" candidate)
                   (cadr (assoc 'note bibtex-actions-symbols))
