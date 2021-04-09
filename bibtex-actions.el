@@ -129,7 +129,8 @@ key associated with each one."
    collect
    (let* ((pdf (if (assoc "=has-pdf=" (cdr candidate)) " has:pdf"))
           (note (if (assoc "=has-note=" (cdr candidate)) "has:note"))
-          (link (if (assoc "doi" (cdr candidate)) "has:link"))
+          (link (if (or (assoc "doi" (cdr candidate))
+                        (assoc "url" (cdr candidate))) "has:link"))
           (citekey (bibtex-completion-get-value "=key=" candidate))
           (candidate-main
            (bibtex-actions--format-entry
@@ -167,9 +168,9 @@ key associated with each one."
    (let ((pdf (if (string-match "has:pdf" candidate)
                   (cadr (assoc 'pdf bibtex-actions-symbols))
                 (cddr (assoc 'pdf bibtex-actions-symbols))))
-         ;(link (if (string-match "has:link" candidate)
-         ;         (cadr (assoc 'link bibtex-actions-symbols))
-         ;       (cddr (assoc 'link bibtex-actions-symbols))))
+         (link (if (string-match "has:link" candidate)
+                   (cadr (assoc 'link bibtex-actions-symbols))
+                 (cddr (assoc 'link bibtex-actions-symbols))))
          (note
           (if (string-match "has:note" candidate)
                   (cadr (assoc 'note bibtex-actions-symbols))
@@ -177,7 +178,7 @@ key associated with each one."
          (suffix ""))
    (list candidate (concat
                     (s-join bibtex-actions-symbol-separator
-                            (list pdf note))"	") suffix))))
+                            (list pdf note link))"	") suffix))))
 
 ;;; Formatting functions
 ;;  NOTE this section will be removed, or dramatically simplified, if and
