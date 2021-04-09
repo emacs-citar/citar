@@ -105,7 +105,6 @@ may be indicated with the same icon but a different face."
 ;;; Completion functions
 (defun bibtex-actions-read ()
   "Read bibtex-completion entries for completion using 'completing-read-multiple'."
-  (bibtex-completion-init)
   (when-let ((crm-separator "\\s-*&\\s-*")
              (candidates (bibtex-actions--get-candidates))
              (chosen
