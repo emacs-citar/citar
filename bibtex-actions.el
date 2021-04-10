@@ -132,8 +132,8 @@ key associated with each one."
           (link (if (or (assoc "doi" (cdr candidate))
                         (assoc "url" (cdr candidate))) "has:link"))
           (citekey (bibtex-completion-get-value "=key=" candidate))
-          (main-width (* (frame-width) 0.65))
-          (suffix-width (* (frame-width) 0.34))
+          (main-width (truncate (* (frame-width) 0.65)))
+          (suffix-width (truncate (* (frame-width) 0.34)))
           (candidate-main
            (bibtex-actions--format-entry
             candidate
