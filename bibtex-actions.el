@@ -127,6 +127,8 @@ may be indicated with the same icon but a different face."
   "Transform candidates from 'bibtex-completion-candidates'.
 This both propertizes the candidates for display, and grabs the
 key associated with each one."
+  ;; TODO refactor to 'add-advice' to use 'setcar' to replace
+  ;; 'bibtex-completion-candidates' car with this string.
   (cl-loop
    for candidate in (bibtex-completion-candidates)
    collect
@@ -162,6 +164,17 @@ key associated with each one."
       (propertize candidate-suffix 'face 'bibtex-actions-suffix) " "
       (propertize candidate-hidden 'invisible t)))
     citekey))))
+
+(defun bibtex-actions--advice (cands)
+  "The advice function to replace CANDS strings."
+  (cl-loop
+   for entry in cands
+   collect
+   ;; TODO change get-candidetes to accept a single CAND as input
+   (setcar entry 'bibtex-actions--get-candidates)))
+
+;; Add advice to replace candidate strings
+(advice-add 'bibtex-completion-candidates :filter-return #'bibtex-actions--advice)
 
 (defun bibtex-actions--affixation (cands)
   "Add affixation prefix to CANDS."
