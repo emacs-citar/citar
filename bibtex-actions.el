@@ -132,15 +132,17 @@ key associated with each one."
           (link (if (or (assoc "doi" (cdr candidate))
                         (assoc "url" (cdr candidate))) "has:link"))
           (citekey (bibtex-completion-get-value "=key=" candidate))
+          (main-width (truncate (* (frame-width) 0.65)))
+          (suffix-width (truncate (* (frame-width) 0.34)))
           (candidate-main
            (bibtex-actions--format-entry
             candidate
-            (1- (frame-width))
+            main-width
             bibtex-actions-template))
           (candidate-suffix
            (bibtex-actions--format-entry
             candidate
-            (1- (frame-width))
+            suffix-width
             bibtex-actions-template-suffix))
           ;; We display this content already using symbols; here we add back
           ;; text to allow it to be searched, and citekey to ensure uniqueness
