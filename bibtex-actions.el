@@ -106,7 +106,7 @@ may be indicated with the same icon but a different face."
 (defun bibtex-actions-read ()
   "Read bibtex-completion entries for completion using 'completing-read-multiple'."
   (when-let ((crm-separator "\\s-*&\\s-*")
-             (candidates (bibtex-actions--get-candidates))
+             (candidates (bibtex-completion-candidates))
              (chosen
               (completing-read-multiple
                "BibTeX entries: "
@@ -161,11 +161,11 @@ This propertizes the candidate for display and search."
   (cl-loop
    for entry in cands
    collect
-   ;; TODO change get-candidetes to accept a single CAND as input
-   (setcar entry 'bibtex-actions--transform-candidate)))
+   ;; TODO the key logic
+   (setcar entry (bibtex-actions--transform-candidate entry))))
 
-;; Add advice to replace candidate strings
 (advice-add 'bibtex-completion-candidates :filter-return #'bibtex-actions--advice)
+(advice-remove 'bibtex-completion-candidates #'bibtex-actions--advice)
 
 (defun bibtex-actions--affixation (cands)
   "Add affixation prefix to CANDS."
