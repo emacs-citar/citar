@@ -123,35 +123,30 @@ may be indicated with the same icon but a different face."
              ;; Collect citation keys of selected candidate(s).
              collect (cdr (assoc choice candidates)))))
 
-(defun bibtex-actions--get-candidates ()
-  "Transform candidates from 'bibtex-completion-candidates'.
-This both propertizes the candidates for display, and grabs the
-key associated with each one."
+(defun bibtex-actions--transform-candidate (candidate)
+  "Transform CANDIDATE.
+This propertizes the candidate for display and search."
   ;; TODO refactor to 'add-advice' to use 'setcar' to replace
   ;; 'bibtex-completion-candidates' car with this string.
-  (cl-loop
-   for candidate in (bibtex-completion-candidates)
-   collect
-   (let* ((pdf (if (assoc "=has-pdf=" (cdr candidate)) " has:pdf"))
-          (note (if (assoc "=has-note=" (cdr candidate)) "has:note"))
-          (link (if (or (assoc "doi" (cdr candidate))
-                        (assoc "url" (cdr candidate))) "has:link"))
-          (citekey (bibtex-completion-get-value "=key=" candidate))
-          (candidate-main
-           (bibtex-actions--format-entry
-            candidate
-            (1- (frame-width))
-            bibtex-actions-template))
-          (candidate-suffix
-           (bibtex-actions--format-entry
-            candidate
-            (1- (frame-width))
-            bibtex-actions-template-suffix))
-          ;; We display this content already using symbols; here we add back
-          ;; text to allow it to be searched, and citekey to ensure uniqueness
-          ;; of the candidate.
-          (candidate-hidden (s-join " " (list pdf note link citekey))))
-   (cons
+  (let* ((pdf (if (assoc "=has-pdf=" (cdr candidate)) " has:pdf"))
+         (note (if (assoc "=has-note=" (cdr candidate)) "has:note"))
+         (link (if (or (assoc "doi" (cdr candidate))
+                       (assoc "url" (cdr candidate))) "has:link"))
+         (citekey (bibtex-completion-get-value "=key=" candidate))
+         (candidate-main
+          (bibtex-actions--format-entry
+           candidate
+           (1- (frame-width))
+           bibtex-actions-template))
+         (candidate-suffix
+          (bibtex-actions--format-entry
+           candidate
+           (1- (frame-width))
+           bibtex-actions-template-suffix))
+         ;; We display this content already using symbols; here we add back
+         ;; text to allow it to be searched, and citekey to ensure uniqueness
+         ;; of the candidate.
+         (candidate-hidden (s-join " " (list pdf note link citekey))))
     ;; If we don't trim the trailing whitespace, 'completing-read-multiple' will
     ;; get confused when there are multiple selected candidates.
     (s-trim-right
@@ -162,8 +157,7 @@ key associated with each one."
       ;;   3. the 'candidate-hidden' variable to be hidden
       (propertize candidate-main) " "
       (propertize candidate-suffix 'face 'bibtex-actions-suffix) " "
-      (propertize candidate-hidden 'invisible t)))
-    citekey))))
+      (propertize candidate-hidden 'invisible t)))))
 
 (defun bibtex-actions--advice (cands)
   "The advice function to replace CANDS strings."
@@ -171,7 +165,7 @@ key associated with each one."
    for entry in cands
    collect
    ;; TODO change get-candidetes to accept a single CAND as input
-   (setcar entry 'bibtex-actions--get-candidates)))
+   (setcar entry 'bibtex-actions--transform-candidate)))
 
 ;; Add advice to replace candidate strings
 (advice-add 'bibtex-completion-candidates :filter-return #'bibtex-actions--advice)
