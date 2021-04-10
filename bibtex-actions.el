@@ -84,9 +84,6 @@ may be indicated with the same icon but a different face."
   :group 'bibtex-actions
   :type 'string)
 
-(defvar bibtex-actions--cache nil
-  "A cache that stores the results of 'bibtex-actions--get-candidates'.")
-
 ;;; Keymap
 
 (defvar bibtex-actions-map
