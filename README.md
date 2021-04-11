@@ -33,7 +33,7 @@ If you happen to be using Doom Emacs, you can just add this to your `package.el`
 
 ### Basic
 
-Since all of the command logic resides in bibtex-completion, that is where to look for different [configuration options][bt-config]. 
+Since most of the command logic resides in bibtex-completion, that is where to look for different [configuration options][bt-config]. 
 
 The only thing, however, that you _must_ configure is where to find your bib file(s). 
 
