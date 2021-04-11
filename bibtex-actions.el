@@ -191,7 +191,8 @@ key associated with each one."
   "Store the candidates list.")
 
 (defun bibtex-actions--get-candidates ()
-    "Load bib files and cache them."
+    "Get the cached candidates.
+If the cache is nil, this will load the cache."
     (if (not bibtex-actions--candidates-cache)
      (bibtex-actions--reload-candidates-cache))
     bibtex-actions--candidates-cache)
