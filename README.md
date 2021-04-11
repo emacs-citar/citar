@@ -15,9 +15,13 @@
 This package turns bibtex-completion functions into completing-read-based Emacs commands. 
 When used with selectrum, embark, and marginalia, it provides similar functionality to helm-bibtex and ivy-bibtex: quick filtering and selecting of bibliographic entries from the minibuffer, and the option to run different commands against them.
 
-Here's a screenshot with selectrum and embark.
+Here's a screenshot with [[selectrum]] and [[embark]].
 
 ![selectrum-embark screenshot](images/selectrum-embark.png)
+
+And another with [[vertico]]:
+
+![vertico with bibtex-actions](images/vertico.png)
 
 ## Installation
 
@@ -187,6 +191,9 @@ And, of course, thanks to [Titus von der Malburg][titus] for creating and mainta
 [bt-config]: https://github.com/tmalsburg/helm-bibtex#basic-configuration-recommended
 [ordeless-dispatchers]: https://github.com/oantolin/orderless#style-dispatchers
 [select]: https://github.com/raxod502/selectrum#usage
+[selectrum]: https://github.com/raxod502/selectrum
+[embark]: https://github.com/oantolin/embark/
+[vertico]: https://github.com/minad/vertico
 [melpa]: https://melpa.org
 [mtreca]: https://github.com/mtreca
 [minad]: https://github.com/minad
