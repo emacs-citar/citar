@@ -109,7 +109,9 @@ The `bibtex-actions-refresh` command will reload the cache, and you can call thi
 You can also add `bibtex-completion`-style proactive loading by using `filenotify` something like this:
 
 ``` emacs-lisp
-(file-notify-add-watch bibtex-completion-bibliography
+;; Of course, you could also use `bibtex-complation-bibliography` here, but would need 
+;; to adapt this if you specify multiple files.
+(file-notify-add-watch "/path/to/file.bib"
                        '(change)
                        (lambda (event) (bibtex-actions-refresh)))
 ```
