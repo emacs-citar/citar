@@ -99,7 +99,7 @@ Here's how to configure it to use `all-the-icons`:
      :group 'all-the-icons-faces)
 ```
 
-### Proactive loading of library
+### Proactive reloading of library
 
 Bibtex-actions uses a cache to speed up library display. 
 This is great for performance, but means the data can become stale if you modify it. 
