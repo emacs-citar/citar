@@ -193,12 +193,12 @@ key associated with each one."
 (defun bibtex-actions--get-candidates ()
     "Load bib files and cache them."
     (if (not bibtex-actions--candidates-cache)
-     (setq bibtex-actions--candidates-cache (bibtex-actions--format-candidates)))
+     (bibtex-actions--reload-candidates-cache))
     bibtex-actions--candidates-cache)
 
-(defun bibtex-actions--clear-candidates-cache ()
-  "Clear the candidates cache."
-  (setq bibtex-actions--candidates-cache nil))
+(defun bibtex-actions--reload-candidates-cache ()
+  "Reload the candidates cache."
+  (setq bibtex-actions--candidates-cache (bibtex-actions--format-candidates)))
 
 (defun bibtex-actions--process-display-formats (formats)
   "Pre-calculate minimal widths needed by the FORMATS strings for various entry types."
