@@ -120,7 +120,7 @@ may be indicated with the same icon but a different face."
              ;; Collect citation keys of selected candidate(s).
              collect (cdr (assoc choice candidates)))))
 
-(defun bibtex-actions--get-candidates ()
+(defun bibtex-actions--format-candidates ()
   "Transform candidates from 'bibtex-completion-candidates'.
 This both propertizes the candidates for display, and grabs the
 key associated with each one."
@@ -186,6 +186,19 @@ key associated with each one."
 ;;  NOTE this section will be removed, or dramatically simplified, if and
 ;;  when this PR is merged:
 ;;    https://github.com/tmalsburg/helm-bibtex/pull/367
+
+(defvar bibtex-actions--candidates-cache nil
+  "Store the candidates list.")
+
+(defun bibtex-actions--get-candidates ()
+    "Load bib files and cache them."
+    (if (not bibtex-actions--candidates-cache)
+     (setq bibtex-actions--candidates-cache (bibtex-actions--format-candidates)))
+    bibtex-actions--candidates-cache)
+
+(defun bibtex-actions--clear-candidates-cache ()
+  "Clear the candidates cache."
+  (setq bibtex-actions--candidates-cache nil))
 
 (defun bibtex-actions--process-display-formats (formats)
   "Pre-calculate minimal widths needed by the FORMATS strings for various entry types."
