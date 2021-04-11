@@ -182,11 +182,6 @@ key associated with each one."
                     (s-join bibtex-actions-symbol-separator
                             (list pdf note link))"	") suffix))))
 
-;;; Formatting functions
-;;  NOTE this section will be removed, or dramatically simplified, if and
-;;  when this PR is merged:
-;;    https://github.com/tmalsburg/helm-bibtex/pull/367
-
 (defvar bibtex-actions--candidates-cache nil
   "Store the candidates list.")
 
@@ -199,7 +194,13 @@ If the cache is nil, this will load the cache."
 
 (defun bibtex-actions--reload-candidates-cache ()
   "Reload the candidates cache."
-  (setq bibtex-actions--candidates-cache (bibtex-actions--format-candidates)))
+  (setq bibtex-actions--candidates-cache
+        (bibtex-actions--format-candidates)))
+
+;;; Formatting functions
+;;  NOTE this section will be removed, or dramatically simplified, if and
+;;  when this PR is merged:
+;;    https://github.com/tmalsburg/helm-bibtex/pull/367
 
 (defun bibtex-actions--process-display-formats (formats)
   "Pre-calculate minimal widths needed by the FORMATS strings for various entry types."
