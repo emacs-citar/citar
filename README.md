@@ -46,6 +46,7 @@ To access these commands from `embark-act`, set this variable.
 ``` emacs-lisp
 (setf (alist-get 'bibtex embark-keymap-alist) 'bibtex-actions-map)
 ```
+
 ### Completion styles
 
 One of the beauties of the new suite of completing-read packages is the flexibility. 
@@ -96,6 +97,34 @@ Here's how to configure it to use `all-the-icons`:
      (((background light)) :foreground "#fafafa"))
      "Face for obscuring/dimming icons"
      :group 'all-the-icons-faces)
+```
+
+### Proactive loading of library
+
+Bibtex-actions uses a cache to speed up library display. 
+This is great for performance, but means the data can become stale if you modify it. 
+
+The `bibtex-actions-refresh` command will reload the cache, and you can call this manually. 
+
+You can also add `bibtex-completion`-style proactive loading by using `filenotify` something like this:
+
+``` emacs-lisp
+(file-notify-add-watch bibtex-completion-bibliography
+                       '(change)
+                       (lambda (event) (bibtex-actions-refresh)))
+```
+
+You can also extend this to do the same thing for your PDF files, or notes:
+
+``` emacs-lisp
+(file-notify-add-watch bibtex-completion-library-path
+                       '(change)
+                       (lambda (event) (bibtex-actions-refresh)))
+
+(file-notify-add-watch bibtex-completion-note-path
+                       '(change)
+                       (lambda (event) (bibtex-actions-refresh)))
+
 ```
 
 ## Usage

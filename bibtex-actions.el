@@ -189,11 +189,12 @@ key associated with each one."
   "Get the cached candidates.
 If the cache is nil, this will load the cache."
   (if (not bibtex-actions--candidates-cache)
-      (bibtex-actions--reload-candidates-cache))
+      (bibtex-actions-refresh))
   bibtex-actions--candidates-cache)
 
-(defun bibtex-actions--reload-candidates-cache ()
+(defun bibtex-actions-refresh ()
   "Reload the candidates cache."
+  (interactive)
   (setq bibtex-actions--candidates-cache
         (bibtex-actions--format-candidates)))
 
