@@ -120,7 +120,7 @@ may be indicated with the same icon but a different face."
              ;; Collect citation keys of selected candidate(s).
              collect (cdr (assoc choice candidates)))))
 
-(defun bibtex-actions--get-candidates ()
+(defun bibtex-actions--format-candidates ()
   "Transform candidates from 'bibtex-completion-candidates'.
 This both propertizes the candidates for display, and grabs the
 key associated with each one."
@@ -181,6 +181,22 @@ key associated with each one."
    (list candidate (concat
                     (s-join bibtex-actions-symbol-separator
                             (list pdf note link))"	") suffix))))
+
+(defvar bibtex-actions--candidates-cache nil
+  "Store the candidates list.")
+
+(defun bibtex-actions--get-candidates ()
+  "Get the cached candidates.
+If the cache is nil, this will load the cache."
+  (if (not bibtex-actions--candidates-cache)
+      (bibtex-actions-refresh))
+  bibtex-actions--candidates-cache)
+
+(defun bibtex-actions-refresh ()
+  "Reload the candidates cache."
+  (interactive)
+  (setq bibtex-actions--candidates-cache
+        (bibtex-actions--format-candidates)))
 
 ;;; Formatting functions
 ;;  NOTE this section will be removed, or dramatically simplified, if and
