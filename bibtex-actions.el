@@ -192,7 +192,7 @@ If the cache is nil, this will load the cache."
       (bibtex-actions-refresh))
   bibtex-actions--candidates-cache)
 
-(defun bibtex-actions-refresh ()
+(defun bibtex-actions-refresh (&optional _event)
   "Reload the candidates cache."
   (interactive)
   (setq bibtex-actions--candidates-cache
