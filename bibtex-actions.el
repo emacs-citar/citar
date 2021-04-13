@@ -134,16 +134,22 @@ key associated with each one."
           (citekey (bibtex-completion-get-value "=key=" candidate))
           (main-width (truncate (* (frame-width) 0.65)))
           (suffix-width (truncate (* (frame-width) 0.34)))
+          (main-template
+           (bibtex-actions--process-display-formats
+            bibtex-actions-template))
+          (suffix-template
+           (bibtex-actions--process-display-formats
+            bibtex-actions-template-suffix))
           (candidate-main
            (bibtex-actions--format-entry
             candidate
             main-width
-            bibtex-actions-template))
+            main-template))
           (candidate-suffix
            (bibtex-actions--format-entry
             candidate
             suffix-width
-            bibtex-actions-template-suffix))
+            suffix-template))
           ;; We display this content already using symbols; here we add back
           ;; text to allow it to be searched, and citekey to ensure uniqueness
           ;; of the candidate.
@@ -228,15 +234,13 @@ If the cache is nil, this will load the cache."
 WIDTH is the width of the results list, and the display format is governed by
 TEMPLATE."
   ;; Adapted from bibtex-completion.
-  (let* ((processed-template
-          (bibtex-actions--process-display-formats template))
-         (format
+  (let* ((format
           (or
            ;; If there's a template specific to the type, use that.
            (assoc-string
-            (bibtex-completion-get-value "=type=" entry) processed-template 'case-fold)
+            (bibtex-completion-get-value "=type=" entry) template 'case-fold)
            ;; Otherwise, use the generic template.
-           (assoc t processed-template)))
+           (assoc t template)))
          (format-string (cadr format)))
     (s-format
      format-string
