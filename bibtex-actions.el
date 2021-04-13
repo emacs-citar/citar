@@ -124,49 +124,49 @@ may be indicated with the same icon but a different face."
   "Transform candidates from 'bibtex-completion-candidates'.
 This both propertizes the candidates for display, and grabs the
 key associated with each one."
-  (cl-loop
-   for candidate in (bibtex-completion-candidates)
-   collect
-   (let* ((pdf (if (assoc "=has-pdf=" (cdr candidate)) " has:pdf"))
-          (note (if (assoc "=has-note=" (cdr candidate)) "has:note"))
-          (link (if (or (assoc "doi" (cdr candidate))
-                        (assoc "url" (cdr candidate))) "has:link"))
-          (citekey (bibtex-completion-get-value "=key=" candidate))
-          (main-width (truncate (* (frame-width) 0.65)))
-          (suffix-width (truncate (* (frame-width) 0.34)))
-          (main-template
-           (bibtex-actions--process-display-formats
-            bibtex-actions-template))
-          (suffix-template
-           (bibtex-actions--process-display-formats
-            bibtex-actions-template-suffix))
-          (candidate-main
-           (bibtex-actions--format-entry
-            candidate
-            main-width
-            main-template))
-          (candidate-suffix
-           (bibtex-actions--format-entry
-            candidate
-            suffix-width
-            suffix-template))
-          ;; We display this content already using symbols; here we add back
-          ;; text to allow it to be searched, and citekey to ensure uniqueness
-          ;; of the candidate.
-          (candidate-hidden (s-join " " (list pdf note link citekey))))
-   (cons
-    ;; If we don't trim the trailing whitespace, 'completing-read-multiple' will
-    ;; get confused when there are multiple selected candidates.
-    (s-trim-right
-     (concat
-      ;; We need all of these searchable:
-      ;;   1. the 'candidate-main' variable to be displayed
-      ;;   2. the 'candidate-suffix' variable to be displayed with a different face
-      ;;   3. the 'candidate-hidden' variable to be hidden
-      (propertize candidate-main) " "
-      (propertize candidate-suffix 'face 'bibtex-actions-suffix) " "
-      (propertize candidate-hidden 'invisible t)))
-    citekey))))
+  (let* ((main-template
+         (bibtex-actions--process-display-formats
+          bibtex-actions-template))
+         (suffix-template
+          (bibtex-actions--process-display-formats
+           bibtex-actions-template-suffix))
+         (main-width (truncate (* (frame-width) 0.65)))
+         (suffix-width (truncate (* (frame-width) 0.34))))
+    (cl-loop
+     for candidate in (bibtex-completion-candidates)
+     collect
+     (let* ((pdf (if (assoc "=has-pdf=" (cdr candidate)) " has:pdf"))
+            (note (if (assoc "=has-note=" (cdr candidate)) "has:note"))
+            (link (if (or (assoc "doi" (cdr candidate))
+                          (assoc "url" (cdr candidate))) "has:link"))
+            (citekey (bibtex-completion-get-value "=key=" candidate))
+            (candidate-main
+             (bibtex-actions--format-entry
+              candidate
+              main-width
+              main-template))
+            (candidate-suffix
+             (bibtex-actions--format-entry
+              candidate
+              suffix-width
+              suffix-template))
+            ;; We display this content already using symbols; here we add back
+            ;; text to allow it to be searched, and citekey to ensure uniqueness
+            ;; of the candidate.
+            (candidate-hidden (s-join " " (list pdf note link citekey))))
+       (cons
+        ;; If we don't trim the trailing whitespace, 'completing-read-multiple' will
+        ;; get confused when there are multiple selected candidates.
+        (s-trim-right
+         (concat
+          ;; We need all of these searchable:
+          ;;   1. the 'candidate-main' variable to be displayed
+          ;;   2. the 'candidate-suffix' variable to be displayed with a different face
+          ;;   3. the 'candidate-hidden' variable to be hidden
+          (propertize candidate-main) " "
+          (propertize candidate-suffix 'face 'bibtex-actions-suffix) " "
+          (propertize candidate-hidden 'invisible t)))
+        citekey)))))
 
 (defun bibtex-actions--affixation (cands)
   "Add affixation prefix to CANDS."
@@ -219,14 +219,15 @@ If the cache is nil, this will load the cache."
           (fields-width 0)
           (string-width
            (string-width
-            (s-format format-string
-                      (lambda (field)
-                        (setq fields-width
-                              (+ fields-width
-                                 (string-to-number
-                                  (or (cadr (split-string field ":"))
-                                      ""))))
-                        "")))))
+            (s-format
+             format-string
+             (lambda (field)
+               (setq fields-width
+                     (+ fields-width
+                        (string-to-number
+                         (or (cadr (split-string field ":"))
+                             ""))))
+               "")))))
      (-cons* (car format) format-string (+ fields-width string-width)))))
 
 (defun bibtex-actions--format-entry (entry width template)
