@@ -113,25 +113,23 @@ The `bibtex-actions-refresh` command will reload the cache, and you can call thi
 You can also add `bibtex-completion`-style proactive loading by using `filenotify` something like this:
 
 ``` emacs-lisp
-;; Of course, you could also use `bibtex-complation-bibliography` here, but would need 
+;; Of course, you could also use `bibtex-completion-bibliography` here, but would need 
 ;; to adapt this if you specify multiple files.
-(file-notify-add-watch "/path/to/file.bib"
-                       '(change)
-                       (lambda (event) (bibtex-actions-refresh)))
+(file-notify-add-watch 
+  "/path/to/file.bib" '(change) 'bibtex-actions-refresh)
 ```
 
 You can also extend this to do the same thing for your PDF files, or notes:
 
 ``` emacs-lisp
-(file-notify-add-watch bibtex-completion-library-path
-                       '(change)
-                       (lambda (event) (bibtex-actions-refresh)))
+(file-notify-add-watch 
+  bibtex-completion-library-path '(change) 'bibtex-actions-refresh)
 
-(file-notify-add-watch bibtex-completion-note-path
-                       '(change)
-                       (lambda (event) (bibtex-actions-refresh)))
-
+(file-notify-add-watch 
+  bibtex-completion-note-path '(change) 'bibtex-actions-refresh)
 ```
+
+For additional configuration options on this, see [the wiki](https://github.com/bdarcus/bibtex-actions/wiki/Configuration#automating-path-watches).
 
 ## Usage
 
