@@ -41,23 +41,10 @@
 
 ;;; Variables
 
-(defface bibtex-actions-suffix
-  '((t :inherit completions-annotations))
-  "Face used to highlight suffixes in `bibtex-actions' candidates."
-  :group 'bibtex-actions)
-
 (defcustom bibtex-actions-template
   '((t . "${author:20}   ${title:48}   ${year:4}"))
   "Configures formatting for the BibTeX entry.
 When combined with the suffix, the same string is used for
-display and for search."
-    :group 'bibtex-actions
-    :type  '(alist :key-type symbol :value-type function))
-
-(defcustom bibtex-actions-template-suffix
-  '((t . "          ${=key=:15}    ${=type=:12}    ${tags:*}"))
-  "Configures formatting for the BibTeX entry suffix.
-When combined wiht the main template, the same string is used for
 display and for search."
     :group 'bibtex-actions
     :type  '(alist :key-type symbol :value-type function))
@@ -120,22 +107,35 @@ may be indicated with the same icon but a different face."
              ;; Collect citation keys of selected candidate(s).
              collect (cdr (assoc choice candidates)))))
 
+(defun bibtex-actions--process-display-formats (formats)
+  "Pre-calculate minimal widths needed by the FORMATS strings for various entry types."
+  ;; Adapted from bibtex-completion.
+  (cl-loop
+   for format in formats
+   collect
+   (let* ((format-string (cdr format))
+          (fields-width 0)
+          (string-width
+           (string-width
+            (s-format
+             format-string
+             (lambda (field)
+               (setq fields-width
+                     (+ fields-width
+                        (string-to-number
+                         (or (cadr (split-string field ":"))
+                             ""))))
+               "")))))
+     (-cons* (car format) format-string (+ fields-width string-width)))))
+
 (defun bibtex-actions--format-candidates ()
   "Transform candidates from 'bibtex-completion-candidates'.
 This both propertizes the candidates for display, and grabs the
 key associated with each one."
-  (let* ((main-template
-         (bibtex-actions--process-display-formats
-          bibtex-actions-template))
-         (suffix-template
+  (let* ((template
           (bibtex-actions--process-display-formats
-           bibtex-actions-template-suffix))
-         (width (1- (frame-width)))
-         (main-width (truncate (* width 0.65)))
-         (suffix-width (truncate (* width 0.34)))
-         (template
-          ; TODO adjust so concats string
-          (concat main-template suffix-template)))
+           bibtex-actions-template))
+         (width (1- (frame-width))))
     (cl-loop
      for candidate in (bibtex-completion-candidates)
      collect
@@ -145,21 +145,22 @@ key associated with each one."
                           (assoc "url" (cdr candidate))) "has:link"))
             (citekey (bibtex-completion-get-value "=key=" candidate))
             (formatted-candidate
-             (bibtex-actions--format-entry candidate width template))
-            (propertized-candidate
-             formatted-candidate
-             (add-text-properties
-              main-width width '(face bibtex-actions-suffix)))
+             (bibtex-actions--format-entry
+              candidate
+              width
+              template))
             ;; We display this content already using symbols; here we add back
             ;; text to allow it to be searched, and citekey to ensure uniqueness
             ;; of the candidate.
-            ;  TODO add property here
-            (hidden-candidate (s-join " " (list pdf note link citekey))))
+            (candidate-hidden (s-join " " (list pdf note link citekey))))
        (cons
         ;; If we don't trim the trailing whitespace, 'completing-read-multiple' will
         ;; get confused when there are multiple selected candidates.
         (s-trim-right
-         (concat propertized-candidate hidden-candidate)) citekey)))))
+         (concat
+          formatted-candidate " "
+          (propertize candidate-hidden 'invisible t)))
+        citekey)))))
 
 (defun bibtex-actions--affixation (cands)
   "Add affixation prefix to CANDS."
@@ -197,31 +198,7 @@ If the cache is nil, this will load the cache."
   (setq bibtex-actions--candidates-cache
         (bibtex-actions--format-candidates)))
 
-;;; Formatting functions
-;;  NOTE this section will be removed, or dramatically simplified, if and
-;;  when this PR is merged:
-;;    https://github.com/tmalsburg/helm-bibtex/pull/367
-
-(defun bibtex-actions--process-display-formats (formats)
-  "Pre-calculate minimal widths needed by the FORMATS strings for various entry types."
-  ;; Adapted from bibtex-completion.
-  (cl-loop
-   for format in formats
-   collect
-   (let* ((format-string (cdr format))
-          (fields-width 0)
-          (string-width
-           (string-width
-            (s-format
-             format-string
-             (lambda (field)
-               (setq fields-width
-                     (+ fields-width
-                        (string-to-number
-                         (or (cadr (split-string field ":"))
-                             ""))))
-               "")))))
-     (-cons* (car format) format-string (+ fields-width string-width)))))
+;;; bt
 
 (defun bibtex-actions--format-entry (entry width template)
   "Formats a BibTeX ENTRY for display in results list.
