@@ -41,23 +41,10 @@
 
 ;;; Variables
 
-(defface bibtex-actions-suffix
-  '((t :inherit completions-annotations))
-  "Face used to highlight suffixes in `bibtex-actions' candidates."
-  :group 'bibtex-actions)
-
 (defcustom bibtex-actions-template
   '((t . "${author:20}   ${title:48}   ${year:4}"))
   "Configures formatting for the BibTeX entry.
 When combined with the suffix, the same string is used for
-display and for search."
-    :group 'bibtex-actions
-    :type  '(alist :key-type symbol :value-type function))
-
-(defcustom bibtex-actions-template-suffix
-  '((t . "          ${=key=:15}    ${=type=:12}    ${tags:*}"))
-  "Configures formatting for the BibTeX entry suffix.
-When combined wiht the main template, the same string is used for
 display and for search."
     :group 'bibtex-actions
     :type  '(alist :key-type symbol :value-type function))
@@ -124,14 +111,10 @@ may be indicated with the same icon but a different face."
   "Transform candidates from 'bibtex-completion-candidates'.
 This both propertizes the candidates for display, and grabs the
 key associated with each one."
-  (let* ((main-template
+  (let* ((template
          (bibtex-actions--process-display-formats
           bibtex-actions-template))
-         (suffix-template
-          (bibtex-actions--process-display-formats
-           bibtex-actions-template-suffix))
-         (main-width (truncate (* (frame-width) 0.65)))
-         (suffix-width (truncate (* (frame-width) 0.34))))
+         (width (1- (frame-width))))
     (cl-loop
      for candidate in (bibtex-completion-candidates)
      collect
@@ -140,16 +123,11 @@ key associated with each one."
             (link (if (or (assoc "doi" (cdr candidate))
                           (assoc "url" (cdr candidate))) "has:link"))
             (citekey (bibtex-completion-get-value "=key=" candidate))
-            (candidate-main
+            (formatted-candidate
              (bibtex-actions--format-entry
               candidate
-              main-width
-              main-template))
-            (candidate-suffix
-             (bibtex-actions--format-entry
-              candidate
-              suffix-width
-              suffix-template))
+              width
+              template))
             ;; We display this content already using symbols; here we add back
             ;; text to allow it to be searched, and citekey to ensure uniqueness
             ;; of the candidate.
@@ -158,14 +136,8 @@ key associated with each one."
         ;; If we don't trim the trailing whitespace, 'completing-read-multiple' will
         ;; get confused when there are multiple selected candidates.
         (s-trim-right
-         (concat
-          ;; We need all of these searchable:
-          ;;   1. the 'candidate-main' variable to be displayed
-          ;;   2. the 'candidate-suffix' variable to be displayed with a different face
-          ;;   3. the 'candidate-hidden' variable to be hidden
-          (propertize candidate-main) " "
-          (propertize candidate-suffix 'face 'bibtex-actions-suffix) " "
-          (propertize candidate-hidden 'invisible t)))
+          (concat formatted-candidate " "
+                  (propertize candidate-hidden 'invisible t)))
         citekey)))))
 
 (defun bibtex-actions--affixation (cands)
