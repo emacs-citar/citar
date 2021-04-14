@@ -101,7 +101,6 @@ may be indicated with the same icon but a different face."
                  (if (eq action 'metadata)
                      `(metadata
                        (annotation-function . bibtex-actions--annotation)
-                       ;(affixation-function . bibtex-actions--affixation)
                        (category . bibtex))
                    (complete-with-action action candidates string predicate))))))
     (cl-loop for choice in chosen
@@ -141,15 +140,7 @@ key associated with each one."
                   (propertize candidate-hidden 'invisible t)))
         citekey)))))
 
-(defun bibtex-actions--affixation (cands)
-  "Add affixation prefix to CANDS."
-  ; TODO broken; either fix, or remove
-  (cl-loop
-   for candidate in cands
-   collect
-   candidate (bibtex-actions--annotation)))
-
-(defun bibtex-actions--annotation (candidate)
+(defun bibtex-actions--annotation (&optional candidate)
   "Add annotation to CANDIDATE."
    (let ((pdf (if (string-match "has:pdf" candidate)
                   (cadr (assoc 'pdf bibtex-actions-symbols))
