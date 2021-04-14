@@ -42,7 +42,7 @@
 ;;; Variables
 
 (defcustom bibtex-actions-template
-  '((t . "${author:20}   ${title:48}   ${year:4}"))
+  '((t . "${author:20}   ${title:48}   ${year:4}   ${=type=:12}  ${tags:*}"))
   "Configures formatting for the BibTeX entry.
 When combined with the suffix, the same string is used for
 display and for search."
@@ -114,7 +114,7 @@ key associated with each one."
   (let* ((template
          (bibtex-actions--process-display-formats
           bibtex-actions-template))
-         (width (1- (frame-width))))
+         (width (1- (- (frame-width) 10))))
     (cl-loop
      for candidate in (bibtex-completion-candidates)
      collect
