@@ -100,7 +100,8 @@ may be indicated with the same icon but a different face."
                (lambda (string predicate action)
                  (if (eq action 'metadata)
                      `(metadata
-                       (affixation-function . bibtex-actions--affixation)
+                       (annotation-function . bibtex-actions--annotation)
+                       ;(affixation-function . bibtex-actions--affixation)
                        (category . bibtex))
                    (complete-with-action action candidates string predicate))))))
     (cl-loop for choice in chosen
@@ -142,9 +143,14 @@ key associated with each one."
 
 (defun bibtex-actions--affixation (cands)
   "Add affixation prefix to CANDS."
+  ; TODO broken; either fix, or remove
   (cl-loop
    for candidate in cands
    collect
+   candidate (bibtex-actions--annotation)))
+
+(defun bibtex-actions--annotation (candidate)
+  "Add annotation to CANDIDATE."
    (let ((pdf (if (string-match "has:pdf" candidate)
                   (cadr (assoc 'pdf bibtex-actions-symbols))
                 (cddr (assoc 'pdf bibtex-actions-symbols))))
@@ -154,11 +160,10 @@ key associated with each one."
          (note
           (if (string-match "has:note" candidate)
                   (cadr (assoc 'note bibtex-actions-symbols))
-                (cddr (assoc 'note bibtex-actions-symbols))))
-         (suffix ""))
-   (list candidate (concat
-                    (s-join bibtex-actions-symbol-separator
-                            (list pdf note link))"	") suffix))))
+                (cddr (assoc 'note bibtex-actions-symbols)))))
+   (concat
+    (s-join bibtex-actions-symbol-separator
+            (list "  " pdf note link)))))
 
 (defvar bibtex-actions--candidates-cache nil
   "Store the candidates list.")
