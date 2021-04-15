@@ -42,12 +42,6 @@ To setup bibtex-actions using `use-package`, you can simply do:
   (add-to-list 'embark-keymap-alist '(bibtex . bibtex-actions-map)))
 ```
 
-If you happen to be using Doom Emacs, you can just add this to your `package.el` file:
-
-``` emacs-lisp
-(package! bibtex-actions)
-```
-
 ## Configuration
 
 ### Basic
