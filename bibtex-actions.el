@@ -269,6 +269,11 @@ TEMPLATE."
               (- width (cddr format)))
             0 ?\s)))))))
 
+(defun bibtex-actions--truncate (str width)
+  "Truncate STR to WIDTH."
+  ; placeholder ATM
+  (truncate-string-to-width str width 0 32 ?\s))
+
 ;;; Command wrappers for bibtex-completion functions
 
 (defun bibtex-actions-open (keys)
