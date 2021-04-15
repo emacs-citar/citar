@@ -27,15 +27,8 @@ And another with [vertico][vertico]:
 
 Bibtex-actions is available for installation from [MELPA][melpa].
 
-To setup bibtex-actions using `use-package`, you can simply do:
 
-``` emacs-lisp
-(use-package bibtex-actions
-  :defer t
-  :config
-  ;; Make the 'bibtex-actions' bindings available from `embark-act'.
-  (add-to-list 'embark-keymap-alist '(bibtex . bibtex-actions-map)))
-```
+## Test Script
 
 The repository `test` directory also includes a script you can use to run this and associated packages in the `emacs -Q` sandbox. 
 To do that, simply run `./run.sh` from the `test` directory. 
@@ -45,6 +38,16 @@ If you would like to try vertico instead, just do `M-x vertico-mode`.
 ## Configuration
 
 ### Basic
+
+To setup bibtex-actions using `use-package`, you can simply do:
+
+``` emacs-lisp
+(use-package bibtex-actions
+  :defer t
+  :config
+  ;; Make the 'bibtex-actions' bindings available from `embark-act'.
+  (add-to-list 'embark-keymap-alist '(bibtex . bibtex-actions-map)))
+```
 
 Since most of the command logic resides in bibtex-completion, that is where to look for different [configuration options][bt-config]. 
 
