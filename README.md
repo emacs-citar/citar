@@ -35,7 +35,6 @@ To setup bibtex-actions using `use-package`, you can simply do:
 
 ``` emacs-lisp
 (use-package bibtex-actions
-  :defer t
   :config
   ;; Make the 'bibtex-actions' bindings available from `embark-act'.
   (add-to-list 'embark-keymap-alist '(bibtex . bibtex-actions-map)))
