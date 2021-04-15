@@ -88,17 +88,18 @@ may be indicated with the same icon but a different face."
 
 (defvar bibtex-actions-map
   (let ((map (make-sparse-keymap)))
-    (define-key map (kbd "o") 'bibtex-actions-open)
-    (define-key map (kbd "p") 'bibtex-actions-open-pdf)
-    (define-key map (kbd "l") 'bibtex-actions-open-link)
-    (define-key map (kbd "c") 'bibtex-actions-insert-citation)
-    (define-key map (kbd "r") 'bibtex-actions-insert-reference)
-    (define-key map (kbd "k") 'bibtex-actions-insert-key)
-    (define-key map (kbd "b") 'bibtex-actions-insert-bibtex)
     (define-key map (kbd "t") 'bibtex-actions-add-pdf-attachment)
-    (define-key map (kbd "n") 'bibtex-actions-open-notes)
-    (define-key map (kbd "e") 'bibtex-actions-open-entry)
     (define-key map (kbd "a") 'bibtex-actions-add-pdf-to-library)
+    (define-key map (kbd "b") 'bibtex-actions-insert-bibtex)
+    (define-key map (kbd "c") 'bibtex-actions-insert-citation)
+    (define-key map (kbd "k") 'bibtex-actions-insert-key)
+    (define-key map (kbd "f") 'bibtex-actions-insert-reference)    
+    (define-key map (kbd "o") 'bibtex-actions-open)
+    (define-key map (kbd "e") 'bibtex-actions-open-entry)
+    (define-key map (kbd "l") 'bibtex-actions-open-link)
+    (define-key map (kbd "n") 'bibtex-actions-open-notes)
+    (define-key map (kbd "p") 'bibtex-actions-open-pdf)
+    (define-key map (kbd "r") 'bibtex-actions-refresh)
     map)
   "Keymap for 'bibtex-actions'.")
 
@@ -268,14 +269,6 @@ TEMPLATE."
                               field-width
                             width)))
                (truncate-string-to-width field-value width 0 ?\s))))))))
-
-(defun bibtex-actions--truncate-field (str field-width template-width)
-  "Truncate STR to FIELD-WIDTH.
-If the value of WIDTH is 0, will fill the TEMPLATE-WIDTH."
-  (let ((width (if (> field-width 0)
-                   field-width
-                 template-width)))
-    (truncate-string-to-width str width 0 ?\s)))
 
 ;;; Command wrappers for bibtex-completion functions
 
