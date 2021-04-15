@@ -262,10 +262,10 @@ TEMPLATE."
          (if (not field-width)
              field-value
            (setq field-width (string-to-number field-width))
-           (bibtex-actions--truncate-field
-            field-value
-            field-width
-            width)))))))
+             (let ((width (if (> field-width 0)
+                              field-width
+                            width)))
+               (truncate-string-to-width field-value width 0 ?\s))))))))
 
 (defun bibtex-actions--truncate-field (str field-width template-width)
   "Truncate STR to FIELD-WIDTH.
