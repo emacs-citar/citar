@@ -269,14 +269,6 @@ TEMPLATE."
                             width)))
                (truncate-string-to-width field-value width 0 ?\s))))))))
 
-(defun bibtex-actions--truncate-field (str field-width template-width)
-  "Truncate STR to FIELD-WIDTH.
-If the value of WIDTH is 0, will fill the TEMPLATE-WIDTH."
-  (let ((width (if (> field-width 0)
-                   field-width
-                 template-width)))
-    (truncate-string-to-width str width 0 ?\s)))
-
 ;;; Command wrappers for bibtex-completion functions
 
 (defun bibtex-actions-open (keys)
