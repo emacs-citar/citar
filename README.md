@@ -48,12 +48,6 @@ The only thing, however, that you _must_ configure is where to find your bib fil
 (setq bibtex-completion-bibliography "~/bib/references.bib")
 ```
 
-To access these commands from `embark-act`, set this variable.
-
-``` emacs-lisp
-(setf (alist-get 'bibtex embark-keymap-alist) 'bibtex-actions-map)
-```
-
 ### Completion styles
 
 One of the beauties of the new suite of completing-read packages is the flexibility. 
