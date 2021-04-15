@@ -262,20 +262,18 @@ TEMPLATE."
          (if (not field-width)
              field-value
            (setq field-width (string-to-number field-width))
-           (truncate-string-to-width
+           (bibtex-actions--truncate-field
             field-value
-            ;; When converted to number, "*" is 0.
-            (if (> field-width 0)
-                field-width
-              ;; This is the line that specifies the width where the field width
-              ;; is specified as "*".
-              (- width (cddr format)))
-            0 ?\s)))))))
+            field-width
+            width)))))))
 
-(defun bibtex-actions--truncate (str width)
-  "Truncate STR to WIDTH."
-  ; placeholder ATM
-  (truncate-string-to-width str width 0 32 ?\s))
+(defun bibtex-actions--truncate-field (str field-width template-width)
+  "Truncate STR to FIELD-WIDTH.
+If the value of WIDTH is 0, will fill the TEMPLATE-WIDTH."
+  (let ((width (if (> field-width 0)
+                   field-width
+                 template-width)))
+    (truncate-string-to-width str width 0 32 ?\s)))
 
 ;;; Command wrappers for bibtex-completion functions
 
