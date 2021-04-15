@@ -47,7 +47,7 @@
   :group 'bibtex-actions)
 
 (defcustom bibtex-actions-template
-  '((t . "${author:20}   ${title:48}   ${year:4}"))
+  '((t . "${author:20}   ${title:*}   ${year:4}"))
   "Configures formatting for the BibTeX entry.
 When combined with the suffix, the same string is used for
 display and for search."
@@ -273,7 +273,7 @@ If the value of WIDTH is 0, will fill the TEMPLATE-WIDTH."
   (let ((width (if (> field-width 0)
                    field-width
                  template-width)))
-    (truncate-string-to-width str width 0 32 ?\s)))
+    (truncate-string-to-width str width 0 ?\s)))
 
 ;;; Command wrappers for bibtex-completion functions
 
