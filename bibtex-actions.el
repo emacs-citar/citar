@@ -263,6 +263,8 @@ TEMPLATE."
              field-value
            (setq field-width (string-to-number field-width))
              (let ((width (if (> field-width 0)
+                              ;; If user specifies field width of "*", use
+                              ;; WIDTH; else use the explicit 'field-width'.
                               field-width
                             width)))
                (truncate-string-to-width field-value width 0 ?\s))))))))
