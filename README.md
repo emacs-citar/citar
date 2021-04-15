@@ -27,14 +27,6 @@ And another with [vertico][vertico]:
 
 Bibtex-actions is available for installation from [MELPA][melpa].
 
-
-## Test Script
-
-The repository `test` directory also includes a script you can use to run this and associated packages in the `emacs -Q` sandbox. 
-To do that, simply run `./run.sh` from the `test` directory. 
-By default, this will use selectrum as the completion system. 
-If you would like to try vertico instead, just do `M-x vertico-mode`.
-
 ## Configuration
 
 ### Basic
@@ -71,6 +63,13 @@ You can read more about this at the [selectrum README][select], but here's an ex
 ![orderless matching](images/orderless.png)
 
 In this case, that search string is searching for all items without either a PDF or note associated with them, and then includes a "the" initialism, and a flex search on "abc".
+
+### Test Script
+
+The repository `test` directory also includes a script you can use to run this and associated packages in the `emacs -Q` sandbox. 
+To do that, simply run `./run.sh` from the `test` directory. 
+By default, this will use selectrum as the completion system. 
+If you would like to try vertico instead, just do `M-x vertico-mode`.
 
 ### Rich UI
 
