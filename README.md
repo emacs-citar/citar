@@ -30,7 +30,7 @@ Bibtex-actions is available for installation from [MELPA][melpa].
 The repository `test` directory includes a script you can use to run this and associated packages in the `emacs -Q` sandbox. 
 To do that, simply run `./run.sh` from the `test` directory. 
 By default, this will use selectrum as the completion system. 
-If you would like to try vertico instead, you can select `vertico-mode`.
+If you would like to try vertico instead, just do `M-x vertico-mode`.
 
 To setup bibtex-actions using `use-package`, you can simply do:
 
