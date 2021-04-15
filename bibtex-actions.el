@@ -264,8 +264,11 @@ TEMPLATE."
            (setq field-width (string-to-number field-width))
            (truncate-string-to-width
             field-value
+            ;; When converted to number, "*" is 0.
             (if (> field-width 0)
                 field-width
+              ;; This is the line that specifies the width where the field width
+              ;; is specified as "*".
               (- width (cddr format)))
             0 ?\s)))))))
 
