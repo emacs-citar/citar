@@ -93,7 +93,7 @@ may be indicated with the same icon but a different face."
     (define-key map (kbd "b") 'bibtex-actions-insert-bibtex)
     (define-key map (kbd "c") 'bibtex-actions-insert-citation)
     (define-key map (kbd "k") 'bibtex-actions-insert-key)
-    (define-key map (kbd "f") 'bibtex-actions-insert-reference)    
+    (define-key map (kbd "f") 'bibtex-actions-insert-reference)
     (define-key map (kbd "o") 'bibtex-actions-open)
     (define-key map (kbd "e") 'bibtex-actions-open-entry)
     (define-key map (kbd "l") 'bibtex-actions-open-link)
