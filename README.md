@@ -27,11 +27,6 @@ And another with [vertico][vertico]:
 
 Bibtex-actions is available for installation from [MELPA][melpa].
 
-The repository `test` directory includes a script you can use to run this and associated packages in the `emacs -Q` sandbox. 
-To do that, simply run `./run.sh` from the `test` directory. 
-By default, this will use selectrum as the completion system. 
-If you would like to try vertico instead, just do `M-x vertico-mode`.
-
 To setup bibtex-actions using `use-package`, you can simply do:
 
 ``` emacs-lisp
@@ -41,6 +36,11 @@ To setup bibtex-actions using `use-package`, you can simply do:
   ;; Make the 'bibtex-actions' bindings available from `embark-act'.
   (add-to-list 'embark-keymap-alist '(bibtex . bibtex-actions-map)))
 ```
+
+The repository `test` directory also includes a script you can use to run this and associated packages in the `emacs -Q` sandbox. 
+To do that, simply run `./run.sh` from the `test` directory. 
+By default, this will use selectrum as the completion system. 
+If you would like to try vertico instead, just do `M-x vertico-mode`.
 
 ## Configuration
 
