@@ -47,7 +47,7 @@
   :group 'bibtex-actions)
 
 (defcustom bibtex-actions-template
-  '((t . "${author:20}   ${title:*}   ${year:4}"))
+  '((t . "${author:20}   ${title:48}   ${year:4}"))
   "Configures formatting for the BibTeX entry.
 When combined with the suffix, the same string is used for
 display and for search."
