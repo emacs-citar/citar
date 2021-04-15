@@ -27,15 +27,18 @@ And another with [vertico][vertico]:
 
 Bibtex-actions is available for installation from [MELPA][melpa].
 
-If you happen to be using Doom Emacs, you can just add this to your `package.el` file:
-
-``` emacs-lisp
-(package! bibtex-actions)
-```
-
 ## Configuration
 
 ### Basic
+
+To setup bibtex-actions using `use-package`, you can simply do:
+
+``` emacs-lisp
+(use-package bibtex-actions
+  :config
+  ;; Make the 'bibtex-actions' bindings available from `embark-act'.
+  (add-to-list 'embark-keymap-alist '(bibtex . bibtex-actions-map)))
+```
 
 Since most of the command logic resides in bibtex-completion, that is where to look for different [configuration options][bt-config]. 
 
@@ -60,6 +63,13 @@ You can read more about this at the [selectrum README][select], but here's an ex
 
 In this case, that search string is searching for all items without either a PDF or note associated with them, and then includes a "the" initialism, and a flex search on "abc".
 
+### Test Script
+
+The repository `test` directory also includes a script you can use to run this and associated packages in the `emacs -Q` sandbox. 
+To do that, simply run `./run.sh` from the `test` directory. 
+By default, this will use selectrum as the completion system. 
+If you would like to try vertico instead, just do `M-x vertico-mode`.
+
 ### Rich UI
 
 There are three sections of the browsing UI. 
@@ -79,6 +89,9 @@ You can configure both of the last two just as you do with bibtex-completion.
 (setq bibtex-actions-display-template '((t . " ${title=:*}")))
 (setq bibtex-actions-display-template-suffix '((t . "          ${=key=:15}")))
 ```
+
+Note: the asterisk signals to the formatter to use available space for the column. 
+You should only use this on one field total, across the two templates, for the formatting to work correctly.
 
 By default, this UI is plain text, but you can configure it to use icons instead. 
 
