@@ -35,4 +35,7 @@
 ;; theme that supports selectrum and vertico
 (package-install 'modus-themes)
 
+;; load full-screen, since this package exploits horizontal real estate
+(add-to-list 'initial-frame-alist '(fullscreen . maximized))
+
 (message "Installed packages to /tmp/ba-test-emacs.d/")
