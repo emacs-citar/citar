@@ -1,0 +1,32 @@
+* Contributing
+  :PROPERTIES:
+  :CUSTOM_ID: contributing
+  :END:
+
+This is a simple package. I imagine it will stay pretty simple and
+stable, and that enhancements will focus on the =bibtex-actions-read=
+function.
+
+Otherwise, I expect most innovations to focus on configuration details
+laid out on the wiki. You should feel free to add your ideas there.
+
+You can of course write your own functions that rely on
+=bibtex-actions-read=, but if you want to share it more widely, you
+should consider submitting it for inclusion in bibtex-completion itself.
+
+If they don't accept it, but you think it fits better here, that might
+be a good time to submit a PR.
+
+If you do submit a PR, a few details:
+
+- First, above all, I know a ton about bibliographic and citation
+  practice, and automating it. I created, for example, CSL. But I am not
+  a great programmer, and am not that comfortable with elisp. I have
+  setup CI to help me vet PRs at a basic level, however; including my
+  own. If you submit a PR and the CI flags any errors or warnings, 
+  please fix them.
+- I do think the code I have here is solid though (at least from the
+  perspective of someone who's first language, beyond BASIC, was XSLT),
+  so try to be consistent with it. For example, I removed a macro in
+  favor of explicit defuns, and use cl-loop here rather than mapcar,
+  because it's slightly more clear to me (and is supposedly faster).
