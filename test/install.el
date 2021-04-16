@@ -25,7 +25,8 @@
 (package-install 'which-key)
 
 ;; bibtex-actions
-(package-install 'bibtex-actions)
+;; we load this locally, to facilitate development testing on branches
+(load "../bibtex-actions.el")
 
 ;; theme that supports selectrum and vertico
 (package-install 'modus-themes)
