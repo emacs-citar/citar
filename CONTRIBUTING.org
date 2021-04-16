@@ -23,7 +23,8 @@ If you do submit a PR, a few details:
   practice, and automating it. I created, for example, CSL. But I am not
   a great programmer, and am not that comfortable with elisp. I have
   setup CI to help me vet PRs at a basic level, however; including my
-  own.
+  own. If you submit a PR and the CI flags any errors or warnings, 
+  please fix them.
 - I do think the code I have here is solid though (at least from the
   perspective of someone who's first language, beyond BASIC, was XSLT),
   so try to be consistent with it. For example, I removed a macro in
