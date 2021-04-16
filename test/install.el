@@ -5,10 +5,13 @@
 
 ;; Setup package archive
 (package-initialize)
-(setq package-archives '(("melpa" . "https://melpa.org/packages/")))
+(setq package-archives '(("elpa"  . "https://elpa.gnu.org/packages/")
+                         ("melpa" . "https://melpa.org/packages/")))
 (package-refresh-contents)
 
 ;; Install packages
+
+(package-install 'load-relative)
 
 ;; completion system options
 (package-install 'selectrum)
@@ -25,8 +28,9 @@
 (package-install 'which-key)
 
 ;; bibtex-actions
+(package-install 'bibtex-completion)
 ;; we load this locally, to facilitate development testing on branches
-(load "../bibtex-actions.el")
+(load-relative "../bibtex-actions.el")
 
 ;; theme that supports selectrum and vertico
 (package-install 'modus-themes)
