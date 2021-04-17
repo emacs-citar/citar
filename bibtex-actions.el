@@ -57,7 +57,7 @@ display and for search."
 (defcustom bibtex-actions-template-suffix
   '((t . "          ${=key=:15}    ${=type=:12}    ${tags:*}"))
   "Configures formatting for the BibTeX entry suffix.
-When combined wiht the main template, the same string is used for
+When combined with the main template, the same string is used for
 display and for search."
     :group 'bibtex-actions
     :type  '(alist :key-type symbol :value-type function))
