@@ -272,6 +272,7 @@ TEMPLATE."
 
 ;;; Command wrappers for bibtex-completion functions
 
+;;;###autoload
 (defun bibtex-actions-open (keys)
  "Open PDF, or URL or DOI link.
 Opens the PDF(s) associated with the KEYS.  If multiple PDFs are
@@ -280,6 +281,7 @@ PDF is found, try to open a URL or DOI in the browser instead."
   (interactive (list (bibtex-actions-read)))
   (bibtex-completion-open-any keys))
 
+;;;###autoload
 (defun bibtex-actions-open-pdf (keys)
  "Open PDF associated with the KEYS.
 If multiple PDFs are found, ask for the one to open using
@@ -287,46 +289,55 @@ If multiple PDFs are found, ask for the one to open using
   (interactive (list (bibtex-actions-read)))
   (bibtex-completion-open-pdf keys))
 
+;;;###autoload
 (defun bibtex-actions-open-link (keys)
  "Open URL or DOI link associated with the KEYS in a browser."
  (interactive (list (bibtex-actions-read)))
  (bibtex-completion-open-url-or-doi keys))
 
+;;;###autoload
 (defun bibtex-actions-insert-citation (keys)
  "Insert citation for the KEYS."
  (interactive (list (bibtex-actions-read)))
  (bibtex-completion-insert-citation keys))
 
+;;;###autoload
 (defun bibtex-actions-insert-reference (keys)
  "Insert formatted reference(s) associated with the KEYS."
   (interactive (list (bibtex-actions-read)))
   (bibtex-completion-insert-reference keys))
 
+;;;###autoload
 (defun bibtex-actions-insert-key (keys)
  "Insert BibTeX KEYS."
  (interactive (list (bibtex-actions-read)))
  (bibtex-completion-insert-key keys))
 
+;;;###autoload
 (defun bibtex-actions-insert-bibtex (keys)
  "Insert BibTeX entry associated with the KEYS."
  (interactive (list (bibtex-actions-read)))
  (bibtex-completion-insert-bibtex keys))
 
+;;;###autoload
 (defun bibtex-actions-add-pdf-attachment (keys)
  "Attach PDF(s) associated with the KEYS to email."
  (interactive (list (bibtex-actions-read)))
  (bibtex-completion-add-PDF-attachment keys))
 
+;;;###autoload
 (defun bibtex-actions-open-notes (keys)
  "Open notes associated with the KEYS."
  (interactive (list (bibtex-actions-read)))
  (bibtex-completion-edit-notes keys))
 
+;;;###autoload
 (defun bibtex-actions-open-entry (keys)
  "Open BibTeX entry associated with the KEYS."
  (interactive (list (bibtex-actions-read)))
  (bibtex-completion-show-entry keys))
 
+;;;###autoload
 (defun bibtex-actions-add-pdf-to-library (keys)
  "Add PDF associated with the KEYS to library.
 The PDF can be added either from an open buffer, a file, or a
