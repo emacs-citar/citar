@@ -130,8 +130,8 @@ You can configure both of the last two just as you do with
 bibtex-completion.
 
 #+BEGIN_SRC emacs-lisp
-  (setq bibtex-actions-display-template '((t . " ${title=:*}")))
-  (setq bibtex-actions-display-template-suffix '((t . "          ${=key=:15}")))
+  (setq bibtex-actions-template '((t . " ${title:*}")))
+  (setq bibtex-actions-template-suffix '((t . "          ${=key=:15}")))
 #+END_SRC
 
 Note: the asterisk signals to the formatter to use available space for
