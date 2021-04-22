@@ -62,6 +62,11 @@ display and for search."
     :group 'bibtex-actions
     :type  '(alist :key-type symbol :value-type function))
 
+(defvar bibtex-actions-org-cite-commands
+  ;; TODO make defcustom?
+  '("text" "year" "title" "author" "locators" "nocite" "plain")
+    "Org citation commands, and command descriptions.")
+
 (defcustom bibtex-actions-link-symbol "🔗"
   "Symbol to indicate a DOI or URL link is available for a publication.
 This should be a single character."
@@ -84,6 +89,14 @@ may be indicated with the same icon but a different face."
   :group 'bibtex-actions
   :type 'string)
 
+(setq bibtex-completion-format-citation-functions
+  '((org-mode      . bibtex-actions--format-citation-org)
+    (latex-mode    . bibtex-completion-format-citation-cite)
+    (markdown-mode . bibtex-completion-format-citation-pandoc-citeproc)
+    (python-mode   . bibtex-completion-format-citation-sphinxcontrib-bibtex)
+    (rst-mode      . bibtex-completion-format-citation-sphinxcontrib-bibtex)
+    (default       . bibtex-completion-format-citation-pandoc-citeproc)))
+
 ;;; Keymap
 
 (defvar bibtex-actions-map
@@ -102,6 +115,40 @@ may be indicated with the same icon but a different face."
     (define-key map (kbd "r") 'bibtex-actions-refresh)
     map)
   "Keymap for 'bibtex-actions'.")
+
+;;; Org-cite citation function
+
+(defun bibtex-actions--format-citation-org (keys)
+  "Format org-cite citations for the entries in KEYS.
+
+The full citation syntax is:
+
+  [cite/style:common prefix ;prefix @key suffix; ... ; common suffix]
+
+Everything is optional, except the brackets, 'cite' and the colon.
+Also the citation must contain at least a key.
+So its minimal form is:
+
+  [cite:@key]
+
+Note that the prefix here is for the citation as a whole; if you
+need to add one specific to an individual citation item, you
+would need to add that after inserting.
+
+  [cite:see ;item prefix @key]
+
+The same is true for suffixes like page numbers, which are
+specific to the item, rather than the citation as a whole.
+
+  [cite: see ;@key pp23-24]"
+  (let* ((prefix  (if bibtex-completion-cite-prompt-for-optional-arguments (read-from-minibuffer "Prefix: ") ""))
+         (styles bibtex-actions-org-cite-commands)
+         (style  (if bibtex-completion-cite-prompt-for-optional-arguments
+                     (ido-completing-read "Style: " styles nil nil nil nil "default")))
+         (prefix  (if (string= "" prefix)  "" (concat prefix  " ;")))
+         (style  (if (string-equal style "default") "" (concat "/" style))))
+    ;; this is derived from the pandoc syntax function, but this has two-levels of affixes
+    (format "[cite%s:%s%s]" style prefix (s-join ";" (--map (concat "@" it) keys)))))
 
 ;;; Completion functions
 (defun bibtex-actions-read ()
