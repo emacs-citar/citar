@@ -261,22 +261,20 @@ will, rather than search individually for each item you want to cite.
    :CUSTOM_ID: comparisons
    :END:
 
-This is inspired by =helm-bibtex= and =ivy-bibtex=, but is based on
-=completing-read=. In comparison:
-
-- all three use the same =bibtex-completion= backend, and so have the 
-  same basic capabilities
+=Bibtex-actions= is inspired by =helm-bibtex= and =ivy-bibtex=, and uses 
+the same =bibtex-completion= backend, and so have the same basic capabilities. 
+In comparison:
+ 
 - like =helm-bibtex=, but unlike =ivy-bibtex=, =bibtex-actions= has
   support for multi-selection of candidates
 - =helm-bibtex= and =ivy-bibtex= provide a single command, and the
   actions are accessed from there; =bibtex-actions= provides all of its
   actions as standard commands, available from =M-x=, without a single
   entry point.
-- =bibtex-actions= is based on =completing-read-multiple=, with a single
-  dependency, and works with different completion systems (though in
-  practice is best supported in =selectrum=) and supporting packages
-  that are =completing-read= compliant; =helm-bibtex= and =ivy-bibtex=
-  are based on =helm= and =ivy= respectively
+- =bibtex-actions= is based on =completing-read-multiple=, and works 
+  with different completion systems (though in practice is best supported 
+  in =selectrum=) and supporting packages that are =completing-read= compliant; 
+  =helm-bibtex= and =ivy-bibtex= are based on =helm= and =ivy= respectively
 
 ** Acknowledgements
    :PROPERTIES:
