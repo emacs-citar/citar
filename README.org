@@ -262,7 +262,7 @@ will, rather than search individually for each item you want to cite.
    :END:
 
 =Bibtex-actions= is inspired by =helm-bibtex= and =ivy-bibtex=, and uses 
-the same =bibtex-completion= backend, and so have the same basic capabilities. 
+the same =bibtex-completion= backend, and so has the same basic capabilities. 
 In comparison:
  
 - like =helm-bibtex=, but unlike =ivy-bibtex=, =bibtex-actions= has
