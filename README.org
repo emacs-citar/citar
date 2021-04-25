@@ -264,6 +264,8 @@ will, rather than search individually for each item you want to cite.
 This is inspired by =helm-bibtex= and =ivy-bibtex=, but is based on
 =completing-read=. In comparison:
 
+- all three use the same =bibtex-completion= backend, and so have the 
+  same basic capabilities
 - like =helm-bibtex=, but unlike =ivy-bibtex=, =bibtex-actions= has
   support for multi-selection of candidates
 - =helm-bibtex= and =ivy-bibtex= provide a single command, and the
