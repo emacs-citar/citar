@@ -128,7 +128,7 @@ the following optional arguments:
              ;; Collect citation keys of selected candidate(s).
              collect (cdr (assoc choice candidates)))))
 
-(defun bibtex-actions--filter (candidate &optional str)
+(defun bibtex-actions--filter (&optional candidate str)
   "A predicate function to filter a CANDIDATE not containing STR."
   ;; want to use 'get-property' to grab the 'hidden' string
   ;; or to generalize, may need more
