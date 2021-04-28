@@ -286,7 +286,7 @@ TEMPLATE."
 Opens the PDF(s) associated with the KEYS.  If multiple PDFs are
 found, ask for the one to open using ‘completing-read’.  If no
 PDF is found, try to open a URL or DOI in the browser instead."
-  (interactive (list (bibtex-actions-read :initial "has:link has:pdf")))
+  (interactive (list (bibtex-actions-read :initial "has:link has:pdf ")))
   (bibtex-completion-open-any keys))
 
 ;;;###autoload
@@ -294,13 +294,13 @@ PDF is found, try to open a URL or DOI in the browser instead."
  "Open PDF associated with the KEYS.
 If multiple PDFs are found, ask for the one to open using
 ‘completing-read’."
-  (interactive (list (bibtex-actions-read :initial "has:pdf")))
+  (interactive (list (bibtex-actions-read :initial "has:pdf ")))
   (bibtex-completion-open-pdf keys))
 
 ;;;###autoload
 (defun bibtex-actions-open-link (keys)
  "Open URL or DOI link associated with the KEYS in a browser."
- (interactive (list (bibtex-actions-read :initial "has:link")))
+ (interactive (list (bibtex-actions-read :initial "has:link ")))
  (bibtex-completion-open-url-or-doi keys))
 
 ;;;###autoload
@@ -336,7 +336,7 @@ If multiple PDFs are found, ask for the one to open using
 ;;;###autoload
 (defun bibtex-actions-open-notes (keys)
  "Open notes associated with the KEYS."
- (interactive (list (bibtex-actions-read :initial "has:note")))
+ (interactive (list (bibtex-actions-read :initial "has:note ")))
  (bibtex-completion-edit-notes keys))
 
 ;;;###autoload
