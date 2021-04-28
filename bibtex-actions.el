@@ -104,8 +104,14 @@ may be indicated with the same icon but a different face."
   "Keymap for 'bibtex-actions'.")
 
 ;;; Completion functions
-(defun bibtex-actions-read ()
-  "Read bibtex-completion entries for completion using 'completing-read-multiple'."
+(cl-defun bibtex-actions-read (&optional &key initial)
+  "Read bibtex-completion entries with INITIAL option.
+
+This provides a wrapper around 'completing-read-multiple', with
+the following optional arguments:
+
+':initial': provides the initial value, for pre-filtering the
+candidate list"
   (when-let ((crm-separator "\\s-*&\\s-*")
              (candidates (bibtex-actions--get-candidates))
              (chosen
@@ -116,7 +122,8 @@ may be indicated with the same icon but a different face."
                      `(metadata
                        (affixation-function . bibtex-actions--affixation)
                        (category . bibtex))
-                   (complete-with-action action candidates string predicate))))))
+                   (complete-with-action action candidates string predicate)))
+                 nil nil initial nil nil nil)))
     (cl-loop for choice in chosen
              ;; Collect citation keys of selected candidate(s).
              collect (cdr (assoc choice candidates)))))
@@ -279,7 +286,7 @@ TEMPLATE."
 Opens the PDF(s) associated with the KEYS.  If multiple PDFs are
 found, ask for the one to open using ‘completing-read’.  If no
 PDF is found, try to open a URL or DOI in the browser instead."
-  (interactive (list (bibtex-actions-read)))
+  (interactive (list (bibtex-actions-read :initial "has:link has:pdf ")))
   (bibtex-completion-open-any keys))
 
 ;;;###autoload
@@ -287,13 +294,13 @@ PDF is found, try to open a URL or DOI in the browser instead."
  "Open PDF associated with the KEYS.
 If multiple PDFs are found, ask for the one to open using
 ‘completing-read’."
-  (interactive (list (bibtex-actions-read)))
+  (interactive (list (bibtex-actions-read :initial "has:pdf ")))
   (bibtex-completion-open-pdf keys))
 
 ;;;###autoload
 (defun bibtex-actions-open-link (keys)
  "Open URL or DOI link associated with the KEYS in a browser."
- (interactive (list (bibtex-actions-read)))
+ (interactive (list (bibtex-actions-read :initial "has:link ")))
  (bibtex-completion-open-url-or-doi keys))
 
 ;;;###autoload
@@ -329,7 +336,7 @@ If multiple PDFs are found, ask for the one to open using
 ;;;###autoload
 (defun bibtex-actions-open-notes (keys)
  "Open notes associated with the KEYS."
- (interactive (list (bibtex-actions-read)))
+ (interactive (list (bibtex-actions-read :initial "has:note ")))
  (bibtex-completion-edit-notes keys))
 
 ;;;###autoload
