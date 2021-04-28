@@ -105,7 +105,7 @@ may be indicated with the same icon but a different face."
 
 ;;; Completion functions
 (cl-defun bibtex-actions-read (&optional &key initial)
-  "Read bibtex-completion entries with INITIAL options.
+  "Read bibtex-completion entries with INITIAL option.
 
 This provides a wrapper around 'completing-read-multiple', with
 the following optional arguments:
