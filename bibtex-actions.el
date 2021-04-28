@@ -122,8 +122,8 @@ the following optional arguments:
                      `(metadata
                        (affixation-function . bibtex-actions--affixation)
                        (category . bibtex))
-                   (complete-with-action action candidates string predicate))
-                 filter initial nil nil nil))))
+                   (complete-with-action action candidates string predicate)))
+                 filter nil initial nil nil nil)))
     (cl-loop for choice in chosen
              ;; Collect citation keys of selected candidate(s).
              collect (cdr (assoc choice candidates)))))
