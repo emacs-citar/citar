@@ -104,14 +104,14 @@ may be indicated with the same icon but a different face."
   "Keymap for 'bibtex-actions'.")
 
 ;;; Completion functions
-(cl-defun bibtex-actions-read (&optional &key initial filter)
-  "Read bibtex-completion entries with INITIAL or FILTER OPTIONS.
+(cl-defun bibtex-actions-read (&optional &key initial)
+  "Read bibtex-completion entries with INITIAL options.
 
 This provides a wrapper around 'completing-read-multiple', with
 the following optional arguments:
 
-':initial': provides the initial value
-':filter': a 'predicate' function to filter the candidate list"
+':initial': provides the initial value, for pre-filtering the
+candidate list"
   (when-let ((crm-separator "\\s-*&\\s-*")
              (candidates (bibtex-actions--get-candidates))
              (chosen
@@ -123,17 +123,10 @@ the following optional arguments:
                        (affixation-function . bibtex-actions--affixation)
                        (category . bibtex))
                    (complete-with-action action candidates string predicate)))
-                 filter nil initial nil nil nil)))
+                 nil nil initial nil nil nil)))
     (cl-loop for choice in chosen
              ;; Collect citation keys of selected candidate(s).
              collect (cdr (assoc choice candidates)))))
-
-(defun bibtex-actions--filter (&optional candidate str)
-  "A predicate function to filter a CANDIDATE not containing STR."
-  ;; want to use 'get-property' to grab the 'hidden' string
-  ;; or to generalize, may need more
-  ;; along with 'seq-filter' or '-keep' or '-filter'
-  (message str))
 
 (defun bibtex-actions--format-candidates ()
   "Transform candidates from 'bibtex-completion-candidates'.
