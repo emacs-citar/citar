@@ -80,8 +80,10 @@ In this case, that search string is searching for all items without either a PDF
     :PROPERTIES:
     :CUSTOM_ID: test-script
     :END:
-
-The repository =test= directory also includes a script you can use to run this and associated packages in the =emacs -Q= sandbox. To do that, simply run =./run.sh= from the =test= directory. By default, this will use selectrum as the completion system. If you would like to try vertico instead, just do =M-x vertico-mode=.
+The repository =test= directory also includes a script you can use to run this and associated packages in the =emacs -Q= sandbox.
+To do that, simply run =./run.sh= from the =test= directory.
+By default, this will use selectrum as the completion system.
+If you would like to try vertico instead, just do =M-x vertico-mode=.
 
 *** Rich UI
     :PROPERTIES:
@@ -94,7 +96,8 @@ There are three sections of the browsing UI.
 2. The main display, which by default shows author, title, and date.
 3. The suffix, which by default shows citekey, reference type, and (if present) tags or keywords.
 
-You can search against all of the above content. For the prefix, you can filter for associated PDFs or notes using =has:pdf= or =has:note= respectively (and at least with my setup, even the =:p= or =:n= shorthand).
+You can search against all of the above content.
+For the prefix, you can filter for associated PDFs or notes using =has:pdf= or =has:note= respectively (and at least with my setup, even the =:p= or =:n= shorthand).
 
 #+CAPTION: UI sections
 [[file:images/ui-segments.png]]
@@ -106,7 +109,8 @@ You can configure both of the last two just as you do with bibtex-completion.
   (setq bibtex-actions-template-suffix '((t . "          ${=key=:15}")))
 #+END_SRC
 
-Note: the asterisk signals to the formatter to use available space for the column. You should only use this on one field total, across the two templates, for the formatting to work correctly.
+Note: the asterisk signals to the formatter to use available space for the column.
+You should only use this on one field total, across the two templates, for the formatting to work correctly.
 
 By default, this UI is plain text, but you can configure it to use icons instead.
 
@@ -137,7 +141,8 @@ Here's how to configure it to use =all-the-icons=:
     :CUSTOM_ID: proactive-reloading-of-library
     :END:
 
-Bibtex-actions uses a cache to speed up library display. This is great for performance, but means the data can become stale if you modify it.
+Bibtex-actions uses a cache to speed up library display.
+This is great for performance, but means the data can become stale if you modify it.
 
 The =bibtex-actions-refresh= command will reload the cache, and you can call this manually.
 
@@ -174,7 +179,8 @@ You have a few different ways to interact with these commands.
     :CUSTOM_ID: m-x
     :END:
 
-Simply do =M-x= and select the command that you want, enter the terms to find the item you are looking for, and hit return. This runs the default action: the command you invoked.
+Simply do =M-x= and select the command that you want, enter the terms to find the item you are looking for, and hit return.
+This runs the default action: the command you invoked.
 
 Here's the view, using marginalia for annotations.
 
@@ -193,7 +199,8 @@ These commands do allow you to select multiple items, with two caveats:
     :CUSTOM_ID: access-an-alternate-action-via-embark-act
     :END:
 
-If while browsing you instead would rather edit that record, and you have embark installed and configured, this is where =embark-act= comes in. Simply input the keybinding for =embark-act= (in my case =C-o=), and select the alternate action.
+If while browsing you instead would rather edit that record, and you have embark installed and configured, this is where =embark-act= comes in.
+Simply input the keybinding for =embark-act= (in my case =C-o=), and select the alternate action.
 
 *** Use =embark-collect-snapshot=
     :PROPERTIES:
@@ -201,7 +208,8 @@ If while browsing you instead would rather edit that record, and you have embark
     :END:
 
 A final option, that can be useful: run =embark-collect-snapshot= (=S=) from =embark-act=.
-This will select the candidate subset, and open it in a separate buffer. From there, you can run the same options discussed above using =embark-act= (which is also bound to =a= in the collect buffer).
+This will select the candidate subset, and open it in a separate buffer.
+From there, you can run the same options discussed above using =embark-act= (which is also bound to =a= in the collect buffer).
 
 So, for example, say you are working on a paper. You hold the complete super-set of items you are interested in citing at some point in that buffer.
 From there, you can run different actions on the candidates at will, rather than search individually for each item you want to cite.
