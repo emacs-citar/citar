@@ -84,8 +84,13 @@ may be indicated with the same icon but a different face."
   :group 'bibtex-actions
   :type 'string)
 
+;;; History, including future history list.
+
 (defvar bibtex-actions-history nil
   "Search history for `bibtex-actions'.")
+
+(defcustom bibtex-actions-presets nil
+  "List of predefined searches.")
 
 ;;; Keymap
 
@@ -126,7 +131,7 @@ candidate list"
                        (affixation-function . bibtex-actions--affixation)
                        (category . bibtex))
                    (complete-with-action action candidates string predicate)))
-                 nil nil initial 'bibtex-actions-history nil nil)))
+                 nil nil initial 'bibtex-actions-history 'bibtex-actions-presets nil)))
     (cl-loop for choice in chosen
              ;; Collect citation keys of selected candidate(s).
              collect (cdr (assoc choice candidates)))))
@@ -215,6 +220,12 @@ If the cache is nil, this will load the cache."
   (interactive)
   (setq bibtex-actions--candidates-cache
         (bibtex-actions--format-candidates)))
+
+(defun bibtex-actions-insert-preset ()
+  "Prompt for and insert a predefined search."
+  (interactive)
+  (when-let ((search (completing-read "Preset: " bibtex-actions-presets)))
+    (insert search)))
 
 ;;; Formatting functions
 ;;  NOTE this section will be removed, or dramatically simplified, if and
