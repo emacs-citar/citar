@@ -138,7 +138,7 @@ Here's how to configure it to use =all-the-icons=:
 
 *** History and Predefined searches
 
-=Bibtex-actions= has functionality similar to the [[(https://github.com/tmalsburg/helm-bibtex#p][predefined search]] in =helm-bibtex= and =ivy-bibtex=, but with a different implementation.
+=Bibtex-actions= has functionality similar to the [[(https://github.com/tmalsburg/helm-bibtex#p][predefined search]] functionality in =helm-bibtex= and =ivy-bibtex=, but with a different implementation.
 Rather than create a new command with the search terms as argument, you just set the =bibtex-actions-presets= variable, and add the strings you want to access:
 
 #+begin_src emacs-lisp
