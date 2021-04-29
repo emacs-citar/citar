@@ -84,6 +84,9 @@ may be indicated with the same icon but a different face."
   :group 'bibtex-actions
   :type 'string)
 
+(defvar bibtex-actions-history nil
+  "Search history for `bibtex-actions'.")
+
 ;;; Keymap
 
 (defvar bibtex-actions-map
@@ -123,7 +126,7 @@ candidate list"
                        (affixation-function . bibtex-actions--affixation)
                        (category . bibtex))
                    (complete-with-action action candidates string predicate)))
-                 nil nil initial nil nil nil)))
+                 nil nil initial 'bibtex-actions-history nil nil)))
     (cl-loop for choice in chosen
              ;; Collect citation keys of selected candidate(s).
              collect (cdr (assoc choice candidates)))))
