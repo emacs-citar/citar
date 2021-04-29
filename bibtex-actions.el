@@ -90,7 +90,9 @@ may be indicated with the same icon but a different face."
   "Search history for `bibtex-actions'.")
 
 (defcustom bibtex-actions-presets nil
-  "List of predefined searches.")
+  "List of predefined searches."
+  :group 'bibtex-actions
+  :type '(repeat string))
 
 ;;; Keymap
 
