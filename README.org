@@ -157,9 +157,12 @@ Rather than create a new command with the search terms as argument, you just set
 (setq bibtex-actions-presets '("one search string" "another search string"))
 #+end_src
 
-Internally, this is using the minibuffer "future history" functionality available in =completing-read=, which you access in your completion UI by using =M-n= from the prompt.
+You then have two ways to access these strings from the completion prompt:
 
-=Bibtex-actions= also preserves the history of your selections (see caveat below about multiple candidate selection though), also accessible in your completion UI, but by using =M-p=.
+1. by using =M-n= from the prompt, which will cycle through the strings
+2. by calling =bibtex-actions-insert-preset= with a keybinding, and then selecting the string
+
+=Bibtex-actions= also preserves the history of your selections (see caveat below about multiple candidate selection though), which are also accessible in your completion UI, but by using =M-p=.
 You can save this history across sessions by adding =bibtex-actions-history= to =savehist-additional-variables=.
 
 *** Proactive reloading of library
