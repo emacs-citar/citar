@@ -81,6 +81,7 @@ One of the beauties of the new suite of completing-read packages is the flexibil
 For =bibtex-actions= to work correctly, and as you may have come to expect in `helm-bibtex` or `ivy-bibtex`, you need to install and configure either prescient or orderless.
 You can read more about this at the [[https://github.com/raxod502/selectrum#usage][selectrum README]], but here's an example using orderless with its [[https://github.com/oantolin/orderless#style-dispatchers][style dispatchers]].
 
+
 #+CAPTION: orderless matching
 [[file:images/orderless.png]]
 
