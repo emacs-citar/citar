@@ -69,9 +69,9 @@ The only thing, however, that you /must/ configure is where to find your bib fil
 =Bibtex-actions= uses the built-in =completing-read-multiple=, and so any vertical completion system that supports that should work.
 In particular, all of these work well:
 
-1. =selectrum=
-2. =vertico=
-3. =icomplete-vertical=
+1. [[https://github.com/raxod502/selectrum][selectrum]] (the most full-featured)
+2. [[https://github.com/minad/vertico][vertico]] (new, with a more minimal feature set)
+3. [[https://github.com/oantolin/icomplete-vertical][icomplete-vertical]] (for those that love icomplete, but want a vertical UI)
 
 *** Completion styles
     :PROPERTIES:
