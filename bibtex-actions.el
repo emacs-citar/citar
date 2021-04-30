@@ -84,6 +84,16 @@ may be indicated with the same icon but a different face."
   :group 'bibtex-actions
   :type 'string)
 
+;;; History, including future history list.
+
+(defvar bibtex-actions-history nil
+  "Search history for `bibtex-actions'.")
+
+(defcustom bibtex-actions-presets nil
+  "List of predefined searches."
+  :group 'bibtex-actions
+  :type '(repeat string))
+
 ;;; Keymap
 
 (defvar bibtex-actions-map
@@ -123,7 +133,7 @@ candidate list"
                        (affixation-function . bibtex-actions--affixation)
                        (category . bibtex))
                    (complete-with-action action candidates string predicate)))
-                 nil nil initial nil nil nil)))
+                 nil nil initial 'bibtex-actions-history bibtex-actions-presets nil)))
     (cl-loop for choice in chosen
              ;; Collect citation keys of selected candidate(s).
              collect (cdr (assoc choice candidates)))))
@@ -213,6 +223,16 @@ If the cache is nil, this will load the cache."
   (setq bibtex-actions--candidates-cache
         (bibtex-actions--format-candidates)))
 
+;;;###autoload
+(defun bibtex-actions-insert-preset ()
+  "Prompt for and insert a predefined search."
+  (interactive)
+  (unless (minibufferp)
+    (user-error "Command can only be used in minibuffer"))
+  (when-let ((enable-recursive-minibuffers t)
+             (search (completing-read "Preset: " bibtex-actions-presets)))
+    (insert search)))
+
 ;;; Formatting functions
 ;;  NOTE this section will be removed, or dramatically simplified, if and
 ;;  when this PR is merged:
@@ -286,7 +306,7 @@ TEMPLATE."
 Opens the PDF(s) associated with the KEYS.  If multiple PDFs are
 found, ask for the one to open using ‘completing-read’.  If no
 PDF is found, try to open a URL or DOI in the browser instead."
-  (interactive (list (bibtex-actions-read :initial "has:link has:pdf ")))
+  (interactive (list (bibtex-actions-read :initial "has:link\|has:pdf ")))
   (bibtex-completion-open-any keys))
 
 ;;;###autoload

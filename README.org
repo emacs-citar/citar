@@ -50,10 +50,16 @@ Bibtex-actions is available for installation from [[https://melpa.org][MELPA]].
 To setup bibtex-actions using =use-package=, you can simply do:
 
 #+BEGIN_SRC emacs-lisp
-  (use-package bibtex-actions
-    :config
-    ;; Make the 'bibtex-actions' bindings available from `embark-act'.
-    (add-to-list 'embark-keymap-alist '(bibtex . bibtex-actions-map)))
+(use-package bibtex-actions
+  :bind (("C-c b" . bibtex-actions-insert-citation)
+         :map minibuffer-local-map
+         ("M-b" . bibtex-actions-insert-preset))
+  :after embark
+  :config
+  ;; Make the 'bibtex-actions' bindings available from `embark-act'.
+  (add-to-list 'embark-keymap-alist '(bibtex . bibtex-actions-map))
+  :custom
+  (bibtex-completion-bibliography '("~/bib/references.bib")))
 #+END_SRC
 
 Since most of the command logic resides in bibtex-completion, that is where to look for different [[https://github.com/tmalsburg/helm-bibtex#basic-configuration-recommended][configuration options]].
@@ -64,12 +70,23 @@ The only thing, however, that you /must/ configure is where to find your bib fil
   (setq bibtex-completion-bibliography "~/bib/references.bib")
 #+END_SRC
 
+*** Completion system
+
+=Bibtex-actions= uses the built-in =completing-read-multiple=, and so any vertical completion system that supports that should work.
+In particular, all of these work well:
+
+1. [[https://github.com/raxod502/selectrum][selectrum]] (the most full-featured)
+2. [[https://github.com/minad/vertico][vertico]] (new, with a more minimal feature set)
+3. [[https://github.com/oantolin/icomplete-vertical][icomplete-vertical]] (for those that love icomplete, but want a vertical UI)
+
 *** Completion styles
     :PROPERTIES:
     :CUSTOM_ID: completion-styles
     :END:
 One of the beauties of the new suite of completing-read packages is the flexibility.
-You can read more about this at the [[https://github.com/raxod502/selectrum#usage][selectrum README]], but here's an example using orderless with its [[https://github.com/oantolin/orderless#style-dispatchers][style dispatchers]].
+For =bibtex-actions= to work correctly, and as you may have come to expect in =helm-bibtex= or =ivy-bibtex=, you need to install and configure either =prescient= or =orderless=.
+You can read more about this at the [[https://github.com/raxod502/selectrum#usage][selectrum README]], but here's an example using =orderless= with its [[https://github.com/oantolin/orderless#style-dispatchers][style dispatchers]].
+
 
 #+CAPTION: orderless matching
 [[file:images/orderless.png]]
@@ -80,6 +97,7 @@ In this case, that search string is searching for all items without either a PDF
     :PROPERTIES:
     :CUSTOM_ID: test-script
     :END:
+
 The repository =test= directory also includes a script you can use to run this and associated packages in the =emacs -Q= sandbox.
 To do that, simply run =./run.sh= from the =test= directory.
 By default, this will use selectrum as the completion system.
@@ -135,6 +153,23 @@ Here's how to configure it to use =all-the-icons=:
        "Face for obscuring/dimming icons"
        :group 'all-the-icons-faces)
 #+END_SRC
+
+*** History and Predefined searches
+
+=Bibtex-actions= has functionality similar to the [[https://github.com/tmalsburg/helm-bibtex#p][predefined search]] functionality in =helm-bibtex= and =ivy-bibtex=, but with a different implementation.
+Rather than create a new command with the search terms as argument, you just set the =bibtex-actions-presets= variable, and add the strings you want to access:
+
+#+begin_src emacs-lisp
+(setq bibtex-actions-presets '("one search string" "another search string"))
+#+end_src
+
+You then have two ways to access these strings from the completion prompt:
+
+1. by using =M-n= from the prompt, which will cycle through the strings
+2. by calling =bibtex-actions-insert-preset= with a keybinding, and then selecting the string
+
+=Bibtex-actions= also preserves the history of your selections (see caveat below about multiple candidate selection though), which are also accessible in your completion UI, but by using =M-p=.
+You can save this history across sessions by adding =bibtex-actions-history= to =savehist-additional-variables=.
 
 *** Proactive reloading of library
     :PROPERTIES:
@@ -223,8 +258,7 @@ This is inspired by =helm-bibtex= and =ivy-bibtex=, but is based on =completing-
 In comparison:
 
 - like =helm-bibtex=, but unlike =ivy-bibtex=, =bibtex-actions= has support for multi-selection of candidates
-- =helm-bibtex= and =ivy-bibtex= provide a single command, and the actions accessed from there; =bibtex-actions= provides all of its actions as standard commands, available from =M-x=, without a single
-  entry point.
+- =helm-bibtex= and =ivy-bibtex= provide a single command, and the actions accessed from there; =bibtex-actions= provides all of its actions as standard commands, available from =M-x=, without a single entry point.
 - =bibtex-actions= is based on =completing-read-multiple=, with a single dependency, and works with different completion systems (though in practice is best supported in =selectrum=) and supporting packages that are =completing-read= compliant; =helm-bibtex= and =ivy-bibtex= are based on =helm= and =ivy= respectively.
 
 ** Acknowledgements
@@ -238,4 +272,4 @@ This code takes those ideas and re-implements them to fill out the feature set, 
 
 Along the way, [[https://github.com/clemera][Clemens Radermacher]] and [[https://github.com/oantolin][Omar Antolín]] helped with some of the intricacies of completing-read and elisp.
 
-And, of course, thanks to [[https://github.com/tmalsburg][Titus von der Malburg]] for creating and maintaining bibtex-completion and helm-bibtex and ivy-bibtex.
+And, of course, thanks to [[https://github.com/tmalsburg][Titus von der Malburg]] for creating and maintaining =bibtex-completion= and =helm-bibtex= and =ivy-bibtex=.
