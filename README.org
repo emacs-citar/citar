@@ -64,11 +64,21 @@ The only thing, however, that you /must/ configure is where to find your bib fil
   (setq bibtex-completion-bibliography "~/bib/references.bib")
 #+END_SRC
 
+*** Completion system
+
+=Bibtex-actions= uses the built-in =completing-read-multiple=, and so any vertical completion system that supports that should work.
+In particular, all of these work well:
+
+1. =selectrum=
+2. =vertico=
+3. =icomplete-vertical=
+
 *** Completion styles
     :PROPERTIES:
     :CUSTOM_ID: completion-styles
     :END:
 One of the beauties of the new suite of completing-read packages is the flexibility.
+For =bibtex-actions= to work correctly, and as you may have come to expect in `helm-bibtex` or `ivy-bibtex`, you need to install and configure either prescient or orderless.
 You can read more about this at the [[https://github.com/raxod502/selectrum#usage][selectrum README]], but here's an example using orderless with its [[https://github.com/oantolin/orderless#style-dispatchers][style dispatchers]].
 
 #+CAPTION: orderless matching
