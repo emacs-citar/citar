@@ -50,10 +50,16 @@ Bibtex-actions is available for installation from [[https://melpa.org][MELPA]].
 To setup bibtex-actions using =use-package=, you can simply do:
 
 #+BEGIN_SRC emacs-lisp
-  (use-package bibtex-actions
-    :config
-    ;; Make the 'bibtex-actions' bindings available from `embark-act'.
-    (add-to-list 'embark-keymap-alist '(bibtex . bibtex-actions-map)))
+(use-package bibtex-actions
+  :bind (("C-c b" . bibtex-actions-insert-citation)
+         :map minibuffer-local-map
+         ("M-b" . bibtex-actions-insert-preset))
+  :after embark
+  :config
+  ;; Make the 'bibtex-actions' bindings available from `embark-act'.
+  (add-to-list 'embark-keymap-alist '(bibtex . bibtex-actions-map))
+  :custom
+  (bibtex-completion-bibliography '("~/bib/references.bib")))
 #+END_SRC
 
 Since most of the command logic resides in bibtex-completion, that is where to look for different [[https://github.com/tmalsburg/helm-bibtex#basic-configuration-recommended][configuration options]].
