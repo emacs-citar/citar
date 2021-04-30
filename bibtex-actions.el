@@ -223,10 +223,14 @@ If the cache is nil, this will load the cache."
   (setq bibtex-actions--candidates-cache
         (bibtex-actions--format-candidates)))
 
+;;;###autoload
 (defun bibtex-actions-insert-preset ()
   "Prompt for and insert a predefined search."
   (interactive)
-  (when-let ((search (completing-read "Preset: " bibtex-actions-presets)))
+  (unless (minibufferp)
+    (user-error "Command can only be used in minibuffer"))
+  (when-let ((enable-recursive-minibuffers t)
+             (search (completing-read "Preset: " bibtex-actions-presets)))
     (insert search)))
 
 ;;; Formatting functions
