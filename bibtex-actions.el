@@ -306,7 +306,7 @@ TEMPLATE."
 Opens the PDF(s) associated with the KEYS.  If multiple PDFs are
 found, ask for the one to open using ‘completing-read’.  If no
 PDF is found, try to open a URL or DOI in the browser instead."
-  (interactive (list (bibtex-actions-read :initial "has:link has:pdf ")))
+  (interactive (list (bibtex-actions-read :initial "has:link\|has:pdf ")))
   (bibtex-completion-open-any keys))
 
 ;;;###autoload
