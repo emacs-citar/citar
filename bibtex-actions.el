@@ -312,7 +312,7 @@ Opens the PDF(s) associated with the KEYS.  If multiple PDFs are
 found, ask for the one to open using ‘completing-read’.  If no
 PDF is found, try to open a URL or DOI in the browser instead.
 With prefix, rebuild the cache before offering candidates."
-  (interactive (list (bibtex-actions-read :initial "has:link\|has:pdf "
+  (interactive (list (bibtex-actions-read :initial "has:link\\|has:pdf "
 					  :rebuild-cache current-prefix-arg)))
   (bibtex-completion-open-any keys))
 
