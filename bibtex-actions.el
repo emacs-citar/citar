@@ -123,7 +123,7 @@ the following optional arguments:
 'INITIAL' provides the initial value, for pre-filtering the
 candidate list
 
-'REBUILD-CACHE' if t, force rebuilding the cache before
+'REBUILD-CACHE' if t, forces rebuilding the cache before
 offering the selection candidates"
   (when-let ((crm-separator "\\s-*&\\s-*")
 	     (candidates (bibtex-actions--get-candidates rebuild-cache))
