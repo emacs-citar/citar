@@ -171,17 +171,18 @@ You then have two ways to access these strings from the completion prompt:
 =Bibtex-actions= also preserves the history of your selections (see caveat below about multiple candidate selection though), which are also accessible in your completion UI, but by using =M-p=.
 You can save this history across sessions by adding =bibtex-actions-history= to =savehist-additional-variables=.
 
-*** Proactive reloading of library
+*** Refreshing the library display
     :PROPERTIES:
-    :CUSTOM_ID: proactive-reloading-of-library
+    :CUSTOM_ID: refreshing-the-library-display
     :END:
 
 Bibtex-actions uses a cache to speed up library display.
 This is great for performance, but means the data can become stale if you modify it.
 
-The =bibtex-actions-refresh= command will reload the cache, and you can call this manually.
+The =bibtex-actions-refresh= command will reload the cache, and you can call this manually. 
+You can also call any of the `bibtex-actions` commands with a prefix argument: `C-u M-x bibtex-actions-insert-key`.
 
-You can also add =bibtex-completion=-style proactive loading by using =filenotify= something like this:
+Finally, another option is to add =bibtex-completion=-style proactive loading externally by using =filenotify= something like this:
 
 #+BEGIN_SRC emacs-lisp
   ;; Of course, you could also use `bibtex-completion-bibliography` here, but would need 
