@@ -180,7 +180,7 @@ Bibtex-actions uses a cache to speed up library display.
 This is great for performance, but means the data can become stale if you modify it.
 
 The =bibtex-actions-refresh= command will reload the cache, and you can call this manually. 
-You can also call any of the `bibtex-actions` commands with a prefix argument: `C-u M-x bibtex-actions-insert-key`.
+You can also call any of the `bibtex-actions` commands with a prefix argument: =C-u M-x bibtex-actions-insert-key=.
 
 Finally, another option is to add =bibtex-completion=-style proactive loading externally by using =filenotify= something like this:
 
