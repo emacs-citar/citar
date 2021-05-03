@@ -86,10 +86,10 @@ may be indicated with the same icon but a different face."
 
 (defcustom bibtex-actions-force-refresh-hook nil
   "Hook run when user forces a (re-) building of the candidates cache.
-This hook is only called when the user explicitly requests that
-the cache has to be rebuilt. It is intended for 'heavy'
-operations such as a complete export of a Zotero library to a
-bibliography file."
+This hook is only called when the user explicitly requests the
+cache to be rebuilt.  It is intended for 'heavy' operations which
+recreate entire bibliography files using an external reference
+manager like Zotero or JabRef."
   :group 'bibtex-actions
   :type '(repeat function))
 
@@ -233,7 +233,8 @@ If FORCE-REBUILD-CACHE is t, force reloading the cache."
 ;;;###autoload
 (defun bibtex-actions-refresh (&optional force-rebuild-cache)
   "Reload the candidates cache.
-If called interactively with a prefix, also run the hook
+If called interactively with a prefix of if FORCE-REBUILD-CACHE
+is non-nil, also run the hook
 `bibtex-actions-before-refresh-hook'"
   (interactive "P")
   (when force-rebuild-cache
