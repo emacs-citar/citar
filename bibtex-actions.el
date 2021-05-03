@@ -84,6 +84,15 @@ may be indicated with the same icon but a different face."
   :group 'bibtex-actions
   :type 'string)
 
+(defcustom bibtex-actions-force-refresh-hook nil
+  "Hook run when user forces a (re-) building of the candidates cache.
+This hook is only called when the user explicitly requests the
+cache to be rebuilt.  It is intended for 'heavy' operations which
+recreate entire bibliography files using an external reference
+manager like Zotero or JabRef."
+  :group 'bibtex-actions
+  :type '(repeat function))
+
 ;;; History, including future history list.
 
 (defvar bibtex-actions-history nil
@@ -216,15 +225,20 @@ key associated with each one."
   "Get the cached candidates.
 If the cache is nil, this will load the cache.
 If FORCE-REBUILD-CACHE is t, force reloading the cache."
-  (if (or force-rebuild-cache
-	  (not bibtex-actions--candidates-cache))
-      (bibtex-actions-refresh))
+  (when (or force-rebuild-cache
+            (not bibtex-actions--candidates-cache))
+    (bibtex-actions-refresh force-rebuild-cache))
   bibtex-actions--candidates-cache)
 
 ;;;###autoload
-(defun bibtex-actions-refresh (&optional _event)
-  "Reload the candidates cache."
-  (interactive)
+(defun bibtex-actions-refresh (&optional force-rebuild-cache)
+  "Reload the candidates cache.
+If called interactively with a prefix or if FORCE-REBUILD-CACHE
+is non-nil, also run the hook
+`bibtex-actions-before-refresh-hook'"
+  (interactive "P")
+  (when force-rebuild-cache
+    (run-hooks 'bibtex-actions-force-refresh-hook))
   (setq bibtex-actions--candidates-cache
         (bibtex-actions--format-candidates)))
 
