@@ -17,15 +17,10 @@
    :CUSTOM_ID: what-is-it
    :END:
 
-This package turns bibtex-completion functions into
-completing-read-based Emacs commands. When used with selectrum, embark,
-and marginalia, it provides similar functionality to helm-bibtex and
-ivy-bibtex: quick filtering and selecting of bibliographic entries from
-the minibuffer, and the option to run different commands against them.
+This package turns bibtex-completion functions into completing-read-based Emacs commands.
+When used with selectrum, embark, and marginalia, it provides similar functionality to helm-bibtex and ivy-bibtex: quick filtering and selecting of bibliographic entries from the minibuffer, and the option to run different commands against them.
 
-Here's a screenshot with
-[[https://github.com/raxod502/selectrum][selectrum]] and
-[[https://github.com/oantolin/embark/][embark]].
+Here's a screenshot with [[https://github.com/raxod502/selectrum][selectrum]] and [[https://github.com/oantolin/embark/][embark]].
 
 #+CAPTION: selectrum-embark screenshot
 [[file:images/selectrum-embark.png]]
@@ -40,8 +35,7 @@ And another with [[https://github.com/minad/vertico][vertico]]:
    :CUSTOM_ID: installation
    :END:
 
-Bibtex-actions is available for installation from
-[[https://melpa.org][MELPA]].
+Bibtex-actions is available for installation from [[https://melpa.org][MELPA]].
 
 ** Configuration
    :PROPERTIES:
@@ -56,53 +50,58 @@ Bibtex-actions is available for installation from
 To setup bibtex-actions using =use-package=, you can simply do:
 
 #+BEGIN_SRC emacs-lisp
-  (use-package bibtex-actions
-    :config
-    ;; Make the 'bibtex-actions' bindings available from `embark-act'.
-    (add-to-list 'embark-keymap-alist '(bibtex . bibtex-actions-map)))
+(use-package bibtex-actions
+  :bind (("C-c b" . bibtex-actions-insert-citation)
+         :map minibuffer-local-map
+         ("M-b" . bibtex-actions-insert-preset))
+  :after embark
+  :config
+  ;; Make the 'bibtex-actions' bindings available from `embark-act'.
+  (add-to-list 'embark-keymap-alist '(bibtex . bibtex-actions-map))
+  :custom
+  (bibtex-completion-bibliography '("~/bib/references.bib")))
 #+END_SRC
 
-Since most of the command logic resides in bibtex-completion, that is
-where to look for different
-[[https://github.com/tmalsburg/helm-bibtex#basic-configuration-recommended][configuration
-options]].
+Since most of the command logic resides in bibtex-completion, that is where to look for different [[https://github.com/tmalsburg/helm-bibtex#basic-configuration-recommended][configuration options]].
 
-The only thing, however, that you /must/ configure is where to find your
-bib file(s).
+The only thing, however, that you /must/ configure is where to find your bib file(s).
 
 #+BEGIN_SRC emacs-lisp
   (setq bibtex-completion-bibliography "~/bib/references.bib")
 #+END_SRC
 
+*** Completion system
+
+=Bibtex-actions= uses the built-in =completing-read-multiple=, and so any vertical completion system that supports that should work.
+In particular, all of these work well:
+
+1. [[https://github.com/raxod502/selectrum][selectrum]] (the most full-featured)
+2. [[https://github.com/minad/vertico][vertico]] (new, with a more minimal feature set)
+3. [[https://github.com/oantolin/icomplete-vertical][icomplete-vertical]] (for those that love icomplete, but want a vertical UI)
+
 *** Completion styles
     :PROPERTIES:
     :CUSTOM_ID: completion-styles
     :END:
+One of the beauties of the new suite of completing-read packages is the flexibility.
+For =bibtex-actions= to work correctly, and as you may have come to expect in =helm-bibtex= or =ivy-bibtex=, you need to install and configure either =prescient= or =orderless=.
+You can read more about this at the [[https://github.com/raxod502/selectrum#usage][selectrum README]], but here's an example using =orderless= with its [[https://github.com/oantolin/orderless#style-dispatchers][style dispatchers]].
 
-One of the beauties of the new suite of completing-read packages is the
-flexibility. You can read more about this at the
-[[https://github.com/raxod502/selectrum#usage][selectrum README]], but
-here's an example using orderless with its
-[[https://github.com/oantolin/orderless#style-dispatchers][style
-dispatchers]].
 
 #+CAPTION: orderless matching
 [[file:images/orderless.png]]
 
-In this case, that search string is searching for all items without
-either a PDF or note associated with them, and then includes a "the"
-initialism, and a flex search on "abc".
+In this case, that search string is searching for all items without either a PDF or note associated with them, and then includes a "the" initialism, and a flex search on "abc".
 
 *** Test Script
     :PROPERTIES:
     :CUSTOM_ID: test-script
     :END:
 
-The repository =test= directory also includes a script you can use to
-run this and associated packages in the =emacs -Q= sandbox. To do that,
-simply run =./run.sh= from the =test= directory. By default, this will
-use selectrum as the completion system. If you would like to try vertico
-instead, just do =M-x vertico-mode=.
+The repository =test= directory also includes a script you can use to run this and associated packages in the =emacs -Q= sandbox.
+To do that, simply run =./run.sh= from the =test= directory.
+By default, this will use selectrum as the completion system.
+If you would like to try vertico instead, just do =M-x vertico-mode=.
 
 *** Rich UI
     :PROPERTIES:
@@ -111,35 +110,27 @@ instead, just do =M-x vertico-mode=.
 
 There are three sections of the browsing UI.
 
-1. The prefix, exploiting the affixation feature only available starting
-   with Emacs 28, and holding the symbols to indicate the presence of
-   PDFs or notes associated with the entries.
+1. The prefix, exploiting the affixation feature only available starting with Emacs 28, and holding the symbols to indicate the presence of PDFs or notes associated with the entries.
 2. The main display, which by default shows author, title, and date.
-3. The suffix, which by default shows citekey, reference type, and (if
-   present) tags or keywords.
+3. The suffix, which by default shows citekey, reference type, and (if present) tags or keywords.
 
-You can search against all of the above content. For the prefix, you can
-filter for associated PDFs or notes using =has:pdf= or =has:note=
-respectively (and at least with my setup, even the =:p= or =:n=
-shorthand).
+You can search against all of the above content.
+For the prefix, you can filter for associated PDFs or notes using =has:pdf= or =has:note= respectively (and at least with my setup, even the =:p= or =:n= shorthand).
 
 #+CAPTION: UI sections
 [[file:images/ui-segments.png]]
 
-You can configure both of the last two just as you do with
-bibtex-completion.
+You can configure both of the last two just as you do with bibtex-completion.
 
 #+BEGIN_SRC emacs-lisp
   (setq bibtex-actions-template '((t . " ${title:*}")))
   (setq bibtex-actions-template-suffix '((t . "          ${=key=:15}")))
 #+END_SRC
 
-Note: the asterisk signals to the formatter to use available space for
-the column. You should only use this on one field total, across the two
-templates, for the formatting to work correctly.
+Note: the asterisk signals to the formatter to use available space for the column.
+You should only use this on one field total, across the two templates, for the formatting to work correctly.
 
-By default, this UI is plain text, but you can configure it to use icons
-instead.
+By default, this UI is plain text, but you can configure it to use icons instead.
 
 #+CAPTION: rich UI with icons screenshot
 [[file:images/rich-ui-icons.png]]
@@ -163,19 +154,35 @@ Here's how to configure it to use =all-the-icons=:
        :group 'all-the-icons-faces)
 #+END_SRC
 
-*** Proactive reloading of library
+*** History and Predefined searches
+
+=Bibtex-actions= has functionality similar to the [[https://github.com/tmalsburg/helm-bibtex#p][predefined search]] functionality in =helm-bibtex= and =ivy-bibtex=, but with a different implementation.
+Rather than create a new command with the search terms as argument, you just set the =bibtex-actions-presets= variable, and add the strings you want to access:
+
+#+begin_src emacs-lisp
+(setq bibtex-actions-presets '("one search string" "another search string"))
+#+end_src
+
+You then have two ways to access these strings from the completion prompt:
+
+1. by using =M-n= from the prompt, which will cycle through the strings
+2. by calling =bibtex-actions-insert-preset= with a keybinding, and then selecting the string
+
+=Bibtex-actions= also preserves the history of your selections (see caveat below about multiple candidate selection though), which are also accessible in your completion UI, but by using =M-p=.
+You can save this history across sessions by adding =bibtex-actions-history= to =savehist-additional-variables=.
+
+*** Refreshing the library display
     :PROPERTIES:
-    :CUSTOM_ID: proactive-reloading-of-library
+    :CUSTOM_ID: refreshing-the-library-display
     :END:
 
-Bibtex-actions uses a cache to speed up library display. This is great
-for performance, but means the data can become stale if you modify it.
+Bibtex-actions uses a cache to speed up library display.
+This is great for performance, but means the data can become stale if you modify it.
 
-The =bibtex-actions-refresh= command will reload the cache, and you can
-call this manually.
+The =bibtex-actions-refresh= command will reload the cache, and you can call this manually. 
+You can also call any of the =bibtex-actions= commands with a prefix argument: =C-u M-x bibtex-actions-insert-key=.
 
-You can also add =bibtex-completion=-style proactive loading by using
-=filenotify= something like this:
+Finally, another option is to add =bibtex-completion=-style proactive loading externally by using =filenotify= something like this:
 
 #+BEGIN_SRC emacs-lisp
   ;; Of course, you could also use `bibtex-completion-bibliography` here, but would need 
@@ -184,8 +191,7 @@ You can also add =bibtex-completion=-style proactive loading by using
     "/path/to/file.bib" '(change) 'bibtex-actions-refresh)
 #+END_SRC
 
-You can also extend this to do the same thing for your PDF files, or
-notes:
+You can also extend this to do the same thing for your PDF files, or notes:
 
 #+BEGIN_SRC emacs-lisp
   (file-notify-add-watch 
@@ -195,9 +201,7 @@ notes:
     bibtex-completion-note-path '(change) 'bibtex-actions-refresh)
 #+END_SRC
 
-For additional configuration options on this, see
-[[https://github.com/bdarcus/bibtex-actions/wiki/Configuration#automating-path-watches][the
-wiki]].
+For additional configuration options on this, see [[https://github.com/bdarcus/bibtex-actions/wiki/Configuration#automating-path-watches][the wiki]].
 
 ** Usage
    :PROPERTIES:
@@ -211,9 +215,8 @@ You have a few different ways to interact with these commands.
     :CUSTOM_ID: m-x
     :END:
 
-Simply do =M-x= and select the command that you want, enter the terms to
-find the item you are looking for, and hit return. This runs the default
-action: the command you invoked.
+Simply do =M-x= and select the command that you want, enter the terms to find the item you are looking for, and hit return.
+This runs the default action: the command you invoked.
 
 Here's the view, using marginalia for annotations.
 
@@ -224,81 +227,50 @@ A note on multiple candidate selection:
 
 These commands do allow you to select multiple items, with two caveats:
 
-1. For this to work correctly, you /must/ use the ampersand (=&=) as
-   =crm-separator= to separate the candidates.
-2. We use very long candidate strings, so if you use a completion system
-   that requires you to =TAB=-complete, the experience is
-   less-than-ideal.
+1. For this to work correctly, you /must/ use the ampersand (=&=) as =crm-separator= to separate the candidates.
+2. We use long candidate strings, so if you use a completion system that requires you to =TAB=-complete, the experience is less-than-ideal.
 
 *** Access an alternate action via =embark-act=
     :PROPERTIES:
     :CUSTOM_ID: access-an-alternate-action-via-embark-act
     :END:
 
-If while browsing you instead would rather edit that record, and you
-have embark installed and configured, this is where =embark-act= comes
-in. Simply input the keybinding for =embark-act= (in my case =C-o=), and
-select the alternate action.
+If while browsing you instead would rather edit that record, and you have embark installed and configured, this is where =embark-act= comes in.
+Simply input the keybinding for =embark-act= (in my case =C-o=), and select the alternate action.
 
 *** Use =embark-collect-snapshot=
     :PROPERTIES:
     :CUSTOM_ID: use-embark-collect-snapshot
     :END:
 
-A final option, that can be very useful: run =embark-collect-snapshot=
-(=S=) from =embark-act=. This will select the candidate subset, and open
-it in a separate buffer. From there, you can run the same options
-discussed above using =embark-act= (which is also bound to =a= in the
-collect buffer).
+A final option, that can be useful: run =embark-collect-snapshot= (=S=) from =embark-act=.
+This will select the candidate subset, and open it in a separate buffer.
+From there, you can run the same options discussed above using =embark-act= (which is also bound to =a= in the collect buffer).
 
-So, for example, say you are working on a paper. You hold the complete
-superset of items you are interested in citing at some point in that
-buffer. From there, you can run different actions on the candidates at
-will, rather than search individually for each item you want to cite.
+So, for example, say you are working on a paper. You hold the complete super-set of items you are interested in citing at some point in that buffer.
+From there, you can run different actions on the candidates at will, rather than search individually for each item you want to cite.
 
 ** Comparisons
    :PROPERTIES:
    :CUSTOM_ID: comparisons
    :END:
 
-This is inspired by =helm-bibtex= and =ivy-bibtex=, but is based on
-=completing-read=. In comparison:
+This is inspired by =helm-bibtex= and =ivy-bibtex=, but is based on =completing-read=.
+In comparison:
 
-- like =helm-bibtex=, but unlike =ivy-bibtex=, =bibtex-actions= has
-  support for multi-selection of candidates
-- =helm-bibtex= and =ivy-bibtex= provide a single command, and the
-  actions are accessed from there; =bibtex-actions= provides all of its
-  actions as standard commands, available from =M-x=, without a single
-  entry point.
-- =bibtex-actions= is based on =completing-read-multiple=, with a single
-  dependency, and works with different completion systems (though in
-  practice is best supported in =selectrum=) and supporting packages
-  that are =completing-read= compliant; =helm-bibtex= and =ivy-bibtex=
-  are based on =helm= and =ivy= respectively
+- like =helm-bibtex=, but unlike =ivy-bibtex=, =bibtex-actions= has support for multi-selection of candidates
+- =helm-bibtex= and =ivy-bibtex= provide a single command, and the actions accessed from there; =bibtex-actions= provides all of its actions as standard commands, available from =M-x=, without a single entry point.
+- =bibtex-actions= is based on =completing-read-multiple=, with a single dependency, and works with different completion systems (though in practice is best supported in =selectrum=) and supporting packages that are =completing-read= compliant; =helm-bibtex= and =ivy-bibtex= are based on =helm= and =ivy= respectively.
 
 ** Acknowledgements
    :PROPERTIES:
    :CUSTOM_ID: acknowledgements
    :END:
 
-The ideas in this project were initially worked out in a
-[[https://github.com/tmalsburg/helm-bibtex/issues/353][conversation]]
-with [[https://github.com/mtreca][Maxime Tréca]] and
-[[https://github.com/minad][Daniel Mendler]]. Daniel, author of
-[[https://github.com/minad/consult][consult]] and
-[[https://github.com/minad/marginalia][marginalia]], helped us
-understand the possibilties of the new suite of completing-read
-packages, while Maxime came up with an
-[[https://github.com/tmalsburg/helm-bibtex/pull/355][initial
-prototype]].
+The ideas in this project were initially worked out in a [[https://github.com/tmalsburg/helm-bibtex/issues/353][conversation]] with [[https://github.com/mtreca][Maxime Tréca]] and [[https://github.com/minad][Daniel Mendler]]. Daniel, author of [[https://github.com/minad/consult][consult]] and [[https://github.com/minad/marginalia][marginalia]], helped us understand the possibilities of the new suite of completing-read packages, while Maxime came up with an [[https://github.com/tmalsburg/helm-bibtex/pull/355][initial prototype]].
 
-This code takes those ideas and reimplements them to fill out the
-feature set, and also optimize the code clarity and performance.
+This code takes those ideas and re-implements them to fill out the feature set, and also optimize the code clarity and performance.
 
-Along the way, [[https://github.com/clemera][Clemens Radermacher]] and
-[[https://github.com/oantolin][Omar Antolín]] helped with some of the
-intricacies of completing-read and elisp.
+Along the way, [[https://github.com/clemera][Clemens Radermacher]] and [[https://github.com/oantolin][Omar Antolín]] helped with some of the intricacies of completing-read and elisp.
 
-And, of course, thanks to [[https://github.com/tmalsburg][Titus von der
-Malburg]] for creating and maintaining bibtex-completion and helm-bibtex
-and ivy-bibtex.
+And, of course, thanks to [[https://github.com/tmalsburg][Titus von der Malburg]] for creating and maintaining =bibtex-completion= and =helm-bibtex= and =ivy-bibtex=.

@@ -97,6 +97,26 @@ may be indicated with the same icon but a different face."
     (rst-mode      . bibtex-completion-format-citation-sphinxcontrib-bibtex)
     (default       . bibtex-completion-format-citation-pandoc-citeproc)))
 
+(defcustom bibtex-actions-force-refresh-hook nil
+  "Hook run when user forces a (re-) building of the candidates cache.
+This hook is only called when the user explicitly requests the
+cache to be rebuilt.  It is intended for 'heavy' operations which
+recreate entire bibliography files using an external reference
+manager like Zotero or JabRef."
+  :group 'bibtex-actions
+  :type '(repeat function))
+
+;;; History, including future history list.
+
+(defvar bibtex-actions-history nil
+  "Search history for `bibtex-actions'.")
+
+(defcustom bibtex-actions-presets nil
+  "List of predefined searches."
+  :group 'bibtex-actions
+  :type '(repeat string))
+
+
 ;;; Keymap
 
 (defvar bibtex-actions-map
@@ -151,10 +171,19 @@ specific to the item, rather than the citation as a whole.
     (format "[cite%s:%s%s]" style prefix (s-join ";" (--map (concat "@" it) keys)))))
 
 ;;; Completion functions
-(defun bibtex-actions-read ()
-  "Read bibtex-completion entries for completion using 'completing-read-multiple'."
+(cl-defun bibtex-actions-read (&optional &key initial rebuild-cache)
+  "Read bibtex-completion entries.
+
+This provides a wrapper around 'completing-read-multiple', with
+the following optional arguments:
+
+'INITIAL' provides the initial value, for pre-filtering the
+candidate list
+
+'REBUILD-CACHE' if t, forces rebuilding the cache before
+offering the selection candidates"
   (when-let ((crm-separator "\\s-*&\\s-*")
-             (candidates (bibtex-actions--get-candidates))
+	     (candidates (bibtex-actions--get-candidates rebuild-cache))
              (chosen
               (completing-read-multiple
                "BibTeX entries: "
@@ -163,7 +192,8 @@ specific to the item, rather than the citation as a whole.
                      `(metadata
                        (affixation-function . bibtex-actions--affixation)
                        (category . bibtex))
-                   (complete-with-action action candidates string predicate))))))
+                   (complete-with-action action candidates string predicate)))
+                 nil nil initial 'bibtex-actions-history bibtex-actions-presets nil)))
     (cl-loop for choice in chosen
              ;; Collect citation keys of selected candidate(s).
              collect (cdr (assoc choice candidates)))))
@@ -239,19 +269,36 @@ key associated with each one."
 (defvar bibtex-actions--candidates-cache nil
   "Store the candidates list.")
 
-(defun bibtex-actions--get-candidates ()
+(defun bibtex-actions--get-candidates (&optional force-rebuild-cache)
   "Get the cached candidates.
-If the cache is nil, this will load the cache."
-  (if (not bibtex-actions--candidates-cache)
-      (bibtex-actions-refresh))
+If the cache is nil, this will load the cache.
+If FORCE-REBUILD-CACHE is t, force reloading the cache."
+  (when (or force-rebuild-cache
+            (not bibtex-actions--candidates-cache))
+    (bibtex-actions-refresh force-rebuild-cache))
   bibtex-actions--candidates-cache)
 
 ;;;###autoload
-(defun bibtex-actions-refresh (&optional _event)
-  "Reload the candidates cache."
-  (interactive)
+(defun bibtex-actions-refresh (&optional force-rebuild-cache)
+  "Reload the candidates cache.
+If called interactively with a prefix or if FORCE-REBUILD-CACHE
+is non-nil, also run the hook
+`bibtex-actions-before-refresh-hook'"
+  (interactive "P")
+  (when force-rebuild-cache
+    (run-hooks 'bibtex-actions-force-refresh-hook))
   (setq bibtex-actions--candidates-cache
         (bibtex-actions--format-candidates)))
+
+;;;###autoload
+(defun bibtex-actions-insert-preset ()
+  "Prompt for and insert a predefined search."
+  (interactive)
+  (unless (minibufferp)
+    (user-error "Command can only be used in minibuffer"))
+  (when-let ((enable-recursive-minibuffers t)
+             (search (completing-read "Preset: " bibtex-actions-presets)))
+    (insert search)))
 
 ;;; Formatting functions
 ;;  NOTE this section will be removed, or dramatically simplified, if and
@@ -325,72 +372,87 @@ TEMPLATE."
  "Open PDF, or URL or DOI link.
 Opens the PDF(s) associated with the KEYS.  If multiple PDFs are
 found, ask for the one to open using ‘completing-read’.  If no
-PDF is found, try to open a URL or DOI in the browser instead."
-  (interactive (list (bibtex-actions-read)))
+PDF is found, try to open a URL or DOI in the browser instead.
+With prefix, rebuild the cache before offering candidates."
+  (interactive (list (bibtex-actions-read :initial "has:link\\|has:pdf "
+					  :rebuild-cache current-prefix-arg)))
   (bibtex-completion-open-any keys))
 
 ;;;###autoload
 (defun bibtex-actions-open-pdf (keys)
  "Open PDF associated with the KEYS.
 If multiple PDFs are found, ask for the one to open using
-‘completing-read’."
-  (interactive (list (bibtex-actions-read)))
+‘completing-read’.
+With prefix, rebuild the cache before offering candidates."
+  (interactive (list (bibtex-actions-read :initial "has:pdf "
+					  :rebuild-cache current-prefix-arg)))
   (bibtex-completion-open-pdf keys))
 
 ;;;###autoload
 (defun bibtex-actions-open-link (keys)
- "Open URL or DOI link associated with the KEYS in a browser."
- (interactive (list (bibtex-actions-read)))
+  "Open URL or DOI link associated with the KEYS in a browser.
+With prefix, rebuild the cache before offering candidates."
+  (interactive (list (bibtex-actions-read :initial "has:link "
+					  :rebuild-cache current-prefix-arg)))
  (bibtex-completion-open-url-or-doi keys))
 
 ;;;###autoload
 (defun bibtex-actions-insert-citation (keys)
- "Insert citation for the KEYS."
- (interactive (list (bibtex-actions-read)))
+  "Insert citation for the KEYS.
+With prefix, rebuild the cache before offering candidates."
+  (interactive (list (bibtex-actions-read :rebuild-cache current-prefix-arg)))
  (bibtex-completion-insert-citation keys))
 
 ;;;###autoload
 (defun bibtex-actions-insert-reference (keys)
- "Insert formatted reference(s) associated with the KEYS."
-  (interactive (list (bibtex-actions-read)))
+  "Insert formatted reference(s) associated with the KEYS.
+With prefix, rebuild the cache before offering candidates."
+  (interactive (list (bibtex-actions-read :rebuild-cache current-prefix-arg)))
   (bibtex-completion-insert-reference keys))
 
 ;;;###autoload
 (defun bibtex-actions-insert-key (keys)
- "Insert BibTeX KEYS."
- (interactive (list (bibtex-actions-read)))
+  "Insert BibTeX KEYS.
+With prefix, rebuild the cache before offering candidates."
+  (interactive (list (bibtex-actions-read :rebuild-cache current-prefix-arg)))
  (bibtex-completion-insert-key keys))
 
 ;;;###autoload
 (defun bibtex-actions-insert-bibtex (keys)
- "Insert BibTeX entry associated with the KEYS."
- (interactive (list (bibtex-actions-read)))
+  "Insert BibTeX entry associated with the KEYS.
+With prefix, rebuild the cache before offering candidates."
+  (interactive (list (bibtex-actions-read :rebuild-cache current-prefix-arg)))
  (bibtex-completion-insert-bibtex keys))
 
 ;;;###autoload
 (defun bibtex-actions-add-pdf-attachment (keys)
- "Attach PDF(s) associated with the KEYS to email."
- (interactive (list (bibtex-actions-read)))
+  "Attach PDF(s) associated with the KEYS to email.
+With prefix, rebuild the cache before offering candidates."
+  (interactive (list (bibtex-actions-read :rebuild-cache current-prefix-arg)))
  (bibtex-completion-add-PDF-attachment keys))
 
 ;;;###autoload
 (defun bibtex-actions-open-notes (keys)
- "Open notes associated with the KEYS."
- (interactive (list (bibtex-actions-read)))
+  "Open notes associated with the KEYS.
+With prefix, rebuild the cache before offering candidates."
+  (interactive (list (bibtex-actions-read :initial "has:note "
+					  :rebuild-cache current-prefix-arg)))
  (bibtex-completion-edit-notes keys))
 
 ;;;###autoload
 (defun bibtex-actions-open-entry (keys)
- "Open BibTeX entry associated with the KEYS."
- (interactive (list (bibtex-actions-read)))
+  "Open BibTeX entry associated with the KEYS.
+With prefix, rebuild the cache before offering candidates."
+  (interactive (list (bibtex-actions-read :rebuild-cache current-prefix-arg)))
  (bibtex-completion-show-entry keys))
 
 ;;;###autoload
 (defun bibtex-actions-add-pdf-to-library (keys)
  "Add PDF associated with the KEYS to library.
 The PDF can be added either from an open buffer, a file, or a
-URL."
-  (interactive (list (bibtex-actions-read)))
+URL.
+With prefix, rebuild the cache before offering candidates."
+  (interactive (list (bibtex-actions-read :rebuild-cache current-prefix-arg)))
   (bibtex-completion-add-pdf-to-library keys))
 
 (provide 'bibtex-actions)

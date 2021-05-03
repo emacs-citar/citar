@@ -2,6 +2,8 @@ name: Elisp check
 
 on:
   pull_request:
+    paths:
+      - '**.el'
 
 jobs:
   check:
