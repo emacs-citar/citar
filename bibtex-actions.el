@@ -233,7 +233,7 @@ If FORCE-REBUILD-CACHE is t, force reloading the cache."
 ;;;###autoload
 (defun bibtex-actions-refresh (&optional force-rebuild-cache)
   "Reload the candidates cache.
-If called interactively with a prefix of if FORCE-REBUILD-CACHE
+If called interactively with a prefix or if FORCE-REBUILD-CACHE
 is non-nil, also run the hook
 `bibtex-actions-before-refresh-hook'"
   (interactive "P")
