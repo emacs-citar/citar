@@ -64,7 +64,7 @@ display and for search."
 
 (defvar bibtex-actions-org-cite-commands
   ;; TODO make defcustom?
-  '("text" "year" "title" "author" "locators" "nocite" "plain")
+  '("text" "year" "title" "author" "locators" "nocite")
     "Org citation commands, and command descriptions.")
 
 (defcustom bibtex-actions-link-symbol "🔗"
