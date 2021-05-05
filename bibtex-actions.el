@@ -62,10 +62,11 @@ display and for search."
     :group 'bibtex-actions
     :type  '(alist :key-type symbol :value-type function))
 
-(defvar bibtex-actions-org-cite-commands
-  ;; TODO make defcustom?
+(defcustom bibtex-actions-org-cite-commands
   '("text" "year" "title" "author" "locators" "nocite")
-    "Org citation commands, and command descriptions.")
+  "Org citation commands, and command descriptions."
+  :group 'bibtex-actions
+  :type '(repeat string))
 
 (defcustom bibtex-actions-link-symbol "🔗"
   "Symbol to indicate a DOI or URL link is available for a publication.
