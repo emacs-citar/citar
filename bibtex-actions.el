@@ -158,7 +158,9 @@ offering the selection candidates"
   "Transform candidates from 'bibtex-completion-candidates'.
 This both propertizes the candidates for display, and grabs the
 key associated with each one."
-  (let* ((main-template
+  (let* ((raw-candidates (or (bibtex-completion-candidates)
+                             (message "your library is empty; check your config!")))
+         (main-template
          (bibtex-actions--process-display-formats
           bibtex-actions-template))
          (suffix-template
@@ -167,7 +169,7 @@ key associated with each one."
          (main-width (truncate (* (frame-width) 0.65)))
          (suffix-width (truncate (* (frame-width) 0.34))))
     (cl-loop
-     for candidate in (bibtex-completion-candidates)
+     for candidate in raw-candidates
      collect
      (let* ((pdf (if (assoc "=has-pdf=" (cdr candidate)) " has:pdf"))
             (note (if (assoc "=has-note=" (cdr candidate)) "has:note"))
