@@ -138,18 +138,18 @@ candidate list
 
 'REBUILD-CACHE' if t, forces rebuilding the cache before
 offering the selection candidates"
-  (when-let ((crm-separator "\\s-*&\\s-*")
-	     (candidates (bibtex-actions--get-candidates rebuild-cache))
-             (chosen
-              (completing-read-multiple
-               "BibTeX entries: "
-               (lambda (string predicate action)
-                 (if (eq action 'metadata)
-                     `(metadata
-                       (affixation-function . bibtex-actions--affixation)
-                       (category . bibtex))
-                   (complete-with-action action candidates string predicate)))
-                 nil nil initial 'bibtex-actions-history bibtex-actions-presets nil)))
+  (let* ((crm-separator "\\s-*&\\s-*")
+	 (candidates (bibtex-actions--get-candidates rebuild-cache))
+         (chosen
+          (completing-read-multiple
+           "BibTeX entries: "
+           (lambda (string predicate action)
+             (if (eq action 'metadata)
+                 `(metadata
+                   (affixation-function . bibtex-actions--affixation)
+                   (category . bibtex))
+               (complete-with-action action candidates string predicate)))
+           nil nil initial 'bibtex-actions-history bibtex-actions-presets nil)))
     (cl-loop for choice in chosen
              ;; Collect citation keys of selected candidate(s).
              collect (cdr (assoc choice candidates)))))
