@@ -39,6 +39,10 @@
 
 (require 'bibtex-completion)
 
+;;; Declare variables for byte compiler
+
+(defvar crm-separator)
+
 ;;; Variables
 
 (defface bibtex-actions-suffix
