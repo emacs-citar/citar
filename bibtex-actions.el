@@ -108,7 +108,7 @@ available candidates to those matching the initial input.
 
 The association key can be one of the symbols `pdf', `note',
 `link' or `source' and defines the input for the function
-`bibtex-action-open-pdf', `bibtex-action-open-link', etc. The
+`bibtex-action-open-pdf', `bibtex-action-open-link', etc.  The
 associated value must be nil, meaning that there will be no
 initial input, or a string.
 
