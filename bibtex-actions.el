@@ -97,6 +97,30 @@ manager like Zotero or JabRef."
   :group 'bibtex-actions
   :type '(repeat function))
 
+(defcustom bibtex-actions-initial-inputs
+  '((pdf    . "has:pdf")
+    (note   . "has:note")
+    (link   . "has:link")
+    (source . "has:link\\|has:pdf"))
+  "Alist defining the initial input for some bibtex open actions.
+Given a flexible completion style, this will restrict the list of
+available candidates to those matching the initial input.
+
+The association key can be one of the symbols `pdf', `note',
+`link' or `source' and defines the input for the function
+`bibtex-action-open-pdf', `bibtex-action-open-link', etc. The
+associated value must be nil, meaning that there will be no
+initial input, or a string.
+
+To match entries with certain properties (e.g. files attached),
+you can use the following initial inputs: \"has:pdf\",
+\"has:link\" and \"has:note\"."
+  :group 'bibtex-actions
+  :type '(alist :key-type symbol
+                :value-type (choice string
+                                    (const :tag "No initial input" nil))))
+
+  
 ;;; History, including future history list.
 
 (defvar bibtex-actions-history nil
