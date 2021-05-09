@@ -119,7 +119,6 @@ you can use the following initial inputs: \"has:pdf\",
   :type '(alist :key-type symbol
                 :value-type (choice string
                                     (const :tag "No initial input" nil))))
-
   
 ;;; History, including future history list.
 
