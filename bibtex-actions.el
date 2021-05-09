@@ -157,13 +157,15 @@ you can use the following initial inputs: \"has:pdf\",
 This provides a wrapper around 'completing-read-multiple', with
 the following optional arguments:
 
-'INITIAL' provides the initial value, for pre-filtering the
-candidate list
+If 'INITIAL' matches one of the keys defined in
+`bibtex-actions-initial-inputs', use the associated initial
+input.
 
 'REBUILD-CACHE' if t, forces rebuilding the cache before
 offering the selection candidates"
   (let* ((crm-separator "\\s-*&\\s-*")
 	 (candidates (bibtex-actions--get-candidates rebuild-cache))
+         (initial-input (assoc-default initial bibtex-actions-initial-inputs))
          (chosen
           (completing-read-multiple
            "BibTeX entries: "
@@ -173,7 +175,12 @@ offering the selection candidates"
                    (affixation-function . bibtex-actions--affixation)
                    (category . bibtex))
                (complete-with-action action candidates string predicate)))
-           nil nil initial 'bibtex-actions-history bibtex-actions-presets nil)))
+           nil
+           nil
+           (and initial-input
+                (stringp initial-input)
+                (concat initial-input " "))
+           'bibtex-actions-history bibtex-actions-presets nil)))
     (cl-loop for choice in chosen
              ;; Collect citation keys of selected candidate(s).
              collect (cdr (assoc choice candidates)))))
@@ -354,7 +361,7 @@ Opens the PDF(s) associated with the KEYS.  If multiple PDFs are
 found, ask for the one to open using ‘completing-read’.  If no
 PDF is found, try to open a URL or DOI in the browser instead.
 With prefix, rebuild the cache before offering candidates."
-  (interactive (list (bibtex-actions-read :initial "has:link\\|has:pdf "
+  (interactive (list (bibtex-actions-read :initial 'source
 					  :rebuild-cache current-prefix-arg)))
   (bibtex-completion-open-any keys))
 
@@ -364,7 +371,7 @@ With prefix, rebuild the cache before offering candidates."
 If multiple PDFs are found, ask for the one to open using
 ‘completing-read’.
 With prefix, rebuild the cache before offering candidates."
-  (interactive (list (bibtex-actions-read :initial "has:pdf "
+  (interactive (list (bibtex-actions-read :initial 'pdf
 					  :rebuild-cache current-prefix-arg)))
   (bibtex-completion-open-pdf keys))
 
@@ -372,7 +379,7 @@ With prefix, rebuild the cache before offering candidates."
 (defun bibtex-actions-open-link (keys)
   "Open URL or DOI link associated with the KEYS in a browser.
 With prefix, rebuild the cache before offering candidates."
-  (interactive (list (bibtex-actions-read :initial "has:link "
+  (interactive (list (bibtex-actions-read :initial 'link
 					  :rebuild-cache current-prefix-arg)))
  (bibtex-completion-open-url-or-doi keys))
 
@@ -415,7 +422,7 @@ With prefix, rebuild the cache before offering candidates."
 (defun bibtex-actions-open-notes (keys)
   "Open notes associated with the KEYS.
 With prefix, rebuild the cache before offering candidates."
-  (interactive (list (bibtex-actions-read :initial "has:note "
+  (interactive (list (bibtex-actions-read :initial 'note
 					  :rebuild-cache current-prefix-arg)))
  (bibtex-completion-edit-notes keys))
 
