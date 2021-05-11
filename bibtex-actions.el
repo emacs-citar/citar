@@ -99,7 +99,7 @@ manager like Zotero or JabRef."
 
 (defcustom bibtex-actions-initial-inputs
   '((pdf    . "has:pdf")
-    (note   . "has:note")
+    (note   . nil)
     (link   . "has:link")
     (source . "has:link\\|has:pdf"))
   "Alist defining the initial input for some bibtex open actions.
