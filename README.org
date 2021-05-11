@@ -154,7 +154,10 @@ Here's how to configure it to use =all-the-icons=:
        :group 'all-the-icons-faces)
 #+END_SRC
 
-*** History and Predefined searches
+*** History and predefined searches
+    :PROPERTIES:
+    :CUSTOM_ID: history-and-predefined-searches
+    :END:
 
 =Bibtex-actions= has functionality similar to the [[https://github.com/tmalsburg/helm-bibtex#p][predefined search]] functionality in =helm-bibtex= and =ivy-bibtex=, but with a different implementation.
 Rather than create a new command with the search terms as argument, you just set the =bibtex-actions-presets= variable, and add the strings you want to access:
@@ -170,6 +173,33 @@ You then have two ways to access these strings from the completion prompt:
 
 =Bibtex-actions= also preserves the history of your selections (see caveat below about multiple candidate selection though), which are also accessible in your completion UI, but by using =M-p=.
 You can save this history across sessions by adding =bibtex-actions-history= to =savehist-additional-variables=.
+
+*** Pre-filtering entries
+    :PROPERTIES:
+    :CUSTOM_ID: prefiltering-entries
+    :END:
+
+By default, =bibtex-actions= will, assuming you are using =orderless= or =prescient= to filter candidates, pre-filter entries for the following commands.
+
+1. =bibtex-actions-open=: pre-narrows the list to those which have associated pdf or links
+2. =bibtex-actions-open-link=: pre-narrows the list to those which have associated links
+3. =bibtex-actions-open-pdf=: -pre-narrows the list to those which have associated pdf(s)
+
+That is, upon running the command, an =initial-input= value will be inserted to narrow the results. 
+You can also delete that if you prefer to see the full list of candidates.
+
+By default, pre-filtering of =bibtex-actions-open-notes= is off, because the command by default will create a new note if none is available, and therefore it makes sense to have access to your full library. 
+But you can customize this to pre-filter if you prefer.
+
+If you want to modify those values, or remove them entirely, you can set =bibtex-actions-initial-inputs= like so; in this case turning off pre-filtering for =bibtex-actions-open-pdf=:
+
+#+begin_src elisp
+(setq bibtex-actions-initial-inputs
+  '((pdf    . nil)
+    (note   . nil)
+    (link   . "has:link")
+    (source . "has:link\\|has:pdf"))
+#+end_src
 
 *** Refreshing the library display
     :PROPERTIES:
