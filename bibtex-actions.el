@@ -62,9 +62,9 @@ display and for search."
     :group 'bibtex-actions
     :type  '(alist :key-type symbol :value-type function))
 
-(defcustom bibtex-actions-org-cite-commands
-  '("text" "year" "title" "author" "locators" "nocite")
-  "Org citation commands, and command descriptions."
+(defcustom bibtex-actions-org-cite-styles
+  '("text" "noauthor" "title" "author" "locators" "nocite")
+  "Org citation styles."
   :group 'bibtex-actions
   :type '(repeat string))
 
@@ -163,7 +163,7 @@ specific to the item, rather than the citation as a whole.
 
   [cite: see ;@key pp23-24]"
   (let* ((prefix  (if bibtex-completion-cite-prompt-for-optional-arguments (read-from-minibuffer "Prefix: ") ""))
-         (styles bibtex-actions-org-cite-commands)
+         (styles bibtex-actions-org-cite-styles)
          (style  (if bibtex-completion-cite-prompt-for-optional-arguments
                      (ido-completing-read "Style: " styles nil nil nil nil "default")))
          (prefix  (if (string= "" prefix)  "" (concat prefix  " ;")))
