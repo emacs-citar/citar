@@ -116,7 +116,7 @@ manager like Zotero or JabRef."
     (note   . nil)
     (link   . "has:link")
     (source . "has:link\\|has:pdf")
-    (point  . "bibtex-completion-key-at-point"))
+    (point  . bibtex-completion-key-at-point))
   "Alist defining the initial input for some bibtex open actions.
 Given a flexible completion style, this will restrict the list of
 available candidates to those matching the initial input.
@@ -133,7 +133,8 @@ you can use the following initial inputs: \"has:pdf\",
   :group 'bibtex-actions
   :type '(alist :key-type symbol
                 :value-type (choice string
-                                    (const :tag "No initial input" nil))))
+                                    (const :tag "No initial input" nil)
+                                    (const :tag "Key at point" bibtex-completion-key-at-point))))
 
 (defcustom bibtex-actions-default-action 'bibtex-actions-open
   "The default action for the `bibtex-actions-at-point' command."
@@ -232,10 +233,9 @@ offering the selection candidates"
            nil
            nil
            (and initial-input
-                (stringp initial-input)
-                (if (string-equal initial-input "bibtex-completion-key-at-point")
-                    (bibtex-completion-key-at-point)
-                  (concat initial-input " ")))
+                (if (stringp initial-input)
+                    (concat initial-input " ")
+                  (funcall initial-input)))
            'bibtex-actions-history bibtex-actions-presets nil)))
     (cl-loop for choice in chosen
              ;; Collect citation keys of selected candidate(s).
