@@ -115,13 +115,14 @@ manager like Zotero or JabRef."
   '((pdf    . "has:pdf")
     (note   . nil)
     (link   . "has:link")
-    (source . "has:link\\|has:pdf"))
+    (source . "has:link\\|has:pdf")
+    (point  . "bibtex-completion-key-at-point"))
   "Alist defining the initial input for some bibtex open actions.
 Given a flexible completion style, this will restrict the list of
 available candidates to those matching the initial input.
 
 The association key can be one of the symbols `pdf', `note',
-`link' or `source' and defines the input for the function
+`link', `source' or `point' and defines the input for the function
 `bibtex-action-open-pdf', `bibtex-action-open-link', etc.  The
 associated value must be nil, meaning that there will be no
 initial input, or a string.
@@ -227,7 +228,9 @@ offering the selection candidates"
            nil
            (and initial-input
                 (stringp initial-input)
-                (concat initial-input " "))
+                (if (string-equal initial-input "bibtex-completion-key-at-point")
+                    (bibtex-completion-key-at-point)
+                  (concat initial-input " ")))
            'bibtex-actions-history bibtex-actions-presets nil)))
     (cl-loop for choice in chosen
              ;; Collect citation keys of selected candidate(s).
