@@ -493,5 +493,13 @@ With prefix, rebuild the cache before offering candidates."
   (interactive (list (bibtex-actions-read :rebuild-cache current-prefix-arg)))
   (bibtex-completion-add-pdf-to-library keys))
 
+(defvar bibtex-actions-default-action 'bibtex-actions-open)
+
+;;;###autoload
+(defun bibtex-actions-at-point (keys)
+  (interactive (list (bibtex-actions-read :initial 'point
+					  :rebuild-cache current-prefix-arg)))
+  (funcall bibtex-actions-default-action keys))
+
 (provide 'bibtex-actions)
 ;;; bibtex-actions.el ends here
