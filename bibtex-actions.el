@@ -499,14 +499,14 @@ With prefix, rebuild the cache before offering candidates."
   (bibtex-completion-add-pdf-to-library keys))
 
 ;;;###autoload
-(defun bibtex-actions-at-point (keys)
-  "Select an action for the bibtex key at point.
-The bibtex key is found by `bibtex-completion-key-at-point', and
-the default action is set by `bibtex-actions-default-action'.
-With prefix, rebuild the cache before offering candidates."  
-  (interactive (list (bibtex-actions-read :initial 'point
-					  :rebuild-cache current-prefix-arg)))
-  (funcall bibtex-actions-default-action keys))
+(defun bibtex-actions-at-point (&optional arg)
+  "Search BibTeX entries and call `bibtex-actions-default-action'.
+With prefix ARG, rebuild the cache before offering candidates.
+The bibtex key found by `bibtex-completion-key-at-point' is used
+as the initial input."
+  (interactive "P")
+  (funcall bibtex-actions-default-action
+           (bibtex-actions-read :initial 'point :rebuild-cache arg)))
 
 (provide 'bibtex-actions)
 ;;; bibtex-actions.el ends here
