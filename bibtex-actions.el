@@ -115,13 +115,14 @@ manager like Zotero or JabRef."
   '((pdf    . "has:pdf")
     (note   . nil)
     (link   . "has:link")
-    (source . "has:link\\|has:pdf"))
+    (source . "has:link\\|has:pdf")
+    (point  . bibtex-completion-key-at-point))
   "Alist defining the initial input for some bibtex open actions.
 Given a flexible completion style, this will restrict the list of
 available candidates to those matching the initial input.
 
 The association key can be one of the symbols `pdf', `note',
-`link' or `source' and defines the input for the function
+`link', `source' or `point' and defines the input for the function
 `bibtex-action-open-pdf', `bibtex-action-open-link', etc.  The
 associated value must be nil, meaning that there will be no
 initial input, or a string.
@@ -132,8 +133,14 @@ you can use the following initial inputs: \"has:pdf\",
   :group 'bibtex-actions
   :type '(alist :key-type symbol
                 :value-type (choice string
-                                    (const :tag "No initial input" nil))))
-  
+                                    (const :tag "No initial input" nil)
+                                    (const :tag "Key at point" bibtex-completion-key-at-point))))
+
+(defcustom bibtex-actions-default-action 'bibtex-actions-open
+  "The default action for the `bibtex-actions-at-point' command."
+  :group 'bibtex-actions
+  :type 'function)
+    
 ;;; History, including future history list.
 
 (defvar bibtex-actions-history nil
@@ -226,8 +233,9 @@ offering the selection candidates"
            nil
            nil
            (and initial-input
-                (stringp initial-input)
-                (concat initial-input " "))
+                (if (stringp initial-input)
+                    (concat initial-input " ")
+                  (funcall initial-input)))
            'bibtex-actions-history bibtex-actions-presets nil)))
     (cl-loop for choice in chosen
              ;; Collect citation keys of selected candidate(s).
@@ -489,6 +497,16 @@ URL.
 With prefix, rebuild the cache before offering candidates."
   (interactive (list (bibtex-actions-read :rebuild-cache current-prefix-arg)))
   (bibtex-completion-add-pdf-to-library keys))
+
+;;;###autoload
+(defun bibtex-actions-at-point (&optional arg)
+  "Search BibTeX entries and call `bibtex-actions-default-action'.
+With prefix ARG, rebuild the cache before offering candidates.
+The bibtex key found by `bibtex-completion-key-at-point' is used
+as the initial input."
+  (interactive "P")
+  (funcall bibtex-actions-default-action
+           (bibtex-actions-read :initial 'point :rebuild-cache arg)))
 
 (provide 'bibtex-actions)
 ;;; bibtex-actions.el ends here
