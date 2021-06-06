@@ -413,7 +413,7 @@ TEMPLATE."
 
 ;;; At-point functions
 
-(defun bibtex-completion-get-key-org-cite ()
+(defun bibtex-actions-get-key-org-cite ()
   "Return key at point for org-cite citation-reference."
   (when (eq major-mode 'org-mode)
     (let ((elt (org-element-context)))
