@@ -38,6 +38,9 @@
 ;;; Code:
 
 (require 'bibtex-completion)
+(require 'org-element)
+
+(declare-function org-element-context "org-element")
 
 ;;; Declare variables for byte compiler
 
@@ -407,6 +410,15 @@ TEMPLATE."
                               field-width
                             width)))
                (truncate-string-to-width field-value width 0 ?\s))))))))
+
+;;; At-point functions
+
+(defun bibtex-completion-get-key-org-cite ()
+  "Return the citation key at point for org-cite citation-references."
+  (when (eq major-mode 'org-mode)
+    (let ((elt (org-element-context)))
+      (if (eq (car elt) 'citation-reference)
+          (org-element-property :key elt)))))
 
 ;;; Command wrappers for bibtex-completion functions
 
