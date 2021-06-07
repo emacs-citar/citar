@@ -38,7 +38,6 @@
 ;;; Code:
 
 (require 'bibtex-completion)
-(require 'org-element)
 
 (declare-function org-element-context "org-element")
 
