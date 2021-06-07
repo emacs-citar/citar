@@ -40,6 +40,7 @@
 (require 'bibtex-completion)
 
 (declare-function org-element-context "org-element")
+(declare-function org-element-property "org-element")
 
 ;;; Declare variables for byte compiler
 
