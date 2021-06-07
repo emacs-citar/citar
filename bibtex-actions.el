@@ -413,6 +413,8 @@ TEMPLATE."
 
 ;;; At-point functions
 
+;; This function will likely be removed if and when bibtex-completions adds
+;; something equivalent.
 (defun bibtex-actions-get-key-org-cite ()
   "Return key at point for org-cite citation-reference."
   (when (eq major-mode 'org-mode)
