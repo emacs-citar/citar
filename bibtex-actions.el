@@ -39,6 +39,9 @@
 
 (require 'bibtex-completion)
 
+(declare-function org-element-context "org-element")
+(declare-function org-element-property "org-element")
+
 ;;; Declare variables for byte compiler
 
 (defvar crm-separator)
@@ -407,6 +410,17 @@ TEMPLATE."
                               field-width
                             width)))
                (truncate-string-to-width field-value width 0 ?\s))))))))
+
+;;; At-point functions
+
+;; This function will likely be removed if and when bibtex-completions adds
+;; something equivalent.
+(defun bibtex-actions-get-key-org-cite ()
+  "Return key at point for org-cite citation-reference."
+  (when (eq major-mode 'org-mode)
+    (let ((elt (org-element-context)))
+      (if (eq (car elt) 'citation-reference)
+          (org-element-property :key elt)))))
 
 ;;; Command wrappers for bibtex-completion functions
 
