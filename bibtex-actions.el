@@ -41,10 +41,17 @@
 
 (declare-function org-element-context "org-element")
 (declare-function org-element-property "org-element")
+(declare-function org-element-type "org-element")
+(declare-function org-cite-get-references "org-cite")
+(declare-function embark-act "embark")
 
 ;;; Declare variables for byte compiler
 
 (defvar crm-separator)
+(defvar embark-keymap-alist)
+(defvar embark-target-finders)
+(defvar embark-general-map)
+(defvar embark-meta-map)
 
 ;;; Variables
 
@@ -143,7 +150,23 @@ you can use the following initial inputs: \"has:pdf\",
   "The default action for the `bibtex-actions-at-point' command."
   :group 'bibtex-actions
   :type 'function)
-    
+
+(defcustom bibtex-actions-at-point-fallback 'prompt
+  "Fallback action for `bibtex-actions-at-point'.
+The action is used when no citation key is found at point.
+`prompt' means choosing entries via `bibtex-actions-read' and nil
+means no action."
+  :group 'bibtex-actions
+  :type '(choice (const :tag "Prompt" 'prompt)
+                 (const :tag "Ignore" nil)))
+
+(defcustom bibtex-actions-embark-dwim t
+  "Whether to run the default action on citation keys at point.
+If non-nil, call the default embark action through `embark-dwim'.
+If nil, prompt the user for an action through `embark-act'."
+  :group 'bibtex-actions
+  :type 'boolean)
+
 ;;; History, including future history list.
 
 (defvar bibtex-actions-history nil
@@ -417,10 +440,39 @@ TEMPLATE."
 ;; something equivalent.
 (defun bibtex-actions-get-key-org-cite ()
   "Return key at point for org-cite citation-reference."
-  (when (eq major-mode 'org-mode)
-    (let ((elt (org-element-context)))
-      (if (eq (car elt) 'citation-reference)
-          (org-element-property :key elt)))))
+  (when-let (((eq major-mode 'org-mode))
+             (elt (org-element-context)))
+    (pcase (org-element-type elt)
+      ('citation-reference
+       (org-element-property :key elt))
+      ('citation
+       (org-cite-get-references elt t)))))
+
+;;; Embark
+
+(defun bibtex-actions-citation-key-at-point ()
+  "Return citation keys at point as a list for `embark'."
+  (when-let ((key (or (bibtex-actions-get-key-org-cite)
+                      (bibtex-completion-key-at-point))))
+    (cons 'citation-key (if (listp key) key (list key)))))
+
+(defvar bibtex-actions-buffer-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map (kbd "t") 'bibtex-actions-add-pdf-attachment)
+    (define-key map (kbd "a") 'bibtex-actions-add-pdf-to-library)
+    (define-key map (kbd "o") 'bibtex-actions-open)
+    (define-key map (kbd "e") 'bibtex-actions-open-entry)
+    (define-key map (kbd "l") 'bibtex-actions-open-link)
+    (define-key map (kbd "n") 'bibtex-actions-open-notes)
+    (define-key map (kbd "p") 'bibtex-actions-open-pdf)
+    (define-key map (kbd "RET") 'bibtex-actions-run-default-action)
+    map)
+  "Keymap for Embark citation-key actions.
+
+This keymap is used by `bibtex-actions-at-point' internally.  It
+should not be added to `embark-keymap-alist' because interactive
+commands (i.e. bibtex-actions-*) currently do not work well with
+`embark-act' outside the minibuffer.")
 
 ;;; Command wrappers for bibtex-completion functions
 
@@ -512,15 +564,44 @@ With prefix, rebuild the cache before offering candidates."
   (interactive (list (bibtex-actions-read :rebuild-cache current-prefix-arg)))
   (bibtex-completion-add-pdf-to-library keys))
 
+(defun bibtex-actions-run-default-action (keys)
+  "Run the default action `bibtex-actions-default-action' on KEYS."
+  (funcall bibtex-actions-default-action keys))
+
 ;;;###autoload
 (defun bibtex-actions-at-point (&optional arg)
-  "Search BibTeX entries and call `bibtex-actions-default-action'.
-With prefix ARG, rebuild the cache before offering candidates.
-The bibtex key found by `bibtex-completion-key-at-point' is used
-as the initial input."
+  "Run the default action on citation keys found at point.
+If no citation key is found, target entries can be chosen
+interactively when `bibtex-actions-at-point-fallback' is non-nil.
+With prefix ARG, rebuild the cache before offering candidates."
   (interactive "P")
-  (funcall bibtex-actions-default-action
-           (bibtex-actions-read :initial 'point :rebuild-cache arg)))
+  (if (fboundp 'embark-dwim)
+      (let ((embark-keymap-alist '((bibtex . bibtex-actions-map))))
+        (condition-case err
+            (let ((embark-target-finders '(bibtex-actions-citation-key-at-point))
+                  (embark-keymap-alist '((citation-key . bibtex-actions-buffer-map)))
+                  ;; `embark-general-map' is useless in this case
+                  ;; because we are not in the minibuffer and the
+                  ;; TARGET is not string
+                  (embark-general-map embark-meta-map))
+              ;; This is a workaround: unless in the minibuffer,
+              ;; embark cannot pass TARGET to action when the action
+              ;; is an interactive command
+              (cl-letf (((symbol-function 'embark--act)
+                         (lambda (action target _) (funcall action target))))
+                (if bibtex-actions-embark-dwim
+                    (embark-dwim)
+                  (embark-act))))
+          (user-error
+           (when (and (string-equal (error-message-string err) "No target found")
+                      bibtex-actions-at-point-fallback)
+             (bibtex-actions-run-default-action
+              (bibtex-actions-read :rebuild-cache arg))))))
+    (if-let ((keys (bibtex-actions-citation-key-at-point)))
+        (funcall bibtex-actions-default-action keys)
+      (when bibtex-actions-at-point-fallback
+        (bibtex-actions-run-default-action
+         (bibtex-actions-read :rebuild-cache arg))))))
 
 (provide 'bibtex-actions)
 ;;; bibtex-actions.el ends here

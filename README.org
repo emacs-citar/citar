@@ -233,6 +233,25 @@ You can also extend this to do the same thing for your PDF files, or notes:
 
 For additional configuration options on this, see [[https://github.com/bdarcus/bibtex-actions/wiki/Configuration#automating-path-watches][the wiki]].
 
+*** Finding citation keys at point
+    :PROPERTIES:
+    :CUSTOM_ID: finding-citation-keys-at-point
+    :END:
+
+=bibtex-actions-at-point= can find citation keys at point in org-mode buffer, latex-mode buffer, etc. To add support for other major modes or citation syntax, you can write a function (below is an example for =org-cite=) and add it to =bibtex-completion-key-at-point-functions=.
+
+#+begin_src emacs-lisp
+(defun bibtex-actions-get-key-org-cite ()
+  "Return key at point for org-cite citation-reference."
+  (when-let (((eq major-mode 'org-mode))
+             (elt (org-element-context)))
+    (pcase (org-element-type elt)
+      ('citation-reference
+       (org-element-property :key elt))
+      ('citation
+       (org-cite-get-references elt t)))))
+#+end_src
+
 ** Usage
    :PROPERTIES:
    :CUSTOM_ID: usage
@@ -279,6 +298,17 @@ From there, you can run the same options discussed above using =embark-act= (whi
 
 So, for example, say you are working on a paper. You hold the complete super-set of items you are interested in citing at some point in that buffer.
 From there, you can run different actions on the candidates at will, rather than search individually for each item you want to cite.
+
+*** Use =bibtex-actions-at-point=
+    :PROPERTIES:
+    :CUSTOM_ID: use-bibtex-actions-at-point
+    :END:
+
+=M-x bibtex-actions-at-point= will run the default action on citation keys found at point directly.
+
+By setting =bibtex-actions-embark-dwim= to nil, other actions in =bibtex-actions-buffer-map= will be prompted if =embark= is installed. Press =RET= will run the default action.
+
+If no citation key is found, all items will be shown in the minibuffer for selection. This behavior can be disabled by setting =bibtex-actions-at-point-fallback= to nil.
 
 ** Comparisons
    :PROPERTIES:
