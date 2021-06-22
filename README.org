@@ -306,7 +306,7 @@ From there, you can run different actions on the candidates at will, rather than
 
 =M-x bibtex-actions-at-point= will run the default action on citation keys found at point directly.
 
-By setting =bibtex-actions-embark-dwim= to nil, other actions in =bibtex-actions-buffer-map= will be prompted if =embark= is installed. Press =RET= will run the default action.
+If =embark= is installed, setting =bibtex-actions-embark-dwim= to nil will prompt for other actions in =bibtex-actions-buffer-map= . From there, pressing =RET= will run the default action.
 
 If no citation key is found, all items will be shown in the minibuffer for selection. This behavior can be disabled by setting =bibtex-actions-at-point-fallback= to nil.
 
