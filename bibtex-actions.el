@@ -585,7 +585,10 @@ With prefix ARG, rebuild the cache before offering candidates."
               ;; embark cannot pass TARGET to action when the action
               ;; is an interactive command
               (cl-letf (((symbol-function 'embark--act)
-                         (lambda (action target _) (funcall action target))))
+                         (lambda (action target _)
+                           (if (where-is-internal action (list bibtex-actions-buffer-map))
+                               (funcall action target)
+                             (command-execute action)))))
                 (if bibtex-actions-embark-dwim
                     (embark-dwim)
                   (embark-act))))
