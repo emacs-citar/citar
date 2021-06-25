@@ -355,9 +355,9 @@ will then return the key 'key', resulting in '@key' at point.
 Supports the pandoc and 'org-cite' key syntax, in either
 'org-mode' or 'markdown-mode'."
     ; FIX
-    (when ;(and (or (eq major-mode 'org-mode)
-         ;         (eq major-mode 'markdown-mode))
-               (eq ?@ (char-before))
+    (when (and (or (eq major-mode 'org-mode)
+                   (eq major-mode 'markdown-mode))
+               (eq ?@ (char-before)))
       (let* ((candidates (bibtex-actions--get-candidates))
              ;; set both begin and end to point so we use capf UI to narrow and
              ;; select
