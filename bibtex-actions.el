@@ -234,28 +234,31 @@ If FORCE-REBUILD-CACHE is t, force reloading the cache."
     (bibtex-actions-refresh force-rebuild-cache))
   bibtex-actions--candidates-cache)
 
-(defun bibtex-actions-complete-key-at-point-org-cite ()
-    "Complete org-cite citation key at point.
+(defun bibtex-actions-complete-key-at-point ()
+    "Complete org-cite or pandoc citation key at point.
 
-When inserting '@' in a buffer the capf UI will present user with
-a list of entries, from which they can narrow against a string
-which includes title, author, etc., and then select one.  This
-function will then return the key 'key', resulting in '@key' at
-point."
-  (when (eq ?@ (char-before))
-    (let* ((candidates (bibtex-actions--get-candidates))
-           ;; set both begin and end to point so we use capf UI to narrow and
-           ;; select
-           (begin (point))
-           (end (point)))
-      (list begin end candidates
-            :exit-function #'bibtex-actions--complete-key-at-point-exit-fn))))
+When inserting '@' in a buffer the capf UI will present a list of
+entries, from which the user can narrow against a string which
+includes title, author, etc., and then select one. This function
+will then return the key 'key', resulting in '@key' at point.
 
-(defun bibtex-actions--complete-key-at-point-exit-fn (&optional str _status)
-  "Exit function to return key from a completion STR."
-    (let ((candidates (bibtex-actions--get-candidates)))
-      (delete-char (- (length str)))
-      (insert (cdr (assoc str candidates)))))
+Supports the pandoc and 'org-cite' key syntax, in either
+'org-mode' or 'markdown-mode'."
+    ; FIX
+    (when ;(and (or (eq major-mode 'org-mode)
+         ;         (eq major-mode 'markdown-mode))
+               (eq ?@ (char-before))
+      (let* ((candidates (bibtex-actions--get-candidates))
+             ;; set both begin and end to point so we use capf UI to narrow and
+             ;; select
+             (begin (point))
+             (end (point)))
+        (list begin end candidates
+              :exit-function
+              (lambda (str _status)
+                ;; take completion str and replace with key
+                (delete-char (- (length str)))
+                (insert (cdr (assoc str candidates))))))))
 
 ;;;###autoload
 (defun bibtex-actions-refresh (&optional force-rebuild-cache)
