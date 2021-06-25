@@ -344,12 +344,37 @@ If FORCE-REBUILD-CACHE is t, force reloading the cache."
     (bibtex-actions-refresh force-rebuild-cache))
   bibtex-actions--candidates-cache)
 
+(defun bibtex-actions-complete-key-at-point ()
+    "Complete org-cite or pandoc citation key at point.
+
+When inserting '@' in a buffer the capf UI will present a list of
+entries, from which the user can narrow against a string which
+includes title, author, etc., and then select one. This function
+will then return the key 'key', resulting in '@key' at point.
+
+Supports the pandoc and 'org-cite' key syntax, in either
+'org-mode' or 'markdown-mode'."
+    ; FIX
+    (when ;(and (or (eq major-mode 'org-mode)
+         ;         (eq major-mode 'markdown-mode))
+               (eq ?@ (char-before))
+      (let* ((candidates (bibtex-actions--get-candidates))
+             ;; set both begin and end to point so we use capf UI to narrow and
+             ;; select
+             (begin (point))
+             (end (point)))
+        (list begin end candidates
+              :exit-function
+              (lambda (str _status)
+                ;; take completion str and replace with key
+                (delete-char (- (length str)))
+                (insert (cdr (assoc str candidates))))))))
+
 ;;;###autoload
 (defun bibtex-actions-refresh (&optional force-rebuild-cache)
   "Reload the candidates cache.
 If called interactively with a prefix or if FORCE-REBUILD-CACHE
-is non-nil, also run the hook
-`bibtex-actions-before-refresh-hook'"
+is non-nil, also run the `bibtex-actions-before-refresh-hook' hook."
   (interactive "P")
   (when force-rebuild-cache
     (run-hooks 'bibtex-actions-force-refresh-hook))
