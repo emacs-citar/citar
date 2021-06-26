@@ -52,6 +52,7 @@
 (defvar embark-target-finders)
 (defvar embark-general-map)
 (defvar embark-meta-map)
+(defvar org-element-citation-prefix-re)
 
 ;;; Variables
 
@@ -349,14 +350,13 @@ If FORCE-REBUILD-CACHE is t, force reloading the cache."
 
 When inserting '@' in a buffer the capf UI will present a list of
 entries, from which the user can narrow against a string which
-includes title, author, etc., and then select one. This function
+includes title, author, etc., and then select one.  This function
 will then return the key 'key', resulting in '@key' at point.
 
 Supports the pandoc and 'org-cite' key syntax, in either
 'org-mode' or 'markdown-mode'."
     ; FIX
-    (when (and (or (eq major-mode 'org-mode)
-                   (eq major-mode 'markdown-mode))
+    (when (and (looking-back org-element-citation-prefix-re (line-beginning-position))
                (eq ?@ (char-before)))
       (let* ((candidates (bibtex-actions--get-candidates))
              ;; set both begin and end to point so we use capf UI to narrow and
