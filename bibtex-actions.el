@@ -247,20 +247,38 @@ offering the selection candidates"
 	 (candidates (bibtex-actions--get-candidates rebuild-cache))
          (initial-input (assoc-default initial bibtex-actions-initial-inputs))
          (chosen
-          (completing-read-multiple
-           "BibTeX entries: "
-           (lambda (string predicate action)
-             (if (eq action 'metadata)
-                 `(metadata
-                   (affixation-function . bibtex-actions--affixation)
-                   (category . bibtex))
-               (complete-with-action action candidates string predicate)))
-           nil
-           nil
-           (and initial-input
-                (stringp initial-input)
-                (concat initial-input " "))
-           'bibtex-actions-history bibtex-actions-presets nil)))
+          (minibuffer-with-setup-hook
+              ;; configures the minibuffer to use a short string (the key) in the prompt
+              ;; FIX no gap between entries
+              (lambda ()
+                (add-hook 'after-change-functions
+                          (lambda (&rest _)
+                            (save-excursion
+                              (save-match-data
+                                (let ((pos (minibuffer-prompt-end)))
+                                  (goto-char pos)
+                                  (while (< pos (point-max))
+                                    (when (re-search-forward (concat crm-separator "\\|\\'") nil 'noerror)
+                                      (when-let (short (cdr (assoc (string-trim (buffer-substring-no-properties
+                                                                                 pos (match-beginning 0)))
+                                                                   candidates)))
+                                        (put-text-property pos (match-beginning 0) 'display short))
+                                      (setq pos (point))))))))
+                          nil 'local))
+            (completing-read-multiple
+             "Reference entries: "
+             (lambda (string predicate action)
+               (if (eq action 'metadata)
+                   `(metadata
+                     (affixation-function . bibtex-actions--affixation)
+                     (category . bibtex))
+                 (complete-with-action action candidates string predicate)))
+             nil
+             nil
+             (and initial-input
+                  (stringp initial-input)
+                  (concat initial-input " "))
+             'bibtex-actions-history bibtex-actions-presets nil))))
     (cl-loop for choice in chosen
              ;; Collect citation keys of selected candidate(s).
              collect (cdr (assoc choice candidates)))))
