@@ -43,6 +43,7 @@
 (declare-function org-element-property "org-element")
 (declare-function org-element-type "org-element")
 (declare-function org-cite-get-references "org-cite")
+(declare-function org-cite-register-processor "org-cite")
 (declare-function embark-act "embark")
 
 ;;; Declare variables for byte compiler
@@ -345,15 +346,7 @@ If FORCE-REBUILD-CACHE is t, force reloading the cache."
   bibtex-actions--candidates-cache)
 
 (defun bibtex-actions-complete-key-at-point ()
-    "Complete org-cite or pandoc citation key at point.
-
-When inserting '@' in a buffer the capf UI will present a list of
-entries, from which the user can narrow against a string which
-includes title, author, etc., and then select one. This function
-will then return the key 'key', resulting in '@key' at point.
-
-Supports the pandoc and 'org-cite' key syntax, in either
-'org-mode' or 'markdown-mode'."
+    "Complete org-cite or pandoc citation key at point."
     ; FIX
     (when (and (or (eq major-mode 'org-mode)
                    (eq major-mode 'markdown-mode))
@@ -458,6 +451,8 @@ TEMPLATE."
 
 ;;; At-point functions
 
+;;; Org-cite
+
 ;; This function will likely be removed if and when bibtex-completions adds
 ;; something equivalent.
 (defun bibtex-actions-get-key-org-cite ()
@@ -469,6 +464,11 @@ TEMPLATE."
        (org-element-property :key elt))
       ('citation
        (org-cite-get-references elt t)))))
+
+;; "follow" processor
+(when (require 'oc nil t)
+  (org-cite-register-processor 'bibtex-actions
+    :follow (lambda (_datum _arg) (call-interactively 'bibtex-actions-at-point))))
 
 ;;; Embark
 
