@@ -61,6 +61,11 @@
   "Face used to highlight suffixes in `bibtex-actions' candidates."
   :group 'bibtex-actions)
 
+(defface bibtex-actions-crm-display-face
+  '((t (:box '(:line-width 6 :color "gray20"))))
+  "Face used to highlightened shortened candidate strings in crm prompt."
+  :group 'bibtex-actions)
+
 (defcustom bibtex-actions-template
   '((t . "${author:20}   ${title:48}   ${year:4}"))
   "Configures formatting for the BibTeX entry.
@@ -262,7 +267,8 @@ offering the selection candidates"
                                       (when-let (short (cdr (assoc (string-trim (buffer-substring-no-properties
                                                                                  pos (match-beginning 0)))
                                                                    candidates)))
-                                        (put-text-property pos (match-beginning 0) 'display short))
+                                        (add-text-properties pos (match-beginning 0)
+                                                             `(display ,(propertize short 'face 'bibtex-actions-crm-display-face))))
                                       (setq pos (point))))))))
                           nil 'local))
             (completing-read-multiple
