@@ -4,7 +4,7 @@
 (setq completion-styles '(orderless))
 
 ;; Enable Selectrum and Marginalia
-(selectrum-mode)
+(vertico-mode)
 (marginalia-mode)
 
 ;; activate additional packages we need, including bibtex-actions
