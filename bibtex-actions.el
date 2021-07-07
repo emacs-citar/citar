@@ -111,7 +111,7 @@ may be indicated with the same icon but a different face."
     (markdown-mode . bibtex-completion-format-citation-pandoc-citeproc)
     (python-mode   . bibtex-completion-format-citation-sphinxcontrib-bibtex)
     (rst-mode      . bibtex-completion-format-citation-sphinxcontrib-bibtex)
-    (default       . bibtex-completion-format-citation-pandoc-citeproc)))
+    (default       . bibtex-actions-format-keys)))
 
 (defcustom bibtex-actions-force-refresh-hook nil
   "Hook run when user forces a (re-) building of the candidates cache.
