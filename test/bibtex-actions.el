@@ -11,9 +11,13 @@
 (require 'embark)
 (require 'bibtex-actions)
 (require 'which-key)
+(require 'consult)
 
 ;; set binding for Embark context menu
 (global-set-key (kbd "M-o") #'embark-act)
+
+;; replace CRM with consult alernative
+(advice-add #'completing-read-multiple :override #'consult-completing-read-multiple)
 
 ;; ensure that embark knows which map to use with bibtex entries
 (add-to-list 'embark-keymap-alist '(bibtex . bibtex-actions-map))

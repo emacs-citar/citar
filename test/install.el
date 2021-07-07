@@ -19,7 +19,7 @@
 
 ;; completion style
 (package-install 'orderless)
-
+(package-install 'consult)
 ;; supporting packages for contextual commands
 (package-install 'embark)
 (package-install 'marginalia)
