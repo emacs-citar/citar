@@ -455,10 +455,8 @@ TEMPLATE."
   "Formatter for KEYS.
 Adds an @ prefix and a semi-colon delimiter for 'org-mode' and 'markdown-mode'.
 Otherwise, keys are plain and comma-delimited."
-  (let* ((prefix (when (or (eq major-mode 'org-mode)
-                           (eq major-mode 'markdown-mode) "@")))
-         (delimiter (if (or (eq major-mode 'org-mode)
-                            (eq major-mode 'markdown-mode) ";")
+  (let* ((prefix (if (eq major-mode 'org-mode) "@" ""))
+         (delimiter (if (eq major-mode 'markdown-mode) ";"
                         ",")))
          (mapconcat (lambda (k) (concat prefix k)) keys delimiter)))
 
