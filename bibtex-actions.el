@@ -449,6 +449,19 @@ TEMPLATE."
                             width)))
                (truncate-string-to-width field-value width 0 ?\s))))))))
 
+;;; Custom formatting functions
+
+(defun bibtex-actions-format-keys (keys)
+  "Formatter for KEYS.
+Adds an @ prefix and a semi-colon delimiter for 'org-mode' and 'markdown-mode'.
+Otherwise, keys are plain and comma-delimited."
+  (let* ((prefix (when (or (eq major-mode 'org-mode)
+                           (eq major-mode 'markdown-mode) "@")))
+         (delimiter (if (or (eq major-mode 'org-mode)
+                            (eq major-mode 'markdown-mode) ";")
+                        ",")))
+         (mapconcat (lambda (k) (concat prefix k)) keys delimiter)))
+
 ;;; At-point functions
 
 ;;; Org-cite
