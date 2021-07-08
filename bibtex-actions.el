@@ -469,10 +469,10 @@ TEMPLATE."
 
 ;; Org-cite "follow" and "insert" processor
 
-(defun bibtex-actions-org-cite-insert ()
-  "Return a list keys, or a key string."
+(defun bibtex-actions-org-cite-insert (multiple)
+  "Return a list of keys when MULTIPLE, or else a key string."
   (let ((references (bibtex-actions-read)))
-    (if (< 1 (length references))
+    (if multiple
         references
       (car references))))
 
