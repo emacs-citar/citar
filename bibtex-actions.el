@@ -44,6 +44,8 @@
 (declare-function org-element-type "org-element")
 (declare-function org-cite-get-references "org-cite")
 (declare-function org-cite-register-processor "org-cite")
+(declare-function org-cite-make-insert-processor "org-cite")
+(declare-function org-cite-basic--complete-style "org-cite")
 (declare-function embark-act "embark")
 
 ;;; Declare variables for byte compiler
@@ -465,9 +467,20 @@ TEMPLATE."
       ('citation
        (org-cite-get-references elt t)))))
 
-;; "follow" processor
+;; Org-cite "follow" and "insert" processor
+
+(defun bibtex-actions-org-cite-insert ()
+  "Return a list keys, or a key string."
+  (let ((references (bibtex-actions-read)))
+    (if (< 1 (length references))
+        references
+      (car references))))
+
 (when (require 'oc nil t)
   (org-cite-register-processor 'bibtex-actions
+    :insert (org-cite-make-insert-processor
+             #'bibtex-actions-org-cite-insert
+             #'org-cite-basic--complete-style)
     :follow (lambda (_datum _arg) (call-interactively 'bibtex-actions-at-point))))
 
 ;;; Embark
