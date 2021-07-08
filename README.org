@@ -20,12 +20,7 @@
 This package turns bibtex-completion functions into completing-read-based Emacs commands.
 When used with selectrum, embark, and marginalia, it provides similar functionality to helm-bibtex and ivy-bibtex: quick filtering and selecting of bibliographic entries from the minibuffer, and the option to run different commands against them.
 
-Here's a screenshot with [[https://github.com/raxod502/selectrum][selectrum]] and [[https://github.com/oantolin/embark/][embark]].
-
-#+CAPTION: selectrum-embark screenshot
-[[file:images/selectrum-embark.png]]
-
-And another with [[https://github.com/minad/vertico][vertico]]:
+Here's a screenshot with [[https://github.com/raxod502/selectrum][vertico]], [[https://github.com/oantolin/embark/][embark]]. and =consult-completing-read-multiple=.
 
 #+CAPTION: vertico with bibtex-actions
 [[file:images/vertico.png]]
@@ -97,6 +92,16 @@ In particular, all of these work well:
 1. [[https://github.com/raxod502/selectrum][selectrum]] (the most full-featured)
 2. [[https://github.com/minad/vertico][vertico]] (new, with a more minimal feature set)
 3. [[https://github.com/oantolin/icomplete-vertical][icomplete-vertical]] (for those that love icomplete, but want a vertical UI)
+
+*** Enhanced multiple selection experience
+
+To get the best user experience with one of the above completion systems, install Consult, and include this in your configuration.
+
+#+BEGIN_SRC emacs-lisp
+(advice-add #'completing-read-multiple :override #'consult-completing-read-multiple)
+#+END_SRC
+
+This will replace the default =completing-read-multiple= UI, which is poorly-suited to long candidate strings like we use here.
 
 *** Completion styles
     :PROPERTIES:
