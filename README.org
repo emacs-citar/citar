@@ -47,7 +47,7 @@ Bibtex-actions is available for installation from [[https://melpa.org][MELPA]].
     :CUSTOM_ID: basic
     :END:
 
-To setup bibtex-actions using =use-package=, you can simply do:
+To setup bibtex-actions using =use-package=, you can do:
 
 #+BEGIN_SRC emacs-lisp
 (use-package bibtex-actions
@@ -69,6 +69,25 @@ The only thing, however, that you /must/ configure is where to find your bib fil
 #+BEGIN_SRC emacs-lisp
   (setq bibtex-completion-bibliography "~/bib/references.bib")
 #+END_SRC
+
+*** Org-Cite
+
+Bibtex-actions includes org-cite integration via a processor with "follow" and "insert" capabilities.
+To configure those, you can do:
+
+#+BEGIN_SRC emacs-lisp
+(setq org-cite-follow-processor 'bibtex-actions)
+(setq org-cite-insert-processor 'bibtex-actions)
+#+END_SRC
+
+By default, in org-mode with org-cite support, when point is on a citation or citation-reference, and you do =org-open-at-point=, it will run the default command, which is =bibtex-actions-open=.
+If you have Embark installed and configured, however, setting this variable will invoke =embark-act= instead.
+
+#+BEGIN_SRC emacs-lisp
+(setq bibtex-actions-embark-dwim nil)
+#+END_SRC
+
+
 
 *** Completion system
 
