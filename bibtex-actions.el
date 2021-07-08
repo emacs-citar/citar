@@ -233,11 +233,15 @@ specific to the item, rather than the citation as a whole.
     (format "[cite%s:%s%s]" style prefix (s-join ";" (--map (concat "@" it) keys)))))
 
 ;;; Completion functions
-(cl-defun bibtex-actions-read (&optional &key initial rebuild-cache)
+(cl-defun bibtex-actions-read (&optional &key multiple initial rebuild-cache)
   "Read bibtex-completion entries.
 
-This provides a wrapper around 'completing-read-multiple', with
-the following optional arguments:
+This provides a wrapper around 'completing-read' and
+'completing-read-multiple', with the following optional
+arguments:
+
+MULTIPLE uses 'completing-read-multiple'; default is
+'completing-read'.
 
 If 'INITIAL' matches one of the keys defined in
 `bibtex-actions-initial-inputs', use the associated initial
@@ -249,20 +253,29 @@ offering the selection candidates"
 	 (candidates (bibtex-actions--get-candidates rebuild-cache))
          (initial-input (assoc-default initial bibtex-actions-initial-inputs))
          (chosen
-          (completing-read-multiple
-           "BibTeX entries: "
-           (lambda (string predicate action)
-             (if (eq action 'metadata)
-                 `(metadata
-                   (affixation-function . bibtex-actions--affixation)
-                   (category . bibtex))
-               (complete-with-action action candidates string predicate)))
-           nil
-           nil
-           (and initial-input
-                (stringp initial-input)
-                (concat initial-input " "))
-           'bibtex-actions-history bibtex-actions-presets nil)))
+          (if multiple
+              (completing-read-multiple
+               "References: "
+               (lambda (string predicate action)
+                 (if (eq action 'metadata)
+                     `(metadata
+                       (affixation-function . bibtex-actions--affixation)
+                       (category . bibtex))
+                   (complete-with-action action candidates string predicate)))
+               nil
+               nil
+               (and initial-input
+                    (stringp initial-input)
+                    (concat initial-input " "))
+               'bibtex-actions-history bibtex-actions-presets nil)
+            (completing-read
+             "References: "
+             (lambda (string predicate action)
+               (if (eq action 'metadata)
+                   '(metadata
+                     (affixation-function . bibtex-actions--affixation)
+                     (category . bibtex))
+                 (complete-with-action action candidates string predicate)))))))
     (cl-loop for choice in chosen
              ;; Collect citation keys of selected candidate(s).
              collect (cdr (assoc choice candidates)))))
@@ -544,28 +557,28 @@ With prefix, rebuild the cache before offering candidates."
 (defun bibtex-actions-insert-citation (keys)
   "Insert citation for the KEYS.
 With prefix, rebuild the cache before offering candidates."
-  (interactive (list (bibtex-actions-read :rebuild-cache current-prefix-arg)))
+  (interactive (list (bibtex-actions-read :multiple t :rebuild-cache current-prefix-arg)))
  (bibtex-completion-insert-citation keys))
 
 ;;;###autoload
 (defun bibtex-actions-insert-reference (keys)
   "Insert formatted reference(s) associated with the KEYS.
 With prefix, rebuild the cache before offering candidates."
-  (interactive (list (bibtex-actions-read :rebuild-cache current-prefix-arg)))
+  (interactive (list (bibtex-actions-read :multiple t :rebuild-cache current-prefix-arg)))
   (bibtex-completion-insert-reference keys))
 
 ;;;###autoload
 (defun bibtex-actions-insert-key (keys)
   "Insert BibTeX KEYS.
 With prefix, rebuild the cache before offering candidates."
-  (interactive (list (bibtex-actions-read :rebuild-cache current-prefix-arg)))
+  (interactive (list (bibtex-actions-read :multiple t :rebuild-cache current-prefix-arg)))
  (bibtex-completion-insert-key keys))
 
 ;;;###autoload
 (defun bibtex-actions-insert-bibtex (keys)
   "Insert BibTeX entry associated with the KEYS.
 With prefix, rebuild the cache before offering candidates."
-  (interactive (list (bibtex-actions-read :rebuild-cache current-prefix-arg)))
+  (interactive (list (bibtex-actions-read :multiple t :rebuild-cache current-prefix-arg)))
  (bibtex-completion-insert-bibtex keys))
 
 ;;;###autoload
