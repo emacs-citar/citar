@@ -98,6 +98,16 @@ In particular, all of these work well:
 2. [[https://github.com/minad/vertico][vertico]] (new, with a more minimal feature set)
 3. [[https://github.com/oantolin/icomplete-vertical][icomplete-vertical]] (for those that love icomplete, but want a vertical UI)
 
+*** Enhanced multiple selection experience
+
+To get the best user experience with one of the above completion systems, install Consult, and include this in your configuration.
+
+#+BEGIN_SRC emacs-lisp
+(advice-add #'completing-read-multiple :override #'consult-completing-read-multiple)
+#+END_SRC
+
+This will replace the default =completing-read-multiple= UI, which is poorly-suited to long candidate strings like we use here.
+
 *** Completion styles
     :PROPERTIES:
     :CUSTOM_ID: completion-styles
