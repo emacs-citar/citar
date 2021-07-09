@@ -183,18 +183,18 @@ If nil, prompt the user for an action through `embark-act'."
 
 (defvar bibtex-actions-map
   (let ((map (make-sparse-keymap)))
-    (define-key map (kbd "t") 'bibtex-actions-add-pdf-attachment)
-    (define-key map (kbd "a") 'bibtex-actions-add-pdf-to-library)
-    (define-key map (kbd "b") 'bibtex-actions-insert-bibtex)
-    (define-key map (kbd "c") 'bibtex-actions-insert-citation)
-    (define-key map (kbd "k") 'bibtex-actions-insert-key)
-    (define-key map (kbd "f") 'bibtex-actions-insert-reference)
-    (define-key map (kbd "o") 'bibtex-actions-open)
-    (define-key map (kbd "e") 'bibtex-actions-open-entry)
-    (define-key map (kbd "l") 'bibtex-actions-open-link)
-    (define-key map (kbd "n") 'bibtex-actions-open-notes)
-    (define-key map (kbd "p") 'bibtex-actions-open-pdf)
-    (define-key map (kbd "r") 'bibtex-actions-refresh)
+    (define-key map "t" '("add pdf attachment" . bibtex-actions-add-pdf-attachment))
+    (define-key map "a" '("add pdf to library" . bibtex-actions-add-pdf-to-library))
+    (define-key map "b" '("insert bibtex" . bibtex-actions-insert-bibtex))
+    (define-key map "c" '("insert citation" . bibtex-actions-insert-citation))
+    (define-key map "k" '("insert key" . bibtex-actions-insert-key))
+    (define-key map "f" '("insert reference" . bibtex-actions-insert-reference))
+    (define-key map "o" '("open source" . bibtex-actions-open))
+    (define-key map "e" '("open reference entry" . bibtex-actions-open-entry))
+    (define-key map "l" '("open source link" . bibtex-actions-open-link))
+    (define-key map "n" '("open notes" . bibtex-actions-open-notes))
+    (define-key map "p" '("open source pdf" . bibtex-actions-open-pdf))
+    (define-key map "r" '("refresh references" . bibtex-actions-refresh))
     map)
   "Keymap for 'bibtex-actions'.")
 
@@ -493,21 +493,16 @@ TEMPLATE."
 
 (defvar bibtex-actions-buffer-map
   (let ((map (make-sparse-keymap)))
-    (define-key map (kbd "t") 'bibtex-actions-add-pdf-attachment)
-    (define-key map (kbd "a") 'bibtex-actions-add-pdf-to-library)
-    (define-key map (kbd "o") 'bibtex-actions-open)
-    (define-key map (kbd "e") 'bibtex-actions-open-entry)
-    (define-key map (kbd "l") 'bibtex-actions-open-link)
-    (define-key map (kbd "n") 'bibtex-actions-open-notes)
-    (define-key map (kbd "p") 'bibtex-actions-open-pdf)
-    (define-key map (kbd "RET") 'bibtex-actions-run-default-action)
+    (define-key map "t" '("add pdf attachment" . bibtex-completion-add-PDF-attachment))
+    (define-key map "a" '("add pdf to library" . bibtex-completion-add-pdf-to-library))
+    (define-key map "o" '("open source" . bibtex-completion-open-any))
+    (define-key map "e" '("open reference entry" . bibtex-completion-show-entry))
+    (define-key map "l" '("open source link" . bibtex-completion-open-url-or-doi))
+    (define-key map "n" '("open notes" . bibtex-completion-edit-notes))
+    (define-key map "p" '("open source pdf" . bibtex-completion-open-pdf))
+    (define-key map "RET" '("default" . bibtex-actions-run-default-action))
     map)
-  "Keymap for Embark citation-key actions.
-
-This keymap is used by `bibtex-actions-at-point' internally.  It
-should not be added to `embark-keymap-alist' because interactive
-commands (i.e. bibtex-actions-*) currently do not work well with
-`embark-act' outside the minibuffer.")
+  "Keymap for Embark citation-key actions.")
 
 ;;; Command wrappers for bibtex-completion functions
 
