@@ -183,18 +183,18 @@ If nil, prompt the user for an action through `embark-act'."
 
 (defvar bibtex-actions-map
   (let ((map (make-sparse-keymap)))
-    (define-key map "t" '("add pdf attachment" . bibtex-actions-add-pdf-attachment))
-    (define-key map "a" '("add pdf to library" . bibtex-actions-add-pdf-to-library))
-    (define-key map "b" '("insert bibtex" . bibtex-actions-insert-bibtex))
-    (define-key map "c" '("insert citation" . bibtex-actions-insert-citation))
-    (define-key map "k" '("insert key" . bibtex-actions-insert-key))
-    (define-key map "f" '("insert reference" . bibtex-actions-insert-reference))
-    (define-key map "o" '("open source" . bibtex-actions-open))
-    (define-key map "e" '("open reference entry" . bibtex-actions-open-entry))
-    (define-key map "l" '("open source link" . bibtex-actions-open-link))
-    (define-key map "n" '("open notes" . bibtex-actions-open-notes))
-    (define-key map "p" '("open source pdf" . bibtex-actions-open-pdf))
-    (define-key map "r" '("refresh references" . bibtex-actions-refresh))
+    (define-key map (kbd "t") 'bibtex-actions-add-pdf-attachment)
+    (define-key map (kbd "a") 'bibtex-actions-add-pdf-to-library)
+    (define-key map (kbd "b") 'bibtex-actions-insert-bibtex)
+    (define-key map (kbd "c") 'bibtex-actions-insert-citation)
+    (define-key map (kbd "k") 'bibtex-actions-insert-key)
+    (define-key map (kbd "f") 'bibtex-actions-insert-reference)
+    (define-key map (kbd "o") 'bibtex-actions-open)
+    (define-key map (kbd "e") 'bibtex-actions-open-entry)
+    (define-key map (kbd "l") 'bibtex-actions-open-link)
+    (define-key map (kbd "n") 'bibtex-actions-open-notes)
+    (define-key map (kbd "p") 'bibtex-actions-open-pdf)
+    (define-key map (kbd "r") 'bibtex-actions-refresh)
     map)
   "Keymap for 'bibtex-actions'.")
 
@@ -265,7 +265,8 @@ offering the selection candidates"
            'bibtex-actions-history bibtex-actions-presets nil)))
     (cl-loop for choice in chosen
              ;; Collect citation keys of selected candidate(s).
-             collect (cdr (assoc choice candidates)))))
+             collect (cdr (or (assoc choice candidates)
+                              (rassoc choice candidates))))))
 
 (defun bibtex-actions--format-candidates ()
   "Transform candidates from 'bibtex-completion-candidates'.
@@ -485,26 +486,22 @@ TEMPLATE."
 
 ;;; Embark
 
-(cl-defun bibtex-actions-citation-key-at-point (&optional &key as-list)
-  "Return citation keys at point AS-LIST for `embark', or string."
-  (when-let* ((key (or (bibtex-actions-get-key-org-cite)
-                      (bibtex-completion-key-at-point)))
-              (crm-separator "\\s-*&\\s-*")
-              (key-list  (if (listp key) key (list key)))
-              ;; Currently, Embark only accepts a string. So we use a crm-like string to
-              ;; represent the list.
-              (return-value (if as-list key-list (string-join key-list "&"))))
-    (cons 'citation-key return-value)))
+(defun bibtex-actions-citation-key-at-point ()
+  "Return citation keys at point as a list for `embark'."
+  (when-let ((key (or (bibtex-actions-get-key-org-cite)
+                      (bibtex-completion-key-at-point))))
+    (cons 'citation-key (if (listp key) (string-join key " & ") key))))
 
 (defvar bibtex-actions-buffer-map
   (let ((map (make-sparse-keymap)))
-    (define-key map "t" '("add pdf attachment" . bibtex-actions-add-pdf-attachment))
-    (define-key map "a" '("add pdf to library" . bibtex-actions-add-pdf-to-library))
-    (define-key map "o" '("open source" . bibtex-actions-open))
-    (define-key map "e" '("open reference entry" . bibtex-actions-open-entry))
-    (define-key map "l" '("open source link" . bibtex-actions-open-link))
-    (define-key map "n" '("open notes" . bibtex-actions-open-notes))
-    (define-key map "p" '("open source pdf" . bibtex-actions-open-pdf))
+    (define-key map (kbd "t") 'bibtex-actions-add-pdf-attachment)
+    (define-key map (kbd "a") 'bibtex-actions-add-pdf-to-library)
+    (define-key map (kbd "o") 'bibtex-actions-open)
+    (define-key map (kbd "e") 'bibtex-actions-open-entry)
+    (define-key map (kbd "l") 'bibtex-actions-open-link)
+    (define-key map (kbd "n") 'bibtex-actions-open-notes)
+    (define-key map (kbd "p") 'bibtex-actions-open-pdf)
+    (define-key map (kbd "RET") 'bibtex-actions-run-default-action)
     map)
   "Keymap for Embark citation-key actions.")
 
@@ -602,10 +599,31 @@ With prefix, rebuild the cache before offering candidates."
   "Run the default action `bibtex-actions-default-action' on KEYS."
   (funcall bibtex-actions-default-action keys))
 
-(with-eval-after-load "embark"
-  (add-to-list 'embark-target-finders 'bibtex-actions-citation-key-at-point)
-  (add-to-list 'embark-keymap-alist '(bibtex . bibtex-actions-map))
-  (add-to-list 'embark-keymap-alist '(citation-key . bibtex-actions-buffer-map)))
+;;;###autoload
+(defun bibtex-actions-at-point (&optional arg)
+  "Run the default action on citation keys found at point.
+If no citation key is found, target entries can be chosen
+interactively when `bibtex-actions-at-point-fallback' is non-nil.
+With prefix ARG, rebuild the cache before offering candidates."
+  (interactive "P")
+  (if (fboundp 'embark-dwim)
+      (let ((embark-keymap-alist '((bibtex . bibtex-actions-map)
+                                   (citation-key . bibtex-actions-buffer-map))))
+        (condition-case err
+            (let ((embark-target-finders '(bibtex-actions-citation-key-at-point)))
+              (if bibtex-actions-embark-dwim
+                    (embark-dwim)
+                  (embark-act)))
+          (user-error
+           (when (and (string-equal (error-message-string err) "No target found")
+                      bibtex-actions-at-point-fallback)
+             (bibtex-actions-run-default-action
+              (bibtex-actions-read :rebuild-cache arg))))))
+    (if-let ((keys (bibtex-actions-citation-key-at-point)))
+        (funcall bibtex-actions-default-action keys)
+      (when bibtex-actions-at-point-fallback
+        (bibtex-actions-run-default-action
+         (bibtex-actions-read :rebuild-cache arg))))))
 
 (provide 'bibtex-actions)
 ;;; bibtex-actions.el ends here
