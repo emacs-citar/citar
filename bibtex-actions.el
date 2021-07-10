@@ -607,23 +607,25 @@ interactively when `bibtex-actions-at-point-fallback' is non-nil.
 With prefix ARG, rebuild the cache before offering candidates."
   (interactive "P")
   (if (fboundp 'embark-dwim)
-      (let ((embark-keymap-alist '((bibtex . bibtex-actions-map)
-                                   (citation-key . bibtex-actions-buffer-map))))
-        (condition-case err
-            (let ((embark-target-finders '(bibtex-actions-citation-key-at-point)))
-              (if bibtex-actions-embark-dwim
-                    (embark-dwim)
-                  (embark-act)))
-          (user-error
-           (when (and (string-equal (error-message-string err) "No target found")
-                      bibtex-actions-at-point-fallback)
-             (bibtex-actions-run-default-action
-              (bibtex-actions-read :rebuild-cache arg))))))
+      (condition-case err
+          (if bibtex-actions-embark-dwim
+              (embark-dwim)
+            (embark-act))
+        (user-error
+         (when (and (string-equal (error-message-string err) "No target found")
+                    bibtex-actions-at-point-fallback)
+           (bibtex-actions-run-default-action
+            (bibtex-actions-read :rebuild-cache arg)))))
     (if-let ((keys (bibtex-actions-citation-key-at-point)))
         (funcall bibtex-actions-default-action keys)
       (when bibtex-actions-at-point-fallback
         (bibtex-actions-run-default-action
          (bibtex-actions-read :rebuild-cache arg))))))
+
+(with-eval-after-load "embark"
+  (add-to-list 'embark-target-finders 'bibtex-actions-citation-key-at-point)
+  (add-to-list 'embark-keymap-alist '((bibtex . bibtex-actions-map)
+                                      (citation-key . bibtex-actions-buffer-map))))
 
 (provide 'bibtex-actions)
 ;;; bibtex-actions.el ends here
