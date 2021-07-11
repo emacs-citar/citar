@@ -597,7 +597,8 @@ With prefix, rebuild the cache before offering candidates."
 
 (defun bibtex-actions-run-default-action (keys)
   "Run the default action `bibtex-actions-default-action' on KEYS."
-  (funcall bibtex-actions-default-action keys))
+  (funcall bibtex-actions-default-action
+           (if (stringp keys) (split-string keys " & ") keys)))
 
 ;;;###autoload
 (defun bibtex-actions-at-point (&optional arg)
