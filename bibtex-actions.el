@@ -470,7 +470,7 @@ TEMPLATE."
 
 ;; Org-cite "follow" and "insert" processor
 
-(defun bibtex-actions-org-cite-insert (multiple)
+(defun bibtex-actions-org-cite-insert (&optional multiple)
   "Return a list of keys when MULTIPLE, or else a key string."
   (let ((references (bibtex-actions-read)))
     (if multiple
