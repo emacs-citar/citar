@@ -468,27 +468,6 @@ TEMPLATE."
       ('citation
        (org-cite-get-references elt t)))))
 
-;; Org-cite "follow" and "insert" processor
-
-(defun bibtex-actions-org-cite-insert (&optional multiple)
-  "Return a list of keys when MULTIPLE, or else a key string."
-  ;; FIX
-  (let ((references (bibtex-actions-read)))
-    (if multiple
-        references
-      (car references))))
-
-(defun bibtex-actions-org-cite-follow ()
-  "Follow processor for org-cite."
-  (call-interactively 'bibtex-actions-at-point))
-
-(with-eval-after-load "org-cite"
-  (org-cite-register-processor 'bibtex-actions-org-cite
-    :insert (org-cite-make-insert-processor
-             #'bibtex-actions-org-cite-insert
-             #'org-cite-basic--complete-style)
-    :follow #'bibtex-actions-org-cite-follow))
-
 ;;; Embark
 
 (defun bibtex-actions-citation-key-at-point ()
