@@ -31,6 +31,8 @@
 
 ;; load the test bib file
 (setq bibtex-completion-bibliography "test.bib")
+;; set this so basic search functionality works correctly here
+(setq bibtex-completion-additional-search-fields '(keywords url doi))
 
 (setq vertico-count 20)
 
