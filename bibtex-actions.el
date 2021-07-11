@@ -479,9 +479,9 @@ TEMPLATE."
 
 (when (require 'oc nil t)
   (org-cite-register-processor 'bibtex-actions
-    :insert (org-cite-make-insert-processor
-             (bibtex-actions-org-cite-insert t)
-             #'org-cite-basic--complete-style)
+    ;:insert (org-cite-make-insert-processor
+    ;         #'bibtex-actions-org-cite-insert
+    ;         #'org-cite-basic--complete-style)
     :follow (lambda (_datum _arg) (call-interactively 'bibtex-actions-at-point))))
 
 ;;; Embark
