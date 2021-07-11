@@ -21,7 +21,9 @@
 ;(advice-add #'completing-read-multiple :override #'consult-completing-read-multiple)
 
 ;; ensure that embark knows which map to use with bibtex entries
-;(add-to-list 'embark-keymap-alist '(bibtex . bibtex-actions-map))
+(add-to-list 'embark-target-finders 'bibtex-actions-citation-key-at-point)
+(add-to-list 'embark-keymap-alist '(bibtex . bibtex-actions-map))
+(add-to-list 'embark-keymap-alist '(citation-key . bibtex-actions-buffer-map))
 
 (with-eval-after-load "org-cite"
   (setq org-cite-follow-processor 'bibtex-actions)
@@ -44,4 +46,3 @@
 
 ;; theme
 (load-theme 'modus-operandi t)
-
