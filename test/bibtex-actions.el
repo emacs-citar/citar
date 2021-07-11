@@ -14,18 +14,25 @@
 (require 'consult)
 
 ;; set binding for Embark context menu
-(global-set-key (kbd "M-o") #'embark-act)
+(global-set-key (kbd "M-;") #'embark-act)
+(global-set-key (kbd "M-.") #'embark-dwim)
 
 ;; replace CRM with consult alernative
 ;(advice-add #'completing-read-multiple :override #'consult-completing-read-multiple)
 
 ;; ensure that embark knows which map to use with bibtex entries
+(add-to-list 'embark-target-finders 'bibtex-actions-citation-key-at-point)
 (add-to-list 'embark-keymap-alist '(bibtex . bibtex-actions-map))
+(add-to-list 'embark-keymap-alist '(citation-key . bibtex-actions-buffer-map))
+
+(with-eval-after-load "org-cite"
+  (setq org-cite-follow-processor 'bibtex-actions)
+  (setq org-cite-insert-processor 'bibtex-actions))
 
 ;; load the test bib file
 (setq bibtex-completion-bibliography "test.bib")
 
-(setq selectrum-fix-vertical-window-height 20)
+(setq vertico-count 20)
 
 ;; setup embark to use which-key
 (setq embark-action-indicator
@@ -39,4 +46,3 @@
 
 ;; theme
 (load-theme 'modus-operandi t)
-

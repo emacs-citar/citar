@@ -75,14 +75,17 @@ To configure those, you can do:
 (setq org-cite-insert-processor 'bibtex-actions)
 #+END_SRC
 
-By default, in org-mode with org-cite support, when point is on a citation or citation-reference, and you do =org-open-at-point=, it will run the default command, which is =bibtex-actions-open=.
+The "insert processor" will use =bibtex-actions-read= to browse your library to insert and edit citations and citation references using the =org-cite-insert= command.
+
+The "follow processor" provides at-point functionality accessible via the =org-open-at-point= command.
+By default, in org-mode with org-cite support, when point is on a citation or citation-reference, and you invoke =org-open-at-point=, it will run the default command, which is =bibtex-actions-open=.
 If you have Embark installed and configured, however, setting this variable will invoke =embark-act= instead.
 
 #+BEGIN_SRC emacs-lisp
 (setq bibtex-actions-embark-dwim nil)
 #+END_SRC
 
-
+You can invoke both =embark-act= and =embark-dwim=, however, independently of =org-at-point=, and in other modes such as =latex-mode=.
 
 *** Completion system
 
@@ -330,9 +333,11 @@ From there, you can run different actions on the candidates at will, rather than
 
 =M-x bibtex-actions-at-point= will run the default action on citation keys found at point directly.
 
-If =embark= is installed, setting =bibtex-actions-embark-dwim= to nil will prompt for other actions in =bibtex-actions-buffer-map= . From there, pressing =RET= will run the default action.
+If you have =embark= installed, setting =bibtex-actions-embark-dwim= to nil will substitute =embark=act=, and so prompt for other actions in =bibtex-actions-buffer-map=.
+From there, pressing =RET= will run the default action.
 
-If no citation key is found, all items will be shown in the minibuffer for selection. This behavior can be disabled by setting =bibtex-actions-at-point-fallback= to nil.
+If no citation key is found, the minibuffer will open for selection.
+You can disable this behavior by setting =bibtex-actions-at-point-fallback= to nil.
 
 ** Comparisons
    :PROPERTIES:

@@ -265,7 +265,8 @@ offering the selection candidates"
            'bibtex-actions-history bibtex-actions-presets nil)))
     (cl-loop for choice in chosen
              ;; Collect citation keys of selected candidate(s).
-             collect (cdr (assoc choice candidates)))))
+             collect (cdr (or (assoc choice candidates)
+                              (rassoc choice candidates))))))
 
 (defun bibtex-actions--format-candidates ()
   "Transform candidates from 'bibtex-completion-candidates'.
@@ -469,7 +470,7 @@ TEMPLATE."
 
 ;; Org-cite "follow" and "insert" processor
 
-(defun bibtex-actions-org-cite-insert (multiple)
+(defun bibtex-actions-org-cite-insert (&optional multiple)
   "Return a list of keys when MULTIPLE, or else a key string."
   (let ((references (bibtex-actions-read)))
     (if multiple
@@ -478,9 +479,9 @@ TEMPLATE."
 
 (when (require 'oc nil t)
   (org-cite-register-processor 'bibtex-actions
-    :insert (org-cite-make-insert-processor
-             (bibtex-actions-org-cite-insert t)
-             #'org-cite-basic--complete-style)
+    ;:insert (org-cite-make-insert-processor
+    ;         #'bibtex-actions-org-cite-insert
+    ;         #'org-cite-basic--complete-style)
     :follow (lambda (_datum _arg) (call-interactively 'bibtex-actions-at-point))))
 
 ;;; Embark
@@ -489,7 +490,7 @@ TEMPLATE."
   "Return citation keys at point as a list for `embark'."
   (when-let ((key (or (bibtex-actions-get-key-org-cite)
                       (bibtex-completion-key-at-point))))
-    (cons 'citation-key (if (listp key) key (list key)))))
+    (cons 'citation-key (if (listp key) (string-join key " & ") key))))
 
 (defvar bibtex-actions-buffer-map
   (let ((map (make-sparse-keymap)))
@@ -502,12 +503,7 @@ TEMPLATE."
     (define-key map (kbd "p") 'bibtex-actions-open-pdf)
     (define-key map (kbd "RET") 'bibtex-actions-run-default-action)
     map)
-  "Keymap for Embark citation-key actions.
-
-This keymap is used by `bibtex-actions-at-point' internally.  It
-should not be added to `embark-keymap-alist' because interactive
-commands (i.e. bibtex-actions-*) currently do not work well with
-`embark-act' outside the minibuffer.")
+  "Keymap for Embark citation-key actions.")
 
 ;;; Command wrappers for bibtex-completion functions
 
@@ -601,7 +597,8 @@ With prefix, rebuild the cache before offering candidates."
 
 (defun bibtex-actions-run-default-action (keys)
   "Run the default action `bibtex-actions-default-action' on KEYS."
-  (funcall bibtex-actions-default-action keys))
+  (funcall bibtex-actions-default-action
+           (if (stringp keys) (split-string keys " & ") keys)))
 
 ;;;###autoload
 (defun bibtex-actions-at-point (&optional arg)
@@ -611,35 +608,25 @@ interactively when `bibtex-actions-at-point-fallback' is non-nil.
 With prefix ARG, rebuild the cache before offering candidates."
   (interactive "P")
   (if (fboundp 'embark-dwim)
-      (let ((embark-keymap-alist '((bibtex . bibtex-actions-map))))
-        (condition-case err
-            (let ((embark-target-finders '(bibtex-actions-citation-key-at-point))
-                  (embark-keymap-alist '((citation-key . bibtex-actions-buffer-map)))
-                  ;; `embark-general-map' is useless in this case
-                  ;; because we are not in the minibuffer and the
-                  ;; TARGET is not string
-                  (embark-general-map embark-meta-map))
-              ;; This is a workaround: unless in the minibuffer,
-              ;; embark cannot pass TARGET to action when the action
-              ;; is an interactive command
-              (cl-letf (((symbol-function 'embark--act)
-                         (lambda (action target _)
-                           (if (where-is-internal action (list bibtex-actions-buffer-map))
-                               (funcall action target)
-                             (command-execute action)))))
-                (if bibtex-actions-embark-dwim
-                    (embark-dwim)
-                  (embark-act))))
-          (user-error
-           (when (and (string-equal (error-message-string err) "No target found")
-                      bibtex-actions-at-point-fallback)
-             (bibtex-actions-run-default-action
-              (bibtex-actions-read :rebuild-cache arg))))))
+      (condition-case err
+          (if bibtex-actions-embark-dwim
+              (embark-dwim)
+            (embark-act))
+        (user-error
+         (when (and (string-equal (error-message-string err) "No target found")
+                    bibtex-actions-at-point-fallback)
+           (bibtex-actions-run-default-action
+            (bibtex-actions-read :rebuild-cache arg)))))
     (if-let ((keys (bibtex-actions-citation-key-at-point)))
         (funcall bibtex-actions-default-action keys)
       (when bibtex-actions-at-point-fallback
         (bibtex-actions-run-default-action
          (bibtex-actions-read :rebuild-cache arg))))))
+
+(with-eval-after-load "embark"
+  (add-to-list 'embark-target-finders 'bibtex-actions-citation-key-at-point)
+  (add-to-list 'embark-keymap-alist '(bibtex . bibtex-actions-map))
+  (add-to-list 'embark-keymap-alist '(citation-key . bibtex-actions-buffer-map)))
 
 (provide 'bibtex-actions)
 ;;; bibtex-actions.el ends here
