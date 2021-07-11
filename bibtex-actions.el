@@ -472,6 +472,7 @@ TEMPLATE."
 
 (defun bibtex-actions-org-cite-insert (&optional multiple)
   "Return a list of keys when MULTIPLE, or else a key string."
+  ;; FIX
   (let ((references (bibtex-actions-read)))
     (if multiple
         references
