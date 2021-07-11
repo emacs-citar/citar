@@ -71,8 +71,8 @@ Bibtex-actions includes org-cite integration via a processor with "follow" and "
 To configure those, you can do:
 
 #+BEGIN_SRC emacs-lisp
-(setq org-cite-follow-processor 'bibtex-actions)
-(setq org-cite-insert-processor 'bibtex-actions)
+(setq org-cite-follow-processor 'bibtex-actions-org)
+(setq org-cite-insert-processor 'bibtex-actions-org)
 #+END_SRC
 
 The "insert processor" will use =bibtex-actions-read= to browse your library to insert and edit citations and citation references using the =org-cite-insert= command.

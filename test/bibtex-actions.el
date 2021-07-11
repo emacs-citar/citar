@@ -26,8 +26,8 @@
 (add-to-list 'embark-keymap-alist '(citation-key . bibtex-actions-buffer-map))
 
 (with-eval-after-load "org-cite"
-  (setq org-cite-follow-processor 'bibtex-actions)
-  (setq org-cite-insert-processor 'bibtex-actions))
+  (setq org-cite-follow-processor 'bibtex-actions-org-cite)
+  (setq org-cite-insert-processor 'bibtex-actions-org-cite))
 
 ;; load the test bib file
 (setq bibtex-completion-bibliography "test.bib")
