@@ -482,7 +482,7 @@ TEMPLATE."
   "Follow processor for org-cite."
   (call-interactively 'bibtex-actions-at-point))
 
-(when (require 'oc nil t)
+(with-eval-after-load "org-cite"
   (org-cite-register-processor 'bibtex-actions-org-cite
     :insert (org-cite-make-insert-processor
              #'bibtex-actions-org-cite-insert
