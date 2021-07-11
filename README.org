@@ -51,9 +51,9 @@ To setup bibtex-actions using =use-package=, you can do:
          ("M-b" . bibtex-actions-insert-preset))
   :after embark
   :config
-  ;; Make the 'bibtex-actions' bindings available from `embark-act'.
-  (add-to-list 'embark-keymap-alist '(bibtex . bibtex-actions-map))
   :custom
+  ;; make sure to set this to ensure open commands work correctly
+  (bibtex-completion-additional-search-fields '(doi url))
   (bibtex-completion-bibliography '("~/bib/references.bib")))
 #+END_SRC
 
@@ -64,6 +64,8 @@ The only thing, however, that you /must/ configure is where to find your bib fil
 #+BEGIN_SRC emacs-lisp
   (setq bibtex-completion-bibliography "~/bib/references.bib")
 #+END_SRC
+
+Per the example configuration above, you should also set the =bibtex-completion-additional-search-fiels= variable to include =doi= and =url=, or the =bibtex-actions-open*= commands will not work correctly.
 
 *** Org-Cite
 
