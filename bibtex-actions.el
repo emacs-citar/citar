@@ -178,7 +178,6 @@ If nil, prompt the user for an action through `embark-act'."
   :group 'bibtex-actions
   :type '(repeat string))
 
-
 ;;; Keymap
 
 (defvar bibtex-actions-map
