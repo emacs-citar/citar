@@ -200,28 +200,7 @@ If nil, prompt the user for an action through `embark-act'."
 ;;; Org-cite citation function
 
 (defun bibtex-actions--format-citation-org (keys)
-  "Format org-cite citations for the entries in KEYS.
-
-The full citation syntax is:
-
-  [cite/style:common prefix ;prefix @key suffix; ... ; common suffix]
-
-Everything is optional, except the brackets, 'cite' and the colon.
-Also the citation must contain at least a key.
-So its minimal form is:
-
-  [cite:@key]
-
-Note that the prefix here is for the citation as a whole; if you
-need to add one specific to an individual citation item, you
-would need to add that after inserting.
-
-  [cite:see ;item prefix @key]
-
-The same is true for suffixes like page numbers, which are
-specific to the item, rather than the citation as a whole.
-
-  [cite: see ;@key pp23-24]"
+  "Format org-cite citations for the entries in KEYS."
   (let* ((prefix  (if bibtex-completion-cite-prompt-for-optional-arguments (read-from-minibuffer "Prefix: ") ""))
          (styles bibtex-actions-org-cite-styles)
          (style  (if bibtex-completion-cite-prompt-for-optional-arguments
