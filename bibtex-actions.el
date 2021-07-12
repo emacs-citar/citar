@@ -607,10 +607,5 @@ With prefix ARG, rebuild the cache before offering candidates."
         (bibtex-actions-run-default-action
          (bibtex-actions-read :rebuild-cache arg))))))
 
-(with-eval-after-load "embark"
-  (add-to-list 'embark-target-finders 'bibtex-actions-citation-key-at-point)
-  (add-to-list 'embark-keymap-alist '(bibtex . bibtex-actions-map))
-  (add-to-list 'embark-keymap-alist '(citation-key . bibtex-actions-buffer-map)))
-
 (provide 'bibtex-actions)
 ;;; bibtex-actions.el ends here
