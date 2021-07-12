@@ -226,7 +226,8 @@ specific to the item, rather than the citation as a whole.
   (let* ((prefix  (if bibtex-completion-cite-prompt-for-optional-arguments (read-from-minibuffer "Prefix: ") ""))
          (styles bibtex-actions-org-cite-styles)
          (style  (if bibtex-completion-cite-prompt-for-optional-arguments
-                     (ido-completing-read "Style: " styles nil nil nil nil "default")))
+                     (ido-completing-read "Style: " styles nil nil nil nil "default")
+                   "default"))
          (prefix  (if (string= "" prefix)  "" (concat prefix  " ;")))
          (style  (if (string-equal style "default") "" (concat "/" style))))
     ;; this is derived from the pandoc syntax function, but this has two-levels of affixes
