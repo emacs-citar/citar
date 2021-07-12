@@ -8,7 +8,7 @@
 ;; License: GPL-3.0-or-later
 ;; Version: 0.1
 ;; Homepage: https://github.com/bdarcus/bibtex-actions
-;; Package-Requires: ((emacs "26.3") (bibtex-actions "0.4"))
+;; Package-Requires: ((emacs "26.3") (bibtex-actions "0.5"))
 ;;
 ;; This file is not part of GNU Emacs.
 ;;
@@ -74,10 +74,10 @@
 
 (defvar bibtex-actions-org-cite-map
   (let ((map (make-sparse-keymap)))
-    (define-key map "c" '("(cite) insert/edit" . 'org-cite-insert))
-    (define-key map "o" '("(cite) open-at-point" . 'org-open-at-point))
-    (define-key map "e" '("(cite) open/edit entry" . 'bibtex-actions-open-entry))
-    (define-key map "n" '("(cite) open notes" . 'bibtex-actions-open-notes))
+    (define-key map "c" '("(cite) insert/edit" . org-cite-insert))
+    (define-key map "o" '("(cite) open-at-point" . org-open-at-point))
+    (define-key map "e" '("(cite) open/edit entry" . bibtex-actions-open-entry))
+    (define-key map "n" '("(cite) open notes" . bibtex-actions-open-notes))
     map)
   "Keymap for 'bibtex-actions-org-cite'.")
 
