@@ -10,9 +10,9 @@
 ;; activate additional packages we need, including bibtex-actions
 (require 'embark)
 (require 'bibtex-actions)
+(require 'bibtex-actions-org-cite)
 (require 'which-key)
 (require 'consult)
-
 ;; set binding for Embark context menu
 (global-set-key (kbd "M-;") #'embark-act)
 (global-set-key (kbd "M-.") #'embark-dwim)
