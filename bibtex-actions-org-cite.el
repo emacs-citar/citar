@@ -45,6 +45,11 @@
 (require 'oc-basic)
 (require 'embark)
 
+(declare-function bibtex-actions-at-point "bibtex-actions")
+(declare-function bibtex-actions-open "bibtex-actions")
+(declare-function bibtex-actions-open-pdf "bibtex-actions")
+(declare-function bibtex-actions-open-notes "bibtex-actions")
+(declare-function bibtex-actions-open-entry "bibtex-actions")
 (declare-function org-open-at-point "org")
 (declare-function org-cite-insert "org-cite")
 
@@ -60,7 +65,7 @@
         references
       (car references))))
 
-(defun bibtex-actions-org-cite-follow ()
+(defun bibtex-actions-org-cite-follow (_datum _arg)
   "Follow processor for org-cite."
   (call-interactively 'bibtex-actions-at-point))
 
