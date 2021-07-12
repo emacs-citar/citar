@@ -250,7 +250,7 @@ offering the selection candidates"
          (initial-input (assoc-default initial bibtex-actions-initial-inputs))
          (chosen
           (completing-read-multiple
-           "BibTeX entries: "
+           "References: "
            (lambda (string predicate action)
              (if (eq action 'metadata)
                  `(metadata
