@@ -79,10 +79,10 @@
 
 (defvar bibtex-actions-org-cite-map
   (let ((map (make-sparse-keymap)))
-    (define-key map "c" '("(cite) insert/edit" . org-cite-insert))
-    (define-key map "o" '("(cite) open-at-point" . org-open-at-point))
-    (define-key map "e" '("(cite) open/edit entry" . bibtex-actions-open-entry))
-    (define-key map "n" '("(cite) open notes" . bibtex-actions-open-notes))
+    (define-key map "c" '("cite | insert/edit" . org-cite-insert))
+    (define-key map "o" '("cite | open-at-point" . org-open-at-point))
+    (define-key map "e" '("cite | open/edit entry" . bibtex-actions-open-entry))
+    (define-key map "n" '("cite | open notes" . bibtex-actions-open-notes))
     map)
   "Keymap for 'bibtex-actions-org-cite'.")
 
