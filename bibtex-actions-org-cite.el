@@ -45,6 +45,9 @@
 (require 'oc-basic)
 (require 'embark)
 
+(declare-function bibtex-actions-at-point "bibtex-actions")
+(declare-function org-open-at-point "org")
+
 ;TODO
 ;(defvar bibtex-actions-org-cite-open-default
 
