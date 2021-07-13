@@ -30,12 +30,7 @@
 ;;  This is a small package that intergrates bibtex-actions and org-cite.  It
 ;;  provides a simple org-cite processor with "follow" and "insert" capabilties.
 ;;
-;;  You can configure like so:
-;;
-;;  (setq org-cite-follow-processor 'bibtex-actions-org-cite)
-;;  (setq org-cite-insert-processor 'bibtex-actions-org-cite)
-;;
-;;  It also configures Embark integration with the above.
+;;  Simply load this file and it will configure them for 'org-cite.'
 ;;
 ;;; Code:
 
