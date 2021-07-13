@@ -567,27 +567,11 @@ With prefix, rebuild the cache before offering candidates."
            (if (stringp keys) (split-string keys " & ") keys)))
 
 ;;;###autoload
-(defun bibtex-actions-at-point (&optional arg)
-  "Run the default action on citation keys found at point.
-If no citation key is found, target entries can be chosen
-interactively when `bibtex-actions-at-point-fallback' is non-nil.
-With prefix ARG, rebuild the cache before offering candidates."
-  (interactive "P")
-  (if (fboundp 'embark-dwim)
-      (condition-case err
-          (if bibtex-actions-embark-dwim
-              (embark-dwim)
-            (embark-act))
-        (user-error
-         (when (and (string-equal (error-message-string err) "No target found")
-                    bibtex-actions-at-point-fallback)
-           (bibtex-actions-run-default-action
-            (bibtex-actions-read :rebuild-cache arg)))))
+(defun bibtex-actions-dwim ()
+  "Run the default action on citation keys found at point."
+  (interactive)
     (if-let ((keys (bibtex-actions-citation-key-at-point)))
-        (funcall bibtex-actions-default-action keys)
-      (when bibtex-actions-at-point-fallback
-        (bibtex-actions-run-default-action
-         (bibtex-actions-read :rebuild-cache arg))))))
+        (funcall bibtex-actions-default-action keys)))
 
 (provide 'bibtex-actions)
 ;;; bibtex-actions.el ends here
