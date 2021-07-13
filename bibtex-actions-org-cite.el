@@ -36,7 +36,7 @@
 
 (require 'bibtex-actions)
 (require 'org)
-(require 'org-cite)
+(require 'oc)
 (require 'oc-basic)
 (require 'embark)
 
