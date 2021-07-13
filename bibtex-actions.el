@@ -178,7 +178,6 @@ If nil, prompt the user for an action through `embark-act'."
   :group 'bibtex-actions
   :type '(repeat string))
 
-
 ;;; Keymap
 
 (defvar bibtex-actions-map
@@ -201,28 +200,7 @@ If nil, prompt the user for an action through `embark-act'."
 ;;; Org-cite citation function
 
 (defun bibtex-actions--format-citation-org (keys)
-  "Format org-cite citations for the entries in KEYS.
-
-The full citation syntax is:
-
-  [cite/style:common prefix ;prefix @key suffix; ... ; common suffix]
-
-Everything is optional, except the brackets, 'cite' and the colon.
-Also the citation must contain at least a key.
-So its minimal form is:
-
-  [cite:@key]
-
-Note that the prefix here is for the citation as a whole; if you
-need to add one specific to an individual citation item, you
-would need to add that after inserting.
-
-  [cite:see ;item prefix @key]
-
-The same is true for suffixes like page numbers, which are
-specific to the item, rather than the citation as a whole.
-
-  [cite: see ;@key pp23-24]"
+  "Format org-cite citations for the entries in KEYS."
   (let* ((prefix  (if bibtex-completion-cite-prompt-for-optional-arguments (read-from-minibuffer "Prefix: ") ""))
          (styles bibtex-actions-org-cite-styles)
          (style  (if bibtex-completion-cite-prompt-for-optional-arguments
@@ -251,7 +229,7 @@ offering the selection candidates"
          (initial-input (assoc-default initial bibtex-actions-initial-inputs))
          (chosen
           (completing-read-multiple
-           "BibTeX entries: "
+           "References: "
            (lambda (string predicate action)
              (if (eq action 'metadata)
                  `(metadata
@@ -469,29 +447,17 @@ TEMPLATE."
       ('citation
        (org-cite-get-references elt t)))))
 
-;; Org-cite "follow" and "insert" processor
-
-(defun bibtex-actions-org-cite-insert (&optional multiple)
-  "Return a list of keys when MULTIPLE, or else a key string."
-  (let ((references (bibtex-actions-read)))
-    (if multiple
-        references
-      (car references))))
-
-(when (require 'oc nil t)
-  (org-cite-register-processor 'bibtex-actions
-    ;:insert (org-cite-make-insert-processor
-    ;         #'bibtex-actions-org-cite-insert
-    ;         #'org-cite-basic--complete-style)
-    :follow (lambda (_datum _arg) (call-interactively 'bibtex-actions-at-point))))
-
 ;;; Embark
+
+(defun bibtex-actions--stringify-keys (keys)
+  "Return a list of KEYS as a crm-string for `embark'."
+  (if (listp keys) (string-join keys " & ") keys))
 
 (defun bibtex-actions-citation-key-at-point ()
   "Return citation keys at point as a list for `embark'."
-  (when-let ((key (or (bibtex-actions-get-key-org-cite)
+  (when-let ((keys (or (bibtex-actions-get-key-org-cite)
                       (bibtex-completion-key-at-point))))
-    (cons 'citation-key (if (listp key) (string-join key " & ") key))))
+    (cons 'citation-key (bibtex-actions--stringify-keys keys))))
 
 (defvar bibtex-actions-buffer-map
   (let ((map (make-sparse-keymap)))
@@ -602,32 +568,11 @@ With prefix, rebuild the cache before offering candidates."
            (if (stringp keys) (split-string keys " & ") keys)))
 
 ;;;###autoload
-(defun bibtex-actions-at-point (&optional arg)
-  "Run the default action on citation keys found at point.
-If no citation key is found, target entries can be chosen
-interactively when `bibtex-actions-at-point-fallback' is non-nil.
-With prefix ARG, rebuild the cache before offering candidates."
-  (interactive "P")
-  (if (fboundp 'embark-dwim)
-      (condition-case err
-          (if bibtex-actions-embark-dwim
-              (embark-dwim)
-            (embark-act))
-        (user-error
-         (when (and (string-equal (error-message-string err) "No target found")
-                    bibtex-actions-at-point-fallback)
-           (bibtex-actions-run-default-action
-            (bibtex-actions-read :rebuild-cache arg)))))
+(defun bibtex-actions-dwim ()
+  "Run the default action on citation keys found at point."
+  (interactive)
     (if-let ((keys (bibtex-actions-citation-key-at-point)))
-        (funcall bibtex-actions-default-action keys)
-      (when bibtex-actions-at-point-fallback
-        (bibtex-actions-run-default-action
-         (bibtex-actions-read :rebuild-cache arg))))))
-
-(with-eval-after-load "embark"
-  (add-to-list 'embark-target-finders 'bibtex-actions-citation-key-at-point)
-  (add-to-list 'embark-keymap-alist '(bibtex . bibtex-actions-map))
-  (add-to-list 'embark-keymap-alist '(citation-key . bibtex-actions-buffer-map)))
+        (funcall bibtex-actions-default-action keys)))
 
 (provide 'bibtex-actions)
 ;;; bibtex-actions.el ends here

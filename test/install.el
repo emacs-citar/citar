@@ -31,7 +31,7 @@
 (package-install 'bibtex-completion)
 ;; we load this locally, to facilitate development testing on branches
 (load-relative "../bibtex-actions.el")
-
+(load-relative "../bibtex-actions-org-cite.el")
 ;; theme that supports selectrum and vertico
 (package-install 'modus-themes)
 
