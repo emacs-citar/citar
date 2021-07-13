@@ -62,7 +62,7 @@
 
 (defun bibtex-actions-org-cite-follow (_datum _arg)
   "Follow processor for org-cite."
-  (call-interactively 'bibtex-actions-at-point))
+  (call-interactively 'embark-dwim))
 
 (org-cite-register-processor 'bibtex-actions-org-cite
   :insert (org-cite-make-insert-processor
