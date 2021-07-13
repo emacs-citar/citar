@@ -161,7 +161,7 @@ means no action."
   :type '(choice (const :tag "Prompt" 'prompt)
                  (const :tag "Ignore" nil)))
 
-(defcustom bibtex-actions-at-point-function 'embark-dwim
+(defcustom bibtex-actions-at-point-function 'bibtex-actions-dwim
   "The function to run for 'bibtex-actions-at-point'."
   :group 'bibtex-actions
   :type 'function)
