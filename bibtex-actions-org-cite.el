@@ -85,9 +85,9 @@
     (define-key map "o" '("cite | open-at-point" . bibtex-actions-open))
     (define-key map "e" '("cite | open/edit entry" . bibtex-actions-open-entry))
     (define-key map "n" '("cite | open notes" . bibtex-actions-open-notes))
-    (define-key map "RET" '("cite | default action" . bibtex-actions-run-default-action))
+    (define-key map (kbd "RET") '("cite | default action" . bibtex-actions-run-default-action))
     map)
-  "Keymap for 'bibtex-actions-org-cite'.")
+  "Keymap for 'bibtex-actions-org-cite' `embark' at-point functionality.")
 
 ;; Bibtex-actions-org-cite configuration
 
