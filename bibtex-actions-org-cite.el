@@ -70,6 +70,13 @@
            #'org-cite-basic--complete-style)
   :follow #'bibtex-actions-org-cite-follow)
 
+;;; Embark target finder
+
+(defun bibtex-actions-org-cite-citation-finder ()
+  "Return org-cite citation keys at point as a list for `embark'."
+  (when-let ((key (bibtex-actions-get-key-org-cite)))
+    (cons 'oc-citation-key (if (listp key) (string-join key " & ") key))))
+
 ;;; Keymap
 
 (defvar bibtex-actions-org-cite-map
@@ -88,9 +95,9 @@
 
 ;; Embark configuration for org-cite
 
-(add-to-list 'embark-target-finders 'bibtex-actions-citation-key-at-point)
+(add-to-list 'embark-target-finders 'bibtex-actions-org-cite-citation-finder)
 (add-to-list 'embark-keymap-alist '(bibtex . bibtex-actions-map))
-(add-to-list 'embark-keymap-alist '(citation-key . bibtex-actions-org-cite-map))
+(add-to-list 'embark-keymap-alist '(oc-citation-key . bibtex-actions-org-cite-map))
 
 (provide 'bibtex-actions-org-cite)
 ;;; bibtex-actions-org-cite.el ends here
