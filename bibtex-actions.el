@@ -448,11 +448,15 @@ TEMPLATE."
 
 ;;; Embark
 
+(defun bibtex-actions--stringify-keys (keys)
+  "Return a list of KEYS as a crm-string for `embark'."
+  (if (listp keys) (string-join keys " & ") keys))
+
 (defun bibtex-actions-citation-key-at-point ()
   "Return citation keys at point as a list for `embark'."
-  (when-let ((key (or (bibtex-actions-get-key-org-cite)
+  (when-let ((keys (or (bibtex-actions-get-key-org-cite)
                       (bibtex-completion-key-at-point))))
-    (cons 'citation-key (if (listp key) (string-join key " & ") key))))
+    (cons 'citation-key (bibtex-actions--stringify-keys keys))))
 
 (defvar bibtex-actions-buffer-map
   (let ((map (make-sparse-keymap)))
