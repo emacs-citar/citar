@@ -83,7 +83,7 @@ By default, in org-mode with org-cite support, when point is on a citation or ci
 If you have Embark installed and configured, however, setting this variable will invoke =embark-act= instead.
 
 #+BEGIN_SRC emacs-lisp
-(setq bibtex-actions-embark-dwim nil)
+(setq bibtex-actions-at-point-function 'embark-act)
 #+END_SRC
 
 You can invoke both =embark-act= and =embark-dwim=, however, independently of =org-at-point=, and in other modes such as =latex-mode=.
@@ -327,15 +327,13 @@ From there, you can run the same options discussed above using =embark-act= (whi
 So, for example, say you are working on a paper. You hold the complete super-set of items you are interested in citing at some point in that buffer.
 From there, you can run different actions on the candidates at will, rather than search individually for each item you want to cite.
 
-*** Use =bibtex-actions-at-point=
+*** Use =bibtex-actions-dwim=
     :PROPERTIES:
-    :CUSTOM_ID: use-bibtex-actions-at-point
+    :CUSTOM_ID: use-bibtex-actions-dwim
     :END:
 
-=M-x bibtex-actions-at-point= will run the default action on citation keys found at point directly.
-
-If you have =embark= installed, setting =bibtex-actions-embark-dwim= to nil will substitute =embark=act=, and so prompt for other actions in =bibtex-actions-buffer-map=.
-From there, pressing =RET= will run the default action.
+=M-x bibtex-actions-dwim= will run the default action on citation keys found at point directly.
+If you have =embark= installed, you use can =embark-dwim= instead for the same behavior, and =embark-act= for additional actions at-point.
 
 If no citation key is found, the minibuffer will open for selection.
 You can disable this behavior by setting =bibtex-actions-at-point-fallback= to nil.
