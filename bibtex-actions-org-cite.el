@@ -8,7 +8,7 @@
 ;; License: GPL-3.0-or-later
 ;; Version: 0.1
 ;; Homepage: https://github.com/bdarcus/bibtex-actions
-;; Package-Requires: ((emacs "26.3"))
+;; Package-Requires: ((emacs "26.3")(org "9.5"))
 ;;
 ;; This file is not part of GNU Emacs.
 ;;
