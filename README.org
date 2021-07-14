@@ -32,6 +32,14 @@ Here's a screenshot with [[https://github.com/raxod502/selectrum][vertico]], [[h
 
 Bibtex-actions is available for installation from [[https://melpa.org][MELPA]].
 
+In addition, the following packages are strongly recommended for the best experience.
+
+1. [[https://github.com/minad/vertico][Vertico]] or [[https://github.ccm/raxod502/selectrum][Selectrum]] (completion interface)
+2. [[https://github.com/oantolin/orderless][Orderless]] (completion style)
+3. [[https://github.com/oantolin/embark][Embark]] (contextual actions)
+4. [[https://github.com/minad/marginalia][Marginalia]] (annotations, and also candidate classification for Embark)
+4. [[https://github.com/minad/consult][Consult]] (enhanced interface for multiple candidate selection)
+
 ** Configuration
    :PROPERTIES:
    :CUSTOM_ID: configuration
@@ -42,7 +50,24 @@ Bibtex-actions is available for installation from [[https://melpa.org][MELPA]].
     :CUSTOM_ID: basic
     :END:
 
-To setup bibtex-actions using =use-package=, you can do:
+This is the minimal configuration, and will work with any completing-read compliant vertical completion UI, like Vertico, Selectrum, or the built-in icomplete-vertical, with actions available via =M-x= commands.
+
+#+BEGIN_SRC emacs-lisp
+(use-package bibtex-actions
+  :bind (("C-c b" . bibtex-actions-insert-citation)
+         :map minibuffer-local-map
+         ("M-b" . bibtex-actions-insert-preset))
+  :config
+  ;; make sure to set this to ensure open commands work correctly
+  (bibtex-completion-additional-search-fields '(doi url))
+  (bibtex-completion-bibliography '("~/bib/references.bib")))
+#+END_SRC
+
+Since most of the command logic resides in bibtex-completion, that is where to look for different [[https://github.com/tmalsburg/helm-bibtex#basic-configuration-recommended][configuration options]].
+
+*** Embark
+
+Highly recommended, this option adds embark, for contextual access to actions in the minibuffer and at-point.
 
 #+BEGIN_SRC emacs-lisp
 (use-package bibtex-actions
@@ -51,36 +76,50 @@ To setup bibtex-actions using =use-package=, you can do:
          ("M-b" . bibtex-actions-insert-preset))
   :after embark
   :config
-  :custom
-  ;; make sure to set this to ensure open commands work correctly
+  ;; Make the 'bibtex-actions' bindings and targets available to `embark'.
+  (add-to-list 'embark-target-finders 'bibtex-actions-citation-key-at-point)
+  (add-to-list 'embark-keymap-alist '(bibtex . bibtex-actions-map))
+  (add-to-list 'embark-keymap-alist '(citation . bibtex-actions-map-buffer))
+  ;; Make sure to set this to ensure 'bibtex-actions-open-link' command works correctly.
   (bibtex-completion-additional-search-fields '(doi url))
   (bibtex-completion-bibliography '("~/bib/references.bib")))
+
+;; use consult-completing-read for enhanced interface
+(advice-add #'completing-read-multiple :override #'consult-completing-read-multiple)
 #+END_SRC
 
-Since most of the command logic resides in bibtex-completion, that is where to look for different [[https://github.com/tmalsburg/helm-bibtex#basic-configuration-recommended][configuration options]].
-
-The only thing, however, that you /must/ configure is where to find your bib file(s).
-
-#+BEGIN_SRC emacs-lisp
-  (setq bibtex-completion-bibliography "~/bib/references.bib")
-#+END_SRC
-
-Per the example configuration above, you should also set the =bibtex-completion-additional-search-fiels= variable to include =doi= and =url=, or the =bibtex-actions-open*= commands will not work correctly.
+When using this option, these actions are generic, and work the same across org, markdown, and latex modes.
 
 *** Org-Cite
 
 #+CAPTION: org-cite at-point integration with =embark-act=
 [[file:images/org-cite-embark-point.png]]
 
-Bibtex-actions includes org-cite integration in =bibtex-actions-org-cite=, which includes a processor with "follow" and "insert" capabilities.
+If you use org-mode, this is the best option.
+It includes the embark functionality above, but customizes menus and user-experience for org-cite.
+In other supported modes, it will work the same as the embark option above.
 
-To configure those, you can just load =bibtex-actions-org-cite=.
+#+BEGIN_SRC emacs-lisp
+;; Set bibliography paths so they are the same.
+(my/bibs '("~/bib/references.bib"))
 
-The "insert processor" will use =bibtex-actions-read= to browse your library to insert and edit citations and citation references using the =org-cite-insert= command.
+(use-package bibtex-actions-org-cite
+  :bind (("C-c b" . org-cite-insert)
+         ("M-o" . org-open-at-point)
+         :map minibuffer-local-map
+         ("M-b" . bibtex-actions-insert-preset))
+  :after (embark org oc bibtex-actions)
+  :config
+  ;; make sure to set this to ensure open commands work correctly
+  (bibtex-completion-additional-search-fields '(doi url))
+  (bibtex-completion-bibliography my/bibs)
+  (org-cite-global-bibliography my/bibs))
 
-The "follow processor" provides at-point functionality accessible via the =org-open-at-point= command.
-By default, in org-mode with org-cite support, when point is on a citation or citation-reference, and you invoke =org-open-at-point=, it will run the default command, which is =bibtex-actions-open=.
-If you have Embark installed and configured, however, setting this variable will invoke =embark-act= instead.
+;; Use consult-completing-read for enhanced interface.
+(advice-add #'completing-read-multiple :override #'consult-completing-read-multiple)
+#+END_SRC
+
+If you prefer to have the embark menu open with =org-open-at-point=, you can set this variable.
 
 #+BEGIN_SRC emacs-lisp
 (setq bibtex-actions-at-point-function 'embark-act)
@@ -88,40 +127,7 @@ If you have Embark installed and configured, however, setting this variable will
 
 You can invoke both =embark-act= and =embark-dwim=, however, independently of =org-at-point=, and in other modes such as =latex-mode=.
 
-*** Completion system
-
-=Bibtex-actions= uses the built-in =completing-read-multiple=, and so any vertical completion system that supports that should work.
-In particular, all of these work well:
-
-1. [[https://github.com/raxod502/selectrum][selectrum]] (the most full-featured)
-2. [[https://github.com/minad/vertico][vertico]] (new, with a more minimal feature set)
-3. [[https://github.com/oantolin/icomplete-vertical][icomplete-vertical]] (for those that love icomplete, but want a vertical UI)
-
-*** Enhanced multiple selection experience
-
-To get the best user experience with one of the above completion systems, install Consult, and include this in your configuration.
-
-#+BEGIN_SRC emacs-lisp
-(advice-add #'completing-read-multiple :override #'consult-completing-read-multiple)
-#+END_SRC
-
-This will replace the default =completing-read-multiple= UI, which is poorly-suited to long candidate strings like we use here.
-
-*** Completion styles
-    :PROPERTIES:
-    :CUSTOM_ID: completion-styles
-    :END:
-One of the beauties of the new suite of completing-read packages is the flexibility.
-For =bibtex-actions= to work correctly, and as you may have come to expect in =helm-bibtex= or =ivy-bibtex=, you need to install and configure either =prescient= or =orderless=.
-You can read more about this at the [[https://github.com/raxod502/selectrum#usage][selectrum README]], but here's an example using =orderless= with its [[https://github.com/oantolin/orderless#style-dispatchers][style dispatchers]].
-
-
-#+CAPTION: orderless matching
-[[file:images/orderless.png]]
-
-In this case, that search string is searching for all items without either a PDF or note associated with them, and then includes a "the" initialism, and a flex search on "abc".
-
-*** Test Script
+** Test Script
     :PROPERTIES:
     :CUSTOM_ID: test-script
     :END:
@@ -131,7 +137,7 @@ To do that, simply run =./run.sh= from the =test= directory.
 By default, this will use selectrum as the completion system.
 If you would like to try vertico instead, just do =M-x vertico-mode=.
 
-*** Rich UI
+** Rich UI
     :PROPERTIES:
     :CUSTOM_ID: rich-ui
     :END:
@@ -182,7 +188,7 @@ Here's how to configure it to use =all-the-icons=:
        :group 'all-the-icons-faces)
 #+END_SRC
 
-*** History and predefined searches
+** History and predefined searches
     :PROPERTIES:
     :CUSTOM_ID: history-and-predefined-searches
     :END:
@@ -202,7 +208,7 @@ You then have two ways to access these strings from the completion prompt:
 =Bibtex-actions= also preserves the history of your selections (see caveat below about multiple candidate selection though), which are also accessible in your completion UI, but by using =M-p=.
 You can save this history across sessions by adding =bibtex-actions-history= to =savehist-additional-variables=.
 
-*** Pre-filtering entries
+** Pre-filtering entries
     :PROPERTIES:
     :CUSTOM_ID: prefiltering-entries
     :END:
@@ -229,7 +235,7 @@ If you want to modify those values, or remove them entirely, you can set =bibtex
     (source . "has:link\\|has:pdf"))
 #+end_src
 
-*** Refreshing the library display
+** Refreshing the library display
     :PROPERTIES:
     :CUSTOM_ID: refreshing-the-library-display
     :END:
@@ -261,7 +267,7 @@ You can also extend this to do the same thing for your PDF files, or notes:
 
 For additional configuration options on this, see [[https://github.com/bdarcus/bibtex-actions/wiki/Configuration#automating-path-watches][the wiki]].
 
-*** Finding citation keys at point
+** Finding citation keys at point
     :PROPERTIES:
     :CUSTOM_ID: finding-citation-keys-at-point
     :END:
@@ -286,6 +292,16 @@ For additional configuration options on this, see [[https://github.com/bdarcus/b
    :END:
 
 You have a few different ways to interact with these commands.
+
+*** Org-cite
+
+Bibtex-actions includes org-cite integration in =bibtex-actions-org-cite=, which includes a processor with "follow" and "insert" capabilities.
+
+The "insert processor" will use =bibtex-actions-read= to browse your library to insert and edit citations and citation references using the =org-cite-insert= command.
+
+The "follow processor" provides at-point functionality accessible via the =org-open-at-point= command.
+By default, in org-mode with org-cite support, when point is on a citation or citation-reference, and you invoke =org-open-at-point=, it will run the default command, which is =bibtex-actions-open=.
+
 
 *** =M-x=
     :PROPERTIES:
