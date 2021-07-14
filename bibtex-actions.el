@@ -161,12 +161,10 @@ means no action."
   :type '(choice (const :tag "Prompt" 'prompt)
                  (const :tag "Ignore" nil)))
 
-(defcustom bibtex-actions-embark-dwim t
-  "Whether to run the default action on citation keys at point.
-If non-nil, call the default embark action through `embark-dwim'.
-If nil, prompt the user for an action through `embark-act'."
+(defcustom bibtex-actions-at-point-function 'bibtex-actions-dwim
+  "The function to run for 'bibtex-actions-at-point'."
   :group 'bibtex-actions
-  :type 'boolean)
+  :type 'function)
 
 ;;; History, including future history list.
 
@@ -571,8 +569,8 @@ With prefix, rebuild the cache before offering candidates."
 (defun bibtex-actions-dwim ()
   "Run the default action on citation keys found at point."
   (interactive)
-    (if-let ((keys (bibtex-actions-citation-key-at-point)))
-        (funcall bibtex-actions-default-action keys)))
+  (if-let ((keys (bibtex-actions-citation-key-at-point)))
+      (funcall bibtex-actions-default-action keys)))
 
 (provide 'bibtex-actions)
 ;;; bibtex-actions.el ends here
