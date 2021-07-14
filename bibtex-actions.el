@@ -176,24 +176,39 @@ means no action."
   :group 'bibtex-actions
   :type '(repeat string))
 
-;;; Keymap
+;;; Keymaps
 
 (defvar bibtex-actions-map
   (let ((map (make-sparse-keymap)))
-    (define-key map (kbd "t") 'bibtex-actions-add-pdf-attachment)
-    (define-key map (kbd "a") 'bibtex-actions-add-pdf-to-library)
-    (define-key map (kbd "b") 'bibtex-actions-insert-bibtex)
-    (define-key map (kbd "c") 'bibtex-actions-insert-citation)
-    (define-key map (kbd "k") 'bibtex-actions-insert-key)
-    (define-key map (kbd "f") 'bibtex-actions-insert-reference)
-    (define-key map (kbd "o") 'bibtex-actions-open)
-    (define-key map (kbd "e") 'bibtex-actions-open-entry)
-    (define-key map (kbd "l") 'bibtex-actions-open-link)
-    (define-key map (kbd "n") 'bibtex-actions-open-notes)
-    (define-key map (kbd "p") 'bibtex-actions-open-pdf)
-    (define-key map (kbd "r") 'bibtex-actions-refresh)
+    (define-key map (kbd "t") '("reference | add pdf attachment" . bibtex-actions-add-pdf-attachment))
+    (define-key map (kbd "a") '("reference | add pdf to library" . bibtex-actions-add-pdf-to-library))
+    (define-key map (kbd "b") '("reference | insert bibtex" . bibtex-actions-insert-bibtex))
+    (define-key map (kbd "c") '("reference | insert citation" . bibtex-actions-insert-citation))
+    (define-key map (kbd "k") '("reference | insert key" . bibtex-actions-insert-key))
+    (define-key map (kbd "f") '("reference | insert" . bibtex-actions-insert-reference))
+    (define-key map (kbd "o") '("reference | open source" . bibtex-actions-open))
+    (define-key map (kbd "e") '("reference | open entry" . bibtex-actions-open-entry))
+    (define-key map (kbd "l") '("reference | open link" . bibtex-actions-open-link))
+    (define-key map (kbd "n") '("reference | open notes" . bibtex-actions-open-notes))
+    (define-key map (kbd "p") '("reference | open pdf" . bibtex-actions-open-pdf))
+    (define-key map (kbd "r") '("reference | refresh library" . bibtex-actions-refresh))
+    ;; Embark doesn't currently use the menu description.
+    ;; https://github.com/oantolin/embark/issues/251
+    (define-key map (kbd "RET") '("reference | default action" . bibtex-actions-run-default-action))
     map)
   "Keymap for 'bibtex-actions'.")
+
+(defvar bibtex-actions-buffer-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map (kbd "o") '("cite | open source" . bibtex-actions-open))
+    (define-key map (kbd "e") '("cite | open entry" . bibtex-actions-open-entry))
+    (define-key map (kbd "l") '("cite | open link" . bibtex-actions-open-link))
+    (define-key map (kbd "n") '("cite | open notes" . bibtex-actions-open-notes))
+    (define-key map (kbd "p") '("cite | open pdf" . bibtex-actions-open-pdf))
+    (define-key map (kbd "r") '("cite | refresh library" . bibtex-actions-refresh))
+    (define-key map (kbd "RET") '("cite| default action" . bibtex-actions-run-default-action))
+    map)
+  "Keymap for Embark citation-key actions.")
 
 ;;; Org-cite citation function
 
@@ -457,18 +472,6 @@ TEMPLATE."
                       (bibtex-completion-key-at-point))))
     (cons 'citation-key (bibtex-actions--stringify-keys keys))))
 
-(defvar bibtex-actions-buffer-map
-  (let ((map (make-sparse-keymap)))
-    (define-key map (kbd "t") 'bibtex-actions-add-pdf-attachment)
-    (define-key map (kbd "a") 'bibtex-actions-add-pdf-to-library)
-    (define-key map (kbd "o") 'bibtex-actions-open)
-    (define-key map (kbd "e") 'bibtex-actions-open-entry)
-    (define-key map (kbd "l") 'bibtex-actions-open-link)
-    (define-key map (kbd "n") 'bibtex-actions-open-notes)
-    (define-key map (kbd "p") 'bibtex-actions-open-pdf)
-    (define-key map (kbd "RET") 'bibtex-actions-run-default-action)
-    map)
-  "Keymap for Embark citation-key actions.")
 
 ;;; Command wrappers for bibtex-completion functions
 
