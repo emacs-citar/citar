@@ -69,6 +69,9 @@ Per the example configuration above, you should also set the =bibtex-completion-
 
 *** Org-Cite
 
+#+CAPTION: org-cite at-point integration with =embark-act=
+[[file:images/org-cite-embark-point.png]]
+
 Bibtex-actions includes org-cite integration in =bibtex-actions-org-cite=, which includes a processor with "follow" and "insert" capabilities.
 
 To configure those, you can just load =bibtex-actions-org-cite=.
