@@ -79,7 +79,7 @@ Highly recommended, this option adds embark, for contextual access to actions in
   ;; Make the 'bibtex-actions' bindings and targets available to `embark'.
   (add-to-list 'embark-target-finders 'bibtex-actions-citation-key-at-point)
   (add-to-list 'embark-keymap-alist '(bibtex . bibtex-actions-map))
-  (add-to-list 'embark-keymap-alist '(citation . bibtex-actions-map-buffer))
+  (add-to-list 'embark-keymap-alist '(citation . bibtex-actions-buffer-map))
   ;; Make sure to set this to ensure 'bibtex-actions-open-link' command works correctly.
   (bibtex-completion-additional-search-fields '(doi url))
   (bibtex-completion-bibliography '("~/bib/references.bib")))
