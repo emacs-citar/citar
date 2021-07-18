@@ -38,10 +38,108 @@
 (require 'org)
 (require 'oc)
 (require 'oc-basic)
+(require 'oc-csl)
+(require 'citeproc)
 (require 'embark)
 
 (declare-function bibtex-actions-at-point "bibtex-actions")
 (declare-function org-open-at-point "org")
+
+(defface bibtex-actions-org-cite-style-preview
+    '((t :foreground "forestgreen"
+         :underline nil
+         :weight bold))
+  "Face for org-cite previews."
+  :group 'bibtex-actions-org-cite)
+
+(defcustom bibtex-actions-org-cite-preview-targets '(natbib csl)
+  "Export processor targets for which to display previews."
+  ;; REVIEW not sure this is the best approach. Bennfit, though, is this can
+  ;; also configure order in the UI.
+  :group 'bibtex-actions-org-cite
+  :type '(choice
+          (const biblatex)
+	  (const csl)
+	  (const natbib)))
+
+;;; Internal variables
+
+(defvar bibtex-actions--csl-processor-cache nil
+  "Cache for the citation preview processor.")
+
+(make-variable-buffer-local 'bibtex-actions--csl-processor-cache)
+
+(defun bibtex-actions--csl-processor ()
+  "Return a `citeproc-el' processor for style preview."
+  (or bibtex-actions--csl-processor-cache
+      (let* ((bibliography (org-cite-list-bibliography-files))
+	     (processor
+	      (citeproc-create
+	       org-cite-csl--fallback-style-file
+	       (org-cite-csl--itemgetter bibliography)
+	       (org-cite-csl--locale-getter))))
+	(setq bibtex-actions--csl-processor-cache processor)
+	processor)))
+
+;; TODO convert to defcustoms
+
+(defvar bibtex-actions-org-cite-style-preview-alist
+  '((natbib . bibtex-actions--org-cite-natbib-style-preview)
+    (biblatex . bibtex-actions--org-cite-biblatex-style-preview)))
+
+(defvar bibtex-actions--org-cite-biblatex-style-preview
+  '(;; Default "nil" style.
+    ("/" . "\\autocite")
+    ("/b" . "\\cite")
+    ("/c" . "\\Autocite")
+    ("/bc" . "\\Cite")
+    ;; "text" style.
+    ("text" . "\\textcite")
+    ("text/c" .  "\\Textcite")
+    ;; "nocite" style.
+    ("nnocite" . "\\nocite")
+    ;; "author" style.
+    ("author/c" . "\\Citeauthor*")
+    ("author/f" . "\\citeauthor")
+    ("author/cf" . "\\Citeauthor")
+    ("author" . "\\citeauthor*")
+    ;; "locators" style.
+    ("locators/b" . "\\notecite")
+    ("locators/c" . "\\Pnotecite")
+    ("locators/bc" . "\\Notecite")
+    ("locators" . "\\pnotecite")
+    ;; "noauthor" style.
+    ("noauthor" .  "\\autocite*")))
+
+(defvar bibtex-actions--org-cite-natbib-style-preview
+  '(;; Default ("nil") style.
+    ("/" . "\\citep")
+    ("/b" . "\\citealp")
+    ("/c" . "\\Citep")
+    ("/f" . "\\citep*")
+    ("/bc" .  "\\Citealp")
+    ("/bf" . "\\citealp*")
+    ("/cf" . "\\Citep*")
+    ("/bcf" . "\\Citealp*")
+    ;; "text" style.
+    ("text" . "\\citet")
+    ("text/b" . "\\citealt")
+    ("text/c" . "\\Citet")
+    ("text/f" . "\\citet*")
+    ("text/bc" . "\\Citealt")
+    ("text/bf"  .   "\\citealt*")
+    ("text/cf" .    "\\Citet*")
+    ("text/bcf" . "\\Citealt*")
+    ;; "author" style.
+    ("author" . "\\citeauthor")
+    ("author/c" . "\\Citeauthor")
+    ("author/f" . "\\citeauthor*")
+    ;; "noauthor" style.
+    ("noauthor" . "\\citeyearpar")
+    ("noauthor/b" .   "\\citeyear")
+    ;; "nocite" style.
+    ("nocite" .  "\\nocite")))
+
 
 ;TODO
 ;(defvar bibtex-actions-org-cite-open-default
@@ -62,8 +160,68 @@
 (org-cite-register-processor 'bibtex-actions-org-cite
   :insert (org-cite-make-insert-processor
            #'bibtex-actions-org-cite-insert
-           #'org-cite-basic--complete-style)
+           #'bibtex-actions-org-cite-select-style)
   :follow #'bibtex-actions-org-cite-follow)
+
+(defun bibtex-actions-org-cite-select-style (&optional _keys)
+"Complete a citation style for org-cite with KEYS preview."
+  (interactive)
+  (let ((oc-styles (bibtex-actions-org-cite--styles-candidates)))
+    (completing-read "Select style: "
+                     (lambda (str pred action)
+                       (if (eq action 'metadata)
+                           `(metadata
+                             (annotation-function . bibtex-actions-org-cite--style-preview-annote)
+                             (cycle-sort-function . identity)
+                             (display-sort-function . identity)
+                             (group-function . bibtex-actions-org-cite--styles-group-fn))
+                           (complete-with-action action oc-styles str pred))))))
+
+(defun bibtex-actions-org-cite--styles-candidates ()
+  "Generate candidate list."
+  bibtex-actions--org-cite-natbib-style-preview)
+
+(defun bibtex-actions-org-cite--styles-group-fn (style transform)
+  "Return group title of STYLE or TRANSFORM the candidate.
+This is a group-function that groups org-cite style/variant
+strings by style."
+    (let ((short-style
+           (if (string-match "^/[bcf]*" style) "default"
+             (car (split-string style "/")))))
+    (if transform
+        ;; Use the candidate string as is.
+        (concat "  " (truncate-string-to-width style 20 nil 32))
+      ;; Transform for grouping and display.
+      (cond
+       ((string= short-style "default") "Default")
+       ((string= short-style "author") "Author-Only")
+       ((string= short-style "locators") "Locators-Only")
+       ((string= short-style "text") "Textual/Narrative")
+       ((string= short-style "nocite") "No Cite")
+       ((string= short-style "noauthor") "Suppress Author")))))
+
+(defun bibtex-actions-csl-render-citation (citation)
+  "Render CITATION."
+  (let ((proc (bibtex-actions--csl-processor)))
+    (citeproc-clear proc)
+    (let* ((info (list :cite-citeproc-processor proc))
+	   (cit-struct (org-cite-csl--create-structure citation info)))
+      (citeproc-append-citations (list cit-struct) proc)
+      (car (citeproc-render-citations proc 'plain t)))))
+
+(defun bibtex-actions-org-cite--style-preview (style output)
+  "Return preview from org-cite STYLE for OUTPUT."
+  ;; This should be added to oc.el.
+  (let oc-styles (cdr (assoc output bibtex-actions-org-cite-style-preview-alist))
+       (cdr (assoc style oc-styles))))
+
+(defun bibtex-actions-org-cite--style-preview-annote (style &optional citation)
+  "Annotate STYLE with CITATION preview."
+  ;; Let's start with simple.
+  (let* ((preview (cdr (assoc style bibtex-actions--org-cite-natbib-style-preview)))
+         ;; TODO look at how define-face does this.
+         (formatted-preview (truncate-string-to-width preview 50 nil 32)))
+    (propertize formatted-preview 'face 'bibtex-actions-org-cite-style-preview)))
 
 ;;; Embark target finder
 
