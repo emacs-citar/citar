@@ -34,7 +34,7 @@ Bibtex-actions is available for installation from [[https://melpa.org][MELPA]].
 
 In addition, the following packages are strongly recommended for the best experience.
 
-1. [[https://github.com/minad/vertico][Vertico]] or [[https://github.ccm/raxod502/selectrum][Selectrum]] (completion interface)
+1. [[https://github.com/minad/vertico][Vertico]] or [[https://github.com/raxod502/selectrum][Selectrum]] (completion interface)
 2. [[https://github.com/oantolin/orderless][Orderless]] (completion style)
 3. [[https://github.com/oantolin/embark][Embark]] (contextual actions)
 4. [[https://github.com/minad/marginalia][Marginalia]] (annotations, and also candidate classification for Embark)
