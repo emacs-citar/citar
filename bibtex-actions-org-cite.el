@@ -163,8 +163,8 @@
            #'bibtex-actions-org-cite-select-style)
   :follow #'bibtex-actions-org-cite-follow)
 
-(defun bibtex-actions-org-cite-select-style (&optional _keys)
-"Complete a citation style for org-cite with KEYS preview."
+(defun bibtex-actions-org-cite-select-style ()
+"Complete a citation style for org-cite with preview."
   (interactive)
   (let ((oc-styles (bibtex-actions-org-cite--styles-candidates)))
     (completing-read "Select style: "
@@ -209,13 +209,13 @@ strings by style."
       (citeproc-append-citations (list cit-struct) proc)
       (car (citeproc-render-citations proc 'plain t)))))
 
-(defun bibtex-actions-org-cite--style-preview (style output)
-  "Return preview from org-cite STYLE for OUTPUT."
-  ;; This should be added to oc.el.
-  (let oc-styles (cdr (assoc output bibtex-actions-org-cite-style-preview-alist))
-       (cdr (assoc style oc-styles))))
+;(defun bibtex-actions-org-cite--style-preview (style output)
+;  "Return preview from org-cite STYLE for OUTPUT."
+;  ;; This should be added to oc.el.
+;  (let oc-styles (cdr (assoc output bibtex-actions-org-cite-style-preview-alist))
+;       (cdr (assoc style oc-styles))))
 
-(defun bibtex-actions-org-cite--style-preview-annote (style &optional citation)
+(defun bibtex-actions-org-cite--style-preview-annote (style &optional _citation)
   "Annotate STYLE with CITATION preview."
   ;; Let's start with simple.
   (let* ((preview (cdr (assoc style bibtex-actions--org-cite-natbib-style-preview)))
