@@ -97,7 +97,7 @@
     ("text" . "\\textcite")
     ("text/c" .  "\\Textcite")
     ;; "nocite" style.
-    ("nnocite" . "\\nocite")
+    ("nocite" . "\\nocite")
     ;; "author" style.
     ("author/c" . "\\Citeauthor*")
     ("author/f" . "\\citeauthor")
