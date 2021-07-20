@@ -64,21 +64,21 @@
 
 ;;; Internal variables
 
-(defvar bibtex-actions--csl-processor-cache nil
+(defvar bibtex-actions-org-cite--csl-processor-cache nil
   "Cache for the citation preview processor.")
 
-(make-variable-buffer-local 'bibtex-actions--csl-processor-cache)
+(make-variable-buffer-local 'bibtex-actions-org-cite--csl-processor-cache)
 
 (defun bibtex-actions--csl-processor ()
   "Return a `citeproc-el' processor for style preview."
-  (or bibtex-actions--csl-processor-cache
+  (or bibtex-actions-org-cite--csl-processor-cache
       (let* ((bibliography (org-cite-list-bibliography-files))
 	     (processor
 	      (citeproc-create
 	       org-cite-csl--fallback-style-file
 	       (org-cite-csl--itemgetter bibliography)
 	       (org-cite-csl--locale-getter))))
-	(setq bibtex-actions--csl-processor-cache processor)
+	(setq bibtex-actions-org-cite--csl-processor-cache processor)
 	processor)))
 
 ;; TODO convert to defcustoms
@@ -179,18 +179,9 @@
 
 (defun bibtex-actions-org-cite--styles-candidates ()
   "Generate candidate list."
-  bibtex-actions-org-cite--natbib-style-preview)
-
-(defun bibtex-actions-org-cite--make-style-previews (style &optional _citation)
-  "Return rendered candidate string for STYLE for TARGET preview."
-  ;; FIX doesn't create the full string
-  (let ((preview-targets bibtex-actions-org-cite-preview-targets))
-  (concat
-   (when (member 'natbib preview-targets)
-     (cdr (assoc style bibtex-actions-org-cite--natbib-style-preview)))
-   (when (member 'biblatex preview-targets)
-     (cdr (assoc style bibtex-actions-org-cite--biblatex-style-preview)))
-   (when (member 'csl preview-targets) nil))))
+   (delete-dups
+    (-keep #'car (append bibtex-actions-org-cite--biblatex-style-preview
+                         bibtex-actions-org-cite--natbib-style-preview))))
 
 (defun bibtex-actions-org-cite--styles-group-fn (style transform)
   "Return group title of STYLE or TRANSFORM the candidate.
@@ -201,7 +192,7 @@ strings by style."
              (car (split-string style "/")))))
     (if transform
         ;; Use the candidate string as is.
-        (concat "  " (truncate-string-to-width style 20 nil 32))
+        style
       ;; Transform for grouping and display.
       (cond
        ((string= short-style "default") "Default")
@@ -229,11 +220,12 @@ strings by style."
 (defun bibtex-actions-org-cite--style-preview-annote (style &optional _citation)
   "Annotate STYLE with CITATION preview."
   ;; Let's start with simple.
-
-  (let* ((preview (bibtex-actions-org-cite--make-style-previews style))
-         ;; TODO look at how define-face does this.
-         (formatted-preview (truncate-string-to-width preview 50 nil 32)))
-    (propertize formatted-preview 'face 'bibtex-actions-org-cite-style-preview)))
+  (let* ((nat-preview (cdr (assoc style bibtex-actions-org-cite--natbib-style-preview)))
+         (bltx-preview (cdr (assoc style bibtex-actions-org-cite--biblatex-style-preview))))
+    (propertize
+     (concat
+      (truncate-string-to-width nat-preview 20 nil 32) bltx-preview)
+     'face 'bibtex-actions-org-cite-style-preview)))
 
 ;;; Embark target finder
 
