@@ -52,7 +52,7 @@
   "Face for org-cite previews."
   :group 'bibtex-actions-org-cite)
 
-(defcustom bibtex-actions-org-cite-preview-targets '(natbib csl)
+(defcustom bibtex-actions-org-cite-preview-targets '("natbib" "csl")
   "Export processor targets for which to display previews."
   ;; REVIEW not sure this is the best approach. Bennfit, though, is this can
   ;; also configure order in the UI.
@@ -84,10 +84,10 @@
 ;; TODO convert to defcustoms
 
 (defvar bibtex-actions-org-cite-style-preview-alist
-  '((natbib . bibtex-actions--org-cite-natbib-style-preview)
-    (biblatex . bibtex-actions--org-cite-biblatex-style-preview)))
+  '((natbib . bibtex-actions-org-cite--natbib-style-preview)
+    (biblatex . bibtex-actions-org-cite--biblatex-style-preview)))
 
-(defvar bibtex-actions--org-cite-biblatex-style-preview
+(defvar bibtex-actions-org-cite--biblatex-style-preview
   '(;; Default "nil" style.
     ("/" . "\\autocite")
     ("/b" . "\\cite")
@@ -111,7 +111,7 @@
     ;; "noauthor" style.
     ("noauthor" .  "\\autocite*")))
 
-(defvar bibtex-actions--org-cite-natbib-style-preview
+(defvar bibtex-actions-org-cite--natbib-style-preview
   '(;; Default ("nil") style.
     ("/" . "\\citep")
     ("/b" . "\\citealp")
@@ -179,7 +179,18 @@
 
 (defun bibtex-actions-org-cite--styles-candidates ()
   "Generate candidate list."
-  bibtex-actions--org-cite-natbib-style-preview)
+  bibtex-actions-org-cite--natbib-style-preview)
+
+(defun bibtex-actions-org-cite--make-style-previews (style &optional _citation)
+  "Return rendered candidate string for STYLE for TARGET preview."
+  ;; FIX doesn't create the full string
+  (let ((preview-targets bibtex-actions-org-cite-preview-targets))
+  (concat
+   (when (member 'natbib preview-targets)
+     (cdr (assoc style bibtex-actions-org-cite--natbib-style-preview)))
+   (when (member 'biblatex preview-targets)
+     (cdr (assoc style bibtex-actions-org-cite--biblatex-style-preview)))
+   (when (member 'csl preview-targets) nil))))
 
 (defun bibtex-actions-org-cite--styles-group-fn (style transform)
   "Return group title of STYLE or TRANSFORM the candidate.
@@ -218,7 +229,8 @@ strings by style."
 (defun bibtex-actions-org-cite--style-preview-annote (style &optional _citation)
   "Annotate STYLE with CITATION preview."
   ;; Let's start with simple.
-  (let* ((preview (cdr (assoc style bibtex-actions--org-cite-natbib-style-preview)))
+
+  (let* ((preview (bibtex-actions-org-cite--make-style-previews style))
          ;; TODO look at how define-face does this.
          (formatted-preview (truncate-string-to-width preview 50 nil 32)))
     (propertize formatted-preview 'face 'bibtex-actions-org-cite-style-preview)))
