@@ -46,9 +46,8 @@
 (declare-function org-open-at-point "org")
 
 (defface bibtex-actions-org-cite-style-preview
-    '((t :foreground "forestgreen"
-         :underline nil
-         :weight bold))
+  ;; Not sure if this is the best parent face.
+    '((t :inherit minibuffer-prompt))
   "Face for org-cite previews."
   :group 'bibtex-actions-org-cite)
 
@@ -58,8 +57,8 @@
   :group 'bibtex-actions-org-cite
   :type '(choice
           (const biblatex)
-	  (const csl)
-	  (const natbib)))
+          (const csl)
+          (const natbib)))
 
 ;;; Internal variables
 
@@ -87,7 +86,7 @@
 
 (defvar bibtex-actions-org-cite-style-preview-alist
   '((natbib .
-            (;; Default ("nil") style.
+            (;; Default style.
              ("/" . "\\citep")
              ("/b" . "\\citealp")
              ("/c" . "\\Citep")
@@ -115,7 +114,7 @@
              ;; "nocite" style.
              ("nocite" .  "\\nocite")))
     (biblatex .
-              ( ;; Default "nil" style.
+              ( ;; Default style.
                ("/" . "\\autocite")
                ("/b" . "\\cite")
                ("/c" . "\\Autocite")
@@ -161,41 +160,48 @@
   (call-interactively bibtex-actions-at-point-function))
 
 (org-cite-register-processor 'bibtex-actions-org-cite
-  ;:insert (org-cite-make-insert-processor
-  ;         #'bibtex-actions-org-cite-insert
+ ; :insert (org-cite-make-insert-processor
+ ;          #'bibtex-actions-org-cite-insert
   ;         #'bibtex-actions-org-cite-select-style)
   :follow #'bibtex-actions-org-cite-follow)
 
 (defun bibtex-actions-org-cite-select-style ()
 "Complete a citation style for org-cite with preview."
   (interactive)
-  (let ((oc-styles (bibtex-actions-org-cite--styles-candidates)))
-    (completing-read "Select style: "
-                     (lambda (str pred action)
-                       (if (eq action 'metadata)
-                           `(metadata
-                             (annotation-function . bibtex-actions-org-cite--style-preview-annote)
-                             (cycle-sort-function . identity)
-                             (display-sort-function . identity)
-                             (group-function . bibtex-actions-org-cite--styles-group-fn))
-                           (complete-with-action action oc-styles str pred))))))
+  (let* ((oc-styles (bibtex-actions-org-cite--styles-candidates))
+         (style
+          (completing-read
+           "Select style: "
+           (lambda (str pred action)
+             (if (eq action 'metadata)
+                 `(metadata
+                   (annotation-function . bibtex-actions-org-cite--style-preview-annote)
+                   (cycle-sort-function . identity)
+                   (display-sort-function . identity)
+                   (group-function . bibtex-actions-org-cite--styles-group-fn))
+               (complete-with-action action oc-styles str pred))))))
+    (string-trim style)))
 
 (defun bibtex-actions-org-cite--styles-candidates ()
   "Generate candidate list."
   ;; TODO extract the style+variant strings from 'org-cite-support-styles'.
-  (cdr (assoc bibtex-actions-org-cite-preview-target
-         bibtex-actions-org-cite-style-preview-alist)))
+  (cl-loop for style in
+           (cdr (assoc bibtex-actions-org-cite-preview-target
+                        bibtex-actions-org-cite-style-preview-alist))
+           collect (cons
+                    (concat "  " (truncate-string-to-width (car style) 20 nil 32)) (cdr style))))
 
 (defun bibtex-actions-org-cite--styles-group-fn (style transform)
   "Return group title of STYLE or TRANSFORM the candidate.
 This is a group-function that groups org-cite style/variant
 strings by style."
-    (let ((short-style
-           (if (string-match "^/[bcf]*" style) "default"
-             (car (split-string style "/")))))
+    (let* ((style-str (string-trim style))
+           (short-style
+            (if (string-match "^/[bcf]*" style-str) "default"
+              (car (split-string style-str "/")))))
     (if transform
-        ;; Use the candidate string as is.
-        (concat "  " (truncate-string-to-width style 20 nil 32))
+        ;; Use the candidate string as is, but add back whitespace alignment.
+        (concat "  " (truncate-string-to-width style-str 20 nil 32))
       ;; Transform for grouping and display.
       (cond
        ((string= short-style "default") "Default")
