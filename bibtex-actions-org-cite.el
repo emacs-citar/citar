@@ -161,9 +161,9 @@
   (call-interactively bibtex-actions-at-point-function))
 
 (org-cite-register-processor 'bibtex-actions-org-cite
-  :insert (org-cite-make-insert-processor
-           #'bibtex-actions-org-cite-insert
-           #'bibtex-actions-org-cite-select-style)
+  ;:insert (org-cite-make-insert-processor
+  ;         #'bibtex-actions-org-cite-insert
+  ;         #'bibtex-actions-org-cite-select-style)
   :follow #'bibtex-actions-org-cite-follow)
 
 (defun bibtex-actions-org-cite-select-style ()
@@ -182,6 +182,7 @@
 
 (defun bibtex-actions-org-cite--styles-candidates ()
   "Generate candidate list."
+  ;; TODO extract the style+variant strings from 'org-cite-support-styles'.
   (cdr (assoc bibtex-actions-org-cite-preview-target
          bibtex-actions-org-cite-style-preview-alist)))
 
@@ -206,7 +207,8 @@ strings by style."
 
 (defun bibtex-actions-csl-render-citation (citation)
   "Render CITATION."
-  (let ((proc (bibtex-actions--csl-processor)))
+  ;; TODO hook this up to previews.
+  (let ((proc (bibtex-actions-org-cite--csl-processor)))
     (citeproc-clear proc)
     (let* ((info (list :cite-citeproc-processor proc))
 	   (cit-struct (org-cite-csl--create-structure citation info)))
@@ -215,7 +217,7 @@ strings by style."
 
 (defun bibtex-actions-org-cite--style-preview-annote (style &optional _citation)
   "Annotate STYLE with CITATION preview."
-  ;; Let's start with simple.
+  ;; TODO rather than use the alist, run the export processors on the citation..
   (let* ((preview (cdr (assoc style (bibtex-actions-org-cite--styles-candidates))))
          ;; TODO look at how define-face does this.
          (formatted-preview (truncate-string-to-width preview 50 nil 32)))
