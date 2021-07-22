@@ -166,7 +166,7 @@
   (let* ((oc-styles (bibtex-actions-org-cite--styles-candidates))
          (style
           (completing-read
-           "Select style: "
+           "Styles: "
            (lambda (str pred action)
              (if (eq action 'metadata)
                  `(metadata
