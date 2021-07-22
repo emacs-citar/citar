@@ -147,7 +147,9 @@
 ;TODO
 ;(defvar bibtex-actions-org-cite-open-default
 
-;; Org-cite processor
+;;; Org-cite processors
+
+;; NOTE I may move some or all of these to a separate project
 
 (defun bibtex-actions-org-cite-insert (&optional multiple)
   "Return a list of keys when MULTIPLE, or else a key string."
@@ -242,12 +244,6 @@ strings by style."
     (define-key map (kbd "RET") '("cite | default action" . bibtex-actions-run-default-action))
     map)
   "Keymap for 'bibtex-actions-org-cite' `embark' at-point functionality.")
-
-;; Bibtex-actions-org-cite configuration
-
-(setq org-cite-follow-processor 'bibtex-actions-org-cite)
-(setq org-cite-insert-processor 'bibtex-actions-org-cite)
-(setq bibtex-actions-at-point-function 'embark-dwim)
 
 ;; Embark configuration for org-cite
 
