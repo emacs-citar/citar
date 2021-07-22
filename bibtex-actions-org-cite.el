@@ -44,6 +44,7 @@
 
 (declare-function bibtex-actions-at-point "bibtex-actions")
 (declare-function org-open-at-point "org")
+(declare-function org-cite-make-insert-processor "oc")
 
 (defface bibtex-actions-org-cite-style-preview
   ;; Not sure if this is the best parent face.
@@ -159,12 +160,6 @@
   "Follow processor for org-cite."
   (call-interactively bibtex-actions-at-point-function))
 
-(org-cite-register-processor 'bibtex-actions-org-cite
- ; :insert (org-cite-make-insert-processor
- ;          #'bibtex-actions-org-cite-insert
-  ;         #'bibtex-actions-org-cite-select-style)
-  :follow #'bibtex-actions-org-cite-follow)
-
 (defun bibtex-actions-org-cite-select-style ()
 "Complete a citation style for org-cite with preview."
   (interactive)
@@ -259,6 +254,15 @@ strings by style."
 (add-to-list 'embark-target-finders 'bibtex-actions-org-cite-citation-finder)
 (add-to-list 'embark-keymap-alist '(bibtex . bibtex-actions-map))
 (add-to-list 'embark-keymap-alist '(oc-citation . bibtex-actions-org-cite-map))
+
+;; Load this last.
+
+(org-cite-register-processor 'bibtex-actions-org-cite
+  :insert (org-cite-make-insert-processor
+           #'bibtex-actions-org-cite-insert
+         ;  #'org-cite-basic--complete-style)
+           #'bibtex-actions-org-cite-select-style)
+  :follow #'bibtex-actions-org-cite-follow)
 
 (provide 'bibtex-actions-org-cite)
 ;;; bibtex-actions-org-cite.el ends here
