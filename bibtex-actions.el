@@ -483,7 +483,9 @@ TEMPLATE."
   "Return citation keys at point as a list for `embark'."
   (when-let ((keys (or (bibtex-actions-get-key-org-cite)
                       (bibtex-completion-key-at-point))))
-    (cons 'citation-key (bibtex-actions--stringify-keys keys))))
+    (if (= bibtex-actions-default-action 'embark-act)
+        (cons 'citation-key (bibtex-actions--stringify-keys keys))
+      keys)))
 
 
 ;;; Command wrappers for bibtex-completion functions
@@ -579,7 +581,9 @@ With prefix, rebuild the cache before offering candidates."
 (defun bibtex-actions-run-default-action (keys)
   "Run the default action `bibtex-actions-default-action' on KEYS."
   (funcall bibtex-actions-default-action
-           (if (stringp keys) (split-string keys " & ") keys)))
+           (if (or (= bibtex-actions-default-action 'embark-act)
+                   (stringp keys))
+               (split-string keys " & ") keys)))
 
 ;;;###autoload
 (defun bibtex-actions-dwim ()
