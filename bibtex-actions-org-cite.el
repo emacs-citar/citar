@@ -176,8 +176,9 @@
                    (cycle-sort-function . identity)
                    (display-sort-function . identity)
                    (group-function . bibtex-actions-org-cite--styles-group-fn))
-               (complete-with-action action oc-styles str pred))))))
-    (string-trim style)))
+               (complete-with-action action oc-styles str pred)))))
+         (style-final (string-trim style)))
+    (if (string= style-final "/") "" style-final)))
 
 (defun bibtex-actions-org-cite--styles-candidates ()
   "Generate candidate list."
