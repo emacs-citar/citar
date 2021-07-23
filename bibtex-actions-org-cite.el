@@ -209,7 +209,7 @@ strings by style."
        ((string= short-style "nocite") "No Cite")
        ((string= short-style "noauthor") "Suppress Author")))))
 
-(defun bibtex-actions-csl-render-citation (citation)
+(defun bibtex-actions-org-cite-csl-render-citation (citation)
   "Render CITATION."
   ;; TODO hook this up to previews.
   (let ((proc (bibtex-actions-org-cite--csl-processor)))
