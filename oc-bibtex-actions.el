@@ -50,12 +50,12 @@
   ;; Not sure if this is the best parent face.
     '((t :inherit minibuffer-prompt))
   "Face for org-cite previews."
-  :group 'bibtex-actions-org-cite)
+  :group 'oc-bibtex-actions)
 
-(defcustom bibtex-actions-org-cite-preview-target 'natbib
+(defcustom oc-bibtex-actions-preview-target 'natbib
   "Export processor target for which to display previews."
   ;; REVIEW not sure this is the best approach.
-  :group 'bibtex-actions-org-cite
+  :group 'oc-bibtex-actions
   :type '(choice
           (const biblatex)
           (const csl)
@@ -63,21 +63,21 @@
 
 ;;; Internal variables
 
-(defvar bibtex-actions-org-cite--csl-processor-cache nil
+(defvar oc-bibtex-actions--csl-processor-cache nil
   "Cache for the citation preview processor.")
 
 (make-variable-buffer-local 'bibtex-actions--csl-processor-cache)
 
-(defun bibtex-actions-org-cite--csl-processor ()
+(defun oc-bibtex-actions--csl-processor ()
   "Return a `citeproc-el' processor for style preview."
-  (or bibtex-actions-org-cite--csl-processor-cache
+  (or oc-bibtex-actions--csl-processor-cache
       (let* ((bibliography (org-cite-list-bibliography-files))
              (processor
               (citeproc-create
                org-cite-csl--fallback-style-file
                (org-cite-csl--itemgetter bibliography)
                (org-cite-csl--locale-getter))))
-        (setq bibtex-actions-org-cite--csl-processor-cache processor)
+        (setq oc-bibtex-actions--csl-processor-cache processor)
         processor)))
 
 ;; TODO maybe connvert to defcustoms. But this is not really the right approach;
@@ -85,7 +85,7 @@
 ;; citation context for that, or some other solution to have a citation to
 ;; process.
 
-(defvar bibtex-actions-org-cite-style-preview-alist
+(defvar oc-bibtex-actions-style-preview-alist
   '((natbib .
             (;; Default style.
              ("/" . "\\citep")
@@ -145,51 +145,51 @@
           ("text" ' "De Loas (2019)")))))
 
 ;TODO
-;(defvar bibtex-actions-org-cite-open-default
+;(defvar oc-bibtex-actions-open-default
 
 ;;; Org-cite processors
 
 ;; NOTE I may move some or all of these to a separate project
 
-(defun bibtex-actions-org-cite-insert (&optional multiple)
+(defun oc-bibtex-actions-insert (&optional multiple)
   "Return a list of keys when MULTIPLE, or else a key string."
   (let ((references (bibtex-actions-read)))
     (if multiple
         references
       (car references))))
 
-(defun bibtex-actions-org-cite-follow (_datum _arg)
+(defun oc-bibtex-actions-follow (_datum _arg)
   "Follow processor for org-cite."
   (call-interactively bibtex-actions-at-point-function))
 
-(defun bibtex-actions-org-cite-select-style ()
+(defun oc-bibtex-actions-select-style ()
 "Complete a citation style for org-cite with preview."
   (interactive)
-  (let* ((oc-styles (bibtex-actions-org-cite--styles-candidates))
+  (let* ((oc-styles (oc-bibtex-actions--styles-candidates))
          (style
           (completing-read
            "Styles: "
            (lambda (str pred action)
              (if (eq action 'metadata)
                  `(metadata
-                   (annotation-function . bibtex-actions-org-cite--style-preview-annote)
+                   (annotation-function . oc-bibtex-actions--style-preview-annote)
                    (cycle-sort-function . identity)
                    (display-sort-function . identity)
-                   (group-function . bibtex-actions-org-cite--styles-group-fn))
+                   (group-function . oc-bibtex-actions--styles-group-fn))
                (complete-with-action action oc-styles str pred)))))
          (style-final (string-trim style)))
     (if (string= style-final "/") "" style-final)))
 
-(defun bibtex-actions-org-cite--styles-candidates ()
+(defun oc-bibtex-actions--styles-candidates ()
   "Generate candidate list."
   ;; TODO extract the style+variant strings from 'org-cite-support-styles'.
   (cl-loop for style in
-           (cdr (assoc bibtex-actions-org-cite-preview-target
-                        bibtex-actions-org-cite-style-preview-alist))
+           (cdr (assoc oc-bibtex-actions-preview-target
+                        oc-bibtex-actions-style-preview-alist))
            collect (cons
                     (concat "  " (truncate-string-to-width (car style) 20 nil 32)) (cdr style))))
 
-(defun bibtex-actions-org-cite--styles-group-fn (style transform)
+(defun oc-bibtex-actions--styles-group-fn (style transform)
   "Return group title of STYLE or TRANSFORM the candidate.
 This is a group-function that groups org-cite style/variant
 strings by style."
@@ -209,34 +209,34 @@ strings by style."
        ((string= short-style "nocite") "No Cite")
        ((string= short-style "noauthor") "Suppress Author")))))
 
-(defun bibtex-actions-org-cite-csl-render-citation (citation)
+(defun oc-bibtex-actions-csl-render-citation (citation)
   "Render CITATION."
   ;; TODO hook this up to previews.
-  (let ((proc (bibtex-actions-org-cite--csl-processor)))
+  (let ((proc (oc-bibtex-actions--csl-processor)))
     (citeproc-clear proc)
     (let* ((info (list :cite-citeproc-processor proc))
 	   (cit-struct (org-cite-csl--create-structure citation info)))
       (citeproc-append-citations (list cit-struct) proc)
       (car (citeproc-render-citations proc 'plain t)))))
 
-(defun bibtex-actions-org-cite--style-preview-annote (style &optional _citation)
+(defun oc-bibtex-actions--style-preview-annote (style &optional _citation)
   "Annotate STYLE with CITATION preview."
   ;; TODO rather than use the alist, run the export processors on the citation..
-  (let* ((preview (cdr (assoc style (bibtex-actions-org-cite--styles-candidates))))
+  (let* ((preview (cdr (assoc style (oc-bibtex-actions--styles-candidates))))
          ;; TODO look at how define-face does this.
          (formatted-preview (truncate-string-to-width preview 50 nil 32)))
-    (propertize formatted-preview 'face 'bibtex-actions-org-cite-style-preview)))
+    (propertize formatted-preview 'face 'oc-bibtex-actions-style-preview)))
 
 ;;; Embark target finder
 
-(defun bibtex-actions-org-cite-citation-finder ()
+(defun oc-bibtex-actions-citation-finder ()
   "Return org-cite citation keys at point as a list for `embark'."
   (when-let ((keys (bibtex-actions-get-key-org-cite)))
     (cons 'oc-citation (bibtex-actions--stringify-keys keys))))
 
 ;;; Keymap
 
-(defvar bibtex-actions-org-cite-map
+(defvar oc-bibtex-actions-map
   (let ((map (make-sparse-keymap)))
     (define-key map "c" '("cite | insert/edit" . org-cite-insert))
     (define-key map "o" '("cite | open-at-point" . bibtex-actions-open))
@@ -244,22 +244,22 @@ strings by style."
     (define-key map "n" '("cite | open notes" . bibtex-actions-open-notes))
     (define-key map (kbd "RET") '("cite | default action" . bibtex-actions-run-default-action))
     map)
-  "Keymap for 'bibtex-actions-org-cite' `embark' at-point functionality.")
+  "Keymap for 'oc-bibtex-actions' `embark' at-point functionality.")
 
 ;; Embark configuration for org-cite
 
-(add-to-list 'embark-target-finders 'bibtex-actions-org-cite-citation-finder)
+(add-to-list 'embark-target-finders 'oc-bibtex-actions-citation-finder)
 (add-to-list 'embark-keymap-alist '(bibtex . bibtex-actions-map))
-(add-to-list 'embark-keymap-alist '(oc-citation . bibtex-actions-org-cite-map))
+(add-to-list 'embark-keymap-alist '(oc-citation . oc-bibtex-actions-map))
 
 ;; Load this last.
 
-(org-cite-register-processor 'bibtex-actions-org-cite
+(org-cite-register-processor 'oc-bibtex-actions
   :insert (org-cite-make-insert-processor
-           #'bibtex-actions-org-cite-insert
+           #'oc-bibtex-actions-insert
          ;  #'org-cite-basic--complete-style)
-           #'bibtex-actions-org-cite-select-style)
-  :follow #'bibtex-actions-org-cite-follow)
+           #'oc-bibtex-actions-select-style)
+  :follow #'oc-bibtex-actions-follow)
 
-(provide 'bibtex-actions-org-cite)
-;;; bibtex-actions-org-cite.el ends here
+(provide 'oc-bibtex-actions)
+;;; oc-bibtex-actions.el ends here
