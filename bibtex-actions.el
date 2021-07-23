@@ -38,6 +38,7 @@
 ;;; Code:
 
 (require 'bibtex-completion)
+(require 'transient)
 
 (declare-function org-element-context "org-element")
 (declare-function org-element-property "org-element")
@@ -161,7 +162,7 @@ means no action."
   :type '(choice (const :tag "Prompt" 'prompt)
                  (const :tag "Ignore" nil)))
 
-(defcustom bibtex-actions-at-point-function 'bibtex-actions-dwim
+(defcustom bibtex-actions-at-point-function 'bibtex-actions-transient-menu
   "The function to run for 'bibtex-actions-at-point'."
   :group 'bibtex-actions
   :type 'function)
@@ -209,6 +210,18 @@ means no action."
     (define-key map (kbd "RET") '("cite| default action" . bibtex-actions-run-default-action))
     map)
   "Keymap for Embark citation-key actions.")
+
+(transient-define-prefix bibtex-actions-transient-menu ()
+  "Transient menu for bibtex-actions."
+  ["Reference(s)\n"
+   ["Open"
+    ("p" "PDF" bibtex-actions-open-pdf)
+    ("b" "BibTEX" bibtex-actions-open-entry)
+    ("l" "URL" bibtex-actions-open-link)
+    ("n" "Notes" bibtex-actions-open-notes)]
+
+   ["Library"
+    ("r" "Refresh" bibtex-actions-refresh)]])
 
 ;;; Org-cite citation function
 
