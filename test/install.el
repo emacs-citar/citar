@@ -24,14 +24,11 @@
 (package-install 'embark)
 (package-install 'marginalia)
 
-;; which-key menus
-(package-install 'which-key)
-
 ;; bibtex-actions
 (package-install 'bibtex-completion)
 ;; we load this locally, to facilitate development testing on branches
 (load-relative "../bibtex-actions.el")
-(load-relative "../bibtex-actions-org-cite.el")
+(load-relative "../oc-bibtex-actions.el")
 ;; theme that supports selectrum and vertico
 (package-install 'modus-themes)
 

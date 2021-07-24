@@ -117,12 +117,6 @@ In other supported modes, it will work the same as the embark option above.
 
 ;; Use consult-completing-read for enhanced interface.
 (advice-add #'completing-read-multiple :override #'consult-completing-read-multiple)
-
-;; If you use which-key, want to move the Embark actions behind a submenu, and sort
-;; based on the description.
-(setq embark-general-map `(keymap (?G . ,embark-general-map)))
-(define-key bibtex-actions-org-cite-map "G" '("general actions >" . (embark-general-map)))
-(setq which-key-sort-order 'which-key-description-order)
 #+END_SRC
 
 If you prefer to have the embark menu open with =org-open-at-point=, you can set this variable.

@@ -10,8 +10,7 @@
 ;; activate additional packages we need, including bibtex-actions
 (require 'embark)
 (require 'bibtex-actions)
-(require 'bibtex-actions-org-cite)
-(require 'which-key)
+(require 'oc-bibtex-actions)
 (require 'consult)
 ;; set binding for Embark context menu
 (global-set-key (kbd "M-;") #'embark-act)
@@ -25,9 +24,9 @@
 (add-to-list 'embark-keymap-alist '(bibtex . bibtex-actions-map))
 (add-to-list 'embark-keymap-alist '(citation-key . bibtex-actions-buffer-map))
 
-(with-eval-after-load "org-cite"
-  (setq org-cite-follow-processor 'bibtex-actions-org-cite)
-  (setq org-cite-insert-processor 'bibtex-actions-org-cite))
+(with-eval-after-load "oc"
+  (setq org-cite-follow-processor 'oc-bibtex-actions)
+  (setq org-cite-insert-processor 'oc-bibtex-actions))
 
 ;; load the test bib file
 (setq bibtex-completion-bibliography "test.bib")
@@ -35,16 +34,6 @@
 (setq bibtex-completion-additional-search-fields '(keywords url doi))
 
 (setq vertico-count 20)
-
-;; setup embark to use which-key
-(setq embark-action-indicator
-      (lambda (map _target)
-        (which-key--show-keymap "Embark" map nil nil 'no-paging)
-        #'which-key--hide-popup-ignore-command)
-      embark-become-indicator embark-action-indicator)
-
-;; sort which-key menu entries, so bibtex-actions commands first
-(setq which-key-sort-order 'which-key-description-order)
 
 ;; theme
 (load-theme 'modus-operandi t)
