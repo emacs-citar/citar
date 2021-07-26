@@ -64,7 +64,7 @@
   :group 'bibtex-actions)
 
 (defface bibtex-actions-highlight
-  '((t :inherit font-lock-keyword-face))
+  '((t :inherit font-lock-keyword-face :weight bold))
   "Face used to highlight content in `bibtex-actions' candidates."
   :group 'bibtex-actions)
 
