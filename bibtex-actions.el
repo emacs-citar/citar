@@ -58,9 +58,14 @@
 
 ;;; Variables
 
-(defface bibtex-actions-suffix
-  '((t :inherit completions-annotations))
-  "Face used to highlight suffixes in `bibtex-actions' candidates."
+(defface bibtex-actions
+  '((t :inherit font-lock-doc-face))
+  "Default Face for `bibtex-actions' candidates."
+  :group 'bibtex-actions)
+
+(defface bibtex-actions-highlight
+  '((t :inherit font-lock-keyword-face))
+  "Face used to highlight content in `bibtex-actions' candidates."
   :group 'bibtex-actions)
 
 (defcustom bibtex-actions-template
@@ -303,8 +308,8 @@ key associated with each one."
           ;;   1. the 'candidate-main' variable to be displayed
           ;;   2. the 'candidate-suffix' variable to be displayed with a different face
           ;;   3. the 'candidate-hidden' variable to be hidden
-          (propertize candidate-main) " "
-          (propertize candidate-suffix 'face 'bibtex-actions-suffix) " "
+          (propertize candidate-main 'face 'bibtex-actions-highlight) " "
+          (propertize candidate-suffix 'face 'bibtex-actions) " "
           (propertize candidate-hidden 'invisible t)))
         citekey)))))
 
