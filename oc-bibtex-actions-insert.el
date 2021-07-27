@@ -1,4 +1,4 @@
-;;; oc-bibtex-insert.el --- Description -*- lexical-binding: t; -*-
+;;; oc-bibtex-actions-insert.el --- Description -*- lexical-binding: t; -*-
 ;;
 ;; Copyright (C) 2021 Bruce D'Arcus
 ;;
@@ -20,7 +20,6 @@
 ;;; Code:
 
 (require 'bibtex-actions)
-(require 'citeproc)
 
 (defface bibtex-actions-org-cite-style-preview
   ;; Not sure if this is the best parent face.
@@ -100,27 +99,6 @@
           ("/c" . "(De Loas, 2019")
           ("text" . "de Loas (2019)")
           ("text" ' "De Loas (2019)")))))
-
-
-;;; Internal variables
-
-(defvar oc-bibtex-actions--csl-processor-cache nil
-  "Cache for the citation preview processor.")
-
-(make-variable-buffer-local 'bibtex-actions--csl-processor-cache)
-
-(defun oc-bibtex-actions--csl-processor ()
-  "Return a `citeproc-el' processor for style preview."
-  (or oc-bibtex-actions--csl-processor-cache
-      (let* ((bibliography (org-cite-list-bibliography-files))
-             (processor
-              (citeproc-create
-               org-cite-csl--fallback-style-file
-               (org-cite-csl--itemgetter bibliography)
-               (org-cite-csl--locale-getter))))
-        (setq oc-bibtex-actions--csl-processor-cache processor)
-        processor)))
-
 
 ;;;; Insert-keys
 
@@ -204,5 +182,5 @@ strings by style."
          ;  #'org-cite-basic--complete-style)
            #'oc-bibtex-actions-select-style))
 
-(provide 'oc-bibtex-insert)
-;;; oc-bibtex-insert.el ends here
+(provide 'oc-bibtex-actions-insert)
+;;; oc-bibtex-actions-insert.el ends here
