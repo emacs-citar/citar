@@ -421,20 +421,6 @@ TEMPLATE."
 
 ;;; At-point functions
 
-;;; Org-cite
-
-;; This function will likely be removed if and when bibtex-completions adds
-;; something equivalent.
-(defun bibtex-actions-get-key-org-cite ()
-  "Return key at point for org-cite citation-reference."
-  (when-let (((eq major-mode 'org-mode))
-             (elt (org-element-context)))
-    (pcase (org-element-type elt)
-      ('citation-reference
-       (org-element-property :key elt))
-      ('citation
-       (org-cite-get-references elt t)))))
-
 ;;; Embark
 
 (defun bibtex-actions--stringify-keys (keys)
@@ -443,10 +429,8 @@ TEMPLATE."
 
 (defun bibtex-actions-citation-key-at-point ()
   "Return citation keys at point as a list for `embark'."
-  (when-let ((keys (or (bibtex-actions-get-key-org-cite)
-                      (bibtex-completion-key-at-point))))
+  (when-let ((keys (bibtex-completion-key-at-point)))
     (cons 'citation-key (bibtex-actions--stringify-keys keys))))
-
 
 ;;; Command wrappers for bibtex-completion functions
 
@@ -536,11 +520,9 @@ With prefix, rebuild the cache before offering candidates."
 
 (defun bibtex-actions-run-default-action (keys)
   "Run the default action `bibtex-actions-default-action' on KEYS."
-  (funcall bibtex-actions-default-action
-           (if (stringp keys) (split-string keys " & ")
-             (if (assoc 'citation-key keys)
-                 (list (cdr (assoc 'citation-key keys)))
-               keys))))
+  (let ((key-list
+         (if (stringp keys) (list keys) keys)))
+    (funcall bibtex-actions-default-action key-list)))
 
 ;;;###autoload
 (defun bibtex-actions-dwim ()
