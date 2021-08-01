@@ -103,7 +103,7 @@ In other supported modes, it will work the same as the embark option above.
 ;; Set bibliography paths so they are the same.
 (my/bibs '("~/bib/references.bib"))
 
-(use-package bibtex-actions-org-cite
+(use-package oc-bibtex-actions
   :bind (("C-c b" . org-cite-insert)
          ("M-o" . org-open-at-point)
          :map minibuffer-local-map
@@ -309,7 +309,7 @@ You have a few different ways to interact with these commands.
 
 *** Org-cite
 
-Bibtex-actions includes org-cite integration in =bibtex-actions-org-cite=, which includes a processor with "follow" and "insert" capabilities.
+Bibtex-actions includes org-cite integration in =oc-bibtex-actions=, which includes a processor with "follow" and "insert" capabilities.
 
 The "insert processor" will use =bibtex-actions-read= to browse your library to insert and edit citations and citation references using the =org-cite-insert= command.
 
