@@ -254,6 +254,9 @@ strings by style."
 (add-to-list 'embark-target-finders 'oc-bibtex-actions-citation-finder)
 (add-to-list 'embark-keymap-alist '(bibtex . bibtex-actions-map))
 (add-to-list 'embark-keymap-alist '(oc-citation . oc-bibtex-actions-map))
+(when (boundp 'embark-pre-action-hooks)
+  ;; Ensure that Embark ignores the target for 'org-cite-insert'.
+  (add-to-list 'embark-pre-action-hooks '(org-cite-insert embark--ignore-target)))
 
 ;; Load this last.
 
