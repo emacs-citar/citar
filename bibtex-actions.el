@@ -207,8 +207,26 @@ offering the selection candidates"
              collect (cdr (or (assoc choice candidates)
                               (rassoc choice candidates))))))
 
-(defun bibtex-actions--format-candidates ()
-  "Transform candidates from 'bibtex-completion-candidates'.
+(defun bibtex-actions--normalize-paths (file-paths)
+  "Return a list of FILE-PATHS normalized with truename."
+  (if (stringp file-paths)
+      ;; If path is a string, return as a list.
+      (list (file-truename file-paths))
+    (delete-dups (mapcar (lambda (p) (file-truename p)) file-paths))))
+
+(defun bibtex-actions--local-files-to-cache ()
+  "The local bibliographic files not included in the global bibliography."
+  ;; We cache these locally to the buffer.
+  (let* ((local-bib-files
+          (bibtex-actions--normalize-paths
+           (bibtex-completion-find-local-bibliography)))
+         (global-bib-files
+          (bibtex-actions--normalize-paths
+           bibtex-completion-bibliography)))
+    (seq-difference local-bib-files global-bib-files)))
+
+(defun bibtex-actions--format-candidates (&optional context)
+  "Format candidates, with optional hidden CONTEXT metadata.
 This both propertizes the candidates for display, and grabs the
 key associated with each one."
   (let* ((main-template
@@ -240,7 +258,7 @@ key associated with each one."
             ;; We display this content already using symbols; here we add back
             ;; text to allow it to be searched, and citekey to ensure uniqueness
             ;; of the candidate.
-            (candidate-hidden (s-join " " (list pdf note link citekey))))
+            (candidate-hidden (s-join " " (list pdf note link context citekey))))
        (cons
         ;; If we don't trim the trailing whitespace, 'completing-read-multiple' will
         ;; get confused when there are multiple selected candidates.
@@ -276,16 +294,23 @@ key associated with each one."
                             (list pdf note link))"	") suffix))))
 
 (defvar bibtex-actions--candidates-cache nil
-  "Store the candidates list.")
+  "Store the global candidates list.")
+
+(defvar-local bibtex-actions--local-candidates-cache nil
+  ;; We use defvar-local so can maintain per-buffer candidate caches.
+  "Store the local (per-buffer) candidates list.")
 
 (defun bibtex-actions--get-candidates (&optional force-rebuild-cache)
   "Get the cached candidates.
 If the cache is nil, this will load the cache.
 If FORCE-REBUILD-CACHE is t, force reloading the cache."
   (when (or force-rebuild-cache
-            (not bibtex-actions--candidates-cache))
+            (not bibtex-actions--candidates-cache)
+            (not bibtex-actions--local-candidates-cache))
     (bibtex-actions-refresh force-rebuild-cache))
-  bibtex-actions--candidates-cache)
+  (seq-concatenate 'list
+                   ((lambda (x) (if (eq x t) nil x)) bibtex-actions--local-candidates-cache)
+                   ((lambda (x) (if (eq x t) nil x)) bibtex-actions--candidates-cache)))
 
 ;;;###autoload
 (defun bibtex-actions-refresh (&optional force-rebuild-cache)
@@ -295,8 +320,14 @@ is non-nil, also run the `bibtex-actions-before-refresh-hook' hook."
   (interactive "P")
   (when force-rebuild-cache
     (run-hooks 'bibtex-actions-force-refresh-hook))
+  ;; t in the result indicates that cache was computed but came out nil nil
+  ;; itself is used to indicate a cache that hasn't been computed this is to
+  ;; work around the fact that we can't differentiate between empty list and nil
   (setq bibtex-actions--candidates-cache
-        (bibtex-actions--format-candidates)))
+        ((lambda (x) (if x x t)) (bibtex-actions--format-candidates)))
+  (let ((bibtex-completion-bibliography (bibtex-actions--local-files-to-cache)))
+    (setq bibtex-actions--local-candidates-cache
+        ((lambda (x) (if x x t)) (bibtex-actions--format-candidates "is:local")))))
 
 ;;;###autoload
 (defun bibtex-actions-insert-preset ()
