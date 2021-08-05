@@ -222,61 +222,26 @@ You then have two ways to access these strings from the completion prompt:
 =Bibtex-actions= also preserves the history of your selections (see caveat below about multiple candidate selection though), which are also accessible in your completion UI, but by using =M-p=.
 You can save this history across sessions by adding =bibtex-actions-history= to =savehist-additional-variables=.
 
-** Pre-filtering entries
-    :PROPERTIES:
-    :CUSTOM_ID: prefiltering-entries
-    :END:
-
-By default, =bibtex-actions= will, assuming you are using =orderless= or =prescient= to filter candidates, pre-filter entries for the following commands.
-
-1. =bibtex-actions-open=: pre-narrows the list to those which have associated pdf or links
-2. =bibtex-actions-open-link=: pre-narrows the list to those which have associated links
-3. =bibtex-actions-open-pdf=: -pre-narrows the list to those which have associated pdf(s)
-
-That is, upon running the command, an =initial-input= value will be inserted to narrow the results. 
-You can also delete that if you prefer to see the full list of candidates.
-
-By default, pre-filtering of =bibtex-actions-open-notes= is off, because the command by default will create a new note if none is available, and therefore it makes sense to have access to your full library. 
-But you can customize this to pre-filter if you prefer.
-
-If you want to modify those values, or remove them entirely, you can set =bibtex-actions-initial-inputs= like so; in this case turning off pre-filtering for =bibtex-actions-open-pdf=:
-
-#+begin_src elisp
-(setq bibtex-actions-initial-inputs
-  '((pdf    . nil)
-    (note   . nil)
-    (link   . "has:link")
-    (source . "has:link\\|has:pdf"))
-#+end_src
-
 ** Refreshing the library display
     :PROPERTIES:
     :CUSTOM_ID: refreshing-the-library-display
     :END:
 
-Bibtex-actions uses a cache to speed up library display.
+=Bibtex-actions= uses two caches to speed up library display; one for the global bibliography, and another for local files specific to a buffer.
 This is great for performance, but means the data can become stale if you modify it.
 
-The =bibtex-actions-refresh= command will reload the cache, and you can call this manually. 
+The =bibtex-actions-refresh= command will reload the caches, and you can call this manually.
 You can also call any of the =bibtex-actions= commands with a prefix argument: =C-u M-x bibtex-actions-insert-key=.
 
-Finally, another option is to add =bibtex-completion=-style proactive loading externally by using =filenotify= something like this:
+Another option is to add a hook, something like this:
 
 #+BEGIN_SRC emacs-lisp
-  ;; Of course, you could also use `bibtex-completion-bibliography` here, but would need 
-  ;; to adapt this if you specify multiple files.
-  (file-notify-add-watch 
-    "/path/to/file.bib" '(change) 'bibtex-actions-refresh)
-#+END_SRC
+(defun gen-bib-cache-idle ()
+  "Generate bib item caches with idle timer"
+  (run-with-idle-timer 0.5 nil #'bibtex-actions-refresh))
 
-You can also extend this to do the same thing for your PDF files, or notes:
-
-#+BEGIN_SRC emacs-lisp
-  (file-notify-add-watch 
-    bibtex-completion-library-path '(change) 'bibtex-actions-refresh)
-
-  (file-notify-add-watch 
-    bibtex-completion-note-path '(change) 'bibtex-actions-refresh)
+(add-hook 'LaTeX-mode-hook #'gen-bib-cache-idle)
+(add-hook 'org-mode-hook #'gen-bib-cache-idle)
 #+END_SRC
 
 For additional configuration options on this, see [[https://github.com/bdarcus/bibtex-actions/wiki/Configuration#automating-path-watches][the wiki]].
