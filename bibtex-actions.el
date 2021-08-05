@@ -84,12 +84,6 @@ display and for search."
     :group 'bibtex-actions
     :type  '(alist :key-type symbol :value-type function))
 
-(defcustom bibtex-actions-org-cite-styles
-  '("text" "noauthor" "title" "author" "locators" "nocite")
-  "Org citation styles."
-  :group 'bibtex-actions
-  :type '(repeat string))
-
 (defcustom bibtex-actions-link-symbol "🔗"
   "Symbol to indicate a DOI or URL link is available for a publication.
 This should be a single character."
@@ -111,14 +105,6 @@ may be indicated with the same icon but a different face."
   "The padding between prefix symbols."
   :group 'bibtex-actions
   :type 'string)
-
-(setq bibtex-completion-format-citation-functions
-  '((org-mode      . bibtex-actions--format-citation-org)
-    (latex-mode    . bibtex-completion-format-citation-cite)
-    (markdown-mode . bibtex-completion-format-citation-pandoc-citeproc)
-    (python-mode   . bibtex-completion-format-citation-sphinxcontrib-bibtex)
-    (rst-mode      . bibtex-completion-format-citation-sphinxcontrib-bibtex)
-    (default       . bibtex-completion-format-citation-pandoc-citeproc)))
 
 (defcustom bibtex-actions-force-refresh-hook nil
   "Hook run when user forces a (re-) building of the candidates cache.
@@ -193,20 +179,6 @@ means no action."
     (define-key map (kbd "RET") '("default action" . bibtex-actions-run-default-action))
     map)
   "Keymap for Embark citation-key actions.")
-
-;;; Org-cite citation function
-
-(defun bibtex-actions--format-citation-org (keys)
-  "Format org-cite citations for the entries in KEYS."
-  (let* ((prefix  (if bibtex-completion-cite-prompt-for-optional-arguments (read-from-minibuffer "Prefix: ") ""))
-         (styles bibtex-actions-org-cite-styles)
-         (style  (if bibtex-completion-cite-prompt-for-optional-arguments
-                     (ido-completing-read "Style: " styles nil nil nil nil "default")
-                   "default"))
-         (prefix  (if (string= "" prefix)  "" (concat prefix  " ;")))
-         (style  (if (string-equal style "default") "" (concat "/" style))))
-    ;; this is derived from the pandoc syntax function, but this has two-levels of affixes
-    (format "[cite%s:%s%s]" style prefix (s-join ";" (--map (concat "@" it) keys)))))
 
 ;;; Completion functions
 (cl-defun bibtex-actions-read (&optional &key rebuild-cache)
@@ -314,24 +286,6 @@ If FORCE-REBUILD-CACHE is t, force reloading the cache."
             (not bibtex-actions--candidates-cache))
     (bibtex-actions-refresh force-rebuild-cache))
   bibtex-actions--candidates-cache)
-
-(defun bibtex-actions-complete-key-at-point ()
-    "Complete org-cite or pandoc citation key at point."
-    ; FIX
-    (when (and (or (eq major-mode 'org-mode)
-                   (eq major-mode 'markdown-mode))
-               (eq ?@ (char-before)))
-      (let* ((candidates (bibtex-actions--get-candidates))
-             ;; set both begin and end to point so we use capf UI to narrow and
-             ;; select
-             (begin (point))
-             (end (point)))
-        (list begin end candidates
-              :exit-function
-              (lambda (str _status)
-                ;; take completion str and replace with key
-                (delete-char (- (length str)))
-                (insert (cdr (assoc str candidates))))))))
 
 ;;;###autoload
 (defun bibtex-actions-refresh (&optional force-rebuild-cache)
