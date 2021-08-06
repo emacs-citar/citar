@@ -293,10 +293,10 @@ key associated with each one."
                     (s-join bibtex-actions-symbol-separator
                             (list pdf note link))"	") suffix))))
 
-(defvar bibtex-actions--candidates-cache nil
+(defvar bibtex-actions--candidates-cache 'uninitialized
   "Store the global candidates list.")
 
-(defvar-local bibtex-actions--local-candidates-cache nil
+(defvar-local bibtex-actions--local-candidates-cache 'uninitialized
   ;; We use defvar-local so can maintain per-buffer candidate caches.
   "Store the local (per-buffer) candidates list.")
 
@@ -305,12 +305,12 @@ key associated with each one."
 If the cache is nil, this will load the cache.
 If FORCE-REBUILD-CACHE is t, force reloading the cache."
   (when (or force-rebuild-cache
-            (not bibtex-actions--candidates-cache)
-            (not bibtex-actions--local-candidates-cache))
+            (eq 'uninitialized bibtex-actions--candidates-cache)
+            (eq 'uninitialized bibtex-actions--local-candidates-cache))
     (bibtex-actions-refresh force-rebuild-cache))
   (seq-concatenate 'list
-                   ((lambda (x) (if (eq x t) nil x)) bibtex-actions--local-candidates-cache)
-                   ((lambda (x) (if (eq x t) nil x)) bibtex-actions--candidates-cache)))
+                   bibtex-actions--local-candidates-cache
+                   bibtex-actions--candidates-cache))
 
 ;;;###autoload
 (defun bibtex-actions-refresh (&optional force-rebuild-cache)
@@ -324,10 +324,10 @@ is non-nil, also run the `bibtex-actions-before-refresh-hook' hook."
   ;; itself is used to indicate a cache that hasn't been computed this is to
   ;; work around the fact that we can't differentiate between empty list and nil
   (setq bibtex-actions--candidates-cache
-        ((lambda (x) (if x x t)) (bibtex-actions--format-candidates)))
+        (bibtex-actions--format-candidates))
   (let ((bibtex-completion-bibliography (bibtex-actions--local-files-to-cache)))
     (setq bibtex-actions--local-candidates-cache
-        ((lambda (x) (if x x t)) (bibtex-actions--format-candidates "is:local")))))
+        (bibtex-actions--format-candidates "is:local"))))
 
 ;;;###autoload
 (defun bibtex-actions-insert-preset ()
