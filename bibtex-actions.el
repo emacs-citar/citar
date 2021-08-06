@@ -545,7 +545,7 @@ The callback FUNC is run when a chage in one of the local bibliography files is 
 (defun bibtex-actions-with-filenotify-local (func)
   "Hook to add watches on buffer local bib files and remove them when the buffer is killed
 The callback FUNC is run when a change is notified"
-  (let ((descs (bib-referesh--add-local-watches func)))
+  (let ((descs (bibtex-actions--add-local-watches func)))
     (add-hook 'kill-buffer-hook
               (lambda () (seq-map #'file-notify-rm-watch descs)) nil t)))
 
