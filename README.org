@@ -233,7 +233,9 @@ This is great for performance, but means the data can become stale if you modify
 The =bibtex-actions-refresh= command will reload the caches, and you can call this manually.
 You can also call any of the =bibtex-actions= commands with a prefix argument: =C-u M-x bibtex-actions-insert-key=.
 
-Although not default =Bibtex-actions= also provides convenience functions for auto-refreshing cache when bib files change using filenotify. There are two such functions. =bibtex-actions-with-filenotify-local= and =bibtex-actions-filenotify-global=. The following snippet will refresh caches when one of the bib files change
+Although not default, =bibtex-actions= also provides convenience functions for auto-refreshing cache when bib files change using filenotify. 
+There are two such functions: =bibtex-actions-with-filenotify-local= and =bibtex-actions-filenotify-global=. 
+The following snippet will refresh caches when one of the bib files change:
 
 #+BEGIN_SRC emacs-lisp
 (bibtex-actions-with-filenotify-global #'bibtex-actions-refresh)
