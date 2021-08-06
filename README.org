@@ -242,8 +242,8 @@ Although not default =Bibtex-actions= also provides convenience functions for au
 (add-hook 'org-mode-hook (lambda () (bibtex-actions-with-filenotify-local #'bibtex-actions-refresh)))
 #+END_SRC
 
-This will reload the cache whenever a bib file changes. A different option which might be useful to merely invalidate the cache so that it s regenerated whenever a
-bibtex-actions is called next. This can be achieved by the following code,
+This will reload the cache whenever a bib file changes. A different option which might be useful to merely invalidate the cache so that it is regenerated whenever a
+bibtex-actions command is called next. This can be achieved by the following code,
 
 #+BEGIN_SRC emacs-lisp
 (bibtex-actions-with-filenotify-global (lambda () (setq bibtex-actions--candidates-cache 'uninitiated)))
