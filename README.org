@@ -244,8 +244,9 @@ The following snippet will refresh caches when one of the bib files change:
 (add-hook 'org-mode-hook (lambda () (bibtex-actions-with-filenotify-local #'bibtex-actions-refresh)))
 #+END_SRC
 
-This will reload the cache whenever a bib file changes. A different option which might be useful is to merely invalidate the cache so that it is regenerated whenever a
-bibtex-actions command is called next. This can be achieved by the following code,
+This will reload the cache whenever a bib file changes. 
+A different option which might be useful is to merely invalidate the cache so that it is regenerated whenever a bibtex-actions command is called next. 
+This can be achieved by the following code:
 
 #+BEGIN_SRC emacs-lisp
 (bibtex-actions-with-filenotify-global (lambda () (setq bibtex-actions--candidates-cache 'uninitialized)))
