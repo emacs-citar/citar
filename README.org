@@ -249,7 +249,8 @@ A different option which might be useful is to merely invalidate the cache so th
 This can be achieved by the following code:
 
 #+BEGIN_SRC emacs-lisp
-(bibtex-actions-with-filenotify-global (lambda () (setq bibtex-actions--candidates-cache 'uninitialized)))
+(bibtex-actions-with-filenotify-global
+ (lambda () (setq bibtex-actions--candidates-cache 'uninitialized)))
 
 (add-hook 'LaTeX-mode-hook
           (lambda () (bibtex-actions-with-filenotify-local
