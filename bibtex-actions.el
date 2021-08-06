@@ -522,7 +522,9 @@ With prefix, rebuild the cache before offering candidates."
 (defun bibtex-actions-run-default-action (keys)
   "Run the default action `bibtex-actions-default-action' on KEYS."
   (funcall bibtex-actions-default-action
-           (if (stringp keys) (split-string keys " & ") keys)))
+           (if (stringp keys)
+               (split-string keys " & ")
+             (split-string (cdr keys) " & "))))
 
 ;;;###autoload
 (defun bibtex-actions-dwim ()
