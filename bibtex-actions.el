@@ -294,7 +294,8 @@ key associated with each one."
                             (list pdf note link))"	") suffix))))
 
 (defvar bibtex-actions--candidates-cache 'uninitialized
-  "Store the global candidates list.")
+  "Store the global candidates list.
+Default value of 'uninitialized is used to indicate that cache has not yet been created")
 
 (defvar-local bibtex-actions--local-candidates-cache 'uninitialized
   ;; We use defvar-local so can maintain per-buffer candidate caches.
@@ -302,8 +303,8 @@ key associated with each one."
 
 (defun bibtex-actions--get-candidates (&optional force-rebuild-cache)
   "Get the cached candidates.
-If the cache is nil, this will load the cache.
-If FORCE-REBUILD-CACHE is t, force reloading the cache."
+If the cache is unintialized, this will load the cache.
+If FORCE-REBUILD-CACHE is t, force reload the cache."
   (when (or force-rebuild-cache
             (eq 'uninitialized bibtex-actions--candidates-cache)
             (eq 'uninitialized bibtex-actions--local-candidates-cache))
@@ -320,9 +321,6 @@ is non-nil, also run the `bibtex-actions-before-refresh-hook' hook."
   (interactive "P")
   (when force-rebuild-cache
     (run-hooks 'bibtex-actions-force-refresh-hook))
-  ;; t in the result indicates that cache was computed but came out nil nil
-  ;; itself is used to indicate a cache that hasn't been computed this is to
-  ;; work around the fact that we can't differentiate between empty list and nil
   (setq bibtex-actions--candidates-cache
         (bibtex-actions--format-candidates))
   (let ((bibtex-completion-bibliography (bibtex-actions--local-files-to-cache)))
@@ -530,6 +528,38 @@ With prefix, rebuild the cache before offering candidates."
   (interactive)
   (if-let ((keys (bibtex-actions-citation-key-at-point)))
       (funcall bibtex-actions-default-action keys)))
+
+;;; Convenience for files watching
+
+(defun bibtex-actions--add-local-watches (func)
+  "Add watches for the files that contribute to the local cache
+The callback FUNC is run when a chage in one of the local bibliography files is notified."
+       (let ((buffer (buffer-name)))
+         (seq-map (lambda (bibfile)
+                    (file-notify-add-watch bibfile '(change)
+                                           (lambda (x) (unless (eq 'stopped (cadr x))
+                                                    (with-current-buffer buffer (funcall func))))))
+                  (bibtex-actions--local-files-to-cache))))
+
+;;;###autoload
+(defun bibtex-actions-with-filenotify-local (func)
+  "Hook to add watches on buffer local bib files and remove them when the buffer is killed
+The callback FUNC is run when a change is notified"
+  (let ((descs (bibtex-actions--add-local-watches func)))
+    (add-hook 'kill-buffer-hook
+              (lambda () (seq-map #'file-notify-rm-watch descs)) nil t)))
+
+;;;###autoload
+(defun bibtex-actions-with-filenotify-global (func)
+  "Add watches on the global bib files.
+The callback FUNC is run when a chage in one of the global bibliography files is notified.
+Unlike `bibtex-actions-with-filenotify-local'these are never removed.
+The functions returns a list of descriptors one for each file and the watches can be removed
+manually if need be by calling `file-notify-rm-watch' on such descriptors"
+  (seq-map (lambda (bibfile) (file-notify-add-watch bibfile '(change)
+                                               (lambda (x) (unless (eq 'stopped (cadr x))
+                                                    (funcall func)))))
+           bibtex-completion-bibliography))
 
 (provide 'bibtex-actions)
 ;;; bibtex-actions.el ends here
