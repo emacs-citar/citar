@@ -242,14 +242,14 @@ Although not default =Bibtex-actions= also provides convenience functions for au
 (add-hook 'org-mode-hook (lambda () (bibtex-actions-with-filenotify-local #'bibtex-actions-refresh)))
 #+END_SRC
 
-This will reload the cache whenever a bib file changes. A different option which might be useful to merely invalidate the cache so that it is regenerated whenever a
+This will reload the cache whenever a bib file changes. A different option which might be useful is to merely invalidate the cache so that it is regenerated whenever a
 bibtex-actions command is called next. This can be achieved by the following code,
 
 #+BEGIN_SRC emacs-lisp
-(bibtex-actions-with-filenotify-global (lambda () (setq bibtex-actions--candidates-cache 'uninitiated)))
+(bibtex-actions-with-filenotify-global (lambda () (setq bibtex-actions--candidates-cache 'uninitialized)))
 
-(add-hook 'LaTeX-mode-hook (lambda () (bibtex-actions-with-filenotify-local (lambda () (setq bibtex-actions--local-candidates-cache 'uninitiated)))))
-(add-hook 'org-mode-hook (lambda () (bibtex-actions-with-filenotify-local (lambda () (setq bibtex-actions--candidates-cache 'uninitiated)))))
+(add-hook 'LaTeX-mode-hook (lambda () (bibtex-actions-with-filenotify-local (lambda () (setq bibtex-actions--local-candidates-cache 'uninitialized)))))
+(add-hook 'org-mode-hook (lambda () (bibtex-actions-with-filenotify-local (lambda () (setq bibtex-actions--local-candidates-cache 'uninitialized)))))
 #+END_SRC
 
 Another option to make the completion interface more seamless is to add a hook which generates the cache after a buffer is opened. This can be done when emacs has been idle (half a second in the example below) with something like this:
