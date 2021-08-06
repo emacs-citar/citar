@@ -245,7 +245,7 @@ strings by style."
     (define-key map (kbd "n") '("open notes" . bibtex-actions-open-notes))
     (define-key map (kbd "p") '("open PDF" . bibtex-actions-open-pdf))
     (define-key map (kbd "r") '("refresh library" . bibtex-actions-refresh))
-    (define-key map (kbd "RET") '("default action" . bibtex-actions-run-default-action))
+    (define-key map (kbd "RET") '("default action" . bibtex-actions-dwim))
     map)
   "Keymap for 'oc-bibtex-actions' `embark' at-point functionality.")
 
