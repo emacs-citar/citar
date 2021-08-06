@@ -528,7 +528,7 @@ With prefix, rebuild the cache before offering candidates."
 (defun bibtex-actions-dwim ()
   "Run the default action on citation keys found at point."
   (interactive)
-  (if-let ((keys (bibtex-actions-citation-key-at-point)))
+  (if-let ((keys (cdr (bibtex-actions-citation-key-at-point))))
       (bibtex-actions-run-default-action keys)))
 
 (provide 'bibtex-actions)
