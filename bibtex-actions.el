@@ -558,7 +558,7 @@ a mode hook containing this function can run several times without adding duplic
                 (setq bibtex-actions--local-watches 'uninitialized))
               nil t)))
 
-(defun bibtex-actions-with-filenotify-local-refresh (func)
+(defun bibtex-actions--with-filenotify-local-refresh (func)
   "Refresh the watches on the local bib files.
 The callback FUNC is run when a change is notified. This function only needs to be called if a local
 bib file has been added or removed."
@@ -570,7 +570,7 @@ bib file has been added or removed."
 (defun bibtex-actions-with-filenotify-global (func)
   "Add watches on the global bib files.
 The callback FUNC is run when a chage in one of the global bibliography files is notified.
-Unlike `bibtex-actions-with-filenotify-local'these are never removed.
+Unlike `bibtex-actions-with-filenotify-local'these have to be removed manually.
 To remove them call `bibtex-actions-rm-global-watches'"
   (setq bibtex-actions--global-watches
         (seq-map (lambda (bibfile) (file-notify-add-watch bibfile '(change)
@@ -583,12 +583,19 @@ To remove them call `bibtex-actions-rm-global-watches'"
   (seq-map #'file-notify-rm-watch bibtex-actions--global-watches)
   (setq bibtex-actions--global-watches nil))
 
-(defun bibtex-actions-with-filenotify-global-refresh (func)
+(defun bibtex-actions--with-filenotify-global-refresh (func)
   "Refresh the watches on the global bib files.
 The callback FUNC is run when a change is notified. This function only needs to be called if a global
 bib file has been added or removed."
   (bibtex-actions-rm-local-watches)
   (bibtex-actions-with-filenotify-global func))
+
+(defun bibtex-actions-with-filenotify-refresh (func)
+  "Refresh the watches on the bib files.
+The callback FUNC is run when a change is notified. This function only needs to be called if a local
+bib file has been added or removed."
+  (bibtex-actions--with-filenotify-global-refresh func)
+  (bibtex-actions--with-filenotify-local-refresh func))
 
 (provide 'bibtex-actions)
 ;;; bibtex-actions.el ends here
