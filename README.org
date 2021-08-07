@@ -245,8 +245,11 @@ The following snippet will refresh caches when one of the bib files change:
 (add-hook 'org-mode-hook
           (lambda () (bibtex-actions-with-filenotify-local #'bibtex-actions-refresh)))
 
-(defun refresh-bib-file-watches ()
-  (interactive) (bibtex-actions-with-filenotify-refresh #'bibtex-actions-refresh) (bibtex-actions-refresh))
+(defun refresh-bib-file-watches () (interactive)
+       (bibtex-actions-with-filenotify-refresh
+        (lambda ()
+          (setq bibtex-actions--local-candidates-cache 'uninitialized)))
+       (setq bibtex-actions--local-candidates-cache 'uninitialized))
 #+END_SRC
 
 Where the last command is for the rare occasion when a bib file is added or removed and thus the watches need to be adjusted.
