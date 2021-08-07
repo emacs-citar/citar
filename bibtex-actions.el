@@ -545,7 +545,7 @@ placed on these files."
                      (file-notify-add-watch bibfile '(change)
                                             (lambda (x) (unless (eq 'stopped (cadr x))
                                                      (with-current-buffer buffer (funcall func))))))
-                   (seq-concatenate (bibtex-actions--local-files-to-cache) extra-local-files)))))
+                   (seq-concatenate 'list (bibtex-actions--local-files-to-cache) extra-local-files)))))
 
 ;;;###autoload
 (defun bibtex-actions-with-filenotify-local (func &optional extra-local-files)
@@ -585,7 +585,7 @@ To remove them call `bibtex-actions-rm-global-watches'"
         (seq-map (lambda (bibfile) (file-notify-add-watch bibfile '(change)
                                                      (lambda (x) (unless (eq 'stopped (cadr x))
                                                               (funcall func)))))
-                 (seq-concatenate bibtex-completion-bibliography extra-files))))
+                 (seq-concatenate 'list bibtex-completion-bibliography extra-files))))
 
 (defun bibtex-actions-rm-global-watches ()
   "Remove the watches on global bib files"
