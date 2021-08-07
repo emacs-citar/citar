@@ -238,14 +238,12 @@ strings by style."
 
 (defvar oc-bibtex-actions-map
   (let ((map (make-sparse-keymap)))
-    (define-key map "c" '("edit citation" . org-cite-insert))
-    (define-key map (kbd "o") '("open source document" . bibtex-actions-open))
+    (define-key map (kbd "o") '("open source (file or link)" . bibtex-actions-open))
     (define-key map (kbd "e") '("open bibtex entry" . bibtex-actions-open-entry))
-    (define-key map (kbd "l") '("open source URL or DOI" . bibtex-actions-open-link))
+    (define-key map (kbd "f") '("open source file" . bibtex-actions-open-pdf))
+    (define-key map (kbd "l") '("open source link" . bibtex-actions-open-link))
     (define-key map (kbd "n") '("open notes" . bibtex-actions-open-notes))
-    (define-key map (kbd "p") '("open PDF" . bibtex-actions-open-pdf))
     (define-key map (kbd "r") '("refresh library" . bibtex-actions-refresh))
-    (define-key map (kbd "RET") '("default action" . bibtex-actions-dwim))
     map)
   "Keymap for 'oc-bibtex-actions' `embark' at-point functionality.")
 
