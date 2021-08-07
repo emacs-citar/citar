@@ -554,7 +554,9 @@ a mode hook containing this function can run several times without adding duplic
   (when (eq 'uninitialized bibtex-actions--local-watches)
     (bibtex-actions--add-local-watches func)
     (add-hook 'kill-buffer-hook
-              (lambda () (seq-map #'file-notify-rm-watch bibtex-actions--local-watches)) nil t)))
+              (lambda () (seq-map #'file-notify-rm-watch bibtex-actions--local-watches)
+                (setq bibtex-actions--local-watches 'uninitialized))
+              nil t)))
 
 (defun bibtex-actions-with-filenotify-local-refresh (func)
   "Refresh the watches on the local bib files.
