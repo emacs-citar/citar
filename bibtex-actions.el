@@ -531,35 +531,61 @@ With prefix, rebuild the cache before offering candidates."
 
 ;;; Convenience for files watching
 
+(defvar bibtex-actions--local-watches 'uninitialized)
+(defvar bibtex-actions--global-watches nil)
+
 (defun bibtex-actions--add-local-watches (func)
   "Add watches for the files that contribute to the local cache
 The callback FUNC is run when a chage in one of the local bibliography files is notified."
-       (let ((buffer (buffer-name)))
-         (seq-map (lambda (bibfile)
-                    (file-notify-add-watch bibfile '(change)
-                                           (lambda (x) (unless (eq 'stopped (cadr x))
-                                                    (with-current-buffer buffer (funcall func))))))
-                  (bibtex-actions--local-files-to-cache))))
+  (let ((buffer (buffer-name)))
+    (setq bibtex-actions--local-watches
+          (seq-map (lambda (bibfile)
+                     (file-notify-add-watch bibfile '(change)
+                                            (lambda (x) (unless (eq 'stopped (cadr x))
+                                                     (with-current-buffer buffer (funcall func))))))
+                   (bibtex-actions--local-files-to-cache)))))
 
 ;;;###autoload
 (defun bibtex-actions-with-filenotify-local (func)
   "Hook to add watches on buffer local bib files and remove them when the buffer is killed
-The callback FUNC is run when a change is notified"
-  (let ((descs (bibtex-actions--add-local-watches func)))
-    (add-hook 'kill-buffer-hook
-              (lambda () (seq-map #'file-notify-rm-watch descs)) nil t)))
+The callback FUNC is run when a change is notified. The watches are added only if`bibtex-actions--local-watches'
+has the default value `uninitialized'. This to ensure that duplicate watches aren't added. This means
+a mode hook containing this function can run several times without adding duplicate watches."
+  (when (eq 'uninitialized bibtex-actions--local-watches)
+      (add-hook 'kill-buffer-hook
+                (lambda () (seq-map #'file-notify-rm-watch bibtex-actions--local-watches)) nil t)))
+
+(defun bibtex-actions-with-filenotify-local-refresh (func)
+  "Refresh the watches on the local bib files.
+The callback FUNC is run when a change is notified. This function only needs to be called if a local
+bib file has been added or removed."
+  (seq-map #'file-notify-rm-watch bibtex-actions--local-watches)
+  (reftex-access-scan-info t)
+  (bibtex-actions--add-local-watches func))
 
 ;;;###autoload
 (defun bibtex-actions-with-filenotify-global (func)
   "Add watches on the global bib files.
 The callback FUNC is run when a chage in one of the global bibliography files is notified.
 Unlike `bibtex-actions-with-filenotify-local'these are never removed.
-The functions returns a list of descriptors one for each file and the watches can be removed
-manually if need be by calling `file-notify-rm-watch' on such descriptors"
-  (seq-map (lambda (bibfile) (file-notify-add-watch bibfile '(change)
-                                               (lambda (x) (unless (eq 'stopped (cadr x))
-                                                    (funcall func)))))
-           bibtex-completion-bibliography))
+To remove them call `bibtex-actions-rm-global-watches'"
+  (setq bibtex-actions--global-watches
+        (seq-map (lambda (bibfile) (file-notify-add-watch bibfile '(change)
+                                                     (lambda (x) (unless (eq 'stopped (cadr x))
+                                                              (funcall func)))))
+                 bibtex-completion-bibliography)))
+
+(defun bibtex-actions-rm-global-watches ()
+  "Remove the watches on global bib files"
+  (seq-map #'file-notify-rm-watch bibtex-actions--global-watches)
+  (setq bibtex-actions--global-watches nil))
+
+(defun bibtex-actions-with-filenotify-global-refresh (func)
+  "Refresh the watches on the global bib files.
+The callback FUNC is run when a change is notified. This function only needs to be called if a global
+bib file has been added or removed."
+  (bibtex-actions-rm-local-watches)
+  (bibtex-actions-with-filenotify-global func))
 
 (provide 'bibtex-actions)
 ;;; bibtex-actions.el ends here
