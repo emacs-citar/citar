@@ -266,9 +266,7 @@ This can be achieved by the following code:
                       (lambda () (setq bibtex-actions--local-candidates-cache 'uninitialized)))))
 
 (defun refresh-bib-file-watches () (interactive)
-       (bibtex-actions-with-filenotify-refresh
-       (lambda () (bibtex-actions-with-filenotify-local
-                      (lambda () (setq bibtex-actions--local-candidates-cache 'uninitialized)))) ))
+       (bibtex-actions-with-filenotify-refresh (lambda () (setq bibtex-actions--local-candidates-cache 'uninitialized))))
 #+END_SRC
 
 Another option to make the completion interface more seamless is to add a hook which generates the cache after a buffer is opened. This can be done when emacs has been idle (half a second in the example below) with something like this:
