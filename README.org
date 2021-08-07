@@ -246,7 +246,7 @@ The following snippet will refresh caches when one of the bib files change:
           (lambda () (bibtex-actions-with-filenotify-local #'bibtex-actions-refresh)))
 
 (defun refresh-bib-file-watches ()
-  (interactive) (bibtex-actions-with-filenotify-refresh #'bibtex-actions-refresh))
+  (interactive) (bibtex-actions-with-filenotify-refresh #'bibtex-actions-refresh) (bibtex-actions-refresh))
 #+END_SRC
 
 Where the last command is for the rare occasion when a bib file is added or removed and thus the watches need to be adjusted.
