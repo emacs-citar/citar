@@ -587,7 +587,7 @@ To remove them call `bibtex-actions-rm-global-watches'"
   "Refresh the watches on the global bib files.
 The callback FUNC is run when a change is notified. This function only needs to be called if a global
 bib file has been added or removed."
-  (bibtex-actions-rm-local-watches)
+  (bibtex-actions-rm-global-watches)
   (bibtex-actions-with-filenotify-global func))
 
 (defun bibtex-actions-with-filenotify-refresh (func)
