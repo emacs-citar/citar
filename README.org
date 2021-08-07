@@ -240,10 +240,13 @@ The following snippet will refresh caches when one of the bib files change:
 #+BEGIN_SRC emacs-lisp
 (bibtex-actions-with-filenotify-global #'bibtex-actions-refresh)
 
-(add-hook 'LaTeX-mode-hook (lambda () (bibtex-actions-with-filenotify-local #'bibtex-actions-refresh)))
-(add-hook 'org-mode-hook (lambda () (bibtex-actions-with-filenotify-local #'bibtex-actions-refresh)))
+(add-hook 'LaTeX-mode-hook
+          (lambda () (bibtex-actions-with-filenotify-local #'bibtex-actions-refresh)))
+(add-hook 'org-mode-hook
+          (lambda () (bibtex-actions-with-filenotify-local #'bibtex-actions-refresh)))
 
-(defun refresh-bib-file-watches () (interactive) (bibtex-actions-with-filenotify-refresh #'bibtex-actions-refresh))
+(defun refresh-bib-file-watches ()
+  (interactive) (bibtex-actions-with-filenotify-refresh #'bibtex-actions-refresh))
 #+END_SRC
 
 Where the last command is for the rare occasion when a bib file is added or removed and thus the watches need to be adjusted.
