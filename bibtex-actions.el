@@ -552,6 +552,7 @@ The callback FUNC is run when a change is notified. The watches are added only i
 has the default value `uninitialized'. This to ensure that duplicate watches aren't added. This means
 a mode hook containing this function can run several times without adding duplicate watches."
   (when (eq 'uninitialized bibtex-actions--local-watches)
+    (bibtex-actions--add-local-watches func)
     (add-hook 'kill-buffer-hook
               (lambda () (seq-map #'file-notify-rm-watch bibtex-actions--local-watches)) nil t)))
 
