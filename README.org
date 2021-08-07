@@ -250,7 +250,7 @@ Where the last command is for the rare occasion when a bib file is added or remo
 
 This will reload the cache whenever a bib file changes. 
 
-A different option which might be useful is to merely invalidate the cache so that it is regenerated whenever a bibtex-actions command is called next. 
+A different option which might be useful is to merely invalidate the cache so that it is regenerated whenever a bibtex-actions command is called next.
 This can be achieved by the following code:
 
 #+BEGIN_SRC emacs-lisp
