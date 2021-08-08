@@ -46,7 +46,8 @@
 (declare-function org-cite-register-processor "org-cite")
 (declare-function org-cite-make-insert-processor "org-cite")
 (declare-function org-cite-basic--complete-style "org-cite")
-(declare-function embark-act "embark")
+(declare-function embark-act "ext:embark")
+(declare-function reftex-access-scan-info "ext:reftex")
 
 ;;; Declare variables for byte compiler
 
