@@ -552,7 +552,9 @@ be placed on these files."
                                     (lambda (x)
                                       (unless (eq 'stopped (cadr x))
                                         (with-current-buffer buffer (funcall func))))))
-           (seq-concatenate 'list (bibtex-actions--local-files-to-cache) extra-local-files)))))
+                      (seq-concatenate 'list
+                            (bibtex-actions--local-files-to-cache)
+                            (bibtex-actions--normalize-paths extra-local-files))))))
 
 ;;;###autoload
 (defun bibtex-actions-with-filenotify-local (func &optional extra-local-files)
@@ -603,7 +605,9 @@ watches have to be removed manually. To remove them call
             (lambda (x)
               (unless (eq 'stopped (cadr x))
                 (funcall func)))))
-         (seq-concatenate 'list bibtex-completion-bibliography extra-files))))
+                 (seq-concatenate 'list
+                          (bibtex-actions--normalize-paths bibtex-completion-bibliography)
+                          (bibtex-actions--normalize-paths extra-files)))))
 
 (defun bibtex-actions-rm-global-watches ()
   "Remove the watches on global bib files."
