@@ -295,7 +295,9 @@ key associated with each one."
 
 (defvar bibtex-actions--candidates-cache 'uninitialized
   "Store the global candidates list.
-Default value of 'uninitialized is used to indicate that cache has not yet been created")
+
+Default value of 'uninitialized is used to indicate that cache
+has not yet been created")
 
 (defvar-local bibtex-actions--local-candidates-cache 'uninitialized
   ;; We use defvar-local so can maintain per-buffer candidate caches.
@@ -535,10 +537,12 @@ With prefix, rebuild the cache before offering candidates."
 (defvar bibtex-actions--global-watches nil)
 
 (defun bibtex-actions--add-local-watches (func &optional extra-local-files)
-  "Add watches for the files that contribute to the local cache
-The callback FUNC is run when a chage in one of the local bibliography files is notified.
-The optional argument EXTRA-LOCAL-FILES is a list of paths. If passed watches will also be
-placed on these files."
+  "Add watches for the files that contribute to the local cache.
+
+The callback FUNC is run when a chage in one of the local
+bibliography files is notified. The optional argument
+EXTRA-LOCAL-FILES is a list of paths. If passed watches will also
+be placed on these files."
   (let ((buffer (buffer-name)))
     (setq bibtex-actions--local-watches
           (seq-map (lambda (bibfile)
@@ -549,13 +553,16 @@ placed on these files."
 
 ;;;###autoload
 (defun bibtex-actions-with-filenotify-local (func &optional extra-local-files)
-  "Hook to add watches on buffer local bib files and remove them when the buffer is killed
+  "Hook to add and remove watches local bib files.
+
 The callback FUNC is run when a change is notified.
-The optional argument EXTRA-LOCAL-FILES is a list of paths. If passed watches will also be
-placed on these files.
-The watches are added only if`bibtex-actions--local-watches'
-has the default value `uninitialized'. This is to ensure that duplicate watches aren't added. This means
-a mode hook containing this function can run several times without adding duplicate watches."
+
+The optional argument EXTRA-LOCAL-FILES is a list of
+paths. If passed watches will also be placed on these files. The
+watches are added only if`bibtex-actions--local-watches' has the
+default value `uninitialized'. This is to ensure that duplicate
+watches aren't added. This means a mode hook containing this
+function can run several times without adding duplicate watches."
   (when (eq 'uninitialized bibtex-actions--local-watches)
     (bibtex-actions--add-local-watches func extra-local-files)
     (add-hook 'kill-buffer-hook
@@ -565,10 +572,11 @@ a mode hook containing this function can run several times without adding duplic
 
 (defun bibtex-actions--with-filenotify-local-refresh (func &optional extra-local-files)
   "Refresh the watches on the local bib files.
-The callback FUNC is run when a change is notified.
-The optional argument EXTRA-LOCAL-FILES is a list of paths. If passed watches will also be
-placed on these files.
-This function only needs to be called if a local bib file has been added or removed."
+
+The callback FUNC is run when a change is notified. The optional
+argument EXTRA-LOCAL-FILES is a list of paths. If passed watches
+will also be placed on these files. This function only needs to
+be called if a local bib file has been added or removed."
   (seq-map #'file-notify-rm-watch bibtex-actions--local-watches)
   (reftex-access-scan-info t)
   (bibtex-actions--add-local-watches func extra-local-files))
@@ -576,11 +584,13 @@ This function only needs to be called if a local bib file has been added or remo
 ;;;###autoload
 (defun bibtex-actions-with-filenotify-global (func &optional extra-files)
   "Add watches on the global bib files.
-The callback FUNC is run when a chage in one of the global bibliography files is notified.
-The optional argument EXTRA-FILES is a list of paths. If passed watches will also be
-placed on these files.
-Unlike `bibtex-actions-with-filenotify-local' these watches have to be removed manually.
-To remove them call `bibtex-actions-rm-global-watches'"
+
+The callback FUNC is run when a chage in one of the global
+bibliography files is notified. The optional argument EXTRA-FILES
+is a list of paths. If passed watches will also be placed on
+these files. Unlike `bibtex-actions-with-filenotify-local' these
+watches have to be removed manually. To remove them call
+`bibtex-actions-rm-global-watches'"
   (setq bibtex-actions--global-watches
         (seq-map (lambda (bibfile) (file-notify-add-watch bibfile '(change)
                                                      (lambda (x) (unless (eq 'stopped (cadr x))
@@ -588,27 +598,35 @@ To remove them call `bibtex-actions-rm-global-watches'"
                  (seq-concatenate 'list bibtex-completion-bibliography extra-files))))
 
 (defun bibtex-actions-rm-global-watches ()
-  "Remove the watches on global bib files"
+  "Remove the watches on global bib files."
   (seq-map #'file-notify-rm-watch bibtex-actions--global-watches)
   (setq bibtex-actions--global-watches nil))
 
 (defun bibtex-actions--with-filenotify-global-refresh (func &optional extra-files)
   "Refresh the watches on the global bib files.
+
 The callback FUNC is run when a change is notified.
-The optional argument EXTRA-FILES is a list of paths. If passed watches will also be
-placed on these files.
-This function only needs to be called if a global bib file has been added or removed."
+
+The optional argument EXTRA-FILES is a list of paths. If passed
+watches will also be placed on these files. This function only
+needs to be called if a global bib file has been added or
+removed."
   (bibtex-actions-rm-global-watches)
   (bibtex-actions-with-filenotify-global func extra-files))
 
 (defun bibtex-actions-with-filenotify-refresh (func &optional extra-files extra-local-files)
   "Refresh the watches on the bib files.
+
 The callback FUNC is run when a change is notified.
-The optional arguments EXTRA-FILES & EXTRA-LOCAL-PATHS is a list of paths. If passed watches will also be
-placed on these files. The difference is that the watches on files in EXTRA-LOCAL-PATHS will be removed when
-the buffer from which this function was called is killed, while those on EXTRA-FILES have to be removed manually via
-`bibtex-actions-rm-global-watches'.
-This function only needs to be called if a local bib file has been added or removed."
+
+The optional arguments EXTRA-FILES & EXTRA-LOCAL-FILES is a list
+of paths. If passed watches will also be placed on these files.
+The difference is that the watches on files in EXTRA-LOCAL-FILES
+will be removed when the buffer from which this function was
+called is killed, while those on EXTRA-FILES have to be removed
+manually via `bibtex-actions-rm-global-watches'. This function
+only needs to be called if a local bib file has been added or
+removed."
   (bibtex-actions--with-filenotify-global-refresh func extra-files)
   (bibtex-actions--with-filenotify-local-refresh func extra-local-files))
 
