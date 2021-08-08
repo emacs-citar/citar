@@ -545,11 +545,13 @@ EXTRA-LOCAL-FILES is a list of paths. If passed watches will also
 be placed on these files."
   (let ((buffer (buffer-name)))
     (setq bibtex-actions--local-watches
-          (seq-map (lambda (bibfile)
-                     (file-notify-add-watch bibfile '(change)
-                                            (lambda (x) (unless (eq 'stopped (cadr x))
-                                                     (with-current-buffer buffer (funcall func))))))
-                   (seq-concatenate 'list (bibtex-actions--local-files-to-cache) extra-local-files)))))
+          (seq-map
+           (lambda (bibfile)
+             (file-notify-add-watch bibfile '(change)
+                                    (lambda (x)
+                                      (unless (eq 'stopped (cadr x))
+                                        (with-current-buffer buffer (funcall func))))))
+           (seq-concatenate 'list (bibtex-actions--local-files-to-cache) extra-local-files)))))
 
 ;;;###autoload
 (defun bibtex-actions-with-filenotify-local (func &optional extra-local-files)
@@ -592,10 +594,13 @@ these files. Unlike `bibtex-actions-with-filenotify-local' these
 watches have to be removed manually. To remove them call
 `bibtex-actions-rm-global-watches'"
   (setq bibtex-actions--global-watches
-        (seq-map (lambda (bibfile) (file-notify-add-watch bibfile '(change)
-                                                     (lambda (x) (unless (eq 'stopped (cadr x))
-                                                              (funcall func)))))
-                 (seq-concatenate 'list bibtex-completion-bibliography extra-files))))
+        (seq-map
+         (lambda (bibfile)
+           (file-notify-add-watch bibfile '(change)
+                                  (lambda (x)
+                                    (unless (eq 'stopped (cadr x))
+                                      (funcall func)))))
+         (seq-concatenate 'list bibtex-completion-bibliography extra-files))))
 
 (defun bibtex-actions-rm-global-watches ()
   "Remove the watches on global bib files."
