@@ -568,7 +568,8 @@ function can run several times without adding duplicate watches."
   (when (eq 'uninitialized bibtex-actions--local-watches)
     (bibtex-actions--add-local-watches func extra-local-files)
     (add-hook 'kill-buffer-hook
-              (lambda () (seq-map #'file-notify-rm-watch bibtex-actions--local-watches)
+              (lambda ()
+                (seq-map #'file-notify-rm-watch bibtex-actions--local-watches)
                 (setq bibtex-actions--local-watches 'uninitialized))
               nil t)))
 
@@ -596,10 +597,11 @@ watches have to be removed manually. To remove them call
   (setq bibtex-actions--global-watches
         (seq-map
          (lambda (bibfile)
-           (file-notify-add-watch bibfile '(change)
-                                  (lambda (x)
-                                    (unless (eq 'stopped (cadr x))
-                                      (funcall func)))))
+           (file-notify-add-watch
+            bibfile '(change)
+            (lambda (x)
+              (unless (eq 'stopped (cadr x))
+                (funcall func)))))
          (seq-concatenate 'list bibtex-completion-bibliography extra-files))))
 
 (defun bibtex-actions-rm-global-watches ()
