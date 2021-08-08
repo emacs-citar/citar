@@ -520,14 +520,16 @@ With prefix, rebuild the cache before offering candidates."
 (defun bibtex-actions-run-default-action (keys)
   "Run the default action `bibtex-actions-default-action' on KEYS."
   (funcall bibtex-actions-default-action
-           (if (stringp keys) (split-string keys " & ") keys)))
+           (if (stringp keys)
+               (split-string keys " & ")
+             (split-string (cdr keys) " & "))))
 
 ;;;###autoload
 (defun bibtex-actions-dwim ()
   "Run the default action on citation keys found at point."
   (interactive)
-  (if-let ((keys (bibtex-actions-citation-key-at-point)))
-      (funcall bibtex-actions-default-action keys)))
+  (if-let ((keys (cdr (bibtex-actions-citation-key-at-point))))
+      (bibtex-actions-run-default-action keys)))
 
 ;;; Convenience for files watching
 

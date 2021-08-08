@@ -238,21 +238,19 @@ strings by style."
 
 (defvar oc-bibtex-actions-map
   (let ((map (make-sparse-keymap)))
-    (define-key map "c" '("edit citation" . org-cite-insert))
-    (define-key map (kbd "o") '("open source document" . bibtex-actions-open))
+    (define-key map (kbd "o") '("open source (file or link)" . bibtex-actions-open))
     (define-key map (kbd "e") '("open bibtex entry" . bibtex-actions-open-entry))
-    (define-key map (kbd "l") '("open source URL or DOI" . bibtex-actions-open-link))
+    (define-key map (kbd "f") '("open source file" . bibtex-actions-open-pdf))
+    (define-key map (kbd "l") '("open source link" . bibtex-actions-open-link))
     (define-key map (kbd "n") '("open notes" . bibtex-actions-open-notes))
-    (define-key map (kbd "p") '("open PDF" . bibtex-actions-open-pdf))
     (define-key map (kbd "r") '("refresh library" . bibtex-actions-refresh))
-    (define-key map (kbd "RET") '("default action" . bibtex-actions-run-default-action))
     map)
   "Keymap for 'oc-bibtex-actions' `embark' at-point functionality.")
 
 ;; Embark configuration for org-cite
 
 (add-to-list 'embark-target-finders 'oc-bibtex-actions-citation-finder)
-(add-to-list 'embark-keymap-alist '(bibtex . bibtex-actions-map))
+(add-to-list 'embark-keymap-alist '(bibtex . oc-bibtex-actions-map))
 (add-to-list 'embark-keymap-alist '(oc-citation . oc-bibtex-actions-map))
 (when (boundp 'embark-pre-action-hooks)
   ;; Ensure that Embark ignores the target for 'org-cite-insert'.
