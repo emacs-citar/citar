@@ -246,10 +246,8 @@ The following snippet will refresh caches when one of the bib files change:
           (lambda () (bibtex-actions-with-filenotify-local #'bibtex-actions-refresh)))
 
 (defun refresh-bib-file-watches () (interactive)
-       (bibtex-actions-with-filenotify-refresh
-        (lambda ()
-          (setq bibtex-actions--local-candidates-cache 'uninitialized)))
-       (setq bibtex-actions--local-candidates-cache 'uninitialized))
+       (bibtex-actions-with-filenotify-refresh #'bibtex-actions-refresh)
+       (bibtex-actions-refresh))
 #+END_SRC
 
 Where the last command is for the rare occasion when a bib file is added or removed and thus the watches need to be adjusted.
@@ -272,7 +270,10 @@ This can be achieved by the following code:
                       (lambda () (setq bibtex-actions--local-candidates-cache 'uninitialized)))))
 
 (defun refresh-bib-file-watches () (interactive)
-       (bibtex-actions-with-filenotify-refresh (lambda () (setq bibtex-actions--local-candidates-cache 'uninitialized))) (setq bibtex-actions--local-candidates-cache 'uninitialized))
+       (bibtex-actions-with-filenotify-refresh
+        (lambda ()
+          (setq bibtex-actions--local-candidates-cache 'uninitialized)))
+       (setq bibtex-actions--local-candidates-cache 'uninitialized))
 #+END_SRC
 
 Another option to make the completion interface more seamless is to add a hook which generates the cache after a buffer is opened. This can be done when emacs has been idle (half a second in the example below) with something like this:
