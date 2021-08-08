@@ -250,7 +250,7 @@ strings by style."
 ;; Embark configuration for org-cite
 
 (add-to-list 'embark-target-finders 'oc-bibtex-actions-citation-finder)
-(add-to-list 'embark-keymap-alist '(bibtex . bibtex-actions-map))
+(add-to-list 'embark-keymap-alist '(bibtex . oc-bibtex-actions-map))
 (add-to-list 'embark-keymap-alist '(oc-citation . oc-bibtex-actions-map))
 (when (boundp 'embark-pre-action-hooks)
   ;; Ensure that Embark ignores the target for 'org-cite-insert'.
