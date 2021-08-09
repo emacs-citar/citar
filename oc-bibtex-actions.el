@@ -48,7 +48,7 @@
 
 (defface oc-bibtex-actions-style-preview
   ;; Not sure if this is the best parent face.
-    '((t :inherit org-cite))
+    '((t :inherit org-cite :underline nil))
   "Face for org-cite previews."
   :group 'oc-bibtex-actions)
 
