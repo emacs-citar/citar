@@ -46,13 +46,13 @@
 (declare-function org-open-at-point "org")
 (declare-function org-cite-make-insert-processor "oc")
 
-(defface bibtex-actions-org-cite-style-preview
+(defface oc-bibtex-actions-style-preview
   ;; Not sure if this is the best parent face.
-    '((t :inherit minibuffer-prompt))
+    '((t :inherit org-cite))
   "Face for org-cite previews."
   :group 'oc-bibtex-actions)
 
-(defcustom oc-bibtex-actions-preview-target 'natbib
+(defcustom oc-bibtex-actions-preview-target 'csl
   "Export processor target for which to display previews."
   ;; REVIEW not sure this is the best approach.
   :group 'oc-bibtex-actions
@@ -115,7 +115,7 @@
              ;; "nocite" style.
              ("nocite" .  "\\nocite")))
     (biblatex .
-              ( ;; Default style.
+              (;; Default style.
                ("/" . "\\autocite")
                ("/b" . "\\cite")
                ("/c" . "\\Autocite")
@@ -138,11 +138,24 @@
                ;; "noauthor" style.
                ("noauthor" .  "\\autocite*")))
     (csl .
-         (
-          ("/" . "(de Loas, 2019)")
-          ("/c" . "(De Loas, 2019")
-          ("text" . "de Loas (2019)")
-          ("text" ' "De Loas (2019)")))))
+         (;; Default style.
+          ("/" . "(de Villiers et al, 2019)")
+          ("/b" . "de Villiers et al, 2019")
+          ("/c" . "(De Villiers et al, 2019)")
+          ("/bc" . "de Villiers et al, 2019")
+          ;; "text" style.
+          ("text" . "de Villiers et al (2019)")
+          ("text/c" . "De Villiers et al (2019)")
+          ("text/f" . "de Villiers, Smith, Doa, and Jones (2019)")
+          ("text/cf" . "De Villiers, Smith, Doa, and Jones (2019)")
+          ;; "author" style.
+          ("author" . "de Villiers et al")
+          ("author/c" . "De Villiers et al")
+          ("author/f" . "de Villiers, Smith, Doa, and Jones")
+          ("author/cf" . "De Villiers, Smith, Doa, and Jones")
+          ;; "noauthor" style.
+          ("noauthor" . "(2019)")
+          ("noauthor/b" . "2019")))))
 
 ;TODO
 ;(defvar oc-bibtex-actions-open-default
