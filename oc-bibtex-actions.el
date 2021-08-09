@@ -46,9 +46,9 @@
 (declare-function org-open-at-point "org")
 (declare-function org-cite-make-insert-processor "oc")
 
-(defface bibtex-actions-org-cite-style-preview
+(defface oc-bibtex-actions-style-preview
   ;; Not sure if this is the best parent face.
-    '((t :inherit minibuffer-prompt))
+    '((t :inherit org-cite))
   "Face for org-cite previews."
   :group 'oc-bibtex-actions)
 
