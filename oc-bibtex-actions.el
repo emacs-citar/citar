@@ -181,7 +181,11 @@ With PROC list, limits to specific processors."
                          (caar s)(cadar s)))
                     (style
                      (if (string= "nil" style-name) "" style-name)))
-               (push (if (string= "" style) "/" style) styles)
+               (push
+                ;; Highlight the styles without variant.
+                (propertize
+                 (if (string= "" style) "/" style) 'face 'bibtex-actions-highlight)
+                styles)
                (cl-loop for v in (cdr s) do
                         (push (concat style "/" (cadr v)) styles))))
     styles))
