@@ -1,4 +1,4 @@
-;;; bibtex-actions-org-cite.el --- Org-cite support for bibtex-actions -*- lexical-binding: t; -*-
+;;; oc-bibtex-actions.el --- Org-cite support for bibtex-actions -*- lexical-binding: t; -*-
 ;;
 ;; Copyright (C) 2021 Bruce D'Arcus
 ;;
@@ -6,7 +6,7 @@
 ;; Maintainer: Bruce D'Arcus <https://github.com/bdarcus>
 ;; Created: July 11, 2021
 ;; License: GPL-3.0-or-later
-;; Version: 0.1
+;; Version: 0.4
 ;; Homepage: https://github.com/bdarcus/bibtex-actions
 ;; Package-Requires: ((emacs "26.3")(org "9.5"))
 ;;
@@ -48,7 +48,7 @@
 
 (defface oc-bibtex-actions-style-preview
   ;; Not sure if this is the best parent face.
-    '((t :inherit org-cite :underline nil))
+    '((t :inherit bibtex-actions))
   "Face for org-cite previews."
   :group 'oc-bibtex-actions)
 
