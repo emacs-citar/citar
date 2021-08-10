@@ -202,18 +202,18 @@ With PROC list, limits to specific processors."
   (call-interactively bibtex-actions-at-point-function))
 
 (defun oc-bibtex-actions-select-style ()
-"Complete a citation style for org-cite with preview."
+  "Complete a citation style for org-cite with preview."
   (interactive)
-  (let* ((oc-styles (oc-bibtex-actions--styles-candidates))
+  (let* ((oc-styles
+          ;; Sort the list upfront, but let completion UI handle beyond that.
+          (sort (oc-bibtex-actions--flat-supported-styles) 'string-lessp))
          (style
           (completing-read
            "Styles: "
            (lambda (str pred action)
              (if (eq action 'metadata)
                  `(metadata
-                   (annotation-function . oc-bibtex-actions--style-preview-annote)
-                   (cycle-sort-function . identity)
-                   (display-sort-function . identity)
+                   ;(annotation-function . oc-bibtex-actions--style-preview-annote)
                    (group-function . oc-bibtex-actions--styles-group-fn))
                (complete-with-action action oc-styles str pred)))))
          (style-final (string-trim style)))
@@ -223,7 +223,7 @@ With PROC list, limits to specific processors."
   "Generate candidate list."
   ;; TODO extract the style+variant strings from 'org-cite-support-styles'.
   (cl-loop for style in
-           (cdr (assoc oc-bibtex-actions-preview-target
+           (cdr (assoc oc-bibtex-actions-style-targets
                         oc-bibtex-actions-style-preview-alist))
            collect (cons
                     (concat "  " (truncate-string-to-width (car style) 20 nil 32)) (cdr style))))
@@ -246,6 +246,7 @@ strings by style."
        ((string= short-style "locators") "Locators-Only")
        ((string= short-style "text") "Textual/Narrative")
        ((string= short-style "nocite") "No Cite")
+       ((string= short-style "year") "Year-Only")
        ((string= short-style "noauthor") "Suppress Author")))))
 
 (defun oc-bibtex-actions-csl-render-citation (citation)
