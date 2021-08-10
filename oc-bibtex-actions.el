@@ -52,14 +52,19 @@
   "Face for org-cite previews."
   :group 'oc-bibtex-actions)
 
-(defcustom oc-bibtex-actions-preview-target 'csl
-  "Export processor target for which to display previews."
-  ;; REVIEW not sure this is the best approach.
+(defcustom oc-bibtex-actions-styles-format 'long
+  "Style format; whether to use full style names or shortcuts."
   :group 'oc-bibtex-actions
   :type '(choice
-          (const biblatex)
-          (const csl)
-          (const natbib)))
+          (const long)
+          (const short)))
+
+(defcustom oc-bibtex-actions-style-targets nil
+  "Export processor targets to include in styles list.
+
+If nil, use 'org-cite-supported-styles'."
+  :group 'oc-bibtex-actions
+  :type '(repeat :tag "org-cite export processor" symbol))
 
 ;;; Internal variables
 
@@ -160,6 +165,31 @@
 ;TODO
 ;(defvar oc-bibtex-actions-open-default
 
+(defun oc-bibtex-actions--flat-supported-styles (&optional proc)
+  "Return a flat list of supported styles.
+
+This converts 'org-cite-supported-styles' to a flat list for use
+as completion candidates.
+
+With PROC list, limits to specific processors."
+  (let ((styles (list)))
+    (cl-loop for s in
+             (org-cite-supported-styles
+              (or proc oc-bibtex-actions-style-targets)) do
+             (let* ((style-name
+                     (if (eq 'long oc-bibtex-actions-styles-format)
+                         (caar s)(cadar s)))
+                    (style
+                     (if (string= "nil" style-name) "" style-name)))
+               (push
+                ;; Highlight the styles without variant.
+                (propertize
+                 (if (string= "" style) "/" style) 'face 'bibtex-actions-highlight)
+                styles)
+               (cl-loop for v in (cdr s) do
+                        (push (concat style "/" (cadr v)) styles))))
+    styles))
+
 ;;; Org-cite processors
 
 ;; NOTE I may move some or all of these to a separate project
@@ -176,18 +206,18 @@
   (call-interactively bibtex-actions-at-point-function))
 
 (defun oc-bibtex-actions-select-style ()
-"Complete a citation style for org-cite with preview."
+  "Complete a citation style for org-cite with preview."
   (interactive)
-  (let* ((oc-styles (oc-bibtex-actions--styles-candidates))
+  (let* ((oc-styles
+          ;; Sort the list upfront, but let completion UI handle beyond that.
+          (sort (oc-bibtex-actions--flat-supported-styles) 'string-lessp))
          (style
           (completing-read
            "Styles: "
            (lambda (str pred action)
              (if (eq action 'metadata)
                  `(metadata
-                   (annotation-function . oc-bibtex-actions--style-preview-annote)
-                   (cycle-sort-function . identity)
-                   (display-sort-function . identity)
+                   ;(annotation-function . oc-bibtex-actions--style-preview-annote)
                    (group-function . oc-bibtex-actions--styles-group-fn))
                (complete-with-action action oc-styles str pred)))))
          (style-final (string-trim style)))
@@ -197,7 +227,7 @@
   "Generate candidate list."
   ;; TODO extract the style+variant strings from 'org-cite-support-styles'.
   (cl-loop for style in
-           (cdr (assoc oc-bibtex-actions-preview-target
+           (cdr (assoc oc-bibtex-actions-style-targets
                         oc-bibtex-actions-style-preview-alist))
            collect (cons
                     (concat "  " (truncate-string-to-width (car style) 20 nil 32)) (cdr style))))
@@ -220,6 +250,7 @@ strings by style."
        ((string= short-style "locators") "Locators-Only")
        ((string= short-style "text") "Textual/Narrative")
        ((string= short-style "nocite") "No Cite")
+       ((string= short-style "year") "Year-Only")
        ((string= short-style "noauthor") "Suppress Author")))))
 
 (defun oc-bibtex-actions-csl-render-citation (citation)

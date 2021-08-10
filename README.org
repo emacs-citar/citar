@@ -309,6 +309,18 @@ The "insert processor" will use =bibtex-actions-read= to browse your library to 
 The "follow processor" provides at-point functionality accessible via the =org-open-at-point= command.
 By default, in org-mode with org-cite support, when point is on a citation or citation-reference, and you invoke =org-open-at-point=, it will run the default command, which is =bibtex-actions-open=.
 
+Org-cite citations include optional "styles" and "variants" to locally modify the citation rendering.
+To edit these, just make sure point is on the citation prefix before running =org-cite-insert=, and you will get a list of available styles.
+That list is based on your configuration; if you have the =oc-natbib= and =oc-csl= processors configured, for example, the list will include the styles and variants available in those two processors.
+The variants included in the bundled processors include the following, with the shortcuts in parentheses:
+
+- =bare= (=b=): without surrounding punctuation
+- =caps= (=c=): force initial capitalization
+- =full= (=f=): ignore et al shortening for author names
+
+Generally, you shouldn't need these, but they can be useful in certain circumstances.
+If an export processor doesn't support a specific variant for a specific style, it should just fallback to the base style.
+For example, if you specify =text/f=, and the export processor you use doesn't support the =f= variant there, it should just output as if you specified =text=.
 
 *** =M-x=
     :PROPERTIES:
