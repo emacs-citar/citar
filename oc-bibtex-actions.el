@@ -52,14 +52,19 @@
   "Face for org-cite previews."
   :group 'oc-bibtex-actions)
 
-(defcustom oc-bibtex-actions-preview-target 'csl
-  "Export processor target for which to display previews."
-  ;; REVIEW not sure this is the best approach.
+(defcustom oc-bibtex-actions-styles-format 'long
+  "Style format; whether to use full style names or shortcuts."
   :group 'oc-bibtex-actions
   :type '(choice
-          (const biblatex)
-          (const csl)
-          (const natbib)))
+          (const long)
+          (const short)))
+
+(defcustom oc-bibtex-actions-style-targets nil
+  "Export processor targets to include in styles list.
+
+If nil, use 'org-cite-supported-styles'."
+  :group 'oc-bibtex-actions
+  :type '(repeat :tag "org-cite export processor" symbol))
 
 ;;; Internal variables
 
@@ -159,6 +164,27 @@
 
 ;TODO
 ;(defvar oc-bibtex-actions-open-default
+
+(defun oc-bibtex-actions--flat-supported-styles (&optional proc)
+  "Return a flat list of supported styles.
+
+This converts 'org-cite-supported-styles' to a flat list for use
+as completion candidates.
+
+With PROC list, limits to specific processors."
+  (let ((styles (list)))
+    (cl-loop for s in
+             (org-cite-supported-styles
+              (or proc oc-bibtex-actions-style-targets)) do
+             (let* ((style-name
+                     (if (eq 'long oc-bibtex-actions-styles-format)
+                         (caar s)(cadar s)))
+                    (style
+                     (if (string= "nil" style-name) "" style-name)))
+               (push (if (string= "" style) "/" style) styles)
+               (cl-loop for v in (cdr s) do
+                        (push (concat style "/" (cadr v)) styles))))
+    styles))
 
 ;;; Org-cite processors
 
