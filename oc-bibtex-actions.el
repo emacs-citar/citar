@@ -187,7 +187,10 @@ With PROC list, limits to specific processors."
                  (if (string= "" style) "/" style) 'face 'bibtex-actions-highlight)
                 styles)
                (cl-loop for v in (cdr s) do
-                        (push (concat style "/" (cadr v)) styles))))
+                        (push
+                         (propertize
+                          (concat style "/" (cadr v)) 'face 'bibtex-actions)
+                         styles))))
     styles))
 
 ;;; Org-cite processors
