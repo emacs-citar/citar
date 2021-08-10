@@ -91,81 +91,28 @@ If nil, use 'org-cite-supported-styles'."
 ;; process.
 
 (defvar oc-bibtex-actions-style-preview-alist
-  '((natbib .
-            (;; Default style.
-             ("/" . "\\citep")
-             ("/b" . "\\citealp")
-             ("/c" . "\\Citep")
-             ("/f" . "\\citep*")
-             ("/bc" .  "\\Citealp")
-             ("/bf" . "\\citealp*")
-             ("/cf" . "\\Citep*")
-             ("/bcf" . "\\Citealp*")
-             ;; "text" style.
-             ("text" . "\\citet")
-             ("text/b" . "\\citealt")
-             ("text/c" . "\\Citet")
-             ("text/f" . "\\citet*")
-             ("text/bc" . "\\Citealt")
-             ("text/bf"  .   "\\citealt*")
-             ("text/cf" .    "\\Citet*")
-             ("text/bcf" . "\\Citealt*")
-             ;; "author" style.
-             ("author" . "\\citeauthor")
-             ("author/c" . "\\Citeauthor")
-             ("author/f" . "\\citeauthor*")
-             ;; "noauthor" style.
-             ("noauthor" . "\\citeyearpar")
-             ("noauthor/b" .   "\\citeyear")
-             ;; "nocite" style.
-             ("nocite" .  "\\nocite")))
-    (biblatex .
-              (;; Default style.
-               ("/" . "\\autocite")
-               ("/b" . "\\cite")
-               ("/c" . "\\Autocite")
-               ("/bc" . "\\Cite")
-               ;; "text" style.
-               ("text" . "\\textcite")
-               ("text/c" .  "\\Textcite")
-               ;; "nocite" style.
-               ("nocite" . "\\nocite")
-               ;; "author" style.
-               ("author/c" . "\\Citeauthor*")
-               ("author/f" . "\\citeauthor")
-               ("author/cf" . "\\Citeauthor")
-               ("author" . "\\citeauthor*")
-               ;; "locators" style.
-               ("locators/b" . "\\notecite")
-               ("locators/c" . "\\Pnotecite")
-               ("locators/bc" . "\\Notecite")
-               ("locators" . "\\pnotecite")
-               ;; "noauthor" style.
-               ("noauthor" .  "\\autocite*")))
-    (csl .
-         (;; Default style.
-          ("/" . "(de Villiers et al, 2019)")
-          ("/b" . "de Villiers et al, 2019")
-          ("/c" . "(De Villiers et al, 2019)")
-          ("/bc" . "de Villiers et al, 2019")
-          ;; "text" style.
-          ("text" . "de Villiers et al (2019)")
-          ("text/c" . "De Villiers et al (2019)")
-          ("text/f" . "de Villiers, Smith, Doa, and Jones (2019)")
-          ("text/cf" . "De Villiers, Smith, Doa, and Jones (2019)")
-          ;; "author" style.
-          ("author" . "de Villiers et al")
-          ("author/c" . "De Villiers et al")
-          ("author/f" . "de Villiers, Smith, Doa, and Jones")
-          ("author/cf" . "De Villiers, Smith, Doa, and Jones")
-          ;; "noauthor" style.
-          ("noauthor" . "(2019)")
-          ("noauthor/b" . "2019")))))
+  '(("/" . "(de Villiers et al, 2019)")
+    ("/b" . "de Villiers et al, 2019")
+    ("/c" . "(De Villiers et al, 2019)")
+    ("/bc" . "de Villiers et al, 2019")
+    ;; "text" style.
+    ("text" . "de Villiers et al (2019)")
+    ("text/c" . "De Villiers et al (2019)")
+    ("text/f" . "de Villiers, Smith, Doa, and Jones (2019)")
+    ("text/cf" . "De Villiers, Smith, Doa, and Jones (2019)")
+    ;; "author" style.
+    ("author" . "de Villiers et al")
+    ("author/c" . "De Villiers et al")
+    ("author/f" . "de Villiers, Smith, Doa, and Jones")
+    ("author/cf" . "De Villiers, Smith, Doa, and Jones")
+    ;; "noauthor" style.
+    ("noauthor" . "(2019)")
+    ("noauthor/b" . "2019")))
 
 ;TODO
 ;(defvar oc-bibtex-actions-open-default
 
-(defun oc-bibtex-actions--flat-supported-styles (&optional proc)
+(defun oc-bibtex-actions--style-candidates (&optional proc)
   "Return a flat list of supported styles.
 
 This converts 'org-cite-supported-styles' to a flat list for use
@@ -213,27 +160,18 @@ With PROC list, limits to specific processors."
   (interactive)
   (let* ((oc-styles
           ;; Sort the list upfront, but let completion UI handle beyond that.
-          (sort (oc-bibtex-actions--flat-supported-styles) 'string-lessp))
+          (sort (oc-bibtex-actions--style-candidates) 'string-lessp))
          (style
           (completing-read
            "Styles: "
            (lambda (str pred action)
              (if (eq action 'metadata)
                  `(metadata
-                   ;(annotation-function . oc-bibtex-actions--style-preview-annote)
+                   (annotation-function . oc-bibtex-actions--style-preview-annote)
                    (group-function . oc-bibtex-actions--styles-group-fn))
                (complete-with-action action oc-styles str pred)))))
          (style-final (string-trim style)))
     (if (string= style-final "/") "" style-final)))
-
-(defun oc-bibtex-actions--styles-candidates ()
-  "Generate candidate list."
-  ;; TODO extract the style+variant strings from 'org-cite-support-styles'.
-  (cl-loop for style in
-           (cdr (assoc oc-bibtex-actions-style-targets
-                        oc-bibtex-actions-style-preview-alist))
-           collect (cons
-                    (concat "  " (truncate-string-to-width (car style) 20 nil 32)) (cdr style))))
 
 (defun oc-bibtex-actions--styles-group-fn (style transform)
   "Return group title of STYLE or TRANSFORM the candidate.
@@ -269,7 +207,7 @@ strings by style."
 (defun oc-bibtex-actions--style-preview-annote (style &optional _citation)
   "Annotate STYLE with CITATION preview."
   ;; TODO rather than use the alist, run the export processors on the citation..
-  (let* ((preview (cdr (assoc style (oc-bibtex-actions--styles-candidates))))
+  (let* ((preview (or (cdr (assoc style oc-bibtex-actions-style-preview-alist)) ""))
          ;; TODO look at how define-face does this.
          (formatted-preview (truncate-string-to-width preview 50 nil 32)))
     (propertize formatted-preview 'face 'oc-bibtex-actions-style-preview)))
