@@ -71,7 +71,7 @@
   :group 'bibtex-actions)
 
 (defcustom bibtex-actions-template
-  '((t . "${author:20}   ${title:48}   ${year:4}"))
+  '((t . "${author:25}   ${date:10}     ${title:48}"))
   "Configures formatting for the BibTeX entry.
 When combined with the suffix, the same string is used for
 display and for search."
@@ -237,11 +237,11 @@ offering the selection candidates"
 
 (defun bibtex-actions-get-value (field item &optional _default)
   "Return biblatex FIELD value for ITEM."
-  ;; TODO need to add 'default' handling?
   (or (cdr (assoc-string field item 'case-fold))
       (cl-loop for fname in (cdr (assoc field bibtex-actions-field-map))
                when (cdr (assoc-string fname item 'case-fold))
-                         return (cdr (assoc-string fname item 'case-fold)))))
+                         return (cdr (assoc-string fname item 'case-fold)))
+      ""))
 
 (defun bibtex-actions--format-candidates (&optional context)
   "Format candidates, with optional hidden CONTEXT metadata.
@@ -407,12 +407,12 @@ TEMPLATE."
          (when (and (string= field-name "author")
                     (not field-value))
            (setq field-value (bibtex-actions-get-value "editor" entry)))
-         (when (and (string= field-name "year")
-                    (not field-value))
-           (setq field-value (car (split-string (bibtex-actions-get-value "date" entry) "-"))))
+;         (when (and (string= field-name "year")
+ ;                   (not field-value))
+ ;          (setq field-value (car (split-string (bibtex-actions-get-value "date" entry) "-"))))
          (setq field-value (bibtex-completion-clean-string (or field-value " ")))
-         (when (member field-name '("author" "editor"))
-           (setq field-value (bibtex-completion-shorten-authors field-value)))
+ ;        (when (member field-name '("author" "editor"))
+ ;          (setq field-value (bibtex-completion-shorten-authors field-value)))
          (if (not field-width)
              field-value
            (setq field-width (string-to-number field-width))
