@@ -8,7 +8,7 @@
 ;; License: GPL-3.0-or-later
 ;; Version: 0.4
 ;; Homepage: https://github.com/bdarcus/bibtex-actions
-;; Package-Requires: ((emacs "26.3") (bibtex-completion "1.0"))
+;; Package-Requires: ((emacs "26.3") (bibtex-completion "1.0") (parsebib "3.0"))
 ;;
 ;; This file is not part of GNU Emacs.
 ;;
@@ -38,6 +38,8 @@
 ;;; Code:
 
 (require 'bibtex-completion)
+(require 'parsebib)
+(require 'ht)
 
 (declare-function org-element-context "org-element")
 (declare-function org-element-property "org-element")
@@ -114,6 +116,14 @@ recreate entire bibliography files using an external reference
 manager like Zotero or JabRef."
   :group 'bibtex-actions
   :type '(repeat function))
+
+(defvar bibtex-actions-field-map
+  '(("date" "year" "issued")
+    ("=key=" "id")
+    ("=type=" "type")
+    ("booktitle" "container-title")
+    ("journaltitle" "journal" "container-title")
+    ("number" "issue")))
 
 (defcustom bibtex-actions-default-action 'bibtex-actions-open
   "The default action for the `bibtex-actions-at-point' command."
@@ -225,11 +235,21 @@ offering the selection candidates"
            bibtex-completion-bibliography)))
     (seq-difference local-bib-files global-bib-files)))
 
+(defun bibtex-actions-get-value (field item &optional _default)
+  "Return biblatex FIELD value for ITEM."
+  ;; TODO need to add 'default' handling?
+  (or (cdr (assoc-string field item 'case-fold))
+      (cl-loop for fname in (cdr (assoc field bibtex-actions-field-map))
+               when (cdr (assoc-string fname item 'case-fold))
+                         return (cdr (assoc-string fname item 'case-fold)))))
+
 (defun bibtex-actions--format-candidates (&optional context)
   "Format candidates, with optional hidden CONTEXT metadata.
 This both propertizes the candidates for display, and grabs the
 key associated with each one."
-  (let* ((main-template
+  (let* ((candidates
+          (ht-values (parsebib-parse bibtex-completion-bibliography)))
+         (main-template
          (bibtex-actions--process-display-formats
           bibtex-actions-template))
          (suffix-template
@@ -237,41 +257,41 @@ key associated with each one."
            bibtex-actions-template-suffix))
          (main-width (truncate (* (frame-width) 0.65)))
          (suffix-width (truncate (* (frame-width) 0.34))))
-    (cl-loop
-     for candidate in (bibtex-completion-candidates)
-     collect
-     (let* ((pdf (if (assoc "=has-pdf=" (cdr candidate)) " has:pdf"))
-            (note (if (assoc "=has-note=" (cdr candidate)) "has:note"))
-            (link (if (or (assoc "doi" (cdr candidate))
-                          (assoc "url" (cdr candidate))) "has:link"))
-            (citekey (bibtex-completion-get-value "=key=" candidate))
-            (candidate-main
-             (bibtex-actions--format-entry
-              candidate
-              main-width
-              main-template))
-            (candidate-suffix
-             (bibtex-actions--format-entry
-              candidate
-              suffix-width
-              suffix-template))
-            ;; We display this content already using symbols; here we add back
-            ;; text to allow it to be searched, and citekey to ensure uniqueness
-            ;; of the candidate.
-            (candidate-hidden (s-join " " (list pdf note link context citekey))))
-       (cons
-        ;; If we don't trim the trailing whitespace, 'completing-read-multiple' will
-        ;; get confused when there are multiple selected candidates.
-        (s-trim-right
-         (concat
-          ;; We need all of these searchable:
-          ;;   1. the 'candidate-main' variable to be displayed
-          ;;   2. the 'candidate-suffix' variable to be displayed with a different face
-          ;;   3. the 'candidate-hidden' variable to be hidden
-          (propertize candidate-main 'face 'bibtex-actions-highlight) " "
-          (propertize candidate-suffix 'face 'bibtex-actions) " "
-          (propertize candidate-hidden 'invisible t)))
-        citekey)))))
+    (cl-loop for candidate in candidates
+             collect
+             (let* ((pdf (if (assoc "=has-pdf=" (cdr candidate)) " has:pdf"))
+                    (note (if (assoc "=has-note=" (cdr candidate)) "has:note"))
+                    (link (if (or (assoc "doi" (cdr candidate))
+                                  (assoc "url" (cdr candidate))) "has:link"))
+                    (citekey (bibtex-actions-get-value "=key=" candidate))
+                    (candidate-main
+                     (bibtex-actions--format-entry
+                      candidate
+                      main-width
+                      main-template))
+                    (candidate-suffix
+                     (bibtex-actions--format-entry
+                      candidate
+                      suffix-width
+                      suffix-template))
+                    ;; We display this content already using symbols; here we add back
+                    ;; text to allow it to be searched, and citekey to ensure uniqueness
+                    ;; of the candidate.
+                    (candidate-hidden (s-join " " (list pdf note link context citekey))))
+               (cons
+                ;; If we don't trim the trailing whitespace,
+                ;; 'completing-read-multiple' will get confused when there are
+                ;; multiple selected candidates.
+                (s-trim-right
+                 (concat
+                  ;; We need all of these searchable:
+                  ;;   1. the 'candidate-main' variable to be displayed
+                  ;;   2. the 'candidate-suffix' variable to be displayed with a different face
+                  ;;   3. the 'candidate-hidden' variable to be hidden
+                  (propertize candidate-main 'face 'bibtex-actions-highlight) " "
+                  (propertize candidate-suffix 'face 'bibtex-actions) " "
+                  (propertize candidate-hidden 'invisible t)))
+                citekey)))))
 
 (defun bibtex-actions--affixation (cands)
   "Add affixation prefix to CANDS."
@@ -295,7 +315,8 @@ key associated with each one."
 
 (defvar bibtex-actions--candidates-cache 'uninitialized
   "Store the global candidates list.
-Default value of 'uninitialized is used to indicate that cache has not yet been created")
+Default value of 'uninitialized is used to indicate that cache
+has not yet been created")
 
 (defvar-local bibtex-actions--local-candidates-cache 'uninitialized
   ;; We use defvar-local so can maintain per-buffer candidate caches.
@@ -372,7 +393,7 @@ TEMPLATE."
           (or
            ;; If there's a template specific to the type, use that.
            (assoc-string
-            (bibtex-completion-get-value "=type=" entry) template 'case-fold)
+            (bibtex-actions-get-value "=type=" entry) template 'case-fold)
            ;; Otherwise, use the generic template.
            (assoc t template)))
          (format-string (cadr format)))
@@ -382,13 +403,13 @@ TEMPLATE."
        (let* ((field (split-string field ":"))
               (field-name (car field))
               (field-width (cadr field))
-              (field-value (bibtex-completion-get-value field-name entry)))
+              (field-value (bibtex-actions-get-value field-name entry)))
          (when (and (string= field-name "author")
                     (not field-value))
-           (setq field-value (bibtex-completion-get-value "editor" entry)))
+           (setq field-value (bibtex-actions-get-value "editor" entry)))
          (when (and (string= field-name "year")
                     (not field-value))
-           (setq field-value (car (split-string (bibtex-completion-get-value "date" entry "") "-"))))
+           (setq field-value (car (split-string (bibtex-actions-get-value "date" entry) "-"))))
          (setq field-value (bibtex-completion-clean-string (or field-value " ")))
          (when (member field-name '("author" "editor"))
            (setq field-value (bibtex-completion-shorten-authors field-value)))
