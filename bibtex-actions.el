@@ -71,7 +71,7 @@
   :group 'bibtex-actions)
 
 (defcustom bibtex-actions-template
-  '((t . "${author:25}   ${date:10}     ${title:48}"))
+  '((t . "${author:40}   ${date:15}     ${title:48}"))
   "Configures formatting for the BibTeX entry.
 When combined with the suffix, the same string is used for
 display and for search."
@@ -407,9 +407,12 @@ TEMPLATE."
          (when (and (string= field-name "author")
                     (not field-value))
            (setq field-value (bibtex-actions-get-value "editor" entry)))
-;         (when (and (string= field-name "year")
- ;                   (not field-value))
- ;          (setq field-value (car (split-string (bibtex-actions-get-value "date" entry) "-"))))
+         (when (string= field-name "date")
+           (setq field-value
+                 (let ((value (bibtex-actions-get-value "date" entry)))
+                   (if (> (length value) 4)
+                       (substring value 0 4)
+                     value))))
          (setq field-value (bibtex-completion-clean-string (or field-value " ")))
  ;        (when (member field-name '("author" "editor"))
  ;          (setq field-value (bibtex-completion-shorten-authors field-value)))
