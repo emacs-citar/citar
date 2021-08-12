@@ -71,7 +71,7 @@
   :group 'bibtex-actions)
 
 (defcustom bibtex-actions-template
-  '((t . "${author:40}   ${date:15}     ${title:48}"))
+  '((t . "${author:30}   ${date:8}  ${title:48}"))
   "Configures formatting for the BibTeX entry.
 When combined with the suffix, the same string is used for
 display and for search."
@@ -121,9 +121,18 @@ manager like Zotero or JabRef."
   '(("date" "year" "issued")
     ("=key=" "id")
     ("=type=" "type")
+    ("tags" "keywords" "keyword")
     ("booktitle" "container-title")
     ("journaltitle" "journal" "container-title")
     ("number" "issue")))
+
+(defvar bibtex-actions-field-mapping
+  '(("issued" "date" "year")
+    ("=key=" "id")
+    ("=type=" "type")
+    ("keyword" "tags" "keywords")
+    ("container-title" "booktitle" "journaltitle" "journal")
+    ("issue" "number")))
 
 (defcustom bibtex-actions-default-action 'bibtex-actions-open
   "The default action for the `bibtex-actions-at-point' command."
@@ -242,6 +251,19 @@ offering the selection candidates"
                when (cdr (assoc-string fname item 'case-fold))
                          return (cdr (assoc-string fname item 'case-fold)))
       ""))
+
+(defun bibtex-actions-shorten-names (names)
+  "Return a comma-separated list of the surnames in NAMES."
+  (if names
+      (cl-loop for name in (split-string names " and ")
+               for p = (split-string name "," t)
+               for sep = "" then ", "
+               concat sep
+               if (eq 1 (length p))
+               concat (last (split-string (car p) " +" t))
+               else
+               concat (car p))
+    nil))
 
 (defun bibtex-actions--format-candidates (&optional context)
   "Format candidates, with optional hidden CONTEXT metadata.
@@ -414,8 +436,8 @@ TEMPLATE."
                        (substring value 0 4)
                      value))))
          (setq field-value (bibtex-completion-clean-string (or field-value " ")))
- ;        (when (member field-name '("author" "editor"))
- ;          (setq field-value (bibtex-completion-shorten-authors field-value)))
+         (when (member field-name '("author" "editor"))
+           (setq field-value (bibtex-actions-shorten-names field-value)))
          (if (not field-width)
              field-value
            (setq field-width (string-to-number field-width))
