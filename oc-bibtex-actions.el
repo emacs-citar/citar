@@ -105,6 +105,9 @@ If nil, use 'org-cite-supported-styles'."
     ("author/c" . "De Villiers et al")
     ("author/f" . "de Villiers, Smith, Doa, and Jones")
     ("author/cf" . "De Villiers, Smith, Doa, and Jones")
+    ;; "locators" style.
+    ("locators" . "(p23)")
+    ("locators" . "p23")
     ;; "noauthor" style.
     ("noauthor" . "(2019)")
     ("noauthor/b" . "2019")))
