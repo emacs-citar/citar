@@ -252,18 +252,17 @@ offering the selection candidates"
                          return (cdr (assoc-string fname item 'case-fold)))
       ""))
 
-(defun bibtex-actions-shorten-names (names)
-  "Return a comma-separated list of the surnames in NAMES."
-  (if names
-      (cl-loop for name in (split-string names " and ")
-               for p = (split-string name "," t)
-               for sep = "" then ", "
-               concat sep
-               if (eq 1 (length p))
-               concat (last (split-string (car p) " +" t))
-               else
-               concat (car p))
-    nil))
+ (defun bibtex-actions-shorten-names (names)
+  "Return a list of family names from a list of full NAMES.
+
+To better accomomodate corporate names, this will only shorten
+personal names of the form 'family, given'."
+  (mapconcat
+   (lambda (name)
+     (if (eq 1 (length name))
+         (cdr (split-string name " "))
+       (car (split-string name ", "))))
+   (split-string names " and ") ", "))
 
 (defun bibtex-actions--format-candidates (&optional context)
   "Format candidates, with optional hidden CONTEXT metadata.
