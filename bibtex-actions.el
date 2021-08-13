@@ -317,18 +317,22 @@ If FORCE-REBUILD-CACHE is t, force reload the cache."
                    bibtex-actions--candidates-cache))
 
 ;;;###autoload
-(defun bibtex-actions-refresh (&optional force-rebuild-cache)
+(defun bibtex-actions-refresh (&optional force-rebuild-cache scope)
   "Reload the candidates cache.
 If called interactively with a prefix or if FORCE-REBUILD-CACHE
-is non-nil, also run the `bibtex-actions-before-refresh-hook' hook."
-  (interactive "P")
+is non-nil, also run the `bibtex-actions-before-refresh-hook' hook.
+If SCOPE is 'global only glboal cache is refreshed, if it is 'local only local cache is
+refrehged. With any other value both are refreshed."
+  (interactive (list current-prefix-arg nil))
   (when force-rebuild-cache
     (run-hooks 'bibtex-actions-force-refresh-hook))
-  (setq bibtex-actions--candidates-cache
-        (bibtex-actions--format-candidates))
-  (let ((bibtex-completion-bibliography (bibtex-actions--local-files-to-cache)))
-    (setq bibtex-actions--local-candidates-cache
-        (bibtex-actions--format-candidates "is:local"))))
+  (unless (eq 'local scope)
+    (setq bibtex-actions--candidates-cache
+          (bibtex-actions--format-candidates)))
+  (unless (eq 'global scope)
+    (let ((bibtex-completion-bibliography (bibtex-actions--local-files-to-cache)))
+      (setq bibtex-actions--local-candidates-cache
+            (bibtex-actions--format-candidates "is:local")))))
 
 ;;;###autoload
 (defun bibtex-actions-insert-preset ()
@@ -534,113 +538,131 @@ With prefix, rebuild the cache before offering candidates."
 
 ;;; Convenience for files watching
 
+(defcustom bibtex-actions-filenotify-callback 'invalidate-cache
+  "The callback that is run when the bibliography related files change.
+Its value can be either 'invalidate-cache, 'refresh-cache or else a function.
+The function takes two arguments. The first is the scope, which is 'global when
+the changed file is in `bibtex-actions-filenotify-files' and 'local otherwise.
+The second is the change that occured. This is the argument that the callback of
+`file-notify-add-watch' accepts. This argument must be optional. The callback is
+called without it when `bibtex-actions-with-filenotify-refresh' is run"
+  :group 'bibtex-actions
+  :type '(choice (const invalidate-cache)
+                 (const refresh-cache)
+                 function))
+
+(defcustom bibtex-actions-filenotify-files '(bibliography)
+  "The files to watch using filenotify."
+  :group 'bibtex-actions
+  :type '(repeat (choice (const bibliogrpahy)
+                         (const library)
+                         (const notes)
+                         string)))
+
 (defvar-local bibtex-actions--local-watches 'uninitialized)
 (defvar bibtex-actions--global-watches nil)
 
-(defun bibtex-actions--add-local-watches (func &optional extra-local-files)
-  "Add watches for the files that contribute to the local cache.
+(defun bibtex-actions--invalidate-cache (&optional scope)
+  "Invalidate local or global scope according to SCOPE.
+If it is other than 'global or 'local invalidate both"
+  (unless (eq 'local scope)
+    (setq bibtex-actions--candidates-cache 'uninitialized))
+  (unless (eq 'glocal scope)
+    (setq bibtex-actions--local-candidates-cache 'uninitialized)))
 
-The callback FUNC is run when a chage in one of the local
-bibliography files is notified. The optional argument
-EXTRA-LOCAL-FILES is a list of paths. If passed watches will also
-be placed on these files."
+(defun bibtex-actions--make-default-callback (func scope &optional change)
+  "The callback that is used to update cache for default options"
+  (message (symbol-name (cadr change)))
+  (cl-case (cadr change)
+    ((nil changed) (message (symbol-name (cadr change))) (funcall func scope))
+    ((created deleted renamed) (bibtex-actions-with-filenotify-refresh scope))))
+
+(defun bibtex-actions--filenotify-callback (scope &optional change)
+  "A callback according to `bibtex-actions-filenotify-callback'.
+ This callback can be passed to the `file-notify-add-watc'."
+  (cl-case bibtex-actions-filenotify-callback
+    (invalidate-cache (bibtex-actions--make-default-callback #'bibtex-actions--invalidate-cache scope change))
+    (refresh-cache (bibtex-actions--make-default-callback (lambda (x) (bibtex-actions-refresh nil x)) scope change))
+    (t (funcall bibtex-actions-filenotify-callback scope change))))
+
+(defun bibtex-actions--add-local-watches ()
+  "Add watches for the files that contribute to the local cache."
   (let ((buffer (buffer-name)))
     (setq bibtex-actions--local-watches
           (seq-map
-           (lambda (bibfile)
-             (file-notify-add-watch bibfile '(change)
+           (lambda (bibfile) (file-notify-add-watch bibfile '(change)
                                     (lambda (x)
-                                      (unless (eq 'stopped (cadr x))
-                                        (with-current-buffer buffer (funcall func))))))
-                      (seq-concatenate 'list
-                            (bibtex-actions--local-files-to-cache)
-                            (bibtex-actions--normalize-paths extra-local-files))))))
+                                        (with-current-buffer buffer
+                                          (bibtex-actions--filenotify-callback 'local x)))))
+           (bibtex-actions--local-files-to-cache)))))
 
-;;;###autoload
-(defun bibtex-actions-with-filenotify-local (func &optional extra-local-files)
+(defun bibtex-actions-filenotify-local-watches ()
   "Hook to add and remove watches local bib files.
 
-The callback FUNC is run when a change is notified.
-
-The optional argument EXTRA-LOCAL-FILES is a list of
-paths. If passed watches will also be placed on these files. The
-watches are added only if`bibtex-actions--local-watches' has the
+The watches are added only if `bibtex-actions--local-watches' has the
 default value `uninitialized'. This is to ensure that duplicate
 watches aren't added. This means a mode hook containing this
 function can run several times without adding duplicate watches."
   (when (eq 'uninitialized bibtex-actions--local-watches)
-    (bibtex-actions--add-local-watches func extra-local-files)
-    (add-hook 'kill-buffer-hook
-              (lambda ()
-                (seq-map #'file-notify-rm-watch bibtex-actions--local-watches)
-                (setq bibtex-actions--local-watches 'uninitialized))
-              nil t)))
+    (bibtex-actions--add-local-watches))
+  (add-hook 'kill-buffer-hook
+            (lambda ()
+              (mapc #'file-notify-rm-watch bibtex-actions--local-watches)
+              (setq bibtex-actions--local-watches 'uninitialized))
+            nil t))
 
-(defun bibtex-actions--with-filenotify-local-refresh (func &optional extra-local-files)
-  "Refresh the watches on the local bib files.
+(defun bibtex-actions--filenotify-files ()
+  "Get the list of files to watch from `bibtex-actions-filenotify-files'"
+  (seq-mapcat (lambda (x)
+                (bibtex-actions--normalize-paths (cl-case x
+                                                   (bibliography bibtex-completion-bibliography)
+                                                   (library bibtex-completion-library-path)
+                                                   (notes  bibtex-completion-notes-path)
+                                                   (t x))))
+              bibtex-actions-filenotify-files))
 
-The callback FUNC is run when a change is notified. The optional
-argument EXTRA-LOCAL-FILES is a list of paths. If passed watches
-will also be placed on these files. This function only needs to
-be called if a local bib file has been added or removed."
-  (seq-map #'file-notify-rm-watch bibtex-actions--local-watches)
-  (reftex-access-scan-info t)
-  (bibtex-actions--add-local-watches func extra-local-files))
+(defun bibtex-actions-filenotify-global-watches ()
+  "Add watches on the global files in `bibtex-actions-filenotify-files'.
 
-;;;###autoload
-(defun bibtex-actions-with-filenotify-global (func &optional extra-files)
-  "Add watches on the global bib files.
-
-The callback FUNC is run when a chage in one of the global
-bibliography files is notified. The optional argument EXTRA-FILES
-is a list of paths. If passed watches will also be placed on
-these files. Unlike `bibtex-actions-with-filenotify-local' these
+Unlike `bibtex-actions-filenotify-local-watches' these
 watches have to be removed manually. To remove them call
 `bibtex-actions-rm-global-watches'"
   (setq bibtex-actions--global-watches
         (seq-map
-         (lambda (bibfile)
-           (file-notify-add-watch
-            bibfile '(change)
-            (lambda (x)
-              (unless (eq 'stopped (cadr x))
-                (funcall func)))))
-                 (seq-concatenate 'list
-                          (bibtex-actions--normalize-paths bibtex-completion-bibliography)
-                          (bibtex-actions--normalize-paths extra-files)))))
+         (lambda (bibfile) (file-notify-add-watch bibfile '(change)
+                                             (lambda (x) (bibtex-actions--filenotify-callback 'global x))))
+         (bibtex-actions--filenotify-files))))
 
 (defun bibtex-actions-rm-global-watches ()
   "Remove the watches on global bib files."
-  (seq-map #'file-notify-rm-watch bibtex-actions--global-watches)
+  (interactive)
+  (mapc #'file-notify-rm-watch bibtex-actions--global-watches)
   (setq bibtex-actions--global-watches nil))
 
-(defun bibtex-actions--with-filenotify-global-refresh (func &optional extra-files)
-  "Refresh the watches on the global bib files.
-
-The callback FUNC is run when a change is notified.
-
-The optional argument EXTRA-FILES is a list of paths. If passed
-watches will also be placed on these files. This function only
-needs to be called if a global bib file has been added or
-removed."
-  (bibtex-actions-rm-global-watches)
-  (bibtex-actions-with-filenotify-global func extra-files))
-
-(defun bibtex-actions-with-filenotify-refresh (func &optional extra-files extra-local-files)
+(defun bibtex-actions-filenotify-refresh (&optional scope)
   "Refresh the watches on the bib files.
 
-The callback FUNC is run when a change is notified.
+This function only needs to be called if a bib file has been added or removed."
+  (interactive)
+  (unless (eq 'local scope)
+    (seq-map #'file-notify-rm-watch bibtex-actions--local-watches)
+    (reftex-access-scan-info t)
+    (bibtex-actions--add-local-watches)
+    (bibtex-actions--filenotify-callback 'global))
+  (unless (eq 'global scope)
+    (bibtex-actions-rm-global-watches)
+    (bibtex-actions-filenotify-global-watches)
+    (bibtex-actions--filenotify-callback 'local)))
 
-The optional arguments EXTRA-FILES & EXTRA-LOCAL-FILES is a list
-of paths. If passed watches will also be placed on these files.
-The difference is that the watches on files in EXTRA-LOCAL-FILES
-will be removed when the buffer from which this function was
-called is killed, while those on EXTRA-FILES have to be removed
-manually via `bibtex-actions-rm-global-watches'. This function
-only needs to be called if a local bib file has been added or
-removed."
-  (bibtex-actions--with-filenotify-global-refresh func extra-files)
-  (bibtex-actions--with-filenotify-local-refresh func extra-local-files))
+;;;###autoload
+(defun bibtex-actions-filenotify-setup (mode-hooks)
+  "Setup the filenotify watches for local and global bibliography related files
+
+This functions adds watches to the files in `bibtex-actions-filenotify-files'
+and adds a hook to the major-mode hooks in MODE-HOOKS which adds watches for
+the local bib files. These local watches are removed when the buffer closes."
+  (bibtex-actions-filenotify-global-watches)
+  (mapc (lambda (mode) (add-hook mode #'bibtex-actions-filenotify-local-watches)) mode-hooks))
 
 (provide 'bibtex-actions)
 ;;; bibtex-actions.el ends here
