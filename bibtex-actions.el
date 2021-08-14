@@ -70,8 +70,7 @@
   "Face used to highlight content in `bibtex-actions' candidates."
   :group 'bibtex-actions)
 
-(defcustom bibtex-actions-bibliography (bibtex-actions--normalize-paths
-                                        bibtex-completion-bibliography)
+(defcustom bibtex-actions-bibliography nil
   "A list of bibliography files."
   ;; The bibtex-completion default is likely to be removed in the future.
   :group 'bibtex-actions
