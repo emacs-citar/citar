@@ -321,7 +321,7 @@ If FORCE-REBUILD-CACHE is t, force reload the cache."
   "Reload the candidates cache.
 If called interactively with a prefix or if FORCE-REBUILD-CACHE
 is non-nil, also run the `bibtex-actions-before-refresh-hook' hook.
-If SCOPE is 'global only glboal cache is refreshed, if it is 'local only local cache is
+If SCOPE is `global' only glboal cache is refreshed, if it is `local' only local cache is
 refrehged. With any other value both are refreshed."
   (interactive (list current-prefix-arg nil))
   (when force-rebuild-cache
@@ -541,8 +541,8 @@ With prefix, rebuild the cache before offering candidates."
 (defcustom bibtex-actions-filenotify-callback 'invalidate-cache
   "The callback that is run when the bibliography related files change.
 Its value can be either 'invalidate-cache, 'refresh-cache or else a function.
-The function takes two arguments. The first is the scope, which is 'global when
-the changed file is in `bibtex-actions-filenotify-files' and 'local otherwise.
+The function takes two arguments. The first is the scope, which is `global' when
+the changed file is in `bibtex-actions-filenotify-files' and `local' otherwise.
 The second is the change that occured. This is the argument that the callback of
 `file-notify-add-watch' accepts. This argument must be optional. The callback is
 called without it when `bibtex-actions-with-filenotify-refresh' is run"
@@ -563,7 +563,7 @@ called without it when `bibtex-actions-with-filenotify-refresh' is run"
 (defvar bibtex-actions--global-watches nil)
 
 (defun bibtex-actions--invalidate-cache (&optional scope)
-  "Invalidate local or global scope according to SCOPE.
+  "Invalidate local or global caches according to SCOPE.
 If it is other than 'global or 'local invalidate both"
   (unless (eq 'local scope)
     (setq bibtex-actions--candidates-cache 'uninitialized))
@@ -572,14 +572,13 @@ If it is other than 'global or 'local invalidate both"
 
 (defun bibtex-actions--make-default-callback (func scope &optional change)
   "The callback that is used to update cache for default options"
-  (message (symbol-name (cadr change)))
   (cl-case (cadr change)
     ((nil changed) (message (symbol-name (cadr change))) (funcall func scope))
     ((created deleted renamed) (bibtex-actions-with-filenotify-refresh scope))))
 
 (defun bibtex-actions--filenotify-callback (scope &optional change)
   "A callback according to `bibtex-actions-filenotify-callback'.
- This callback can be passed to the `file-notify-add-watc'."
+ This callback can be passed to the `file-notify-add-watch'."
   (cl-case bibtex-actions-filenotify-callback
     (invalidate-cache (bibtex-actions--make-default-callback #'bibtex-actions--invalidate-cache scope change))
     (refresh-cache (bibtex-actions--make-default-callback (lambda (x) (bibtex-actions-refresh nil x)) scope change))
@@ -597,7 +596,7 @@ If it is other than 'global or 'local invalidate both"
            (bibtex-actions--local-files-to-cache)))))
 
 (defun bibtex-actions-filenotify-local-watches ()
-  "Hook to add and remove watches local bib files.
+  "Hook to add and remove watches on local bib files.
 
 The watches are added only if `bibtex-actions--local-watches' has the
 default value `uninitialized'. This is to ensure that duplicate
