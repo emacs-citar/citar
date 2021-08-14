@@ -5,20 +5,23 @@
   :CUSTOM_ID: bibtex-actions
   :END:
 
-- [[#what-is-it][What is it?]]
+- [[#features][Features]]
 - [[#installation][Installation]]
 - [[#configuration][Configuration]]
 - [[#usage][Usage]]
 - [[#comparisons][Comparisons]]
 - [[#acknowledgements][Acknowledgements]]
 
-** What is it?
+** Features
    :PROPERTIES:
-   :CUSTOM_ID: what-is-it
+   :CUSTOM_ID: features
    :END:
 
-This package turns bibtex-completion functions into completing-read-based Emacs commands.
-When used with selectrum, embark, and marginalia, it provides similar functionality to helm-bibtex and ivy-bibtex: quick filtering and selecting of bibliographic entries from the minibuffer, and the option to run different commands against them.
+This package provides a completing-read front-end to browse and act on BibTeX, BibLaTeX, and CSL JSON bibliographic data.
+
+When used with vertico (or selectrum), embark, and marginalia, it provides similar functionality to helm-bibtex and ivy-bibtex: quick filtering and selecting of bibliographic entries from the minibuffer, and the option to run different commands against them.
+
+With embark, it also makes available at-point actions in org-mode citations.
 
 Here's a screenshot with [[https://github.com/raxod502/selectrum][vertico]], [[https://github.com/oantolin/embark/][embark]]. and =consult-completing-read-multiple=.
 
@@ -60,7 +63,7 @@ This is the minimal configuration, and will work with any completing-read compli
   :config
   ;; make sure to set this to ensure open commands work correctly
   (bibtex-completion-additional-search-fields '(doi url))
-  (bibtex-completion-bibliography '("~/bib/references.bib")))
+  (bibtex-actions-bibliography '("~/bib/references.bib")))
 #+END_SRC
 
 Since most of the command logic resides in bibtex-completion, that is where to look for different [[https://github.com/tmalsburg/helm-bibtex#basic-configuration-recommended][configuration options]].
@@ -82,7 +85,7 @@ Highly recommended, this option adds embark, for contextual access to actions in
   (add-to-list 'embark-keymap-alist '(citation-key . bibtex-actions-buffer-map))
   ;; Make sure to set this to ensure 'bibtex-actions-open-link' command works correctly.
   (bibtex-completion-additional-search-fields '(doi url))
-  (bibtex-completion-bibliography '("~/bib/references.bib")))
+  (bibtex-actions-bibliography '("~/bib/references.bib")))
 
 ;; use consult-completing-read for enhanced interface
 (advice-add #'completing-read-multiple :override #'consult-completing-read-multiple)
@@ -112,7 +115,7 @@ In other supported modes, it will work the same as the embark option above.
   :config
   ;; make sure to set this to ensure open commands work correctly
   (bibtex-completion-additional-search-fields '(doi url))
-  (bibtex-completion-bibliography my/bibs)
+  (bibtex-actions-bibliography my/bibs)
   (org-cite-global-bibliography my/bibs))
 
 ;; Use consult-completing-read for enhanced interface.
@@ -168,15 +171,17 @@ For the prefix, you can filter for associated PDFs or notes using =has:pdf= or =
 #+CAPTION: UI sections
 [[file:images/ui-segments.png]]
 
-You can configure both of the last two just as you do with bibtex-completion.
+You can configure both of the last two similar as you do with bibtex-completion.
 
 #+BEGIN_SRC emacs-lisp
   (setq bibtex-actions-template '((t . " ${title:*}")))
   (setq bibtex-actions-template-suffix '((t . "          ${=key=:15}")))
 #+END_SRC
 
-Note: the asterisk signals to the formatter to use available space for the column.
-You should only use this on one field total, across the two templates, for the formatting to work correctly.
+Note:
+
+1. the asterisk signals to the formatter to use available space for the column: you should only use this on one field total, across the two templates, for the formatting to work correctly.
+2. the inclusion of CSL-JSON support is currently experimental, and relies on =bibtex-actions-field-map= variable to map among the different supported formats, and is subject to change.
 
 By default, this UI is plain text, but you can configure it to use icons instead.
 
