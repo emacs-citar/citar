@@ -135,6 +135,27 @@ means no action."
   :group 'bibtex-actions
   :type 'function)
 
+(defcustom bibtex-actions-filenotify-callback 'invalidate-cache
+  "The callback that is run when the bibliography related files change.
+Its value can be either 'invalidate-cache, 'refresh-cache or else a function.
+The function takes two arguments. The first is the scope, which is `global' when
+the changed file is in `bibtex-actions-filenotify-files' and `local' otherwise.
+The second is the change that occured. This is the argument that the callback of
+`file-notify-add-watch' accepts. This argument must be optional. The callback is
+called without it when `bibtex-actions-with-filenotify-refresh' is run"
+  :group 'bibtex-actions
+  :type '(choice (const invalidate-cache)
+                 (const refresh-cache)
+                 function))
+
+(defcustom bibtex-actions-filenotify-files '(bibliography)
+  "The files to watch using filenotify."
+  :group 'bibtex-actions
+  :type '(repeat (choice (const bibliogrpahy)
+                         (const library)
+                         (const notes)
+                         string)))
+
 ;;; History, including future history list.
 
 (defvar bibtex-actions-history nil
@@ -537,27 +558,6 @@ With prefix, rebuild the cache before offering candidates."
       (funcall bibtex-actions-default-action keys)))
 
 ;;; Convenience for files watching
-
-(defcustom bibtex-actions-filenotify-callback 'invalidate-cache
-  "The callback that is run when the bibliography related files change.
-Its value can be either 'invalidate-cache, 'refresh-cache or else a function.
-The function takes two arguments. The first is the scope, which is `global' when
-the changed file is in `bibtex-actions-filenotify-files' and `local' otherwise.
-The second is the change that occured. This is the argument that the callback of
-`file-notify-add-watch' accepts. This argument must be optional. The callback is
-called without it when `bibtex-actions-with-filenotify-refresh' is run"
-  :group 'bibtex-actions
-  :type '(choice (const invalidate-cache)
-                 (const refresh-cache)
-                 function))
-
-(defcustom bibtex-actions-filenotify-files '(bibliography)
-  "The files to watch using filenotify."
-  :group 'bibtex-actions
-  :type '(repeat (choice (const bibliogrpahy)
-                         (const library)
-                         (const notes)
-                         string)))
 
 (defvar-local bibtex-actions--local-watches 'uninitialized)
 (defvar bibtex-actions--global-watches nil)
