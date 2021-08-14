@@ -390,7 +390,7 @@ If called interactively with a prefix or if FORCE-REBUILD-CACHE
 is non-nil, also run the `bibtex-actions-before-refresh-hook' hook.
 
 If SCOPE is `global' only global cache is refreshed, if it is
-`local' only local cache is refrehged. With any other value both
+`local' only local cache is refreshed. With any other value both
 are refreshed."
   (interactive (list current-prefix-arg nil))
   (when force-rebuild-cache
