@@ -39,7 +39,6 @@
 
 (require 'bibtex-completion)
 (require 'parsebib)
-(require 'ht)
 
 (declare-function org-element-context "org-element")
 (declare-function org-element-property "org-element")
@@ -69,6 +68,13 @@
   '((t :weight bold))
   "Face used to highlight content in `bibtex-actions' candidates."
   :group 'bibtex-actions)
+
+(defcustom bibtex-actions-bibliography (bibtex-actions--normalize-paths
+                                        bibtex-completion-bibliography)
+  "A list of bibliography files."
+  ;; The bibtex-completion default is likely to be removed in the future.
+  :group 'bibtex-actions
+  :type '(repeat file))
 
 (defcustom bibtex-actions-template
   '((t . "${author:30}   ${date:8}  ${title:48}"))
@@ -264,13 +270,11 @@ personal names of the form 'family, given'."
        (car (split-string name ", "))))
    (split-string names " and ") ", "))
 
-(defun bibtex-actions--format-candidates (&optional context)
-  "Format candidates, with optional hidden CONTEXT metadata.
+(defun bibtex-actions--format-candidates (files &optional context)
+  "Format candidates from FILES, with optional hidden CONTEXT metadata.
 This both propertizes the candidates for display, and grabs the
 key associated with each one."
-  (let* ((candidates
-          (ht-values (parsebib-parse bibtex-completion-bibliography)))
-         (main-template
+  (let* ((main-template
          (bibtex-actions--process-display-formats
           bibtex-actions-template))
          (suffix-template
@@ -278,7 +282,7 @@ key associated with each one."
            bibtex-actions-template-suffix))
          (main-width (truncate (* (frame-width) 0.65)))
          (suffix-width (truncate (* (frame-width) 0.34))))
-    (cl-loop for candidate in candidates
+    (cl-loop for candidate being the hash-values of (parsebib-parse files)
              collect
              (let* ((pdf (if (assoc "=has-pdf=" (cdr candidate)) " has:pdf"))
                     (note (if (assoc "=has-note=" (cdr candidate)) "has:note"))
@@ -364,10 +368,9 @@ is non-nil, also run the `bibtex-actions-before-refresh-hook' hook."
   (when force-rebuild-cache
     (run-hooks 'bibtex-actions-force-refresh-hook))
   (setq bibtex-actions--candidates-cache
-        (bibtex-actions--format-candidates))
-  (let ((bibtex-completion-bibliography (bibtex-actions--local-files-to-cache)))
-    (setq bibtex-actions--local-candidates-cache
-        (bibtex-actions--format-candidates "is:local"))))
+        (bibtex-actions--format-candidates bibtex-actions-bibliography))
+  (setq bibtex-actions--local-candidates-cache
+        (bibtex-actions--format-candidates bibtex-actions--local-files-to-cache "is:local")))
 
 ;;;###autoload
 (defun bibtex-actions-insert-preset ()
