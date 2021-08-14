@@ -362,6 +362,7 @@ key associated with each one."
 
 (defvar bibtex-actions--candidates-cache 'uninitialized
   "Store the global candidates list.
+
 Default value of 'uninitialized is used to indicate that cache
 has not yet been created")
 
@@ -396,8 +397,8 @@ are refreshed."
     (run-hooks 'bibtex-actions-force-refresh-hook))
   (unless (eq 'local scope)
     (setq bibtex-actions--candidates-cache
-          (bibtex-actions--format-candidates
-           bibtex-actions-bibliography)))
+      (bibtex-actions--format-candidates
+        bibtex-actions-bibliography)))
   (unless (eq 'global scope)
     (setq bibtex-actions--local-candidates-cache
           (bibtex-actions--format-candidates
@@ -655,6 +656,7 @@ CHANGE refers to the filenotify argument."
 
 (defun bibtex-actions-filenotify-local-watches ()
   "Hook to add and remove watches on local bib files.
+
 The watches are added only if `bibtex-actions--local-watches' has the
 default value `uninitialized'. This is to ensure that duplicate
 watches aren't added. This means a mode hook containing this
@@ -679,6 +681,7 @@ function can run several times without adding duplicate watches."
 
 (defun bibtex-actions-filenotify-global-watches ()
   "Add watches on the global files in `bibtex-actions-filenotify-files'.
+
 Unlike `bibtex-actions-filenotify-local-watches' these
 watches have to be removed manually. To remove them call
 `bibtex-actions-rm-global-watches'"
