@@ -370,7 +370,7 @@ is non-nil, also run the `bibtex-actions-before-refresh-hook' hook."
   (setq bibtex-actions--candidates-cache
         (bibtex-actions--format-candidates bibtex-actions-bibliography))
   (setq bibtex-actions--local-candidates-cache
-        (bibtex-actions--format-candidates bibtex-actions--local-files-to-cache "is:local")))
+        (bibtex-actions--format-candidates (bibtex-actions--local-files-to-cache) "is:local")))
 
 ;;;###autoload
 (defun bibtex-actions-insert-preset ()
