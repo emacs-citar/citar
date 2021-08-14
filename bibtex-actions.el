@@ -308,11 +308,13 @@ key associated with each one."
          (suffix-width (truncate (* (frame-width) 0.34))))
     (cl-loop for candidate being the hash-values of (parsebib-parse files)
              collect
-             (let* ((pdf (if (assoc "=has-pdf=" (cdr candidate)) " has:pdf"))
-                    (note (if (assoc "=has-note=" (cdr candidate)) "has:note"))
-                    (link (if (or (assoc "doi" (cdr candidate))
+             (let* ((citekey (bibtex-actions-get-value "=key=" candidate))
+                    (pdf (when (bibtex-completion-find-pdf citekey) "has:pdf"))
+                    (note (when (or (bibtex-completion-find-note-multiple-files citekey)
+                                    (bibtex-completion-find-note-one-file citekey))
+                            "has:note"))
+                    (link (when (or (assoc "doi" (cdr candidate))
                                   (assoc "url" (cdr candidate))) "has:link"))
-                    (citekey (bibtex-actions-get-value "=key=" candidate))
                     (candidate-main
                      (bibtex-actions--format-entry
                       candidate
