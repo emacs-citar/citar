@@ -710,11 +710,11 @@ This function only needs to be called if a bib file has been added or removed."
     (seq-map #'file-notify-rm-watch bibtex-actions--local-watches)
     (reftex-access-scan-info t)
     (bibtex-actions--add-local-watches)
-    (bibtex-actions--filenotify-callback 'global))
+    (bibtex-actions--filenotify-callback 'local))
   (unless (eq 'local scope)
     (bibtex-actions-rm-global-watches)
     (bibtex-actions-filenotify-global-watches)
-    (bibtex-actions--filenotify-callback 'local)))
+    (bibtex-actions--filenotify-callback 'global)))
 
 ;;;###autoload
 (defun bibtex-actions-filenotify-setup (mode-hooks)
