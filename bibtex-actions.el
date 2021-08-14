@@ -166,7 +166,7 @@ The function takes two arguments. The first is the scope, which is `global' when
 the changed file is in `bibtex-actions-filenotify-files' and `local' otherwise.
 The second is the change that occured. This is the argument that the callback of
 `file-notify-add-watch' accepts. This argument must be optional. The callback is
-called without it when `bibtex-actions-with-filenotify-refresh' is run"
+called without it when `bibtex-actions-filenotify-refresh' is run"
   :group 'bibtex-actions
   :type '(choice (const invalidate-cache)
                  (const refresh-cache)
@@ -701,12 +701,12 @@ watches have to be removed manually. To remove them call
 
 This function only needs to be called if a bib file has been added or removed."
   (interactive)
-  (unless (eq 'local scope)
+  (unless (eq 'global scope)
     (seq-map #'file-notify-rm-watch bibtex-actions--local-watches)
     (reftex-access-scan-info t)
     (bibtex-actions--add-local-watches)
     (bibtex-actions--filenotify-callback 'global))
-  (unless (eq 'global scope)
+  (unless (eq 'local scope)
     (bibtex-actions-rm-global-watches)
     (bibtex-actions-filenotify-global-watches)
     (bibtex-actions--filenotify-callback 'local)))
