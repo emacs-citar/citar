@@ -288,25 +288,27 @@ offering the selection candidates"
            (bibtex-completion-find-local-bibliography))))
     (seq-difference local-bib-files bibtex-actions-bibliography)))
 
-(defun bibtex-actions-get-value (field item &optional _default)
-  "Return biblatex FIELD value for ITEM."
+(defun bibtex-actions-get-value (field item &optional default)
+  "Return biblatex FIELD value for ITEM.
+When nil, return DEFAULT."
   (or (cdr (assoc-string field item 'case-fold))
       (cl-loop for fname in (cdr (assoc field bibtex-actions-field-map))
                when (cdr (assoc-string fname item 'case-fold))
                          return (cdr (assoc-string fname item 'case-fold)))
-      ""))
+      default))
 
- (defun bibtex-actions-shorten-names (names)
+(defun bibtex-actions-shorten-names (names)
   "Return a list of family names from a list of full NAMES.
 
 To better accomomodate corporate names, this will only shorten
 personal names of the form 'family, given'."
-  (mapconcat
-   (lambda (name)
-     (if (eq 1 (length name))
-         (cdr (split-string name " "))
-       (car (split-string name ", "))))
-   (split-string names " and ") ", "))
+  (when (stringp names)
+    (mapconcat
+     (lambda (name)
+       (if (eq 1 (length name))
+           (cdr (split-string name " "))
+         (car (split-string name ", "))))
+     (split-string names " and ") ", ")))
 
 (defun bibtex-actions--format-candidates (files &optional context)
   "Format candidates from FILES, with optional hidden CONTEXT metadata.
@@ -485,7 +487,8 @@ TEMPLATE."
        (let* ((field (split-string field ":"))
               (field-name (car field))
               (field-width (cadr field))
-              (field-value (bibtex-actions-get-value field-name entry)))
+              ;; Make sure we always return a string, even if empty.
+              (field-value (or (bibtex-actions-get-value field-name entry) "")))
          (when (and (string= field-name "author")
                     (not field-value))
            (setq field-value (bibtex-actions-get-value "editor" entry)))
