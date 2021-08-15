@@ -125,7 +125,7 @@ function can run several times without adding duplicate watches."
   (seq-mapcat (lambda (x)
                 (bibtex-actions--normalize-paths
                  (cl-case x
-                   (bibliography (bibtex-actions--global-files-to-cache))
+                   (bibliography bibtex-actions-bibliography)
                    (library bibtex-actions-library-paths)
                    (notes  bibtex-actions-notes-paths)
                    (t x))))
