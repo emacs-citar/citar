@@ -99,10 +99,12 @@ CHANGE refers to the filenotify argument."
   (let ((buffer (buffer-name)))
     (setq bibtex-actions--local-watches
           (seq-map
-           (lambda (bibfile) (file-notify-add-watch bibfile '(change)
-                                    (lambda (x)
-                                        (with-current-buffer buffer
-                                          (bibtex-actions--filenotify-callback 'local x)))))
+           (lambda (bibfile)
+             (file-notify-add-watch
+              bibfile '(change)
+              (lambda (x)
+                (with-current-buffer buffer
+                  (bibtex-actions--filenotify-callback 'local x)))))
            (bibtex-actions--local-files-to-cache)))))
 
 (defun bibtex-actions-filenotify-local-watches ()
@@ -123,11 +125,12 @@ function can run several times without adding duplicate watches."
 (defun bibtex-actions--filenotify-files ()
   "Get the list of files to watch from `bibtex-actions-filenotify-files'."
   (seq-mapcat (lambda (x)
-                (bibtex-actions--normalize-paths (cl-case x
-                                                   (bibliography (bibtex-actions--global-files-to-cache))
-                                                   (library bibtex-actions-library-paths)
-                                                   (notes  bibtex-actions-notes-paths)
-                                                   (t x))))
+                (bibtex-actions--normalize-paths
+                 (cl-case x
+                   (bibliography (bibtex-actions--global-files-to-cache))
+                   (library bibtex-actions-library-paths)
+                   (notes  bibtex-actions-notes-paths)
+                   (t x))))
               bibtex-actions-filenotify-files))
 
 (defun bibtex-actions-filenotify-global-watches ()
@@ -138,9 +141,11 @@ watches have to be removed manually. To remove them call
 `bibtex-actions-rm-global-watches'"
   (setq bibtex-actions--global-watches
         (seq-map
-         (lambda (bibfile) (file-notify-add-watch bibfile '(change)
-                                             (lambda (x)
-                                               (bibtex-actions--filenotify-callback 'global x))))
+         (lambda (bibfile)
+           (file-notify-add-watch
+            bibfile '(change)
+            (lambda (x)
+              (bibtex-actions--filenotify-callback 'global x))))
          (bibtex-actions--filenotify-files))))
 
 (defun bibtex-actions-rm-global-watches ()
