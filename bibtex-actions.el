@@ -280,19 +280,13 @@ offering the selection candidates"
              collect (cdr (or (assoc choice candidates)
                               (rassoc choice candidates))))))
 
-(defun bibtex-actions--global-files-to-cache ()
-  "The local files to cache. This is a temporary measure."
-  (if bibtex-actions-bibliography
-      bibtex-actions-bibliography
-    (bibtex-actions--normalize-paths bibtex-completion-bibliography)))
-
 (defun bibtex-actions--local-files-to-cache ()
   "The local bibliographic files not included in the global bibliography."
   ;; We cache these locally to the buffer.
   (let* ((local-bib-files
           (bibtex-actions--normalize-paths
            (bibtex-completion-find-local-bibliography))))
-    (seq-difference local-bib-files (bibtex-actions--global-files-to-cache))))
+    (seq-difference local-bib-files bibtex-actions-bibliography)))
 
 (defun bibtex-actions-get-value (field item &optional _default)
   "Return biblatex FIELD value for ITEM."
@@ -430,7 +424,7 @@ are refreshed."
   (unless (eq 'local scope)
     (setq bibtex-actions--candidates-cache
       (bibtex-actions--format-candidates
-        (bibtex-actions--global-files-to-cache))))
+       bibtex-actions-bibliography)))
   (unless (eq 'global scope)
     (setq bibtex-actions--local-candidates-cache
           (bibtex-actions--format-candidates
