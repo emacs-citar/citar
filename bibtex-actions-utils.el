@@ -33,11 +33,11 @@
 (defun bibtex-actions--files-for-key (key dirs extensions)
   "Find files related to KEY in DIRS with extension in EXTENSIONS."
   (cl-flet ((possible-file-names-with-extension
-             (extensions)
+             (extension)
              (seq-map
               (lambda (directory)
-                (file-name-concat directory
-                                  (concat key "." extensions)))
+                (expand-file-name
+                 (concat key "." extension) directory))
               dirs)))
     (seq-filter #'file-exists-p
                 (seq-mapcat #'possible-file-names-with-extension
