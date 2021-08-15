@@ -77,6 +77,18 @@
   :group 'bibtex-actions
   :type '(repeat file))
 
+(defcustom bibtex-actions-library-paths nil
+  "A list of files paths for related PDFs, etc."
+  ;; The bibtex-completion default is likely to be removed in the future.
+  :group 'bibtex-actions
+  :type '(repeat path))
+
+(defcustom bibtex-actions-notes-paths nil
+  "A list of file paths for bibliographic notes."
+  ;; The bibtex-completion default is likely to be removed in the future.
+  :group 'bibtex-actions
+  :type '(repeat path))
+
 (defcustom bibtex-actions-template
   '((t . "${author:30}   ${date:8}  ${title:48}"))
   "Configures formatting for the BibTeX entry.
@@ -302,9 +314,17 @@ key associated with each one."
          (suffix-width (truncate (* (frame-width) 0.34))))
     (cl-loop for candidate being the hash-values of (parsebib-parse files)
              collect
-             (let* ((pdf (if (assoc "=has-pdf=" (cdr candidate)) " has:pdf"))
-                    (note (if (assoc "=has-note=" (cdr candidate)) "has:note"))
-                    (link (if (or (assoc "doi" (cdr candidate))
+             (let* ((files
+                     (when (bibtex-actions--files-for-key
+                            (bibtex-actions-get-value "=key=" candidate)
+                            bibtex-actions-library-paths bibtex-actions-file-extensions)
+                           " has:files"))
+                    (notes
+                     (when (bibtex-actions--files-for-key
+                            (bibtex-actions-get-value "=key=" candidate)
+                            bibtex-actions-notes-paths bibtex-actions-file-extensions)
+                           " has:notes"))
+                    (link (when (or (assoc "doi" (cdr candidate))
                                   (assoc "url" (cdr candidate))) "has:link"))
                     (citekey (bibtex-actions-get-value "=key=" candidate))
                     (candidate-main
@@ -320,7 +340,7 @@ key associated with each one."
                     ;; We display this content already using symbols; here we add back
                     ;; text to allow it to be searched, and citekey to ensure uniqueness
                     ;; of the candidate.
-                    (candidate-hidden (s-join " " (list pdf note link context citekey))))
+                    (candidate-hidden (s-join " " (list files notes link context citekey))))
                (cons
                 ;; If we don't trim the trailing whitespace,
                 ;; 'completing-read-multiple' will get confused when there are
