@@ -70,8 +70,7 @@
   "Face used to highlight content in `bibtex-actions' candidates."
   :group 'bibtex-actions)
 
-(defcustom bibtex-actions-bibliography (bibtex-actions--normalize-paths
-                                        bibtex-completion-bibliography)
+(defcustom bibtex-actions-bibliography nil
   "A list of bibliography files."
   ;; The bibtex-completion default is likely to be removed in the future.
   :group 'bibtex-actions
@@ -167,7 +166,7 @@ The function takes two arguments. The first is the scope, which is `global' when
 the changed file is in `bibtex-actions-filenotify-files' and `local' otherwise.
 The second is the change that occured. This is the argument that the callback of
 `file-notify-add-watch' accepts. This argument must be optional. The callback is
-called without it when `bibtex-actions-with-filenotify-refresh' is run"
+called without it when `bibtex-actions-filenotify-refresh' is run"
   :group 'bibtex-actions
   :type '(choice (const invalidate-cache)
                  (const refresh-cache)
@@ -261,16 +260,19 @@ offering the selection candidates"
       (list (file-truename file-paths))
     (delete-dups (mapcar (lambda (p) (file-truename p)) file-paths))))
 
+(defun bibtex-actions--global-files-to-cache ()
+  "The local files to cache. This is a temporary measure."
+  (if bibtex-actions-bibliography
+      bibtex-actions-bibliography
+    (bibtex-actions--normalize-paths bibtex-completion-bibliography)))
+
 (defun bibtex-actions--local-files-to-cache ()
   "The local bibliographic files not included in the global bibliography."
   ;; We cache these locally to the buffer.
   (let* ((local-bib-files
           (bibtex-actions--normalize-paths
-           (bibtex-completion-find-local-bibliography)))
-         (global-bib-files
-          (bibtex-actions--normalize-paths
-           bibtex-completion-bibliography)))
-    (seq-difference local-bib-files global-bib-files)))
+           (bibtex-completion-find-local-bibliography))))
+    (seq-difference local-bib-files (bibtex-actions--global-files-to-cache))))
 
 (defun bibtex-actions-get-value (field item &optional _default)
   "Return biblatex FIELD value for ITEM."
@@ -398,7 +400,7 @@ are refreshed."
   (unless (eq 'local scope)
     (setq bibtex-actions--candidates-cache
       (bibtex-actions--format-candidates
-        bibtex-actions-bibliography)))
+        (bibtex-actions--global-files-to-cache))))
   (unless (eq 'global scope)
     (setq bibtex-actions--local-candidates-cache
           (bibtex-actions--format-candidates
@@ -673,7 +675,7 @@ function can run several times without adding duplicate watches."
   "Get the list of files to watch from `bibtex-actions-filenotify-files'"
   (seq-mapcat (lambda (x)
                 (bibtex-actions--normalize-paths (cl-case x
-                                                   (bibliography bibtex-completion-bibliography)
+                                                   (bibliography (bibtex-actions--global-files-to-cache))
                                                    (library bibtex-completion-library-path)
                                                    (notes  bibtex-completion-notes-path)
                                                    (t x))))
@@ -702,15 +704,15 @@ watches have to be removed manually. To remove them call
 
 This function only needs to be called if a bib file has been added or removed."
   (interactive)
-  (unless (eq 'local scope)
+  (unless (eq 'global scope)
     (seq-map #'file-notify-rm-watch bibtex-actions--local-watches)
     (reftex-access-scan-info t)
     (bibtex-actions--add-local-watches)
-    (bibtex-actions--filenotify-callback 'global))
-  (unless (eq 'global scope)
+    (bibtex-actions--filenotify-callback 'local))
+  (unless (eq 'local scope)
     (bibtex-actions-rm-global-watches)
     (bibtex-actions-filenotify-global-watches)
-    (bibtex-actions--filenotify-callback 'local)))
+    (bibtex-actions--filenotify-callback 'global)))
 
 ;;;###autoload
 (defun bibtex-actions-filenotify-setup (mode-hooks)
