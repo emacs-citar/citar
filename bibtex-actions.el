@@ -40,6 +40,8 @@
 (require 'bibtex-actions-utils)
 (require 'bibtex-completion)
 (require 'parsebib)
+(require 'filenotify)
+(require 's)
 
 (declare-function org-element-context "org-element")
 (declare-function org-element-property "org-element")
@@ -453,7 +455,7 @@ are refreshed."
                          (or (cadr (split-string field ":"))
                              ""))))
                "")))))
-     (-cons* (car format) format-string (+ fields-width string-width)))))
+     (cons (car format) (cons format-string (+ fields-width string-width))))))
 
 (defun bibtex-actions--format-entry (entry width template)
   "Formats a BibTeX ENTRY for display in results list.
