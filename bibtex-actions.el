@@ -98,6 +98,11 @@
   :group 'bibtex-actions
   :type '(repeat path))
 
+(defcustom  bibtex-actions-file-variable "file"
+  "The field key to look for in an entry for PDF, etc."
+  :group 'bibtex-actions
+  :type '(string))
+
 (defcustom bibtex-actions-template
   '((t . "${author:30}   ${date:8}  ${title:48}"))
   "Configures formatting for the BibTeX entry.
@@ -324,11 +329,12 @@ key associated with each one."
     (cl-loop for candidate being the hash-values of (parsebib-parse files)
              collect
              (let* ((files
-                     (when (or (bibtex-actions-get-value "=key=" candidate)
-                          (bibtex-actions--files-for-key
-                            (bibtex-actions-get-value "=key=" candidate)
-                            bibtex-actions-library-paths bibtex-actions-file-extensions)
-                           " has:files"))
+                     (when (or (bibtex-actions-get-value
+                                bibtex-actions-file-variable candidate)
+                               (bibtex-actions--files-for-key
+                                (bibtex-actions-get-value "=key=" candidate)
+                                bibtex-actions-library-paths bibtex-actions-file-extensions))
+                       " has:files"))
                     (notes
                      (when (bibtex-actions--files-for-key
                             (bibtex-actions-get-value "=key=" candidate)
