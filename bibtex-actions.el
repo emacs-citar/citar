@@ -121,7 +121,7 @@ This should be a single character."
   :type 'string)
 
 (defcustom bibtex-actions-symbols
-  `((pdf  .     (,bibtex-completion-pdf-symbol . " "))
+  `((file  .     (,bibtex-completion-pdf-symbol . " "))
     (note .     (,bibtex-completion-notes-symbol . " "))
     (link .     (,bibtex-actions-link-symbol . " ")))
   "Configuration alist specifying which symbol or icon to pick for a bib entry.
@@ -370,9 +370,9 @@ key associated with each one."
   (cl-loop
    for candidate in cands
    collect
-   (let ((pdf (if (string-match "has:pdf" candidate)
-                  (cadr (assoc 'pdf bibtex-actions-symbols))
-                (cddr (assoc 'pdf bibtex-actions-symbols))))
+   (let ((files (if (string-match "has:files" candidate)
+                  (cadr (assoc 'file bibtex-actions-symbols))
+                (cddr (assoc 'file bibtex-actions-symbols))))
          (link (if (string-match "has:link" candidate)
                    (cadr (assoc 'link bibtex-actions-symbols))
                  (cddr (assoc 'link bibtex-actions-symbols))))
@@ -383,7 +383,7 @@ key associated with each one."
          (suffix ""))
    (list candidate (concat
                     (s-join bibtex-actions-symbol-separator
-                            (list pdf note link))"	") suffix))))
+                            (list files note link))"	") suffix))))
 
 (defvar bibtex-actions--candidates-cache 'uninitialized
   "Store the global candidates list.
