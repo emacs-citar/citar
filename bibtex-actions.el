@@ -641,8 +641,10 @@ This callback can be passed to the `file-notify-add-watch'.
 
 CHANGE refers to the filenotify argument."
   (cl-case bibtex-actions-filenotify-callback
-    (invalidate-cache (bibtex-actions--make-default-callback #'bibtex-actions--invalidate-cache scope change))
-    (refresh-cache (bibtex-actions--make-default-callback (lambda (x) (bibtex-actions-refresh nil x)) scope change))
+    (invalidate-cache (bibtex-actions--make-default-callback
+                       #'bibtex-actions--invalidate-cache scope change))
+    (refresh-cache (bibtex-actions--make-default-callback
+                    (lambda (x) (bibtex-actions-refresh nil x)) scope change))
     (t (funcall bibtex-actions-filenotify-callback scope change))))
 
 (defun bibtex-actions--add-local-watches ()
@@ -690,7 +692,8 @@ watches have to be removed manually. To remove them call
   (setq bibtex-actions--global-watches
         (seq-map
          (lambda (bibfile) (file-notify-add-watch bibfile '(change)
-                                             (lambda (x) (bibtex-actions--filenotify-callback 'global x))))
+                                             (lambda (x)
+                                               (bibtex-actions--filenotify-callback 'global x))))
          (bibtex-actions--filenotify-files))))
 
 (defun bibtex-actions-rm-global-watches ()
