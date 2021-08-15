@@ -72,19 +72,27 @@
   "Face used to highlight content in `bibtex-actions' candidates."
   :group 'bibtex-actions)
 
-(defcustom bibtex-actions-bibliography nil
+(defcustom bibtex-actions-bibliography
+  (bibtex-actions--normalize-paths bibtex-completion-bibliography)
   "A list of bibliography files."
   ;; The bibtex-completion default is likely to be removed in the future.
   :group 'bibtex-actions
   :type '(repeat file))
 
-(defcustom bibtex-actions-library-paths nil
+(defcustom bibtex-actions-library-paths
+  (bibtex-actions--normalize-paths bibtex-completion-library-path)
   "A list of files paths for related PDFs, etc."
   ;; The bibtex-completion default is likely to be removed in the future.
   :group 'bibtex-actions
   :type '(repeat path))
 
-(defcustom bibtex-actions-notes-paths nil
+(defcustom bibtex-actions-file-extensions '("pdf" "org" "md")
+  "A list of file extensions to recognize for related files."
+  :group 'bibtex-actions
+  :type '(repeat string))
+
+(defcustom bibtex-actions-notes-paths
+  (bibtex-actions--normalize-paths bibtex-completion-notes-path)
   "A list of file paths for bibliographic notes."
   ;; The bibtex-completion default is likely to be removed in the future.
   :group 'bibtex-actions
