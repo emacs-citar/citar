@@ -324,7 +324,8 @@ key associated with each one."
     (cl-loop for candidate being the hash-values of (parsebib-parse files)
              collect
              (let* ((files
-                     (when (bibtex-actions--files-for-key
+                     (when (or (bibtex-actions-get-value "=key=" candidate)
+                          (bibtex-actions--files-for-key
                             (bibtex-actions-get-value "=key=" candidate)
                             bibtex-actions-library-paths bibtex-actions-file-extensions)
                            " has:files"))
