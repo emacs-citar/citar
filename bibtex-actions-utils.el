@@ -6,9 +6,7 @@
 ;; Maintainer: Bruce D'Arcus <bdarcus@gmail.com>
 ;; Created: August 15, 2021
 ;; Modified: August 15, 2021
-;; Version: 0.0.1
-;; Keywords: Symbol’s value as variable is void: finder-known-keywords
-;; Homepage: https://github.com/bruce/bibtex-actions-utils
+;; Version: 0.1
 ;; Package-Requires: ((emacs "26.3"))
 ;;
 ;; This file is not part of GNU Emacs.
@@ -22,6 +20,7 @@
 (require 'cl-lib)
 (require 'seq)
 (require 'files)
+(require 'filenotify)
 
 (declare-function bibtex-actions-refresh "bibtex-actions")
 (declare-function bibtex-actions--local-files-to-cache "bibtex-actions")
@@ -35,7 +34,6 @@
 (defvar bibtex-actions-filenotify-files)
 (defvar bibtex-actions--candidates-cache)
 (defvar bibtex-actions--local-candidates-cache)
-(defvar bibtex-actions-filenotify-callback)
 (defvar bibtex-actions-filenotify-callback)
 
 ;;; File handling
