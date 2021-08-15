@@ -37,6 +37,7 @@
 ;;
 ;;; Code:
 
+(require 'bibtex-actions-utils)
 (require 'bibtex-completion)
 (require 'parsebib)
 
@@ -252,13 +253,6 @@ offering the selection candidates"
              ;; Collect citation keys of selected candidate(s).
              collect (cdr (or (assoc choice candidates)
                               (rassoc choice candidates))))))
-
-(defun bibtex-actions--normalize-paths (file-paths)
-  "Return a list of FILE-PATHS normalized with truename."
-  (if (stringp file-paths)
-      ;; If path is a string, return as a list.
-      (list (file-truename file-paths))
-    (delete-dups (mapcar (lambda (p) (file-truename p)) file-paths))))
 
 (defun bibtex-actions--global-files-to-cache ()
   "The local files to cache. This is a temporary measure."
