@@ -688,7 +688,7 @@ function can run several times without adding duplicate watches."
             nil t))
 
 (defun bibtex-actions--filenotify-files ()
-  "Get the list of files to watch from `bibtex-actions-filenotify-files'"
+  "Get list of files to watch from `bibtex-actions-filenotify-files'."
   (seq-mapcat (lambda (x)
                 (bibtex-actions--normalize-paths (cl-case x
                                                    (bibliography (bibtex-actions--global-files-to-cache))

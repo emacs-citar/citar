@@ -1,4 +1,4 @@
-;;; bibtex-actions-utils.el --- Description -*- lexical-binding: t; -*-
+;;; bibtex-actions-utils.el --- bibtex-actions convenience functions -*- lexical-binding: t; -*-
 ;;
 ;; Copyright (C) 2021 Bruce D'Arcus
 ;;
@@ -15,7 +15,7 @@
 ;;
 ;;; Commentary:
 ;;
-;;  Useful convenience functions for 'bibtex-actions'.
+;;  Convenience functions for 'bibtex-actions'.
 ;;
 ;;; Code:
 
