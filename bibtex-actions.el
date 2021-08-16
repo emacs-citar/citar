@@ -566,6 +566,9 @@ With prefix, rebuild the cache before offering candidates."
   (interactive (list (bibtex-actions-read :rebuild-cache current-prefix-arg)))
   (bibtex-actions-open-files keys bibtex-actions-library-paths))
 
+(make-obsolete 'bibtex-actions-open-pdf
+               'bibtex-actions-open-library-files "1.0")
+
 ;;;###autoload
 (defun bibtex-actions-open-notes (keys)
   "Open notes associated with the KEYS.
