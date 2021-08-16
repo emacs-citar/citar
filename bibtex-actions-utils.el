@@ -115,8 +115,13 @@ If it is other than 'global or 'local invalidate both"
 
 CHANGE refers to the notify argument."
   (cl-case (cadr change)
-    ((nil changed) (message (symbol-name (cadr change))) (funcall func scope))
-    ((created deleted renamed) (bibtex-actions-filenotify-refresh scope))))
+    ((nil changed) (funcall func scope))
+    ((created deleted renamed) (if (member (nth 2 change)
+                                           (seq-concatenate 'list
+                                                            bibtex-actions-bibliography
+                                                            (bibtex-actions--local-files-to-cache)))
+                                   (bibtex-actions-filenotify-refresh scope)
+                                 (funcall func scope)))))
 
 (defun bibtex-actions--filenotify-callback (scope &optional change)
   "A by SCOPE callback according to `bibtex-actions-filenotify-callback'.

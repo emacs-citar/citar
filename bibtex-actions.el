@@ -416,10 +416,12 @@ has not yet been created")
   "Get the cached candidates.
 If the cache is unintialized, this will load the cache.
 If FORCE-REBUILD-CACHE is t, force reload the cache."
-  (when (or force-rebuild-cache
-            (eq 'uninitialized bibtex-actions--candidates-cache)
-            (eq 'uninitialized bibtex-actions--local-candidates-cache))
-    (bibtex-actions-refresh force-rebuild-cache))
+  (if force-rebuild-cache
+      (bibtex-actions-refresh force-rebuild-cache)
+      (when (eq 'uninitialized bibtex-actions--candidates-cache)
+        (bibtex-actions-refresh nil 'global))
+      (when (eq 'uninitialized bibtex-actions--local-candidates-cache)
+        (bibtex-actions-refresh nil 'local)))
   (seq-concatenate 'list
                    bibtex-actions--local-candidates-cache
                    bibtex-actions--candidates-cache))
@@ -468,19 +470,12 @@ are refreshed."
    for format in formats
    collect
    (let* ((format-string (cdr format))
-          (fields-width 0)
-          (string-width
-           (string-width
-            (s-format
-             format-string
-             (lambda (field)
-               (setq fields-width
-                     (+ fields-width
-                        (string-to-number
-                         (or (cadr (split-string field ":"))
-                             ""))))
-               "")))))
-     (cons (car format) (cons format-string (+ fields-width string-width))))))
+          (content-width (apply #'+
+                                (seq-map #'string-to-number
+                                         (split-string format-string ":"))))
+          (whitespace-width (string-width (s-format format-string
+                                                    (lambda (_) "")))))
+     (cons (car format) (cons format-string (+ content-width whitespace-width))))))
 
 (defun bibtex-actions--format-entry (entry width template)
   "Formats a BibTeX ENTRY for display in results list.
@@ -508,14 +503,14 @@ TEMPLATE."
                                  field-width
                                width))
               ;; Make sure we always return a string, even if empty.
-              (field-value (bibtex-completion-clean-string
-                            (or (bibtex-actions--field-value-for-formatting field-name entry)
-                                " "))))
+              (field-value (or (bibtex-actions--field-value-for-formatting field-name entry)
+                               " ")))
          (truncate-string-to-width field-value display-width 0 ?\s))))))
 
 (defun bibtex-actions--field-value-for-formatting (field-name entry)
   "Field formatting for ENTRY FIELD-NAME."
-  (let ((field-value (bibtex-actions-get-value field-name entry)))
+  (let ((field-value (bibtex-completion-clean-string
+                      (bibtex-actions-get-value field-name entry))))
     (pcase field-name
       ("author" (if field-value
                     (bibtex-actions-shorten-names field-value)
