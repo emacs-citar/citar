@@ -506,6 +506,7 @@ TEMPLATE."
           (or
            ;; If there's a template specific to the type, use that.
            (assoc-string
+            ;; TODO I don't think this is right.
             (bibtex-actions-get-value "=type=" entry) template 'case-fold)
            ;; Otherwise, use the generic template.
            (assoc t template)))
@@ -565,7 +566,6 @@ TEMPLATE."
   (when-let ((keys (or (bibtex-actions-get-key-org-cite)
                       (bibtex-completion-key-at-point))))
     (cons 'citation-key (bibtex-actions--stringify-keys keys))))
-
 
 ;;; Command wrappers for bibtex-completion functions
 

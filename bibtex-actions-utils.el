@@ -29,6 +29,7 @@
 (declare-function file-notify-add-watch "ext:file-notify")
 (declare-function file-notify-rm-watch "ext:file-notify")
 
+(defvar bibtex-actions-bibliography)
 (defvar bibtex-actions-library-paths)
 (defvar bibtex-actions-notes-paths)
 (defvar bibtex-actions-filenotify-files)
@@ -60,8 +61,8 @@
                 (seq-mapcat #'possible-file-names-with-extension
                             extensions))))
 
-(cl-defun bibtex-actions-open-files (key dirs
-                                          &optional &key create prompt external)
+(cl-defun bibtex-actions-open-files
+    (key dirs &optional &key create prompt external)
   "Open files related to KEY in DIRS.
 
 PROMPT with group-function.
