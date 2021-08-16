@@ -35,6 +35,8 @@
 (defvar bibtex-actions--candidates-cache)
 (defvar bibtex-actions--local-candidates-cache)
 (defvar bibtex-actions-filenotify-callback)
+(defvar bibtex-actions-open-file-function)
+(defvar bibtex-actions-file-extensions)
 
 ;;; File handling
 
@@ -59,15 +61,17 @@
                             extensions))))
 
 (defun bibtex-actions-open-files (keys dirs)
-  "Open files related to KEY in DIRS."
+  "Open files related to KEYS in DIRS."
   (cl-loop for key in keys do
            (let ((files
                   (bibtex-actions--files-for-key
                    key
                    dirs
                    bibtex-actions-file-extensions)))
-             (cl-loop for file in files do
-                      (funcall bibtex-actions-open-file-function file)))))
+             (if files
+                 (cl-loop for file in files do
+                          (funcall bibtex-actions-open-file-function file))
+               (message "No file(s) found for this entry: %s" key)))))
 
 ;;; File watching
 
