@@ -489,34 +489,30 @@ TEMPLATE."
          (format-string (cadr format)))
     (s-format
      format-string
-     (lambda (field)
-       (let* ((field (split-string field ":"))
+     (lambda (raw-field)
+       (let* ((field (split-string raw-field ":"))
               (field-name (car field))
-              (field-width (cadr field))
+              (field-width (string-to-number (cadr field)))
+              (display-width (if (> field-width 0)
+                                 ;; If user specifies field width of "*", use
+                                 ;; WIDTH; else use the explicit 'field-width'.
+                                 field-width
+                               width))
               ;; Make sure we always return a string, even if empty.
-              (field-value (or (bibtex-actions-get-value field-name entry) "")))
-         (when (and (string= field-name "author")
-                    (not field-value))
-           (setq field-value (bibtex-actions-get-value "editor" entry)))
-         (when (string= field-name "date")
-           (setq field-value
-                 (let ((value (bibtex-actions-get-value "date" entry)))
-                   (if (> (length value) 4)
-                       (substring value 0 4)
-                     value))))
-         (setq field-value (bibtex-completion-clean-string (or field-value " ")))
-         (when (member field-name '("author" "editor"))
-           (setq field-value (bibtex-actions-shorten-names field-value)))
-         (if (not field-width)
-             field-value
-           (setq field-width (string-to-number field-width))
-             (let ((width (if (> field-width 0)
-                              ;; If user specifies field width of "*", use
-                              ;; WIDTH; else use the explicit 'field-width'.
-                              field-width
-                            width)))
-               (truncate-string-to-width field-value width 0 ?\s))))))))
+              (field-value (bibtex-completion-clean-string
+                            (or (bibtex-actions--field-value-for-formatting field-name entry)
+                                " "))))
+         (truncate-string-to-width field-value display-width 0 ?\s))))))
 
+(defun bibtex-actions--field-value-for-formatting (field-name entry)
+  (let ((field-value (bibtex-actions-get-value field-name entry)))
+    (pcase field-name
+      ("author" (if field-value
+                    (bibtex-actions-shorten-names field-value)
+                  (bibtex-actions--field-value-for-formatting "editor" entry)))
+      ("editor" (bibtex-actions-shorten-names field-value))
+      ("date" (string-limit field-value 4))
+      (t field-value))))
 ;;; At-point functions
 
 ;;; Org-cite
