@@ -522,14 +522,14 @@ TEMPLATE."
                                  field-width
                                width))
               ;; Make sure we always return a string, even if empty.
-              (field-value (bibtex-completion-clean-string
-                            (or (bibtex-actions--field-value-for-formatting field-name entry)
-                                " "))))
+              (field-value (or (bibtex-actions--field-value-for-formatting field-name entry)
+                               " ")))
          (truncate-string-to-width field-value display-width 0 ?\s))))))
 
 (defun bibtex-actions--field-value-for-formatting (field-name entry)
   "Field formatting for ENTRY FIELD-NAME."
-  (let ((field-value (bibtex-actions-get-value field-name entry)))
+  (let ((field-value (bibtex-completion-clean-string
+                      (bibtex-actions-get-value field-name entry))))
     (pcase field-name
       ("author" (if field-value
                     (bibtex-actions-shorten-names field-value)
