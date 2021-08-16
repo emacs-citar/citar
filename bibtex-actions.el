@@ -512,7 +512,7 @@ TEMPLATE."
                   (bibtex-actions--field-value-for-formatting "editor" entry)))
       ("editor" (bibtex-actions-shorten-names field-value))
       ("date" (string-limit field-value 4))
-      (t field-value))))
+      (_ field-value))))
 ;;; At-point functions
 
 ;;; Org-cite
