@@ -431,10 +431,13 @@ has not yet been created")
   "Get the cached candidates.
 If the cache is unintialized, this will load the cache.
 If FORCE-REBUILD-CACHE is t, force reload the cache."
-  (when (or force-rebuild-cache
-            (eq 'uninitialized bibtex-actions--candidates-cache)
-            (eq 'uninitialized bibtex-actions--local-candidates-cache))
-    (bibtex-actions-refresh force-rebuild-cache))
+  (if force-rebuild-cache
+      (bibtex-actions-refresh force-rebuild-cache)
+    (progn
+      (when (eq 'uninitialized bibtex-actions--candidates-cache)
+        (bibtex-actions-refresh nil 'local))
+      (when (eq 'uninitialized bibtex-actions--local-candidates-cache)
+        (bibtex-actions-refresh nil 'global))))
   (seq-concatenate 'list
                    bibtex-actions--local-candidates-cache
                    bibtex-actions--candidates-cache))
