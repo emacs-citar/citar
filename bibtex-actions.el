@@ -103,6 +103,11 @@
   :group 'bibtex-actions
   :type '(string))
 
+(defcustom bibtex-actions-open-file-function 'find-file
+  "Function to use to open files."
+  :group 'bibtex-actions
+  :type '(function))
+
 (defcustom bibtex-actions-template
   '((t . "${author:30}   ${date:8}  ${title:48}"))
   "Configures formatting for the BibTeX entry.
@@ -553,13 +558,19 @@ With prefix, rebuild the cache before offering candidates."
   (bibtex-completion-open-any keys))
 
 ;;;###autoload
-(defun bibtex-actions-open-pdf (keys)
- "Open PDF associated with the KEYS.
-If multiple PDFs are found, ask for the one to open using
-‘completing-read’.
+(defun bibtex-actions-open-library-file (keys)
+ "Open library files associated with the KEYS.
+
 With prefix, rebuild the cache before offering candidates."
   (interactive (list (bibtex-actions-read :rebuild-cache current-prefix-arg)))
-  (bibtex-completion-open-pdf keys))
+  (cl-loop for key in keys do
+           (let ((files
+                  (bibtex-actions--files-for-key
+                   key
+                   bibtex-actions-library-paths
+                   bibtex-actions-file-extensions)))
+             (cl-loop for file in files do
+                      (funcall bibtex-actions-open-file-function file)))))
 
 ;;;###autoload
 (defun bibtex-actions-open-link (keys)
