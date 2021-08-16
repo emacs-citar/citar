@@ -290,7 +290,7 @@ offering the selection candidates"
                  (if (eq action 'metadata)
                      `(metadata
                        (affixation-function . bibtex-actions--affixation)
-                       (category . bibtex))
+                       (category . bib-reference))
                    (complete-with-action action candidates string predicate)))
                nil
                nil
@@ -301,7 +301,7 @@ offering the selection candidates"
                (if (eq action 'metadata)
                    '(metadata
                      (affixation-function . bibtex-actions--affixation)
-                     (category . bibtex))
+                     (category . bib-reference))
                  (complete-with-action action candidates string predicate)))))))
     (if (not multiple)
         (cdr (assoc chosen candidates))
