@@ -106,8 +106,16 @@
 
 (defcustom bibtex-actions-open-file-function 'find-file
   "Function to use to open files."
+  ;; tODO maybe this should be higher-level; eg:
+  ;; 'bibtex-actions-open-file?
   :group 'bibtex-actions
   :type '(function))
+
+(defcustom bibtex-actions-open-library-file-external t
+  "Whether to open a library file in an external application."
+  :group 'bibtex-actions
+  :type '(boolean))
+
 
 (defcustom bibtex-actions-template
   '((t . "${author:30}   ${date:8}  ${title:48}"))
@@ -505,6 +513,7 @@ TEMPLATE."
          (truncate-string-to-width field-value display-width 0 ?\s))))))
 
 (defun bibtex-actions--field-value-for-formatting (field-name entry)
+  "Field formatting for ENTRY FIELD-NAME."
   (let ((field-value (bibtex-actions-get-value field-name entry)))
     (pcase field-name
       ("author" (if field-value
@@ -513,6 +522,7 @@ TEMPLATE."
       ("editor" (bibtex-actions-shorten-names field-value))
       ("date" (string-limit field-value 4))
       (_ field-value))))
+
 ;;; At-point functions
 
 ;;; Org-cite
@@ -551,6 +561,8 @@ Opens the PDF(s) associated with the KEYS.  If multiple PDFs are
 found, ask for the one to open using ‘completing-read’.  If no
 PDF is found, try to open a URL or DOI in the browser instead.
 With prefix, rebuild the cache before offering candidates."
+ ;; TODO make this is a CRM interface, with grouping
+ ;;      files, links, notes
   (interactive (list (bibtex-actions-read :rebuild-cache current-prefix-arg)))
   (bibtex-completion-open-any keys))
 
@@ -560,7 +572,9 @@ With prefix, rebuild the cache before offering candidates."
 
 With prefix, rebuild the cache before offering candidates."
   (interactive (list (bibtex-actions-read :rebuild-cache current-prefix-arg)))
-  (bibtex-actions-open-files keys bibtex-actions-library-paths))
+  (bibtex-actions-open-files
+   keys bibtex-actions-library-paths
+   :external bibtex-actions-open-library-file-external))
 
 (make-obsolete 'bibtex-actions-open-pdf
                'bibtex-actions-open-library-files "1.0")

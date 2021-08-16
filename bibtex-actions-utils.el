@@ -60,22 +60,41 @@
                 (seq-mapcat #'possible-file-names-with-extension
                             extensions))))
 
-(cl-defun bibtex-actions-open-files (keys dirs &optional &key create)
-  "Open files related to KEYS in DIRS.
+(cl-defun bibtex-actions-open-files (key dirs
+                                          &optional &key create prompt external)
+  "Open files related to KEY in DIRS.
+
+PROMPT with group-function.
+
+EXTERNAL for external applications.
 
 Create a new note if file not found, and CREATE is set to 'note."
-  (cl-loop for key in keys do
-           (let ((files
-                  (bibtex-actions--files-for-key
-                   key
-                   dirs
-                   bibtex-actions-file-extensions)))
-             (if files
-                 (cl-loop for file in files do
-                          (funcall bibtex-actions-open-file-function file))
-               (if (eq create 'note)
-                   (message "create note")
-                 (message "No file(s) found for this entry: %s" key))))))
+  (let* ((files
+          (bibtex-actions--files-for-key
+           key
+           dirs
+           bibtex-actions-file-extensions))
+         (selected (when prompt
+                     (completing-read "Files: " files))))
+    (if selected
+        (funcall bibtex-actions-open-file-function selected)
+      (if files
+          (cl-loop for file in files do
+                   (if external
+                       ;; Adapted from consult-file-externally.
+                       (if (and (eq system-type 'windows-nt)
+                                (fboundp 'w32-shell-execute))
+                           (w32-shell-execute "open" file)
+                         (call-process (pcase system-type
+                                         ('darwin "open")
+                                         ('cygwin "cygstart")
+                                         (_ "xdg-open"))
+                                       nil 0 nil
+                                       file))
+                     (funcall bibtex-actions-open-file-function file))
+        (if (eq create 'note)
+            (message "create note")
+          (message "No file(s) found for this entry: %s" key)))))))
 
 ;;; File watching
 
