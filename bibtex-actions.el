@@ -343,8 +343,12 @@ personal names of the form 'family, given'."
   "Format candidates from FILES, with optional hidden CONTEXT metadata.
 This both propertizes the candidates for display, and grabs the
 key associated with each one."
-  (let* ((main-template bibtex-actions-template)
-         (suffix-template bibtex-actions-template-suffix)
+  (let* ((main-template
+         (bibtex-actions--process-display-formats
+          bibtex-actions-template))
+         (suffix-template
+          (bibtex-actions--process-display-formats
+           bibtex-actions-template-suffix))
          (main-width (truncate (* (frame-width) 0.65)))
          (suffix-width (truncate (* (frame-width) 0.34))))
     (cl-loop for candidate being the hash-values of (parsebib-parse files)
@@ -481,10 +485,12 @@ are refreshed."
    for format in formats
    collect
    (let* ((format-string (cdr format))
-          (total-width (apply #'+
-                              (seq-map #'string-to-number
-                                       (split-string format-string ":")))))
-     (cons (car format) (cons format-string total-width)))))
+          (content-width (apply #'+
+                                (seq-map #'string-to-number
+                                         (split-string format-string ":"))))
+          (whitespace-width (string-width (s-format format-string
+                                                    (lambda (_) "")))))
+     (cons (car format) (cons format-string (+ content-width whitespace-width))))))
 
 (defun bibtex-actions--format-entry (entry width template)
   "Formats a BibTeX ENTRY for display in results list.
@@ -498,7 +504,7 @@ TEMPLATE."
             (bibtex-actions-get-value "=type=" entry) template 'case-fold)
            ;; Otherwise, use the generic template.
            (assoc t template)))
-         (format-string (cdr format)))
+         (format-string (cadr format)))
     (s-format
      format-string
      (lambda (raw-field)
