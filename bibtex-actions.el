@@ -572,7 +572,8 @@ With prefix, rebuild the cache before offering candidates."
 With prefix, rebuild the cache before offering candidates."
   (interactive (list (bibtex-actions-read :rebuild-cache current-prefix-arg)))
   ;; TODO this doesn't work
-  (bibtex-actions-open-files keys bibtex-actions-notes-paths))
+  (bibtex-actions-open-files
+   keys bibtex-actions-notes-paths :create 'note))
 
 ;;;###autoload
 (defun bibtex-actions-open-entry (keys)

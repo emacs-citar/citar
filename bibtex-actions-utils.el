@@ -60,8 +60,10 @@
                 (seq-mapcat #'possible-file-names-with-extension
                             extensions))))
 
-(defun bibtex-actions-open-files (keys dirs)
-  "Open files related to KEYS in DIRS."
+(cl-defun bibtex-actions-open-files (keys dirs &optional &key create)
+  "Open files related to KEYS in DIRS.
+
+Create a new note if file not found, and CREATE is set to 'note."
   (cl-loop for key in keys do
            (let ((files
                   (bibtex-actions--files-for-key
@@ -71,7 +73,9 @@
              (if files
                  (cl-loop for file in files do
                           (funcall bibtex-actions-open-file-function file))
-               (message "No file(s) found for this entry: %s" key)))))
+               (if (eq create 'note)
+                   (message "create note")
+                 (message "No file(s) found for this entry: %s" key))))))
 
 ;;; File watching
 
