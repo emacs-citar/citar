@@ -433,11 +433,10 @@ If the cache is unintialized, this will load the cache.
 If FORCE-REBUILD-CACHE is t, force reload the cache."
   (if force-rebuild-cache
       (bibtex-actions-refresh force-rebuild-cache)
-    (progn
       (when (eq 'uninitialized bibtex-actions--candidates-cache)
         (bibtex-actions-refresh nil 'global))
       (when (eq 'uninitialized bibtex-actions--local-candidates-cache)
-        (bibtex-actions-refresh nil 'local))))
+        (bibtex-actions-refresh nil 'local)))
   (seq-concatenate 'list
                    bibtex-actions--local-candidates-cache
                    bibtex-actions--candidates-cache))
