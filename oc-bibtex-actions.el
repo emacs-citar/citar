@@ -228,10 +228,10 @@ strings by style."
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "o") '("open source (file or link)" . bibtex-actions-open))
     (define-key map (kbd "e") '("open bibtex entry" . bibtex-actions-open-entry))
-    (define-key map (kbd "f") '("open source file" . bibtex-actions-open-pdf))
+    (define-key map (kbd "f") '("open source file" . bibtex-actions-open-library-files))
     (define-key map (kbd "l") '("open source link" . bibtex-actions-open-link))
     (define-key map (kbd "n") '("open notes" . bibtex-actions-open-notes))
-    (define-key map (kbd "r") '("refresh library" . bibtex-actions-refresh))
+    (define-key map (kbd "r") '("refresh" . bibtex-actions-refresh))
     map)
   "Keymap for 'oc-bibtex-actions' `embark' at-point functionality.")
 

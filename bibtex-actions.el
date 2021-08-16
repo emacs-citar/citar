@@ -43,6 +43,7 @@
 (require 'filenotify)
 (require 's)
 
+(declare-function bibtex-actions-open-files "bibtex-actions")
 (declare-function org-element-context "org-element")
 (declare-function org-element-property "org-element")
 (declare-function org-element-type "org-element")
@@ -236,8 +237,8 @@ called without it when `bibtex-actions-filenotify-refresh' is run"
     (define-key map (kbd "e") '("open bibtex entry" . bibtex-actions-open-entry))
     (define-key map (kbd "l") '("open source URL or DOI" . bibtex-actions-open-link))
     (define-key map (kbd "n") '("open notes" . bibtex-actions-open-notes))
-    (define-key map (kbd "p") '("open PDF" . bibtex-actions-open-pdf))
-    (define-key map (kbd "r") '("refresh library" . bibtex-actions-refresh))
+    (define-key map (kbd "p") '("open library files" . bibtex-actions-open-library-files))
+    (define-key map (kbd "r") '("refresh" . bibtex-actions-refresh))
     ;; Embark doesn't currently use the menu description.
     ;; https://github.com/oantolin/embark/issues/251
     (define-key map (kbd "RET") '("default action" . bibtex-actions-run-default-action))
@@ -250,7 +251,7 @@ called without it when `bibtex-actions-filenotify-refresh' is run"
     (define-key map (kbd "e") '("open bibtex entry" . bibtex-actions-open-entry))
     (define-key map (kbd "l") '("open source URL or DOI" . bibtex-actions-open-link))
     (define-key map (kbd "n") '("open notes" . bibtex-actions-open-notes))
-    (define-key map (kbd "p") '("open PDF" . bibtex-actions-open-pdf))
+    (define-key map (kbd "p") '("open library files" . bibtex-actions-open-library-files))
     (define-key map (kbd "r") '("refresh library" . bibtex-actions-refresh))
     ;; Embark doesn't currently use the menu description.
     ;; https://github.com/oantolin/embark/issues/251
@@ -558,19 +559,27 @@ With prefix, rebuild the cache before offering candidates."
   (bibtex-completion-open-any keys))
 
 ;;;###autoload
-(defun bibtex-actions-open-library-file (keys)
+(defun bibtex-actions-open-library-files (keys)
  "Open library files associated with the KEYS.
 
 With prefix, rebuild the cache before offering candidates."
   (interactive (list (bibtex-actions-read :rebuild-cache current-prefix-arg)))
-  (cl-loop for key in keys do
-           (let ((files
-                  (bibtex-actions--files-for-key
-                   key
-                   bibtex-actions-library-paths
-                   bibtex-actions-file-extensions)))
-             (cl-loop for file in files do
-                      (funcall bibtex-actions-open-file-function file)))))
+  (bibtex-actions-open-files keys bibtex-actions-library-paths))
+
+;;;###autoload
+(defun bibtex-actions-open-notes (keys)
+  "Open notes associated with the KEYS.
+With prefix, rebuild the cache before offering candidates."
+  (interactive (list (bibtex-actions-read :rebuild-cache current-prefix-arg)))
+  ;; TODO this doesn't work
+  (bibtex-actions-open-files keys bibtex-actions-notes-paths))
+
+;;;###autoload
+(defun bibtex-actions-open-entry (keys)
+  "Open BibTeX entry associated with the KEYS.
+With prefix, rebuild the cache before offering candidates."
+  (interactive (list (bibtex-actions-read :rebuild-cache current-prefix-arg)))
+ (bibtex-completion-show-entry keys))
 
 ;;;###autoload
 (defun bibtex-actions-open-link (keys)
@@ -613,20 +622,6 @@ With prefix, rebuild the cache before offering candidates."
 With prefix, rebuild the cache before offering candidates."
   (interactive (list (bibtex-actions-read :rebuild-cache current-prefix-arg)))
  (bibtex-completion-add-PDF-attachment keys))
-
-;;;###autoload
-(defun bibtex-actions-open-notes (keys)
-  "Open notes associated with the KEYS.
-With prefix, rebuild the cache before offering candidates."
-  (interactive (list (bibtex-actions-read :rebuild-cache current-prefix-arg)))
- (bibtex-completion-edit-notes keys))
-
-;;;###autoload
-(defun bibtex-actions-open-entry (keys)
-  "Open BibTeX entry associated with the KEYS.
-With prefix, rebuild the cache before offering candidates."
-  (interactive (list (bibtex-actions-read :rebuild-cache current-prefix-arg)))
- (bibtex-completion-show-entry keys))
 
 ;;;###autoload
 (defun bibtex-actions-add-pdf-to-library (keys)

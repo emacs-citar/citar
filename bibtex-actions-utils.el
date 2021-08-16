@@ -58,6 +58,17 @@
                 (seq-mapcat #'possible-file-names-with-extension
                             extensions))))
 
+(defun bibtex-actions-open-files (keys dirs)
+  "Open files related to KEY in DIRS."
+  (cl-loop for key in keys do
+           (let ((files
+                  (bibtex-actions--files-for-key
+                   key
+                   dirs
+                   bibtex-actions-file-extensions)))
+             (cl-loop for file in files do
+                      (funcall bibtex-actions-open-file-function file)))))
+
 ;;; File watching
 
 (defvar-local bibtex-actions--local-watches 'uninitialized)
