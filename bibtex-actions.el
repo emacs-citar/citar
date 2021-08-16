@@ -343,12 +343,8 @@ personal names of the form 'family, given'."
   "Format candidates from FILES, with optional hidden CONTEXT metadata.
 This both propertizes the candidates for display, and grabs the
 key associated with each one."
-  (let* ((main-template
-         (bibtex-actions--process-display-formats
-          bibtex-actions-template))
-         (suffix-template
-          (bibtex-actions--process-display-formats
-           bibtex-actions-template-suffix))
+  (let* ((main-template bibtex-actions-template)
+         (suffix-template bibtex-actions-template-suffix)
          (main-width (truncate (* (frame-width) 0.65)))
          (suffix-width (truncate (* (frame-width) 0.34))))
     (cl-loop for candidate being the hash-values of (parsebib-parse files)
@@ -502,7 +498,7 @@ TEMPLATE."
             (bibtex-actions-get-value "=type=" entry) template 'case-fold)
            ;; Otherwise, use the generic template.
            (assoc t template)))
-         (format-string (cadr format)))
+         (format-string (cdr format)))
     (s-format
      format-string
      (lambda (raw-field)
