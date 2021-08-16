@@ -268,31 +268,46 @@ called without it when `bibtex-actions-filenotify-refresh' is run"
   "Keymap for Embark citation-key actions.")
 
 ;;; Completion functions
-(cl-defun bibtex-actions-read (&optional &key rebuild-cache)
+(cl-defun bibtex-actions-read (&optional &key multiple rebuild-cache)
   "Read bibtex-completion entries.
 
-This provides a wrapper around 'completing-read-multiple', with
-the following optional arguments:
+Provides a wrapper around 'completing-read' and
+'completing-read-multiple', with the following optional
+arguments:
+
+MULTIPLE uses 'completing-read-multiple'; default is
+'completing-read'.
 
 'REBUILD-CACHE' if t, forces rebuilding the cache before
 offering the selection candidates"
   (let* ((crm-separator "\\s-*&\\s-*")
 	 (candidates (bibtex-actions--get-candidates rebuild-cache))
          (chosen
-          (completing-read-multiple
-           "References: "
-           (lambda (string predicate action)
-             (if (eq action 'metadata)
-                 `(metadata
-                   (affixation-function . bibtex-actions--affixation)
-                   (category . bibtex))
-               (complete-with-action action candidates string predicate)))
-           nil nil nil
-           'bibtex-actions-history bibtex-actions-presets nil)))
-    (cl-loop for choice in chosen
-             ;; Collect citation keys of selected candidate(s).
-             collect (cdr (or (assoc choice candidates)
-                              (rassoc choice candidates))))))
+          (if multiple
+              (completing-read-multiple
+               "References: "
+               (lambda (string predicate action)
+                 (if (eq action 'metadata)
+                     `(metadata
+                       (affixation-function . bibtex-actions--affixation)
+                       (category . bibtex))
+                   (complete-with-action action candidates string predicate)))
+               nil
+               nil
+               'bibtex-actions-history bibtex-actions-presets nil)
+            (completing-read
+             "References: "
+             (lambda (string predicate action)
+               (if (eq action 'metadata)
+                   '(metadata
+                     (affixation-function . bibtex-actions--affixation)
+                     (category . bibtex))
+                 (complete-with-action action candidates string predicate)))))))
+    (if (not multiple)
+        (cdr (assoc chosen candidates))
+      (cl-loop for choice in chosen
+               ;; Collect citation keys of selected candidate(s).
+               collect (cdr (assoc choice candidates))))))
 
 (defun bibtex-actions--local-files-to-cache ()
   "The local bibliographic files not included in the global bibliography."
@@ -567,13 +582,14 @@ With prefix, rebuild the cache before offering candidates."
   (bibtex-completion-open-any keys))
 
 ;;;###autoload
-(defun bibtex-actions-open-library-files (keys)
- "Open library files associated with the KEYS.
+(defun bibtex-actions-open-library-files (key)
+ "Open library files associated with the KEY.
 
 With prefix, rebuild the cache before offering candidates."
-  (interactive (list (bibtex-actions-read :rebuild-cache current-prefix-arg)))
+  (interactive (list (bibtex-actions-read
+                      :rebuild-cache current-prefix-arg)))
   (bibtex-actions-open-files
-   keys bibtex-actions-library-paths
+   key bibtex-actions-library-paths
    :external bibtex-actions-open-library-file-external))
 
 (make-obsolete 'bibtex-actions-open-pdf
