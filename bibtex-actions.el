@@ -483,19 +483,10 @@ are refreshed."
    for format in formats
    collect
    (let* ((format-string (cdr format))
-          (fields-width 0)
-          (string-width
-           (string-width
-            (s-format
-             format-string
-             (lambda (field)
-               (setq fields-width
-                     (+ fields-width
-                        (string-to-number
-                         (or (cadr (split-string field ":"))
-                             ""))))
-               "")))))
-     (cons (car format) (cons format-string (+ fields-width string-width))))))
+          (total-width (apply #'+
+                              (seq-map #'string-to-number
+                                       (split-string format-string ":")))))
+     (cons (car format) (cons format-string total-width)))))
 
 (defun bibtex-actions--format-entry (entry width template)
   "Formats a BibTeX ENTRY for display in results list.
