@@ -28,9 +28,12 @@
   :group 'bibtex-actions-file
   :type '(function))
 
-(defcustom bibtex-actions-file-create-notes-function
+(defcustom bibtex-actions-file-edit-notes-function
   'bibtex-actions-file-create-notes-org-capture
-  "Function to create a new note."
+  "Function to create a new note.
+
+If you use 'org-roam' and 'org-roam-bibtex, you should use
+'orb-edit-notes' for this value."
   :group 'bibtex-actions-file
   :type '(function))
 
@@ -83,9 +86,9 @@
                   nil 0 nil
                   file)))
 
-(defun bibtex-actions-file-create-notes (file)
+(defun bibtex-actions-file-edit-notes (file)
   "Create new notes FILE."
-  (funcall bibtex-actions-file-create-notes-function file))
+  (funcall bibtex-actions-file-edit-notes-function file))
 
 (provide 'bibtex-actions-file)
 ;;; bibtex-actions-file.el ends here
