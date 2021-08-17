@@ -41,7 +41,6 @@
 (require 'bibtex-actions-filenotify)
 (require 'bibtex-completion)
 (require 'parsebib)
-(require 'filenotify)
 (require 's)
 
 
@@ -204,27 +203,6 @@ means no action."
   "The function to run for 'bibtex-actions-at-point'."
   :group 'bibtex-actions
   :type 'function)
-
-(defcustom bibtex-actions-filenotify-callback 'invalidate-cache
-  "The callback that is run when the bibliography related files change.
-Its value can be either 'invalidate-cache, 'refresh-cache or else a function.
-The function takes two arguments. The first is the scope, which is `global' when
-the changed file is in `bibtex-actions-filenotify-files' and `local' otherwise.
-The second is the change that occured. This is the argument that the callback of
-`file-notify-add-watch' accepts. This argument must be optional. The callback is
-called without it when `bibtex-actions-filenotify-refresh' is run"
-  :group 'bibtex-actions
-  :type '(choice (const invalidate-cache)
-                 (const refresh-cache)
-                 function))
-
-(defcustom bibtex-actions-filenotify-files '(bibliography)
-  "The files to watch using filenotify."
-  :group 'bibtex-actions
-  :type '(repeat (choice (const bibliogrpahy)
-                         (const library)
-                         (const notes)
-                         string)))
 
 ;;; History, including future history list.
 
@@ -667,19 +645,6 @@ With prefix, rebuild the cache before offering candidates."
   (interactive)
   (if-let ((keys (cdr (bibtex-actions-citation-key-at-point))))
       (bibtex-actions-run-default-action keys)))
-
-;;;###autoload
-(defun bibtex-actions-filenotify-setup (mode-hooks)
-  "Setup filenotify watches for local and global bibliography related files.
-
-This functions adds watches to the files in
-`bibtex-actions-filenotify-files' and adds a hook to the
-'major-mode' hooks in 'MODE-HOOKS' which adds watches for the
-local bib files. These local watches are removed when the buffer
-closes."
-  (bibtex-actions-filenotify-global-watches)
-  (mapc (lambda (mode)
-          (add-hook mode #'bibtex-actions-filenotify-local-watches)) mode-hooks))
 
 (provide 'bibtex-actions)
 ;;; bibtex-actions.el ends here
