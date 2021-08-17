@@ -43,7 +43,9 @@
 (require 'filenotify)
 (require 's)
 
-(declare-function bibtex-actions-open-files "bibtex-actions")
+(declare-function bibtex-actions-open-files "bibtex-actions-utils")
+(declare-function bibtex-actions--files-for-keys "bibtex-actions-utils")
+(declare-function bibtex-actions--stringify-keys "bibtex-actions-utils")
 (declare-function org-element-context "org-element")
 (declare-function org-element-property "org-element")
 (declare-function org-element-type "org-element")
@@ -341,13 +343,13 @@ key associated with each one."
              (let* ((files
                      (when (or (bibtex-actions-get-value
                                 bibtex-actions-file-variable candidate)
-                               (bibtex-actions--files-for-key
-                                (bibtex-actions-get-value "=key=" candidate)
+                               (bibtex-actions--files-for-keys
+                                (list (bibtex-actions-get-value "=key=" candidate))
                                 bibtex-actions-library-paths bibtex-actions-file-extensions))
                        " has:files"))
                     (notes
-                     (when (bibtex-actions--files-for-key
-                            (bibtex-actions-get-value "=key=" candidate)
+                     (when (bibtex-actions--files-for-keys
+                            (list (bibtex-actions-get-value "=key=" candidate))
                             bibtex-actions-notes-paths bibtex-actions-file-extensions)
                            " has:notes"))
                     (link (when (or (assoc "doi" (cdr candidate))
@@ -537,9 +539,6 @@ TEMPLATE."
 
 ;;; Embark
 
-(defun bibtex-actions--stringify-keys (keys)
-  "Return a list of KEYS as a crm-string for `embark'."
-  (if (listp keys) (string-join keys " & ") keys))
 
 (defun bibtex-actions-citation-key-at-point ()
   "Return citation keys at point as a list for `embark'."
@@ -581,7 +580,7 @@ With prefix, rebuild the cache before offering candidates."
   (interactive (list (bibtex-actions-read :rebuild-cache current-prefix-arg)))
   ;; TODO this doesn't work
   (bibtex-actions-open-files
-   keys bibtex-actions-notes-paths :create 'note))
+   keys bibtex-actions-notes-paths :create-note))
 
 ;;;###autoload
 (defun bibtex-actions-open-entry (keys)

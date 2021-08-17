@@ -21,6 +21,7 @@
 (require 'seq)
 (require 'files)
 (require 'filenotify)
+(require 'subr-x)
 
 (declare-function bibtex-actions-refresh "bibtex-actions")
 (declare-function bibtex-actions--local-files-to-cache "bibtex-actions")
@@ -38,6 +39,10 @@
 (defvar bibtex-actions-filenotify-callback)
 (defvar bibtex-actions-open-file-function)
 (defvar bibtex-actions-file-extensions)
+
+(defun bibtex-actions--stringify-keys (keys)
+  "Return a list of KEYS as a crm-string for `embark'."
+  (if (listp keys) (string-join keys " & ") keys))
 
 ;;; File handling
 
@@ -65,40 +70,41 @@
                                     extensions))))
 
 (cl-defun bibtex-actions-open-files
-    (key dirs &optional &key create prompt external)
-  "Open files related to KEY in DIRS.
+    (keys dirs &optional &key create-note prompt external)
+  "Open files related to KEYS in DIRS.
 
 PROMPT with group-function.
 
 EXTERNAL for external applications.
 
-Create a new note if file not found, and CREATE is set to 'note."
+CREATE-NOTE if note not found."
   (let* ((files
           (bibtex-actions--files-for-keys
-           key
+           keys
            dirs
            bibtex-actions-file-extensions))
          (selected (when prompt
                      (completing-read "Files: " files))))
     (if selected
-        (funcall bibtex-actions-open-file-function selected)
+        (cl-loop for file in selected do
+                 (funcall bibtex-actions-open-file-function file))
       (if files
           (cl-loop for file in files do
-                   (if external
-                       ;; Adapted from consult-file-externally.
-                       (if (and (eq system-type 'windows-nt)
-                                (fboundp 'w32-shell-execute))
-                           (w32-shell-execute "open" file)
-                         (call-process (pcase system-type
-                                         ('darwin "open")
-                                         ('cygwin "cygstart")
-                                         (_ "xdg-open"))
-                                       nil 0 nil
-                                       file))
-                     (funcall bibtex-actions-open-file-function file))
-        (if (eq create 'note)
-            (message "create note")
-          (message "No file(s) found for this entry: %s" key)))))))
+                   (cond (external
+                          ;; Adapted from consult-file-externally.
+                          (if (and (eq system-type 'windows-nt)
+                                   (fboundp 'w32-shell-execute))
+                              (w32-shell-execute "open" file)
+                            (call-process (pcase system-type
+                                            ('darwin "open")
+                                            ('cygwin "cygstart")
+                                            (_ "xdg-open"))
+                                          nil 0 nil
+                                          file)))
+                         (create-note
+                          (message "FIX THIS"))
+                         (t (funcall bibtex-actions-open-file-function file))))
+        (message "No file(s) found for %s" keys)))))
 
 ;;; File watching
 
