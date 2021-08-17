@@ -37,8 +37,8 @@
 ;;
 ;;; Code:
 
+(require 'bibtex-actions-select)
 (require 'bibtex-actions-file)
-(require 'bibtex-actions-filenotify)
 (require 'bibtex-completion)
 (require 'parsebib)
 (require 's)
@@ -265,7 +265,7 @@ offering the selection candidates"
              (if (eq action 'metadata)
                  `(metadata
                    (affixation-function . bibtex-actions--affixation)
-                   (category . bibtex))
+                   (category . bib-reference))
                (complete-with-action action candidates string predicate)))
            nil nil nil
            'bibtex-actions-history bibtex-actions-presets nil)))
@@ -541,7 +541,14 @@ With prefix, rebuild the cache before offering candidates."
  ;; TODO make this is a CRM interface, with grouping
  ;;      files, links, notes
   (interactive (list (bibtex-actions-read :rebuild-cache current-prefix-arg)))
-  (bibtex-completion-open-any keys))
+  (let* ((files
+         (bibtex-actions-file--files-for-multiple-keys
+          keys
+          (append bibtex-actions-library-paths bibtex-actions-notes-paths)
+          bibtex-actions-file-extensions))
+        (chosen-files (bibtex-actions-select-files files)))
+        (cl-loop for file in chosen-files do
+                 (funcall bibtex-actions-file-open-function file))))
 
 ;;;###autoload
 (defun bibtex-actions-open-library-files (keys)
