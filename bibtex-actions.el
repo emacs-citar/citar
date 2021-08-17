@@ -42,10 +42,6 @@
 (require 'parsebib)
 (require 's)
 
-(declare-function bibtex-actions-file--files-for-key "bibtex-actions-file")
-(declare-function bibtex-actions-file--files-for-multiple-keys "bibtex-actions-file")
-;(declare-function bibtex-actions-filenotify-global-watches "bibtex-actions-filenotify")
-;(declare-function bibtex-actions-filenotify-local-watches "bibtex-actions-filenotify")
 (declare-function org-element-context "org-element")
 (declare-function org-element-property "org-element")
 (declare-function org-element-type "org-element")
