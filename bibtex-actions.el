@@ -46,6 +46,8 @@
 (declare-function bibtex-actions-open-files "bibtex-actions-utils")
 (declare-function bibtex-actions--files-for-keys "bibtex-actions-utils")
 (declare-function bibtex-actions--stringify-keys "bibtex-actions-utils")
+(declare-function bibtex-actions-filenotify-global-watches "bibtex-actions-filenotify")
+(declare-function bibtex-actions-filenotify-local-watches "bibtex-actions-filenotify")
 (declare-function org-element-context "org-element")
 (declare-function org-element-property "org-element")
 (declare-function org-element-type "org-element")
@@ -76,14 +78,14 @@
   :group 'bibtex-actions)
 
 (defcustom bibtex-actions-bibliography
-  (bibtex-actions--normalize-paths bibtex-completion-bibliography)
+  (bibtex-actions-utils--normalize-paths bibtex-completion-bibliography)
   "A list of bibliography files."
   ;; The bibtex-completion default is likely to be removed in the future.
   :group 'bibtex-actions
   :type '(repeat file))
 
 (defcustom bibtex-actions-library-paths
-  (bibtex-actions--normalize-paths bibtex-completion-library-path)
+  (bibtex-actions-utils--normalize-paths bibtex-completion-library-path)
   "A list of files paths for related PDFs, etc."
   ;; The bibtex-completion default is likely to be removed in the future.
   :group 'bibtex-actions
@@ -95,7 +97,7 @@
   :type '(repeat string))
 
 (defcustom bibtex-actions-notes-paths
-  (bibtex-actions--normalize-paths bibtex-completion-notes-path)
+  (bibtex-actions-utils--normalize-paths bibtex-completion-notes-path)
   "A list of file paths for bibliographic notes."
   ;; The bibtex-completion default is likely to be removed in the future.
   :group 'bibtex-actions
@@ -300,7 +302,7 @@ offering the selection candidates"
   "The local bibliographic files not included in the global bibliography."
   ;; We cache these locally to the buffer.
   (let* ((local-bib-files
-          (bibtex-actions--normalize-paths
+          (bibtex-actions-utils--normalize-paths
            (bibtex-completion-find-local-bibliography))))
     (seq-difference local-bib-files bibtex-actions-bibliography)))
 
