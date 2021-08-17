@@ -304,14 +304,10 @@ personal names of the form 'family, given'."
   "Format candidates from FILES, with optional hidden CONTEXT metadata.
 This both propertizes the candidates for display, and grabs the
 key associated with each one."
-  (let* ((main-template
-         (bibtex-actions--process-display-formats
-          bibtex-actions-template))
-         (suffix-template
-          (bibtex-actions--process-display-formats
-           bibtex-actions-template-suffix))
-         (main-width (truncate (* (frame-width) 0.65)))
-         (suffix-width (truncate (* (frame-width) 0.34))))
+  (let* ((main-width (bibtex-actions--format-width bibtex-actions-template))
+         (suffix-width (bibtex-actions--format-width bibtex-actions-template-suffix))
+         (symbols-width (string-width (bibtex-actions--symbols-string t t t)))
+         (star-width (- (frame-width) (+ symbols-width main-width suffix-width))))
     (cl-loop for candidate being the hash-values of (parsebib-parse files)
              collect
              (let* ((files
@@ -332,13 +328,13 @@ key associated with each one."
                     (candidate-main
                      (bibtex-actions--format-entry
                       candidate
-                      main-width
-                      main-template))
+                      star-width
+                      bibtex-actions-template))
                     (candidate-suffix
                      (bibtex-actions--format-entry
                       candidate
-                      suffix-width
-                      suffix-template))
+                      star-width
+                      bibtex-actions-template-suffix))
                     ;; We display this content already using symbols; here we add back
                     ;; text to allow it to be searched, and citekey to ensure uniqueness
                     ;; of the candidate.
@@ -363,20 +359,29 @@ key associated with each one."
   (cl-loop
    for candidate in cands
    collect
-   (let ((files (if (string-match "has:files" candidate)
-                  (cadr (assoc 'file bibtex-actions-symbols))
-                (cddr (assoc 'file bibtex-actions-symbols))))
-         (link (if (string-match "has:link" candidate)
-                   (cadr (assoc 'link bibtex-actions-symbols))
-                 (cddr (assoc 'link bibtex-actions-symbols))))
-         (note
-          (if (string-match "has:note" candidate)
-                  (cadr (assoc 'note bibtex-actions-symbols))
-                (cddr (assoc 'note bibtex-actions-symbols))))
-         (suffix ""))
-   (list candidate (concat
-                    (s-join bibtex-actions-symbol-separator
-                            (list files note link))"	") suffix))))
+   (list candidate
+         (bibtex-actions--symbols-string
+          (string-match "has:files" candidate)
+          (string-match "has:link" candidate)
+          (string-match "has:note" candidate))
+         "")))
+
+(defun bibtex-actions--symbols-string (has-files has-link has-note)
+  "String for display from booleans HAS-FILES HASL-LINK HAS-NOTE"
+  (let ((files (if has-files
+                   (cadr (assoc 'file bibtex-actions-symbols))
+                 (cddr (assoc 'file bibtex-actions-symbols))))
+        (link (if has-link
+                  (cadr (assoc 'link bibtex-actions-symbols))
+                (cddr (assoc 'link bibtex-actions-symbols))))
+        (note
+         (if has-note
+             (cadr (assoc 'note bibtex-actions-symbols))
+           (cddr (assoc 'note bibtex-actions-symbols))))
+        (suffix ""))
+    (concat
+     (s-join bibtex-actions-symbol-separator
+             (list files note link))"	")))
 
 (defvar bibtex-actions--candidates-cache 'uninitialized
   "Store the global candidates list.
@@ -439,19 +444,20 @@ are refreshed."
 ;;  when this PR is merged:
 ;;    https://github.com/tmalsburg/helm-bibtex/pull/367
 
-(defun bibtex-actions--process-display-formats (formats)
+(defun bibtex-actions--format-width (formats)
   "Pre-calculate minimal widths needed by the FORMATS strings for various entry types."
   ;; Adapted from bibtex-completion.
-  (cl-loop
-   for format in formats
-   collect
-   (let* ((format-string (cdr format))
-          (content-width (apply #'+
-                                (seq-map #'string-to-number
-                                         (split-string format-string ":"))))
-          (whitespace-width (string-width (s-format format-string
-                                                    (lambda (_) "")))))
-     (cons (car format) (cons format-string (+ content-width whitespace-width))))))
+  (apply #'max
+         (cl-loop
+          for format in formats
+          collect
+          (let* ((format-string (cdr format))
+                 (content-width (apply #'+
+                                       (seq-map #'string-to-number
+                                                (split-string format-string ":"))))
+                 (whitespace-width (string-width (s-format format-string
+                                                           (lambda (_) "")))))
+            (+ content-width whitespace-width)))))
 
 (defun bibtex-actions--format-entry (entry width template)
   "Formats a BibTeX ENTRY for display in results list.
@@ -462,11 +468,10 @@ TEMPLATE."
           (or
            ;; If there's a template specific to the type, use that.
            (assoc-string
-            ;; TODO I don't think this is right.
             (bibtex-actions-get-value "=type=" entry) template 'case-fold)
            ;; Otherwise, use the generic template.
            (assoc t template)))
-         (format-string (cadr format)))
+         (format-string (cdr format)))
     (s-format
      format-string
      (lambda (raw-field)
