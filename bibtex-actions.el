@@ -43,7 +43,7 @@
 (require 'filenotify)
 (require 's)
 
-(declare-function bibtex-actions-open-files "bibtex-actions-utils")
+(declare-function bibtex-actions-utils-open-files "bibtex-actions-utils")
 (declare-function bibtex-actions-utils--files-for-key "bibtex-actions-utils")
 (declare-function bibtex-actions-utils--stringify-keys "bibtex-actions-utils")
 (declare-function bibtex-actions-filenotify-global-watches "bibtex-actions-filenotify")
@@ -568,7 +568,7 @@ With prefix, rebuild the cache before offering candidates."
 
 With prefix, rebuild the cache before offering candidates."
   (interactive (list (bibtex-actions-read :rebuild-cache current-prefix-arg)))
-  (bibtex-actions-open-files
+  (bibtex-actions-utils-open-files
    keys bibtex-actions-library-paths
    :external bibtex-actions-open-library-file-external))
 
