@@ -150,7 +150,7 @@ watches have to be removed manually. To remove them call
             bibfile '(change)
             (lambda (x)
               (bibtex-actions-filenotify--callback 'global x))))
-         (bibtex-actions--filenotify-files))))
+         (bibtex-actions-filenotify--files))))
 
 (defun bibtex-actions-filenotify-rm-global-watches ()
   "Remove the watches on global bib files."
