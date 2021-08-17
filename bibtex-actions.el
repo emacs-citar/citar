@@ -37,17 +37,18 @@
 ;;
 ;;; Code:
 
-(require 'bibtex-actions-utils)
+(require 'bibtex-actions-file)
+(require 'bibtex-actions-filenotify)
 (require 'bibtex-completion)
 (require 'parsebib)
 (require 'filenotify)
 (require 's)
 
-(declare-function bibtex-actions-utils-open-files "bibtex-actions-utils")
-(declare-function bibtex-actions-utils--files-for-key "bibtex-actions-utils")
-(declare-function bibtex-actions-utils--stringify-keys "bibtex-actions-utils")
-(declare-function bibtex-actions-filenotify-global-watches "bibtex-actions-filenotify")
-(declare-function bibtex-actions-filenotify-local-watches "bibtex-actions-filenotify")
+
+(declare-function bibtex-actions-file--files-for-key "bibtex-actions-file")
+(declare-function bibtex-actions-file--files-for-multiple-keys "bibtex-actions-file")
+;(declare-function bibtex-actions-filenotify-global-watches "bibtex-actions-filenotify")
+;(declare-function bibtex-actions-filenotify-local-watches "bibtex-actions-filenotify")
 (declare-function org-element-context "org-element")
 (declare-function org-element-property "org-element")
 (declare-function org-element-type "org-element")
@@ -78,14 +79,14 @@
   :group 'bibtex-actions)
 
 (defcustom bibtex-actions-bibliography
-  (bibtex-actions-utils--normalize-paths bibtex-completion-bibliography)
+  (bibtex-actions-file--normalize-paths bibtex-completion-bibliography)
   "A list of bibliography files."
   ;; The bibtex-completion default is likely to be removed in the future.
   :group 'bibtex-actions
   :type '(repeat file))
 
 (defcustom bibtex-actions-library-paths
-  (bibtex-actions-utils--normalize-paths bibtex-completion-library-path)
+  (bibtex-actions-file--normalize-paths bibtex-completion-library-path)
   "A list of files paths for related PDFs, etc."
   ;; The bibtex-completion default is likely to be removed in the future.
   :group 'bibtex-actions
@@ -97,7 +98,7 @@
   :type '(repeat string))
 
 (defcustom bibtex-actions-notes-paths
-  (bibtex-actions-utils--normalize-paths bibtex-completion-notes-path)
+  (bibtex-actions-file--normalize-paths bibtex-completion-notes-path)
   "A list of file paths for bibliographic notes."
   ;; The bibtex-completion default is likely to be removed in the future.
   :group 'bibtex-actions
@@ -302,7 +303,7 @@ offering the selection candidates"
   "The local bibliographic files not included in the global bibliography."
   ;; We cache these locally to the buffer.
   (let* ((local-bib-files
-          (bibtex-actions-utils--normalize-paths
+          (bibtex-actions-file--normalize-paths
            (bibtex-completion-find-local-bibliography))))
     (seq-difference local-bib-files bibtex-actions-bibliography)))
 
@@ -345,12 +346,12 @@ key associated with each one."
              (let* ((files
                      (when (or (bibtex-actions-get-value
                                 bibtex-actions-file-variable candidate)
-                               (bibtex-actions-utils--files-for-key
+                               (bibtex-actions-file--files-for-key
                                 (bibtex-actions-get-value "=key=" candidate)
                                 bibtex-actions-library-paths bibtex-actions-file-extensions))
                        " has:files"))
                     (notes
-                     (when (bibtex-actions-utils--files-for-key
+                     (when (bibtex-actions-file--files-for-key
                             (bibtex-actions-get-value "=key=" candidate)
                             bibtex-actions-notes-paths bibtex-actions-file-extensions)
                            " has:notes"))
@@ -548,6 +549,11 @@ TEMPLATE."
                       (bibtex-completion-key-at-point))))
     (cons 'citation-key (bibtex-actions--stringify-keys keys))))
 
+(defun bibtex-actions--stringify-keys (keys)
+  "Return a list of KEYS as a crm-string for `embark'."
+  (if (listp keys) (string-join keys " & ") keys))
+
+
 ;;; Command wrappers for bibtex-completion functions
 
 ;;;###autoload
@@ -568,9 +574,13 @@ With prefix, rebuild the cache before offering candidates."
 
 With prefix, rebuild the cache before offering candidates."
   (interactive (list (bibtex-actions-read :rebuild-cache current-prefix-arg)))
-  (bibtex-actions-utils-open-files
-   keys bibtex-actions-library-paths
-   :external bibtex-actions-open-library-file-external))
+  (let ((files
+         (bibtex-actions-file--files-for-multiple-keys
+          keys bibtex-actions-library-paths bibtex-actions-file-extensions)))
+    (cl-loop for file in files do
+             (if bibtex-actions-open-library-file-external
+                 (bibtex-actions-file-open-external file)
+               (funcall bibtex-actions-file-open-function file)))))
 
 (make-obsolete 'bibtex-actions-open-pdf
                'bibtex-actions-open-library-files "1.0")
@@ -580,9 +590,11 @@ With prefix, rebuild the cache before offering candidates."
   "Open notes associated with the KEYS.
 With prefix, rebuild the cache before offering candidates."
   (interactive (list (bibtex-actions-read :rebuild-cache current-prefix-arg)))
-  ;; TODO this doesn't work
-  (bibtex-actions-open-files
-   keys bibtex-actions-notes-paths :create-note))
+  (let ((files
+         (bibtex-actions-file--files-for-multiple-keys
+          keys bibtex-actions-library-paths bibtex-actions-file-extensions)))
+    (cl-loop for file in files do
+             (bibtex-actions-file-open file))))
 
 ;;;###autoload
 (defun bibtex-actions-open-entry (keys)

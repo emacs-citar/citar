@@ -1,0 +1,91 @@
+;;; bibtex-actions-file.el --- file functions for bibtex-actions -*- lexical-binding: t; -*-
+;;
+;; Copyright (C) 2021 Bruce D'Arcus
+;;
+;; Author: Bruce D'Arcus <https://github.com/bdarcus>
+;; Maintainer: Bruce D'Arcus <bdarcus@gmail.com>
+;; Created: August 17, 2021
+;; Modified: August 17, 2021
+;; Version: 0.0.1
+;; Keywords: Symbol’s value as variable is void: finder-known-keywords
+;; Homepage: https://github.com/bruce/bibtex-actions-files
+;; Package-Requires: ((emacs "24.3"))
+;;
+;; This file is not part of GNU Emacs.
+;;
+;;; Commentary:
+;;
+;;  Functions for opening and creating bibliographic files related to a source.
+;;
+;;; Code:
+
+(require 'cl-lib)
+
+;;;; File related variables
+
+(defcustom bibtex-actions-file-open-function 'find-file
+  "Function to open a file."
+  :group 'bibtex-actions-file
+  :type '(function))
+
+(defcustom bibtex-actions-file-create-notes-function
+  'bibtex-actions-file-create-notes-org-capture
+  "Function to create a new note."
+  :group 'bibtex-actions-file
+  :type '(function))
+
+;;;; Convenience functions for files and paths
+
+(defun bibtex-actions-file--normalize-paths (file-paths)
+  "Return a list of FILE-PATHS normalized with truename."
+  (if (stringp file-paths)
+      ;; If path is a string, return as a list.
+      (list (file-truename file-paths))
+    (delete-dups
+     (mapcar
+      (lambda (p) (file-truename p)) file-paths))))
+
+(defun bibtex-actions-file--files-for-key (key dirs extensions)
+  "Find files related to KEY in DIRS with extension in EXTENSIONS."
+  (cl-flet ((possible-file-names-with-extension
+             (extension)
+             (seq-map
+              (lambda (directory)
+                (expand-file-name
+                 (concat key "." extension) directory))
+              dirs)))
+    (seq-filter #'file-exists-p
+                (seq-mapcat #'possible-file-names-with-extension
+                            extensions))))
+
+(defun bibtex-actions-file--files-for-multiple-keys (keys dirs extensions)
+  "Find files related to a list of KEYS in DIRS with extension in EXTENSIONS."
+  (seq-mapcat
+   (lambda (key)
+     (bibtex-actions-file--files-for-key key dirs extensions)) keys))
+
+;;;; Opening and creating files functions
+
+(defun bibtex-actions-file-open (file)
+  "Open FILE."
+  (funcall bibtex-actions-file-open-function file))
+
+(defun bibtex-actions-file-open-external (file)
+  "Open FILE with external application."
+  ;; Adapted from consult-file-externally.
+  (if (and (eq system-type 'windows-nt)
+           (fboundp 'w32-shell-execute))
+      (w32-shell-execute "open" file)
+    (call-process (pcase system-type
+                    ('darwin "open")
+                    ('cygwin "cygstart")
+                    (_ "xdg-open"))
+                  nil 0 nil
+                  file)))
+
+(defun bibtex-actions-file-create-notes (file)
+  "Create new notes FILE."
+  (funcall bibtex-actions-file-create-notes-function file))
+
+(provide 'bibtex-actions-file)
+;;; bibtex-actions-file.el ends here
