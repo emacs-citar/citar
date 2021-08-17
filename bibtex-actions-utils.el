@@ -48,18 +48,21 @@
       (list (file-truename file-paths))
     (delete-dups (mapcar (lambda (p) (file-truename p)) file-paths))))
 
-(defun bibtex-actions--files-for-key (key dirs extensions)
-  "Find files related to KEY in DIRS with extension in EXTENSIONS."
+(defun bibtex-actions--files-for-keys (keys dirs extensions)
+  "Find files related to KEYS in DIRS with extension in EXTENSIONS."
   (cl-flet ((possible-file-names-with-extension
              (extension)
-             (seq-map
-              (lambda (directory)
-                (expand-file-name
-                 (concat key "." extension) directory))
-              dirs)))
-    (seq-filter #'file-exists-p
-                (seq-mapcat #'possible-file-names-with-extension
-                            extensions))))
+             (seq-mapcat
+              (lambda (key)
+                (seq-map
+                 (lambda (directory)
+                   (expand-file-name
+                    (concat key "." extension) directory))
+                 dirs))
+              keys)))
+            (seq-filter #'file-exists-p
+                        (seq-mapcat #'possible-file-names-with-extension
+                                    extensions))))
 
 (cl-defun bibtex-actions-open-files
     (key dirs &optional &key create prompt external)
@@ -71,7 +74,7 @@ EXTERNAL for external applications.
 
 Create a new note if file not found, and CREATE is set to 'note."
   (let* ((files
-          (bibtex-actions--files-for-key
+          (bibtex-actions--files-for-keys
            key
            dirs
            bibtex-actions-file-extensions))
