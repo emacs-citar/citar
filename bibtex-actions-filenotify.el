@@ -14,7 +14,9 @@
 ;; This file is not part of GNU Emacs.
 ;;
 ;;; Commentary:
-;;
+;; A companion to the bibtex-actions for auto-invalidation and auto-refreshing
+;; of cache when a bib file or a related file such notes directory or library
+;; changes. Uses filenotify api to acheive this.
 ;;
 ;;
 ;;; Code:
