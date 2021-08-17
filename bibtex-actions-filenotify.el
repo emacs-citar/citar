@@ -126,7 +126,7 @@ function can run several times without adding duplicate watches."
               (setq bibtex-actions-filenotify--local-watches 'uninitialized))
             nil t))
 
-(defun bibtex-actions--filenotify-files ()
+(defun bibtex-actions-filenotify--files ()
   "Get the list of files to watch from `bibtex-actions-filenotify-files'."
   (seq-mapcat (lambda (x)
                 (bibtex-actions-utils--normalize-paths
