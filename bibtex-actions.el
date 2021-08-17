@@ -244,12 +244,12 @@ called without it when `bibtex-actions-filenotify-refresh' is run"
     (define-key map (kbd "b") '("insert bibtex" . bibtex-actions-insert-bibtex))
     (define-key map (kbd "c") '("insert citation" . bibtex-actions-insert-citation))
     (define-key map (kbd "k") '("insert key" . bibtex-actions-insert-key))
-    (define-key map (kbd "f") '("insert formatted reference" . bibtex-actions-insert-reference))
+    (define-key map (kbd "fr") '("insert formatted reference" . bibtex-actions-insert-reference))
     (define-key map (kbd "o") '("open source document" . bibtex-actions-open))
     (define-key map (kbd "e") '("open bibtex entry" . bibtex-actions-open-entry))
     (define-key map (kbd "l") '("open source URL or DOI" . bibtex-actions-open-link))
     (define-key map (kbd "n") '("open notes" . bibtex-actions-open-notes))
-    (define-key map (kbd "p") '("open library files" . bibtex-actions-open-library-files))
+    (define-key map (kbd "f") '("open library files" . bibtex-actions-open-library-files))
     (define-key map (kbd "r") '("refresh" . bibtex-actions-refresh))
     ;; Embark doesn't currently use the menu description.
     ;; https://github.com/oantolin/embark/issues/251
@@ -263,7 +263,7 @@ called without it when `bibtex-actions-filenotify-refresh' is run"
     (define-key map (kbd "e") '("open bibtex entry" . bibtex-actions-open-entry))
     (define-key map (kbd "l") '("open source URL or DOI" . bibtex-actions-open-link))
     (define-key map (kbd "n") '("open notes" . bibtex-actions-open-notes))
-    (define-key map (kbd "p") '("open library files" . bibtex-actions-open-library-files))
+    (define-key map (kbd "f") '("open library files" . bibtex-actions-open-library-files))
     (define-key map (kbd "r") '("refresh library" . bibtex-actions-refresh))
     ;; Embark doesn't currently use the menu description.
     ;; https://github.com/oantolin/embark/issues/251
