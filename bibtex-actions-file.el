@@ -28,14 +28,21 @@
   :group 'bibtex-actions-file
   :type '(function))
 
-(defcustom bibtex-actions-file-edit-notes-function
-  'bibtex-actions-file-create-notes-org-capture
-  "Function to create a new note.
+(defcustom bibtex-actions-file-open-note-function
+  'bibtex-actions-file-open-notes-default
+  "Function to open and existing or create a new note.
 
 If you use 'org-roam' and 'org-roam-bibtex, you should use
 'orb-edit-notes' for this value."
   :group 'bibtex-actions-file
   :type '(function))
+
+(defcustom bibtex-actions-file-extensions '("pdf" "org" "md")
+  "A list of file extensions to recognize for related files."
+  :group 'bibtex-actions
+  :type '(repeat string))
+
+(defvar bibtex-actions-notes-paths)
 
 ;;;; Convenience functions for files and paths
 
@@ -86,9 +93,12 @@ If you use 'org-roam' and 'org-roam-bibtex, you should use
                   nil 0 nil
                   file)))
 
-(defun bibtex-actions-file-edit-notes (file)
-  "Create new notes FILE."
-  (funcall bibtex-actions-file-edit-notes-function file))
+(defun bibtex-actions-file-open-notes-default (key)
+  "Open a note file from KEY."
+  (let ((file
+         (bibtex-actions-file--files-for-key
+          key bibtex-actions-notes-paths bibtex-actions-file-extensions)))
+  (funcall bibtex-actions-file-open-function (car file))))
 
 (provide 'bibtex-actions-file)
 ;;; bibtex-actions-file.el ends here

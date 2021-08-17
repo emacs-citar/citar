@@ -64,6 +64,8 @@
 (defvar embark-target-finders)
 (defvar embark-general-map)
 (defvar embark-meta-map)
+(defvar bibtex-actions-file-open-note-function)
+(defvar bibtex-actions-file-extensions)
 
 ;;; Variables
 
@@ -90,11 +92,6 @@
   ;; The bibtex-completion default is likely to be removed in the future.
   :group 'bibtex-actions
   :type '(repeat path))
-
-(defcustom bibtex-actions-file-extensions '("pdf" "org" "md")
-  "A list of file extensions to recognize for related files."
-  :group 'bibtex-actions
-  :type '(repeat string))
 
 (defcustom bibtex-actions-notes-paths
   (bibtex-actions-file--normalize-paths bibtex-completion-notes-path)
@@ -555,10 +552,12 @@ With prefix, rebuild the cache before offering candidates."
   (let ((files
          (bibtex-actions-file--files-for-multiple-keys
           keys bibtex-actions-library-paths bibtex-actions-file-extensions)))
-    (cl-loop for file in files do
-             (if bibtex-actions-open-library-file-external
-                 (bibtex-actions-file-open-external file)
-               (funcall bibtex-actions-file-open-function file)))))
+    (if files
+        (cl-loop for file in files do
+                 (if bibtex-actions-open-library-file-external
+                     (bibtex-actions-file-open-external file)
+                   (funcall bibtex-actions-file-open-function file)))
+      (message "No file(s) found for %s" keys))))
 
 (make-obsolete 'bibtex-actions-open-pdf
                'bibtex-actions-open-library-files "1.0")
@@ -568,11 +567,8 @@ With prefix, rebuild the cache before offering candidates."
   "Open notes associated with the KEYS.
 With prefix, rebuild the cache before offering candidates."
   (interactive (list (bibtex-actions-read :rebuild-cache current-prefix-arg)))
-  (let ((files
-         (bibtex-actions-file--files-for-multiple-keys
-          keys bibtex-actions-library-paths bibtex-actions-file-extensions)))
-    (cl-loop for file in files do
-             (bibtex-actions-file-open file))))
+  (cl-loop for key in keys do
+           (funcall bibtex-actions-file-open-note-function key)))
 
 ;;;###autoload
 (defun bibtex-actions-open-entry (keys)
