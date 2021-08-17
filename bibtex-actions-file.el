@@ -98,7 +98,9 @@ If you use 'org-roam' and 'org-roam-bibtex, you should use
   (let ((file
          (bibtex-actions-file--files-for-key
           key bibtex-actions-notes-paths bibtex-actions-file-extensions)))
-  (funcall bibtex-actions-file-open-function (car file))))
+    (if file
+        (funcall bibtex-actions-file-open-function (car file))
+      (message "Note not found for %s" key))))
 
 (provide 'bibtex-actions-file)
 ;;; bibtex-actions-file.el ends here
