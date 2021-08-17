@@ -33,16 +33,6 @@
 (declare-function file-notify-add-watch "ext:file-notify")
 (declare-function file-notify-rm-watch "ext:file-notify")
 
-(defvar bibtex-actions-bibliography)
-(defvar bibtex-actions-library-paths)
-(defvar bibtex-actions-notes-paths)
-(defvar bibtex-actions-create-note-function)
-(defvar bibtex-actions-filenotify-files)
-(defvar bibtex-actions--candidates-cache)
-(defvar bibtex-actions--local-candidates-cache)
-(defvar bibtex-actions-filenotify-callback)
-(defvar bibtex-actions-open-file-function)
-(defvar bibtex-actions-file-extensions)
 
 ;;;; Variables
 
