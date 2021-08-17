@@ -44,8 +44,8 @@
 (require 's)
 
 (declare-function bibtex-actions-open-files "bibtex-actions-utils")
-(declare-function bibtex-actions--files-for-keys "bibtex-actions-utils")
-(declare-function bibtex-actions--stringify-keys "bibtex-actions-utils")
+(declare-function bibtex-actions-utils--files-for-key "bibtex-actions-utils")
+(declare-function bibtex-actions-utils--stringify-keys "bibtex-actions-utils")
 (declare-function bibtex-actions-filenotify-global-watches "bibtex-actions-filenotify")
 (declare-function bibtex-actions-filenotify-local-watches "bibtex-actions-filenotify")
 (declare-function org-element-context "org-element")
@@ -345,13 +345,13 @@ key associated with each one."
              (let* ((files
                      (when (or (bibtex-actions-get-value
                                 bibtex-actions-file-variable candidate)
-                               (bibtex-actions--files-for-keys
-                                (list (bibtex-actions-get-value "=key=" candidate))
+                               (bibtex-actions-utils--files-for-key
+                                (bibtex-actions-get-value "=key=" candidate)
                                 bibtex-actions-library-paths bibtex-actions-file-extensions))
                        " has:files"))
                     (notes
-                     (when (bibtex-actions--files-for-keys
-                            (list (bibtex-actions-get-value "=key=" candidate))
+                     (when (bibtex-actions-utils--files-for-key
+                            (bibtex-actions-get-value "=key=" candidate)
                             bibtex-actions-notes-paths bibtex-actions-file-extensions)
                            " has:notes"))
                     (link (when (or (assoc "doi" (cdr candidate))

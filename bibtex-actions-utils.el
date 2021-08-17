@@ -40,34 +40,37 @@
 (defvar bibtex-actions-open-file-function)
 (defvar bibtex-actions-file-extensions)
 
-(defun bibtex-actions--stringify-keys (keys)
+(defun bibtex-actions-utils--stringify-keys (keys)
   "Return a list of KEYS as a crm-string for `embark'."
   (if (listp keys) (string-join keys " & ") keys))
 
 ;;; File handling
 
-(defun bibtex-actions--normalize-paths (file-paths)
+(defun bibtex-actions-utils--normalize-paths (file-paths)
   "Return a list of FILE-PATHS normalized with truename."
   (if (stringp file-paths)
       ;; If path is a string, return as a list.
       (list (file-truename file-paths))
     (delete-dups (mapcar (lambda (p) (file-truename p)) file-paths))))
 
-(defun bibtex-actions--files-for-keys (keys dirs extensions)
-  "Find files related to KEYS in DIRS with extension in EXTENSIONS."
+(defun bibtex-actions-utils--files-for-key (key dirs extensions)
+  "Find files related to KEY in DIRS with extension in EXTENSIONS."
   (cl-flet ((possible-file-names-with-extension
              (extension)
-             (seq-mapcat
-              (lambda (key)
-                (seq-map
-                 (lambda (directory)
-                   (expand-file-name
-                    (concat key "." extension) directory))
-                 dirs))
-              keys)))
-            (seq-filter #'file-exists-p
-                        (seq-mapcat #'possible-file-names-with-extension
-                                    extensions))))
+             (seq-map
+              (lambda (directory)
+                (expand-file-name
+                 (concat key "." extension) directory))
+              dirs)))
+    (seq-filter #'file-exists-p
+                (seq-mapcat #'possible-file-names-with-extension
+                            extensions))))
+
+(defun bibtex-actions-utils--files-for-multiple-keys (keys dirs extensions)
+  "Find files related to a list of KEYS in DIRS with extension in EXTENSIONS."
+  (seq-mapcat
+   (lambda (key)
+     (bibtex-actions-utils--files-for-key key dirs extensions)) keys))
 
 (cl-defun bibtex-actions-open-files
     (keys dirs &optional &key create-note prompt external)
@@ -79,7 +82,7 @@ EXTERNAL for external applications.
 
 CREATE-NOTE if note not found."
   (let* ((files
-          (bibtex-actions--files-for-keys
+          (bibtex-actions-utils--files-for-multiple-keys
            keys
            dirs
            bibtex-actions-file-extensions))
@@ -176,7 +179,7 @@ function can run several times without adding duplicate watches."
 (defun bibtex-actions--filenotify-files ()
   "Get the list of files to watch from `bibtex-actions-filenotify-files'."
   (seq-mapcat (lambda (x)
-                (bibtex-actions--normalize-paths
+                (bibtex-actions-utils--normalize-paths
                  (cl-case x
                    (bibliography bibtex-actions-bibliography)
                    (library bibtex-actions-library-paths)
