@@ -183,8 +183,8 @@ manager like Zotero or JabRef."
 (defcustom bibtex-actions-at-point-fallback 'prompt
   "Fallback action for `bibtex-actions-at-point'.
 The action is used when no citation key is found at point.
-`prompt' means choosing entries via `bibtex-actions-read' and nil
-means no action."
+`prompt' means choosing entries via `bibtex-actions-select-keys'
+and nil means no action."
   :group 'bibtex-actions
   :type '(choice (const :tag "Prompt" 'prompt)
                  (const :tag "Ignore" nil)))
@@ -243,7 +243,7 @@ means no action."
 ;;; Completion functions
 
 (cl-defun bibtex-actions-select-keys (&optional &key rebuild-cache)
-  "Read bibtex-completion entries.
+  "Read bibliographic entries for completing citekeys.
 
 This provides a wrapper around 'completing-read-multiple', with
 the following optional arguments:
