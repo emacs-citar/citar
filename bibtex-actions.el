@@ -362,26 +362,22 @@ key associated with each one."
    (list candidate
          (bibtex-actions--symbols-string
           (string-match "has:files" candidate)
-          (string-match "has:link" candidate)
-          (string-match "has:note" candidate))
+          (string-match "has:note" candidate)
+          (string-match "has:link" candidate) )
          "")))
 
-(defun bibtex-actions--symbols-string (has-files has-link has-note)
+(defun bibtex-actions--symbols-string (has-files has-note has-link)
   "String for display from booleans HAS-FILES HASL-LINK HAS-NOTE"
-  (let ((files (if has-files
-                   (cadr (assoc 'file bibtex-actions-symbols))
-                 (cddr (assoc 'file bibtex-actions-symbols))))
-        (link (if has-link
-                  (cadr (assoc 'link bibtex-actions-symbols))
-                (cddr (assoc 'link bibtex-actions-symbols))))
-        (note
-         (if has-note
-             (cadr (assoc 'note bibtex-actions-symbols))
-           (cddr (assoc 'note bibtex-actions-symbols))))
-        (suffix ""))
+  (cl-flet ((thing-string (has-thing thing-symbol)
+                          (if has-thing
+                              (cadr (assoc thing-symbol bibtex-actions-symbols))
+                            (cddr (assoc thing-symbol bibtex-actions-symbols)))))
     (concat
      (s-join bibtex-actions-symbol-separator
-             (list files note link))"	")))
+             (list (thing-string has-files 'file)
+                   (thing-string has-note 'note)
+                   (thing-string has-link 'link)))
+     "	")))
 
 (defvar bibtex-actions--candidates-cache 'uninitialized
   "Store the global candidates list.
