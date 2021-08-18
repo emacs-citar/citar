@@ -287,6 +287,14 @@ When nil, return DEFAULT."
                          return (cdr (assoc-string fname item 'case-fold)))
       default))
 
+(defun bibtex-actions-get-entry (key)
+  "Return the cached entry for KEY."
+  (seq-find
+   (lambda (entry)
+     (string-equal key
+                   (bibtex-actions-get-value "=key=" entry)))
+   (bibtex-actions--get-candidates)))
+
 (defun bibtex-actions-shorten-names (names)
   "Return a list of family names from a list of full NAMES.
 
@@ -367,7 +375,7 @@ key associated with each one."
          "")))
 
 (defun bibtex-actions--symbols-string (has-files has-note has-link)
-  "String for display from booleans HAS-FILES HASL-LINK HAS-NOTE"
+  "String for display from booleans HAS-FILES HAS-LINK HAS-NOTE."
   (cl-flet ((thing-string (has-thing thing-symbol)
                           (if has-thing
                               (cadr (assoc thing-symbol bibtex-actions-symbols))
@@ -536,8 +544,7 @@ PDF is found, try to open a URL or DOI in the browser instead.
 With prefix, rebuild the cache before offering candidates."
  ;; TODO make this is a CRM interface, with grouping
  ;;      files, links, notes
- ;;      (browse-url-default-browser "https://google.com")
-  (interactive (list (bibtex-actions-select-keys
+ (interactive (list (bibtex-actions-select-keys
                       :rebuild-cache current-prefix-arg)))
   (let* ((files
          (bibtex-actions-file--files-for-multiple-keys
@@ -589,9 +596,19 @@ With prefix, rebuild the cache before offering candidates."
 (defun bibtex-actions-open-link (keys)
   "Open URL or DOI link associated with the KEYS in a browser.
 With prefix, rebuild the cache before offering candidates."
+  ;;      (browse-url-default-browser "https://google.com")
   (interactive (list (bibtex-actions-select-keys
                       :rebuild-cache current-prefix-arg)))
- (bibtex-completion-open-url-or-doi keys))
+  (cl-loop for key in keys do
+           (let* ((entry (bibtex-actions-get-entry key))
+                  (doi (concat
+                        "https://doi.org/"
+                        (bibtex-actions-get-value "doi" entry)))
+                  (url (bibtex-actions-get-value "url" entry))
+                  (link (or doi url)))
+             (if link
+                 (browse-url-default-browser link)
+               (message "No link found for %s" key)))))
 
 ;;;###autoload
 (defun bibtex-actions-insert-citation (keys)
