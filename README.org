@@ -61,9 +61,7 @@ This is the minimal configuration, and will work with any completing-read compli
          :map minibuffer-local-map
          ("M-b" . bibtex-actions-insert-preset))
   :config
-  ;; make sure to set this to ensure open commands work correctly
-  (bibtex-completion-additional-search-fields '(doi url))
-  (bibtex-actions-bibliography '("~/bib/references.bib")))
+  (setq bibtex-actions-bibliography '("~/bib/references.bib"))
 #+END_SRC
 
 Since most of the command logic resides in bibtex-completion, that is where to look for different [[https://github.com/tmalsburg/helm-bibtex#basic-configuration-recommended][configuration options]].
@@ -77,15 +75,13 @@ Highly recommended, this option adds embark, for contextual access to actions in
   :bind (("C-c b" . bibtex-actions-insert-citation)
          :map minibuffer-local-map
          ("M-b" . bibtex-actions-insert-preset))
-  :after embark
+  :after (embark bibtex-completion)
   :config
   ;; Make the 'bibtex-actions' bindings and targets available to `embark'.
   (add-to-list 'embark-target-finders 'bibtex-actions-citation-key-at-point)
   (add-to-list 'embark-keymap-alist '(bib-reference . bibtex-actions-map))
   (add-to-list 'embark-keymap-alist '(citation-key . bibtex-actions-buffer-map))
-  ;; Make sure to set this to ensure 'bibtex-actions-open-link' command works correctly.
-  (bibtex-completion-additional-search-fields '(doi url))
-  (bibtex-actions-bibliography '("~/bib/references.bib")))
+  (setq bibtex-actions-bibliography '("~/bib/references.bib"))
 
 ;; use consult-completing-read for enhanced interface
 (advice-add #'completing-read-multiple :override #'consult-completing-read-multiple)
@@ -111,12 +107,10 @@ In other supported modes, it will work the same as the embark option above.
          ("M-o" . org-open-at-point)
          :map minibuffer-local-map
          ("M-b" . bibtex-actions-insert-preset))
-  :after (embark org oc bibtex-actions)
+  :after (embark oc)
   :config
-  ;; make sure to set this to ensure open commands work correctly
-  (bibtex-completion-additional-search-fields '(doi url))
-  (bibtex-actions-bibliography my/bibs)
-  (org-cite-global-bibliography my/bibs))
+  (setq bibtex-actions-bibliography my/bibs
+        org-cite-global-bibliography my/bibs))
 
 ;; Use consult-completing-read for enhanced interface.
 (advice-add #'completing-read-multiple :override #'consult-completing-read-multiple)
