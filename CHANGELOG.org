@@ -16,13 +16,13 @@ Changelog]], and this project adheres to
 
 *** Refactor
 
-- Use Parsebib 3.0 directly
-- Rewrite "open" commands to use internal functions
-- Simplify format functions
+- Use Parsebib 3.0 directly ([[https://github.com/bdarcus/bibtex-actions/pull/222][#222]])
+- Rewrite "open" commands to use internal functions ([[https://github.com/bdarcus/bibtex-actions/pull/222][#222]])
+- Simplify format functions ([[https://github.com/bdarcus/bibtex-actions/pull/222][#222]])
 
 *** Added
 
-- CSL JSON
+- CSL JSON ([[https://github.com/bdarcus/bibtex-actions/pull/222][#222]])
 - Optional filenotify updating
 - Local file and caching
 - Org-cite processor with "follow" and "insert" capabilities
