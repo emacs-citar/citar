@@ -25,8 +25,13 @@
 
 (defcustom bibtex-actions-file-open-function 'find-file
   "Function to open a file."
-  :group 'bibtex-actions-file
+  :group 'bibtex-actions
   :type '(function))
+
+(defcustom bibtex-actions-file-open-prompt nil
+  "Prompt for selection of related files to open."
+  :group 'bibtex-actions
+  :type '(boolean))
 
 (defcustom bibtex-actions-file-open-note-function
   'bibtex-actions-file-open-notes-default
@@ -34,7 +39,7 @@
 
 If you use 'org-roam' and 'org-roam-bibtex, you should use
 'orb-edit-notes' for this value."
-  :group 'bibtex-actions-file
+  :group 'bibtex-actions
   :type '(function))
 
 (defcustom bibtex-actions-file-extensions '("pdf" "org" "md")
