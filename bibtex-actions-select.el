@@ -6,8 +6,8 @@
 ;; Maintainer: Bruce D'Arcus <bdarcus@gmail.com>
 ;; Created: August 17, 2021
 ;; Modified: August 17, 2021
-;; Version: 0.0.1
-;; Homepage: https://github.com/bruce/bibtex-actions
+;; Version: 0.1
+;; Homepage: https://github.com/bdarcus/bibtex-actions
 ;; Package-Requires: ((emacs "26.3"))
 ;;
 ;; This file is not part of GNU Emacs.
@@ -37,7 +37,6 @@
         (cond
          ((string= extension (or "org" "md")) "Notes")
           (t "Library Files")))))
-
 
 (provide 'bibtex-actions-select)
 ;;; bibtex-actions-select.el ends here

@@ -6,10 +6,10 @@
 ;; Maintainer: Bruce D'Arcus <bdarcus@gmail.com>
 ;; Created: August 17, 2021
 ;; Modified: August 17, 2021
-;; Version: 0.0.1
+;; Version: 0.1
 ;; Keywords: Symbol’s value as variable is void: finder-known-keywords
-;; Homepage: https://github.com/bruce/bibtex-actions-files
-;; Package-Requires: ((emacs "24.3"))
+;; Homepage: https://github.com/bdarcus/bibtex-actions
+;; Package-Requires: ((emacs "26.3"))
 ;;
 ;; This file is not part of GNU Emacs.
 ;;

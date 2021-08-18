@@ -6,9 +6,9 @@
 ;; Maintainer: Bruce D'Arcus <bdarcus@gmail.com>
 ;; Created: August 17, 2021
 ;; Modified: August 17, 2021
-;; Version: 0.0.1
-;; Keywords: abbrev bib c calendar comm convenience data docs emulations extensions faces files frames games hardware help hypermedia i18n internal languages lisp local maint mail matching mouse multimedia news outlines processes terminals tex tools unix vc wp
-;; Homepage: https://github.com/bruce/bibtex-actions-filenotify
+;; Version: 0.1
+;; Keywords: bib files frames games hardware help
+;; Homepage: https://github.com/bdarcus/bibtex-actions
 ;; Package-Requires: ((emacs "26.3"))
 ;;
 ;; This file is not part of GNU Emacs.
@@ -33,9 +33,7 @@
 (declare-function file-notify-add-watch "ext:file-notify")
 (declare-function file-notify-rm-watch "ext:file-notify")
 
-
 ;;;; Variables
-
 
 (defcustom bibtex-actions-filenotify-callback 'invalidate-cache
   "The callback that is run when the bibliography related files change.
