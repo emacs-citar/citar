@@ -27,8 +27,7 @@
 
 (declare-function bibtex-actions-refresh "bibtex-actions")
 (declare-function bibtex-actions--local-files-to-cache "bibtex-actions")
-(declare-function bibtex-actions--global-files-to-cache "bibtex-actions")
-(declare-function bibtex-actions-utils--normalize-paths "bibtex-actions-utils")
+(declare-function bibtex-actions-file--normalize-paths "bibtex-actions-file")
 (declare-function reftex-access-scan-info "ext:reftex")
 (declare-function file-notify-add-watch "ext:file-notify")
 (declare-function file-notify-rm-watch "ext:file-notify")
@@ -127,7 +126,7 @@ function can run several times without adding duplicate watches."
 (defun bibtex-actions-filenotify--files ()
   "Get the list of files to watch from `bibtex-actions-filenotify-files'."
   (seq-mapcat (lambda (x)
-                (bibtex-actions-utils--normalize-paths
+                (bibtex-actions-file--normalize-paths
                  (cl-case x
                    (bibliography bibtex-actions-bibliography)
                    (library bibtex-actions-library-paths)
