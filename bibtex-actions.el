@@ -362,7 +362,7 @@ key associated with each one."
   (let* ((main-width (bibtex-actions--format-width bibtex-actions-template))
          (suffix-width (bibtex-actions--format-width bibtex-actions-template-suffix))
          (symbols-width (string-width (bibtex-actions--symbols-string t t t)))
-         (star-width (- (frame-width) (+ symbols-width main-width suffix-width))))
+         (star-width (- (frame-width) (+ 1 symbols-width main-width suffix-width))))
     (cl-loop for candidate being the hash-values of
              (parsebib-parse files :fields (bibtex-actions--fields-to-parse))
              collect
