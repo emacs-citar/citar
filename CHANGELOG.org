@@ -23,9 +23,9 @@ Changelog]], and this project adheres to
 *** Added
 
 - CSL JSON ([[https://github.com/bdarcus/bibtex-actions/pull/222][#222]])
-- Optional filenotify updating
-- Local file and caching
-- Org-cite processor with "follow" and "insert" capabilities
+- Optional filenotify updating ([[https://github.com/bdarcus/bibtex-actions/pull/214][#214]])
+- Local file and caching ([[https://github.com/bdarcus/bibtex-actions/pull/208][#208]])
+- Org-cite processor with "follow" and "insert" capabilities ([[https://github.com/bdarcus/bibtex-actions/pull/167][#167]])
 
 ** [[https://github.com/bdarcus/bibtex-actions/compare/v0.3...v0.4][0.4]] -
 2021-04-01

@@ -59,6 +59,7 @@
 (defvar embark-meta-map)
 (defvar bibtex-actions-file-open-note-function)
 (defvar bibtex-actions-file-extensions)
+(defvar  bibtex-actions-file-open-prompt)
 
 ;;; Variables
 
@@ -272,6 +273,7 @@ offering the selection candidates"
 
 (defun bibtex-actions-select-files (files)
   "Select file(s) from a list of FILES."
+  ;; TODO add links to candidates
   (completing-read-multiple
    "Files: "
    (lambda (string predicate action)
@@ -343,7 +345,7 @@ personal names of the form 'family, given'."
                                bibtex-actions-template-suffix)))))
 
 (defun bibtex-actions--fields-to-parse ()
-  "Determine the fields to parse from the template and field map"
+  "Determine the fields to parse from the template and field map."
   (let* ((fields-in-format (bibtex-actions--fields-in-formats))
          (fields-for-symbols (list "doi" "url" bibtex-actions-file-variable))
          (canonical-fields (seq-concatenate 'list fields-in-format fields-for-symbols))
@@ -361,7 +363,8 @@ key associated with each one."
          (suffix-width (bibtex-actions--format-width bibtex-actions-template-suffix))
          (symbols-width (string-width (bibtex-actions--symbols-string t t t)))
          (star-width (- (frame-width) (+ symbols-width main-width suffix-width))))
-    (cl-loop for candidate being the hash-values of (parsebib-parse files :fields (bibtex-actions--fields-to-parse))
+    (cl-loop for candidate being the hash-values of
+             (parsebib-parse files :fields (bibtex-actions--fields-to-parse))
              collect
              (let* ((files
                      (when (or (bibtex-actions-get-value
@@ -584,18 +587,9 @@ Opens the PDF(s) associated with the KEYS.  If multiple PDFs are
 found, ask for the one to open using ‘completing-read’.  If no
 PDF is found, try to open a URL or DOI in the browser instead.
 With prefix, rebuild the cache before offering candidates."
- ;; TODO make this is a CRM interface, with grouping
- ;;      files, links, notes
- (interactive (list (bibtex-actions-select-keys
+  (interactive (list (bibtex-actions-select-keys
                       :rebuild-cache current-prefix-arg)))
-  (let* ((files
-         (bibtex-actions-file--files-for-multiple-keys
-          keys
-          (append bibtex-actions-library-paths bibtex-actions-notes-paths)
-          bibtex-actions-file-extensions))
-        (chosen-files (bibtex-actions-select-files files)))
-        (cl-loop for file in chosen-files do
-                 (funcall bibtex-actions-file-open-function file))))
+  (bibtex-completion-open-any keys))
 
 ;;;###autoload
 (defun bibtex-actions-open-library-files (keys)
