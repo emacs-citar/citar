@@ -345,11 +345,12 @@ personal names of the form 'family, given'."
 (defun bibtex-actions--fields-to-parse ()
   "Determine the fields to parse from the template and field map"
   (let* ((fields-in-format (bibtex-actions--fields-in-formats))
-        (fields-for-symbols (list "doi" "url" bibtex-actions-file-variable))
-        (canonical-fields (seq-concatenate 'list fields-in-format fields-for-symbols)))
+         (fields-for-symbols (list "doi" "url" bibtex-actions-file-variable))
+         (canonical-fields (seq-concatenate 'list fields-in-format fields-for-symbols))
+         (equivalent-fields (cons '("author" "editor") bibtex-actions-field-map)))
     (seq-concatenate 'list
                      canonical-fields
-                     (seq-mapcat (lambda (field) (cdr (assoc field bibtex-actions-field-map)))
+                     (seq-mapcat (lambda (field) (cdr (assoc field equivalent-fields)))
                                  canonical-fields))))
 
 (defun bibtex-actions--format-candidates (files &optional context)
