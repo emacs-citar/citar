@@ -329,6 +329,30 @@ personal names of the form 'family, given'."
          (car (split-string name ", "))))
      (split-string names " and ") ", ")))
 
+(defun bibtex-actions--fields-in-formats ()
+  "Find the fields to mentioned in the templates."
+  (cl-flet ((fields-for-format
+             (format-string)
+             (split-string
+              (s-format format-string
+                        (lambda (fields-string) (car (split-string fields-string ":")))))))
+    (seq-uniq
+     (seq-mapcat (lambda (format) (fields-for-format (cdr format)))
+              (seq-concatenate 'list
+                               bibtex-actions-template
+                               bibtex-actions-template-suffix)))))
+
+(defun bibtex-actions--fields-to-parse ()
+  "Determine the fields to parse from the template and field map"
+  (let* ((fields-in-format (bibtex-actions--fields-in-formats))
+         (fields-for-symbols (list "doi" "url" bibtex-actions-file-variable))
+         (canonical-fields (seq-concatenate 'list fields-in-format fields-for-symbols))
+         (equivalent-fields (cons '("author" "editor") bibtex-actions-field-map)))
+    (seq-concatenate 'list
+                     canonical-fields
+                     (seq-mapcat (lambda (field) (cdr (assoc field equivalent-fields)))
+                                 canonical-fields))))
+
 (defun bibtex-actions--format-candidates (files &optional context)
   "Format candidates from FILES, with optional hidden CONTEXT metadata.
 This both propertizes the candidates for display, and grabs the
@@ -337,7 +361,7 @@ key associated with each one."
          (suffix-width (bibtex-actions--format-width bibtex-actions-template-suffix))
          (symbols-width (string-width (bibtex-actions--symbols-string t t t)))
          (star-width (- (frame-width) (+ symbols-width main-width suffix-width))))
-    (cl-loop for candidate being the hash-values of (parsebib-parse files)
+    (cl-loop for candidate being the hash-values of (parsebib-parse files :fields (bibtex-actions--fields-to-parse))
              collect
              (let* ((files
                      (when (or (bibtex-actions-get-value
