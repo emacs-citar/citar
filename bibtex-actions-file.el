@@ -55,8 +55,8 @@ If you use 'org-roam' and 'org-roam-bibtex, you should use
      (mapcar
       (lambda (p) (file-truename p)) file-paths))))
 
-(defun bibtex-actions-file--files-for-key (key dirs extensions)
-  "Find files related to KEY in DIRS with extension in EXTENSIONS."
+(defun bibtex-actions-file--possible-names (key dirs extensions)
+  "Possible names for files correponding to KEY with EXTENSIONS in DIRS."
   (cl-flet ((possible-file-names-with-extension
              (extension)
              (seq-map
@@ -64,9 +64,31 @@ If you use 'org-roam' and 'org-roam-bibtex, you should use
                 (expand-file-name
                  (concat key "." extension) directory))
               dirs)))
+    (seq-mapcat #'possible-file-names-with-extension
+                extensions)))
+
+(defun bibtex-actions-file--files-for-key (key dirs extensions)
+    "Find files related to KEY in DIRS with extension in EXTENSIONS."
     (seq-filter #'file-exists-p
-                (seq-mapcat #'possible-file-names-with-extension
-                            extensions))))
+                (bibtex-actions-file--possible-names key dirs extensions)))
+
+(defun bibtex-actions-file--files-to-open-or-create (keys dirs extensions)
+  "Find files related to a list of KEYS in DIRS with extension in EXTENSIONS."
+  (cl-flet ((files-for-key
+             (key)
+             (let* ((possible-files
+                     (bibtex-actions-file--possible-names key dirs extensions))
+                    (existing-files
+                     (seq-filter #'file-exists-p possible-files)))
+               (if existing-files
+                   (seq-map
+                    (lambda (file) (cons file 'exists))
+                    existing-files)
+                 (seq-map
+                  (lambda (file) (cons file 'new))
+                  possible-files)))))
+    (seq-mapcat #'files-for-key keys)))
+
 
 (defun bibtex-actions-file--files-for-multiple-keys (keys dirs extensions)
   "Find files related to a list of KEYS in DIRS with extension in EXTENSIONS."

@@ -522,8 +522,7 @@ TEMPLATE."
   "Return a list of KEYS as a crm-string for `embark'."
   (if (listp keys) (string-join keys " & ") keys))
 
-
-;;; Command wrappers for bibtex-completion functions
+;;; Commands
 
 ;;;###autoload
 (defun bibtex-actions-open (keys)
@@ -534,6 +533,7 @@ PDF is found, try to open a URL or DOI in the browser instead.
 With prefix, rebuild the cache before offering candidates."
  ;; TODO make this is a CRM interface, with grouping
  ;;      files, links, notes
+ ;;      (browse-url-default-browser "https://google.com")
   (interactive (list (bibtex-actions-read :rebuild-cache current-prefix-arg)))
   (let* ((files
          (bibtex-actions-file--files-for-multiple-keys
