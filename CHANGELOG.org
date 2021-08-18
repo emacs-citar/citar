@@ -14,6 +14,19 @@ Changelog]], and this project adheres to
    :CUSTOM_ID: unreleased
    :END:
 
+*** Refactor
+
+- Use Parsebib 3.0 directly
+- Rewrite "open" commands to use internal functions
+- Simplify format functions
+
+*** Added
+
+- CSL JSON
+- Optional filenotify updating
+- Local file and caching
+- Org-cite processor with "follow" and "insert" capabilities
+
 ** [[https://github.com/bdarcus/bibtex-actions/compare/v0.3...v0.4][0.4]] -
 2021-04-01
    :PROPERTIES:
