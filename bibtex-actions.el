@@ -8,7 +8,7 @@
 ;; License: GPL-3.0-or-later
 ;; Version: 0.4
 ;; Homepage: https://github.com/bdarcus/bibtex-actions
-;; Package-Requires: ((emacs "26.3") (bibtex-completion "1.0"))
+;; Package-Requires: ((emacs "26.3") (bibtex-completion "1.0") (parsebib "3.0"))
 ;;
 ;; This file is not part of GNU Emacs.
 ;;
@@ -27,17 +27,19 @@
 ;;
 ;;; Commentary:
 ;;
-;;  A completing-read front-end to bibtex-completion.
+;;  A completing-read front-end for browsing and acting on bibliographic data.
 ;;
-;;  This package turns bibtex-completion functions into completing-read-based
-;;  Emacs commands.  When used with selectrum/icomplete-vertical, embark, and
-;;  marginalia, it provides similar functionality to helm-bibtex and ivy-bibtex:
-;;  quick filtering and selecting of bibliographic entries from the minibuffer,
-;;  and the option to run different commands against them.
+;;  When used with vertico/selectrum/icomplete-vertical, embark, and marginalia,
+;;  it provides similar functionality to helm-bibtex and ivy-bibtex: quick
+;;  filtering and selecting of bibliographic entries from the minibuffer, and
+;;  the option to run different commands against them.
 ;;
 ;;; Code:
 
+(require 'bibtex-actions-file)
 (require 'bibtex-completion)
+(require 'parsebib)
+(require 's)
 
 (declare-function org-element-context "org-element")
 (declare-function org-element-property "org-element")
@@ -46,7 +48,7 @@
 (declare-function org-cite-register-processor "org-cite")
 (declare-function org-cite-make-insert-processor "org-cite")
 (declare-function org-cite-basic--complete-style "org-cite")
-(declare-function embark-act "embark")
+(declare-function embark-act "ext:embark")
 
 ;;; Declare variables for byte compiler
 
@@ -55,6 +57,9 @@
 (defvar embark-target-finders)
 (defvar embark-general-map)
 (defvar embark-meta-map)
+(defvar bibtex-actions-file-open-note-function)
+(defvar bibtex-actions-file-extensions)
+(defvar  bibtex-actions-file-open-prompt)
 
 ;;; Variables
 
@@ -68,8 +73,47 @@
   "Face used to highlight content in `bibtex-actions' candidates."
   :group 'bibtex-actions)
 
+(defcustom bibtex-actions-bibliography
+  (bibtex-actions-file--normalize-paths bibtex-completion-bibliography)
+  "A list of bibliography files."
+  ;; The bibtex-completion default is likely to be removed in the future.
+  :group 'bibtex-actions
+  :type '(repeat file))
+
+(defcustom bibtex-actions-library-paths
+  (bibtex-actions-file--normalize-paths bibtex-completion-library-path)
+  "A list of files paths for related PDFs, etc."
+  ;; The bibtex-completion default is likely to be removed in the future.
+  :group 'bibtex-actions
+  :type '(repeat path))
+
+(defcustom bibtex-actions-notes-paths
+  (bibtex-actions-file--normalize-paths bibtex-completion-notes-path)
+  "A list of file paths for bibliographic notes."
+  ;; The bibtex-completion default is likely to be removed in the future.
+  :group 'bibtex-actions
+  :type '(repeat path))
+
+(defcustom  bibtex-actions-file-variable "file"
+  "The field key to look for in an entry for PDF, etc."
+  :group 'bibtex-actions
+  :type '(string))
+
+(defcustom bibtex-actions-open-file-function 'find-file
+  "Function to use to open files."
+  ;; tODO maybe this should be higher-level; eg:
+  ;; 'bibtex-actions-open-file?
+  :group 'bibtex-actions
+  :type '(function))
+
+(defcustom bibtex-actions-open-library-file-external t
+  "Whether to open a library file in an external application."
+  :group 'bibtex-actions
+  :type '(boolean))
+
+
 (defcustom bibtex-actions-template
-  '((t . "${author:20}   ${title:48}   ${year:4}"))
+  '((t . "${author:30}   ${date:8}  ${title:48}"))
   "Configures formatting for the BibTeX entry.
 When combined with the suffix, the same string is used for
 display and for search."
@@ -91,7 +135,7 @@ This should be a single character."
   :type 'string)
 
 (defcustom bibtex-actions-symbols
-  `((pdf  .     (,bibtex-completion-pdf-symbol . " "))
+  `((file  .     (,bibtex-completion-pdf-symbol . " "))
     (note .     (,bibtex-completion-notes-symbol . " "))
     (link .     (,bibtex-actions-link-symbol . " ")))
   "Configuration alist specifying which symbol or icon to pick for a bib entry.
@@ -115,6 +159,23 @@ manager like Zotero or JabRef."
   :group 'bibtex-actions
   :type '(repeat function))
 
+(defvar bibtex-actions-field-map
+  '(("date" "year" "issued")
+    ("=key=" "id")
+    ("=type=" "type")
+    ("tags" "keywords" "keyword")
+    ("booktitle" "container-title")
+    ("journaltitle" "journal" "container-title")
+    ("number" "issue")))
+
+(defvar bibtex-actions-field-mapping
+  '(("issued" "date" "year")
+    ("=key=" "id")
+    ("=type=" "type")
+    ("keyword" "tags" "keywords")
+    ("container-title" "booktitle" "journaltitle" "journal")
+    ("issue" "number")))
+
 (defcustom bibtex-actions-default-action 'bibtex-actions-open
   "The default action for the `bibtex-actions-at-point' command."
   :group 'bibtex-actions
@@ -123,8 +184,8 @@ manager like Zotero or JabRef."
 (defcustom bibtex-actions-at-point-fallback 'prompt
   "Fallback action for `bibtex-actions-at-point'.
 The action is used when no citation key is found at point.
-`prompt' means choosing entries via `bibtex-actions-read' and nil
-means no action."
+`prompt' means choosing entries via `bibtex-actions-select-keys'
+and nil means no action."
   :group 'bibtex-actions
   :type '(choice (const :tag "Prompt" 'prompt)
                  (const :tag "Ignore" nil)))
@@ -153,13 +214,13 @@ means no action."
     (define-key map (kbd "b") '("insert bibtex" . bibtex-actions-insert-bibtex))
     (define-key map (kbd "c") '("insert citation" . bibtex-actions-insert-citation))
     (define-key map (kbd "k") '("insert key" . bibtex-actions-insert-key))
-    (define-key map (kbd "f") '("insert formatted reference" . bibtex-actions-insert-reference))
+    (define-key map (kbd "fr") '("insert formatted reference" . bibtex-actions-insert-reference))
     (define-key map (kbd "o") '("open source document" . bibtex-actions-open))
     (define-key map (kbd "e") '("open bibtex entry" . bibtex-actions-open-entry))
     (define-key map (kbd "l") '("open source URL or DOI" . bibtex-actions-open-link))
     (define-key map (kbd "n") '("open notes" . bibtex-actions-open-notes))
-    (define-key map (kbd "p") '("open PDF" . bibtex-actions-open-pdf))
-    (define-key map (kbd "r") '("refresh library" . bibtex-actions-refresh))
+    (define-key map (kbd "f") '("open library files" . bibtex-actions-open-library-files))
+    (define-key map (kbd "r") '("refresh" . bibtex-actions-refresh))
     ;; Embark doesn't currently use the menu description.
     ;; https://github.com/oantolin/embark/issues/251
     (define-key map (kbd "RET") '("default action" . bibtex-actions-run-default-action))
@@ -172,7 +233,7 @@ means no action."
     (define-key map (kbd "e") '("open bibtex entry" . bibtex-actions-open-entry))
     (define-key map (kbd "l") '("open source URL or DOI" . bibtex-actions-open-link))
     (define-key map (kbd "n") '("open notes" . bibtex-actions-open-notes))
-    (define-key map (kbd "p") '("open PDF" . bibtex-actions-open-pdf))
+    (define-key map (kbd "f") '("open library files" . bibtex-actions-open-library-files))
     (define-key map (kbd "r") '("refresh library" . bibtex-actions-refresh))
     ;; Embark doesn't currently use the menu description.
     ;; https://github.com/oantolin/embark/issues/251
@@ -181,8 +242,9 @@ means no action."
   "Keymap for Embark citation-key actions.")
 
 ;;; Completion functions
-(cl-defun bibtex-actions-read (&optional &key rebuild-cache)
-  "Read bibtex-completion entries.
+
+(cl-defun bibtex-actions-select-keys (&optional &key rebuild-cache)
+  "Read bibliographic entries for completing citekeys.
 
 This provides a wrapper around 'completing-read-multiple', with
 the following optional arguments:
@@ -198,104 +260,186 @@ offering the selection candidates"
              (if (eq action 'metadata)
                  `(metadata
                    (affixation-function . bibtex-actions--affixation)
-                   (category . bibtex))
+                   (category . bib-reference))
                (complete-with-action action candidates string predicate)))
            nil nil nil
            'bibtex-actions-history bibtex-actions-presets nil)))
     (cl-loop for choice in chosen
              ;; Collect citation keys of selected candidate(s).
-             collect (cdr (or (assoc choice candidates)
-                              (rassoc choice candidates))))))
+             collect (bibtex-actions-get-value
+                      "=key="
+                      (or (assoc choice candidates)
+                          (rassoc choice candidates))))))
 
-(defun bibtex-actions--normalize-paths (file-paths)
-  "Return a list of FILE-PATHS normalized with truename."
-  (if (stringp file-paths)
-      ;; If path is a string, return as a list.
-      (list (file-truename file-paths))
-    (delete-dups (mapcar (lambda (p) (file-truename p)) file-paths))))
+(defun bibtex-actions-select-files (files)
+  "Select file(s) from a list of FILES."
+  ;; TODO add links to candidates
+  (completing-read-multiple
+   "Files: "
+   (lambda (string predicate action)
+     (if (eq action 'metadata)
+         `(metadata
+           (group-function . bibtex-actions-select-group-related-sources)
+           (category . file))
+       (complete-with-action action files string predicate)))))
+
+(defun bibtex-actions-select-group-related-sources (file transform)
+  "Group by FILE by source, TRANSFORM."
+    (let ((extension (file-name-extension file)))
+      (if transform file
+        ;; Transform for grouping and group title display.
+        (cond
+         ((string= extension (or "org" "md")) "Notes")
+          (t "Library Files")))))
+
 
 (defun bibtex-actions--local-files-to-cache ()
   "The local bibliographic files not included in the global bibliography."
   ;; We cache these locally to the buffer.
   (let* ((local-bib-files
-          (bibtex-actions--normalize-paths
-           (bibtex-completion-find-local-bibliography)))
-         (global-bib-files
-          (bibtex-actions--normalize-paths
-           bibtex-completion-bibliography)))
-    (seq-difference local-bib-files global-bib-files)))
+          (bibtex-actions-file--normalize-paths
+           (bibtex-completion-find-local-bibliography))))
+    (seq-difference local-bib-files bibtex-actions-bibliography)))
 
-(defun bibtex-actions--format-candidates (&optional context)
-  "Format candidates, with optional hidden CONTEXT metadata.
+(defun bibtex-actions-get-value (field item &optional default)
+  "Return biblatex FIELD value for ITEM.
+When nil, return DEFAULT."
+  (or (cdr (assoc-string field item 'case-fold))
+      (cl-loop for fname in (cdr (assoc field bibtex-actions-field-map))
+               when (cdr (assoc-string fname item 'case-fold))
+                         return (cdr (assoc-string fname item 'case-fold)))
+      default))
+
+(defun bibtex-actions-get-entry (key)
+  "Return the cached entry for KEY."
+  (seq-find
+   (lambda (entry)
+     (string-equal key
+                   (bibtex-actions-get-value "=key=" entry)))
+   (bibtex-actions--get-candidates)))
+
+(defun bibtex-actions-shorten-names (names)
+  "Return a list of family names from a list of full NAMES.
+
+To better accomomodate corporate names, this will only shorten
+personal names of the form 'family, given'."
+  (when (stringp names)
+    (mapconcat
+     (lambda (name)
+       (if (eq 1 (length name))
+           (cdr (split-string name " "))
+         (car (split-string name ", "))))
+     (split-string names " and ") ", ")))
+
+(defun bibtex-actions--fields-in-formats ()
+  "Find the fields to mentioned in the templates."
+  (cl-flet ((fields-for-format
+             (format-string)
+             (split-string
+              (s-format format-string
+                        (lambda (fields-string) (car (split-string fields-string ":")))))))
+    (seq-uniq
+     (seq-mapcat (lambda (format) (fields-for-format (cdr format)))
+              (seq-concatenate 'list
+                               bibtex-actions-template
+                               bibtex-actions-template-suffix)))))
+
+(defun bibtex-actions--fields-to-parse ()
+  "Determine the fields to parse from the template and field map."
+  (let* ((fields-in-format (bibtex-actions--fields-in-formats))
+         (fields-for-symbols (list "doi" "url" bibtex-actions-file-variable))
+         (canonical-fields (seq-concatenate 'list fields-in-format fields-for-symbols))
+         (equivalent-fields (cons '("author" "editor") bibtex-actions-field-map)))
+    (seq-concatenate 'list
+                     canonical-fields
+                     (seq-mapcat (lambda (field) (cdr (assoc field equivalent-fields)))
+                                 canonical-fields))))
+
+(defun bibtex-actions--format-candidates (files &optional context)
+  "Format candidates from FILES, with optional hidden CONTEXT metadata.
 This both propertizes the candidates for display, and grabs the
 key associated with each one."
-  (let* ((main-template
-         (bibtex-actions--process-display-formats
-          bibtex-actions-template))
-         (suffix-template
-          (bibtex-actions--process-display-formats
-           bibtex-actions-template-suffix))
-         (main-width (truncate (* (frame-width) 0.65)))
-         (suffix-width (truncate (* (frame-width) 0.34))))
-    (cl-loop
-     for candidate in (bibtex-completion-candidates)
-     collect
-     (let* ((pdf (if (assoc "=has-pdf=" (cdr candidate)) " has:pdf"))
-            (note (if (assoc "=has-note=" (cdr candidate)) "has:note"))
-            (link (if (or (assoc "doi" (cdr candidate))
-                          (assoc "url" (cdr candidate))) "has:link"))
-            (citekey (bibtex-completion-get-value "=key=" candidate))
-            (candidate-main
-             (bibtex-actions--format-entry
-              candidate
-              main-width
-              main-template))
-            (candidate-suffix
-             (bibtex-actions--format-entry
-              candidate
-              suffix-width
-              suffix-template))
-            ;; We display this content already using symbols; here we add back
-            ;; text to allow it to be searched, and citekey to ensure uniqueness
-            ;; of the candidate.
-            (candidate-hidden (s-join " " (list pdf note link context citekey))))
-       (cons
-        ;; If we don't trim the trailing whitespace, 'completing-read-multiple' will
-        ;; get confused when there are multiple selected candidates.
-        (s-trim-right
-         (concat
-          ;; We need all of these searchable:
-          ;;   1. the 'candidate-main' variable to be displayed
-          ;;   2. the 'candidate-suffix' variable to be displayed with a different face
-          ;;   3. the 'candidate-hidden' variable to be hidden
-          (propertize candidate-main 'face 'bibtex-actions-highlight) " "
-          (propertize candidate-suffix 'face 'bibtex-actions) " "
-          (propertize candidate-hidden 'invisible t)))
-        citekey)))))
+  (let* ((main-width (bibtex-actions--format-width bibtex-actions-template))
+         (suffix-width (bibtex-actions--format-width bibtex-actions-template-suffix))
+         (symbols-width (string-width (bibtex-actions--symbols-string t t t)))
+         (star-width (- (frame-width) (+ 1 symbols-width main-width suffix-width))))
+    (cl-loop for candidate being the hash-values of
+             (parsebib-parse files :fields (bibtex-actions--fields-to-parse))
+             collect
+             (let* ((files
+                     (when (or (bibtex-actions-get-value
+                                bibtex-actions-file-variable candidate)
+                               (bibtex-actions-file--files-for-key
+                                (bibtex-actions-get-value "=key=" candidate)
+                                bibtex-actions-library-paths bibtex-actions-file-extensions))
+                       " has:files"))
+                    (notes
+                     (when (bibtex-actions-file--files-for-key
+                            (bibtex-actions-get-value "=key=" candidate)
+                            bibtex-actions-notes-paths bibtex-actions-file-extensions)
+                           " has:notes"))
+                    (link (when (or (assoc "doi" (cdr candidate))
+                                  (assoc "url" (cdr candidate))) "has:link"))
+                    (citekey (bibtex-actions-get-value "=key=" candidate))
+                    (candidate-main
+                     (bibtex-actions--format-entry
+                      candidate
+                      star-width
+                      bibtex-actions-template))
+                    (candidate-suffix
+                     (bibtex-actions--format-entry
+                      candidate
+                      star-width
+                      bibtex-actions-template-suffix))
+                    ;; We display this content already using symbols; here we add back
+                    ;; text to allow it to be searched, and citekey to ensure uniqueness
+                    ;; of the candidate.
+                    (candidate-hidden (s-join " " (list files notes link context citekey))))
+               (cons
+                ;; If we don't trim the trailing whitespace,
+                ;; 'completing-read-multiple' will get confused when there are
+                ;; multiple selected candidates.
+                (s-trim-right
+                 (concat
+                  ;; We need all of these searchable:
+                  ;;   1. the 'candidate-main' variable to be displayed
+                  ;;   2. the 'candidate-suffix' variable to be displayed with a different face
+                  ;;   3. the 'candidate-hidden' variable to be hidden
+                  (propertize candidate-main 'face 'bibtex-actions-highlight) " "
+                  (propertize candidate-suffix 'face 'bibtex-actions) " "
+                  (propertize candidate-hidden 'invisible t)))
+                candidate)))))
 
 (defun bibtex-actions--affixation (cands)
   "Add affixation prefix to CANDS."
   (cl-loop
    for candidate in cands
    collect
-   (let ((pdf (if (string-match "has:pdf" candidate)
-                  (cadr (assoc 'pdf bibtex-actions-symbols))
-                (cddr (assoc 'pdf bibtex-actions-symbols))))
-         (link (if (string-match "has:link" candidate)
-                   (cadr (assoc 'link bibtex-actions-symbols))
-                 (cddr (assoc 'link bibtex-actions-symbols))))
-         (note
-          (if (string-match "has:note" candidate)
-                  (cadr (assoc 'note bibtex-actions-symbols))
-                (cddr (assoc 'note bibtex-actions-symbols))))
-         (suffix ""))
-   (list candidate (concat
-                    (s-join bibtex-actions-symbol-separator
-                            (list pdf note link))"	") suffix))))
+   (list candidate
+         (bibtex-actions--symbols-string
+          (string-match "has:files" candidate)
+          (string-match "has:note" candidate)
+          (string-match "has:link" candidate) )
+         "")))
+
+(defun bibtex-actions--symbols-string (has-files has-note has-link)
+  "String for display from booleans HAS-FILES HAS-LINK HAS-NOTE."
+  (cl-flet ((thing-string (has-thing thing-symbol)
+                          (if has-thing
+                              (cadr (assoc thing-symbol bibtex-actions-symbols))
+                            (cddr (assoc thing-symbol bibtex-actions-symbols)))))
+    (concat
+     (s-join bibtex-actions-symbol-separator
+             (list (thing-string has-files 'file)
+                   (thing-string has-note 'note)
+                   (thing-string has-link 'link)))
+     "	")))
 
 (defvar bibtex-actions--candidates-cache 'uninitialized
   "Store the global candidates list.
-Default value of 'uninitialized is used to indicate that cache has not yet been created")
+
+Default value of 'uninitialized is used to indicate that cache
+has not yet been created")
 
 (defvar-local bibtex-actions--local-candidates-cache 'uninitialized
   ;; We use defvar-local so can maintain per-buffer candidate caches.
@@ -305,27 +449,37 @@ Default value of 'uninitialized is used to indicate that cache has not yet been 
   "Get the cached candidates.
 If the cache is unintialized, this will load the cache.
 If FORCE-REBUILD-CACHE is t, force reload the cache."
-  (when (or force-rebuild-cache
-            (eq 'uninitialized bibtex-actions--candidates-cache)
-            (eq 'uninitialized bibtex-actions--local-candidates-cache))
-    (bibtex-actions-refresh force-rebuild-cache))
+  (if force-rebuild-cache
+      (bibtex-actions-refresh force-rebuild-cache)
+      (when (eq 'uninitialized bibtex-actions--candidates-cache)
+        (bibtex-actions-refresh nil 'global))
+      (when (eq 'uninitialized bibtex-actions--local-candidates-cache)
+        (bibtex-actions-refresh nil 'local)))
   (seq-concatenate 'list
                    bibtex-actions--local-candidates-cache
                    bibtex-actions--candidates-cache))
 
 ;;;###autoload
-(defun bibtex-actions-refresh (&optional force-rebuild-cache)
+(defun bibtex-actions-refresh (&optional force-rebuild-cache scope)
   "Reload the candidates cache.
+
 If called interactively with a prefix or if FORCE-REBUILD-CACHE
-is non-nil, also run the `bibtex-actions-before-refresh-hook' hook."
-  (interactive "P")
+is non-nil, also run the `bibtex-actions-before-refresh-hook' hook.
+
+If SCOPE is `global' only global cache is refreshed, if it is
+`local' only local cache is refreshed. With any other value both
+are refreshed."
+  (interactive (list current-prefix-arg nil))
   (when force-rebuild-cache
     (run-hooks 'bibtex-actions-force-refresh-hook))
-  (setq bibtex-actions--candidates-cache
-        (bibtex-actions--format-candidates))
-  (let ((bibtex-completion-bibliography (bibtex-actions--local-files-to-cache)))
+  (unless (eq 'local scope)
+    (setq bibtex-actions--candidates-cache
+      (bibtex-actions--format-candidates
+       bibtex-actions-bibliography)))
+  (unless (eq 'global scope)
     (setq bibtex-actions--local-candidates-cache
-        (bibtex-actions--format-candidates "is:local"))))
+          (bibtex-actions--format-candidates
+           (bibtex-actions--local-files-to-cache) "is:local"))))
 
 ;;;###autoload
 (defun bibtex-actions-insert-preset ()
@@ -342,26 +496,20 @@ is non-nil, also run the `bibtex-actions-before-refresh-hook' hook."
 ;;  when this PR is merged:
 ;;    https://github.com/tmalsburg/helm-bibtex/pull/367
 
-(defun bibtex-actions--process-display-formats (formats)
+(defun bibtex-actions--format-width (formats)
   "Pre-calculate minimal widths needed by the FORMATS strings for various entry types."
   ;; Adapted from bibtex-completion.
-  (cl-loop
-   for format in formats
-   collect
-   (let* ((format-string (cdr format))
-          (fields-width 0)
-          (string-width
-           (string-width
-            (s-format
-             format-string
-             (lambda (field)
-               (setq fields-width
-                     (+ fields-width
-                        (string-to-number
-                         (or (cadr (split-string field ":"))
-                             ""))))
-               "")))))
-     (-cons* (car format) format-string (+ fields-width string-width)))))
+  (apply #'max
+         (cl-loop
+          for format in formats
+          collect
+          (let* ((format-string (cdr format))
+                 (content-width (apply #'+
+                                       (seq-map #'string-to-number
+                                                (split-string format-string ":"))))
+                 (whitespace-width (string-width (s-format format-string
+                                                           (lambda (_) "")))))
+            (+ content-width whitespace-width)))))
 
 (defun bibtex-actions--format-entry (entry width template)
   "Formats a BibTeX ENTRY for display in results list.
@@ -372,42 +520,42 @@ TEMPLATE."
           (or
            ;; If there's a template specific to the type, use that.
            (assoc-string
-            (bibtex-completion-get-value "=type=" entry) template 'case-fold)
+            (bibtex-actions-get-value "=type=" entry) template 'case-fold)
            ;; Otherwise, use the generic template.
            (assoc t template)))
-         (format-string (cadr format)))
+         (format-string (cdr format)))
     (s-format
      format-string
-     (lambda (field)
-       (let* ((field (split-string field ":"))
+     (lambda (raw-field)
+       (let* ((field (split-string raw-field ":"))
               (field-name (car field))
-              (field-width (cadr field))
-              (field-value (bibtex-completion-get-value field-name entry)))
-         (when (and (string= field-name "author")
-                    (not field-value))
-           (setq field-value (bibtex-completion-get-value "editor" entry)))
-         (when (and (string= field-name "year")
-                    (not field-value))
-           (setq field-value (car (split-string (bibtex-completion-get-value "date" entry "") "-"))))
-         (setq field-value (bibtex-completion-clean-string (or field-value " ")))
-         (when (member field-name '("author" "editor"))
-           (setq field-value (bibtex-completion-shorten-authors field-value)))
-         (if (not field-width)
-             field-value
-           (setq field-width (string-to-number field-width))
-             (let ((width (if (> field-width 0)
-                              ;; If user specifies field width of "*", use
-                              ;; WIDTH; else use the explicit 'field-width'.
-                              field-width
-                            width)))
-               (truncate-string-to-width field-value width 0 ?\s))))))))
+              (field-width (string-to-number (cadr field)))
+              (display-width (if (> field-width 0)
+                                 ;; If user specifies field width of "*", use
+                                 ;; WIDTH; else use the explicit 'field-width'.
+                                 field-width
+                               width))
+              ;; Make sure we always return a string, even if empty.
+              (field-value (or (bibtex-actions--field-value-for-formatting field-name entry)
+                               " ")))
+         (truncate-string-to-width field-value display-width 0 ?\s))))))
+
+(defun bibtex-actions--field-value-for-formatting (field-name entry)
+  "Field formatting for ENTRY FIELD-NAME."
+  (let ((field-value (bibtex-completion-clean-string
+                      (bibtex-actions-get-value field-name entry))))
+    (pcase field-name
+      ("author" (if field-value
+                    (bibtex-actions-shorten-names field-value)
+                  (bibtex-actions--field-value-for-formatting "editor" entry)))
+      ("editor" (bibtex-actions-shorten-names field-value))
+      ("date" (string-limit field-value 4))
+      (_ field-value))))
 
 ;;; At-point functions
 
 ;;; Org-cite
 
-;; This function will likely be removed if and when bibtex-completions adds
-;; something equivalent.
 (defun bibtex-actions-get-key-org-cite ()
   "Return key at point for org-cite citation-reference."
   (when-let (((eq major-mode 'org-mode))
@@ -420,18 +568,17 @@ TEMPLATE."
 
 ;;; Embark
 
-(defun bibtex-actions--stringify-keys (keys)
-  "Return a list of KEYS as a crm-string for `embark'."
-  (if (listp keys) (string-join keys " & ") keys))
-
 (defun bibtex-actions-citation-key-at-point ()
   "Return citation keys at point as a list for `embark'."
   (when-let ((keys (or (bibtex-actions-get-key-org-cite)
                       (bibtex-completion-key-at-point))))
     (cons 'citation-key (bibtex-actions--stringify-keys keys))))
 
+(defun bibtex-actions--stringify-keys (keys)
+  "Return a list of KEYS as a crm-string for `embark'."
+  (if (listp keys) (string-join keys " & ") keys))
 
-;;; Command wrappers for bibtex-completion functions
+;;; Commands
 
 ;;;###autoload
 (defun bibtex-actions-open (keys)
@@ -440,73 +587,106 @@ Opens the PDF(s) associated with the KEYS.  If multiple PDFs are
 found, ask for the one to open using ‘completing-read’.  If no
 PDF is found, try to open a URL or DOI in the browser instead.
 With prefix, rebuild the cache before offering candidates."
-  (interactive (list (bibtex-actions-read :rebuild-cache current-prefix-arg)))
+  (interactive (list (bibtex-actions-select-keys
+                      :rebuild-cache current-prefix-arg)))
   (bibtex-completion-open-any keys))
 
 ;;;###autoload
-(defun bibtex-actions-open-pdf (keys)
- "Open PDF associated with the KEYS.
-If multiple PDFs are found, ask for the one to open using
-‘completing-read’.
+(defun bibtex-actions-open-library-files (keys)
+ "Open library files associated with the KEYS.
+
 With prefix, rebuild the cache before offering candidates."
-  (interactive (list (bibtex-actions-read :rebuild-cache current-prefix-arg)))
-  (bibtex-completion-open-pdf keys))
+  (interactive (list (bibtex-actions-select-keys
+                      :rebuild-cache current-prefix-arg)))
+  (let ((files
+         (bibtex-actions-file--files-for-multiple-keys
+          keys bibtex-actions-library-paths bibtex-actions-file-extensions)))
+    (if files
+        (cl-loop for file in files do
+                 (if bibtex-actions-open-library-file-external
+                     (bibtex-actions-file-open-external file)
+                   (funcall bibtex-actions-file-open-function file)))
+      (message "No file(s) found for %s" keys))))
+
+(make-obsolete 'bibtex-actions-open-pdf
+               'bibtex-actions-open-library-files "1.0")
+
+;;;###autoload
+(defun bibtex-actions-open-notes (keys)
+  "Open notes associated with the KEYS.
+With prefix, rebuild the cache before offering candidates."
+  (interactive (list (bibtex-actions-select-keys
+                      :rebuild-cache current-prefix-arg)))
+  (cl-loop for key in keys do
+           (funcall bibtex-actions-file-open-note-function key)))
+
+;;;###autoload
+(defun bibtex-actions-open-entry (keys)
+  "Open BibTeX entry associated with the KEYS.
+With prefix, rebuild the cache before offering candidates."
+  (interactive (list (bibtex-actions-select-keys
+                      :rebuild-cache current-prefix-arg)))
+ (bibtex-completion-show-entry keys))
 
 ;;;###autoload
 (defun bibtex-actions-open-link (keys)
   "Open URL or DOI link associated with the KEYS in a browser.
 With prefix, rebuild the cache before offering candidates."
-  (interactive (list (bibtex-actions-read :rebuild-cache current-prefix-arg)))
- (bibtex-completion-open-url-or-doi keys))
+  ;;      (browse-url-default-browser "https://google.com")
+  (interactive (list (bibtex-actions-select-keys
+                      :rebuild-cache current-prefix-arg)))
+  (cl-loop for key in keys do
+           (let* ((entry (bibtex-actions-get-entry key))
+                  (doi
+                   (bibtex-actions-get-value "doi" entry))
+                  (doi-url
+                   (when doi
+                     (concat "https://doi.org/" doi)))
+                  (url (bibtex-actions-get-value "url" entry))
+                  (link (or doi-url url)))
+             (if link
+                 (browse-url-default-browser link)
+               (message "No link found for %s" key)))))
 
 ;;;###autoload
 (defun bibtex-actions-insert-citation (keys)
   "Insert citation for the KEYS.
 With prefix, rebuild the cache before offering candidates."
-  (interactive (list (bibtex-actions-read :rebuild-cache current-prefix-arg)))
+  (interactive (list (bibtex-actions-select-keys
+                      :rebuild-cache current-prefix-arg)))
  (bibtex-completion-insert-citation keys))
 
 ;;;###autoload
 (defun bibtex-actions-insert-reference (keys)
   "Insert formatted reference(s) associated with the KEYS.
 With prefix, rebuild the cache before offering candidates."
-  (interactive (list (bibtex-actions-read :rebuild-cache current-prefix-arg)))
+  (interactive (list (bibtex-actions-select-keys
+                      :rebuild-cache current-prefix-arg)))
   (bibtex-completion-insert-reference keys))
 
 ;;;###autoload
 (defun bibtex-actions-insert-key (keys)
   "Insert BibTeX KEYS.
 With prefix, rebuild the cache before offering candidates."
-  (interactive (list (bibtex-actions-read :rebuild-cache current-prefix-arg)))
+  (interactive (list (bibtex-actions-select-keys
+                      :rebuild-cache current-prefix-arg)))
  (bibtex-completion-insert-key keys))
 
 ;;;###autoload
 (defun bibtex-actions-insert-bibtex (keys)
   "Insert BibTeX entry associated with the KEYS.
 With prefix, rebuild the cache before offering candidates."
-  (interactive (list (bibtex-actions-read :rebuild-cache current-prefix-arg)))
+  (interactive (list (bibtex-actions-select-keys
+                      :rebuild-cache current-prefix-arg)))
  (bibtex-completion-insert-bibtex keys))
 
 ;;;###autoload
 (defun bibtex-actions-add-pdf-attachment (keys)
   "Attach PDF(s) associated with the KEYS to email.
 With prefix, rebuild the cache before offering candidates."
-  (interactive (list (bibtex-actions-read :rebuild-cache current-prefix-arg)))
+  (interactive (list (bibtex-actions-select-keys
+                      :rebuild-cache current-prefix-arg)))
  (bibtex-completion-add-PDF-attachment keys))
-
-;;;###autoload
-(defun bibtex-actions-open-notes (keys)
-  "Open notes associated with the KEYS.
-With prefix, rebuild the cache before offering candidates."
-  (interactive (list (bibtex-actions-read :rebuild-cache current-prefix-arg)))
- (bibtex-completion-edit-notes keys))
-
-;;;###autoload
-(defun bibtex-actions-open-entry (keys)
-  "Open BibTeX entry associated with the KEYS.
-With prefix, rebuild the cache before offering candidates."
-  (interactive (list (bibtex-actions-read :rebuild-cache current-prefix-arg)))
- (bibtex-completion-show-entry keys))
 
 ;;;###autoload
 (defun bibtex-actions-add-pdf-to-library (keys)
@@ -514,7 +694,8 @@ With prefix, rebuild the cache before offering candidates."
 The PDF can be added either from an open buffer, a file, or a
 URL.
 With prefix, rebuild the cache before offering candidates."
-  (interactive (list (bibtex-actions-read :rebuild-cache current-prefix-arg)))
+  (interactive (list (bibtex-actions-select-keys
+                      :rebuild-cache current-prefix-arg)))
   (bibtex-completion-add-pdf-to-library keys))
 
 (defun bibtex-actions-run-default-action (keys)
@@ -530,38 +711,6 @@ With prefix, rebuild the cache before offering candidates."
   (interactive)
   (if-let ((keys (cdr (bibtex-actions-citation-key-at-point))))
       (bibtex-actions-run-default-action keys)))
-
-;;; Convenience for files watching
-
-(defun bibtex-actions--add-local-watches (func)
-  "Add watches for the files that contribute to the local cache
-The callback FUNC is run when a chage in one of the local bibliography files is notified."
-       (let ((buffer (buffer-name)))
-         (seq-map (lambda (bibfile)
-                    (file-notify-add-watch bibfile '(change)
-                                           (lambda (x) (unless (eq 'stopped (cadr x))
-                                                    (with-current-buffer buffer (funcall func))))))
-                  (bibtex-actions--local-files-to-cache))))
-
-;;;###autoload
-(defun bibtex-actions-with-filenotify-local (func)
-  "Hook to add watches on buffer local bib files and remove them when the buffer is killed
-The callback FUNC is run when a change is notified"
-  (let ((descs (bibtex-actions--add-local-watches func)))
-    (add-hook 'kill-buffer-hook
-              (lambda () (seq-map #'file-notify-rm-watch descs)) nil t)))
-
-;;;###autoload
-(defun bibtex-actions-with-filenotify-global (func)
-  "Add watches on the global bib files.
-The callback FUNC is run when a chage in one of the global bibliography files is notified.
-Unlike `bibtex-actions-with-filenotify-local'these are never removed.
-The functions returns a list of descriptors one for each file and the watches can be removed
-manually if need be by calling `file-notify-rm-watch' on such descriptors"
-  (seq-map (lambda (bibfile) (file-notify-add-watch bibfile '(change)
-                                               (lambda (x) (unless (eq 'stopped (cadr x))
-                                                    (funcall func)))))
-           bibtex-completion-bibliography))
 
 (provide 'bibtex-actions)
 ;;; bibtex-actions.el ends here

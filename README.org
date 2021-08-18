@@ -5,20 +5,23 @@
   :CUSTOM_ID: bibtex-actions
   :END:
 
-- [[#what-is-it][What is it?]]
+- [[#features][Features]]
 - [[#installation][Installation]]
 - [[#configuration][Configuration]]
 - [[#usage][Usage]]
 - [[#comparisons][Comparisons]]
 - [[#acknowledgements][Acknowledgements]]
 
-** What is it?
+** Features
    :PROPERTIES:
-   :CUSTOM_ID: what-is-it
+   :CUSTOM_ID: features
    :END:
 
-This package turns bibtex-completion functions into completing-read-based Emacs commands.
-When used with selectrum, embark, and marginalia, it provides similar functionality to helm-bibtex and ivy-bibtex: quick filtering and selecting of bibliographic entries from the minibuffer, and the option to run different commands against them.
+This package provides a completing-read front-end to browse and act on BibTeX, BibLaTeX, and CSL JSON bibliographic data.
+
+When used with vertico (or selectrum), embark, and marginalia, it provides similar functionality to helm-bibtex and ivy-bibtex: quick filtering and selecting of bibliographic entries from the minibuffer, and the option to run different commands against them.
+
+With embark, it also makes available at-point actions in org-mode citations.
 
 Here's a screenshot with [[https://github.com/raxod502/selectrum][vertico]], [[https://github.com/oantolin/embark/][embark]]. and =consult-completing-read-multiple=.
 
@@ -58,9 +61,7 @@ This is the minimal configuration, and will work with any completing-read compli
          :map minibuffer-local-map
          ("M-b" . bibtex-actions-insert-preset))
   :config
-  ;; make sure to set this to ensure open commands work correctly
-  (setq bibtex-completion-additional-search-fields '(doi url)
-        bibtex-completion-bibliography "/path/to/references.bib"))
+  (setq bibtex-actions-bibliography '("~/bib/references.bib"))
 #+END_SRC
 
 Since most of the command logic resides in bibtex-completion, that is where to look for different [[https://github.com/tmalsburg/helm-bibtex#basic-configuration-recommended][configuration options]].
@@ -78,11 +79,9 @@ Highly recommended, this option adds embark, for contextual access to actions in
   :config
   ;; Make the 'bibtex-actions' bindings and targets available to `embark'.
   (add-to-list 'embark-target-finders 'bibtex-actions-citation-key-at-point)
-  (add-to-list 'embark-keymap-alist '(bibtex . bibtex-actions-map))
+  (add-to-list 'embark-keymap-alist '(bib-reference . bibtex-actions-map))
   (add-to-list 'embark-keymap-alist '(citation-key . bibtex-actions-buffer-map))
-  ;; Make sure to set this to ensure 'bibtex-actions-open-link' command works correctly.
-  (setq bibtex-completion-additional-search-fields '(doi url)
-        bibtex-completion-bibliography "/path/to/references.bib"))
+  (setq bibtex-actions-bibliography '("~/bib/references.bib"))
 
 ;; use consult-completing-read for enhanced interface
 (advice-add #'completing-read-multiple :override #'consult-completing-read-multiple)
@@ -110,9 +109,7 @@ In other supported modes, it will work the same as the embark option above.
          ("M-b" . bibtex-actions-insert-preset))
   :after (embark oc)
   :config
-  ;; make sure to set this to ensure open commands work correctly
-  (setq bibtex-completion-additional-search-fields '(doi url)
-        bibtex-completion-bibliography my/bibs
+  (setq bibtex-actions-bibliography my/bibs
         org-cite-global-bibliography my/bibs))
 
 ;; Use consult-completing-read for enhanced interface.
@@ -168,15 +165,17 @@ For the prefix, you can filter for associated PDFs or notes using =has:pdf= or =
 #+CAPTION: UI sections
 [[file:images/ui-segments.png]]
 
-You can configure both of the last two just as you do with bibtex-completion.
+You can configure both of the last two similar as you do with bibtex-completion.
 
 #+BEGIN_SRC emacs-lisp
   (setq bibtex-actions-template '((t . " ${title:*}")))
   (setq bibtex-actions-template-suffix '((t . "          ${=key=:15}")))
 #+END_SRC
 
-Note: the asterisk signals to the formatter to use available space for the column.
-You should only use this on one field total, across the two templates, for the formatting to work correctly.
+Note:
+
+1. the asterisk signals to the formatter to use available space for the column: you should only use this on one field total, across the two templates, for the formatting to work correctly.
+2. the inclusion of CSL-JSON support is currently experimental, and relies on =bibtex-actions-field-map= variable to map among the different supported formats, and is subject to change.
 
 By default, this UI is plain text, but you can configure it to use icons instead.
 
@@ -233,33 +232,23 @@ This is great for performance, but means the data can become stale if you modify
 The =bibtex-actions-refresh= command will reload the caches, and you can call this manually.
 You can also call any of the =bibtex-actions= commands with a prefix argument: =C-u M-x bibtex-actions-insert-key=.
 
-Although not default, =bibtex-actions= also provides convenience functions for auto-refreshing cache when bib files change using filenotify. 
-There are two such functions: =bibtex-actions-with-filenotify-local= and =bibtex-actions-filenotify-global=. 
-The following snippet will refresh caches when one of the bib files change:
+Although not default, =bibtex-actions= also provides convenience functions for auto-refreshing cache when bib files change using filenotify.
+The simplest use of this functionality is
 
 #+BEGIN_SRC emacs-lisp
-(bibtex-actions-with-filenotify-global #'bibtex-actions-refresh)
-
-(add-hook 'LaTeX-mode-hook (lambda () (bibtex-actions-with-filenotify-local #'bibtex-actions-refresh)))
-(add-hook 'org-mode-hook (lambda () (bibtex-actions-with-filenotify-local #'bibtex-actions-refresh)))
+(bibtex-actions-filenotify-setup '(LaTeX-mode-hook org-mode-hook))
 #+END_SRC
 
-This will reload the cache whenever a bib file changes. 
-A different option which might be useful is to merely invalidate the cache so that it is regenerated whenever a bibtex-actions command is called next. 
-This can be achieved by the following code:
+This will add watches for the global bib files and in addition add a hook to =LaTeX-mode-hook= and =org-mode-hook= to add watches for local bibliographic files.
+By default this will invalidate the cache if a bib file changes. If the bib files change rarely, a more suitable option is to refresh the cache.
+This can be achieved by
 
 #+BEGIN_SRC emacs-lisp
-(bibtex-actions-with-filenotify-global
- (lambda () (setq bibtex-actions--candidates-cache 'uninitialized)))
-
-(add-hook 'LaTeX-mode-hook
-          (lambda () (bibtex-actions-with-filenotify-local
-                      (lambda () (setq bibtex-actions--local-candidates-cache 'uninitialized)))))
-
-(add-hook 'org-mode-hook
-          (lambda () (bibtex-actions-with-filenotify-local
-                      (lambda () (setq bibtex-actions--local-candidates-cache 'uninitialized)))))
+(setq bibtex-actions-filenotify-callback 'refresh-cache)
 #+END_SRC
+
+The behavior can be tweaked more thoroughly by setting =bibtex-actions-filenotify-callback= to a function. See its documentation for details.
+Watches can be also placed on additional files. This is controlled by the variable =bibtex-actions-filenotify-files=.
 
 Another option to make the completion interface more seamless is to add a hook which generates the cache after a buffer is opened. This can be done when emacs has been idle (half a second in the example below) with something like this:
 

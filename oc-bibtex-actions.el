@@ -105,6 +105,9 @@ If nil, use 'org-cite-supported-styles'."
     ("author/c" . "De Villiers et al")
     ("author/f" . "de Villiers, Smith, Doa, and Jones")
     ("author/cf" . "De Villiers, Smith, Doa, and Jones")
+    ;; "locators" style.
+    ("locators" . "(p23)")
+    ("locators" . "p23")
     ;; "noauthor" style.
     ("noauthor" . "(2019)")
     ("noauthor/b" . "2019")))
@@ -146,7 +149,7 @@ With PROC list, limits to specific processors."
 
 (defun oc-bibtex-actions-insert (&optional multiple)
   "Return a list of keys when MULTIPLE, or else a key string."
-  (let ((references (bibtex-actions-read)))
+  (let ((references (bibtex-actions-select-keys)))
     (if multiple
         references
       (car references))))
@@ -225,17 +228,17 @@ strings by style."
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "o") '("open source (file or link)" . bibtex-actions-open))
     (define-key map (kbd "e") '("open bibtex entry" . bibtex-actions-open-entry))
-    (define-key map (kbd "f") '("open source file" . bibtex-actions-open-pdf))
+    (define-key map (kbd "f") '("open source file" . bibtex-actions-open-library-files))
     (define-key map (kbd "l") '("open source link" . bibtex-actions-open-link))
     (define-key map (kbd "n") '("open notes" . bibtex-actions-open-notes))
-    (define-key map (kbd "r") '("refresh library" . bibtex-actions-refresh))
+    (define-key map (kbd "r") '("refresh" . bibtex-actions-refresh))
     map)
   "Keymap for 'oc-bibtex-actions' `embark' at-point functionality.")
 
 ;; Embark configuration for org-cite
 
 (add-to-list 'embark-target-finders 'oc-bibtex-actions-citation-finder)
-(add-to-list 'embark-keymap-alist '(bibtex . oc-bibtex-actions-map))
+(add-to-list 'embark-keymap-alist '(bib-reference . oc-bibtex-actions-map))
 (add-to-list 'embark-keymap-alist '(oc-citation . oc-bibtex-actions-map))
 (when (boundp 'embark-pre-action-hooks)
   ;; Ensure that Embark ignores the target for 'org-cite-insert'.
