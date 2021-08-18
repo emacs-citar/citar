@@ -117,12 +117,12 @@ If you use 'org-roam' and 'org-roam-bibtex, you should use
 
 (defun bibtex-actions-file-open-notes-default (key)
   "Open a note file from KEY."
+  ;; TODO add template; markdown?
   (let ((file
-         (bibtex-actions-file--files-for-key
-          key bibtex-actions-notes-paths bibtex-actions-file-extensions)))
-    (if file
-        (funcall bibtex-actions-file-open-function (car file))
-      (message "Note not found for %s" key))))
+         (caar (bibtex-actions-file--files-to-open-or-create
+               (list key)
+               bibtex-actions-notes-paths '("org")))))
+    (funcall bibtex-actions-file-open-function file)))
 
 (provide 'bibtex-actions-file)
 ;;; bibtex-actions-file.el ends here

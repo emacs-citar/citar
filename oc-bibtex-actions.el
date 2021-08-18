@@ -149,7 +149,7 @@ With PROC list, limits to specific processors."
 
 (defun oc-bibtex-actions-insert (&optional multiple)
   "Return a list of keys when MULTIPLE, or else a key string."
-  (let ((references (bibtex-actions-select-keys :multiple t)))
+  (let ((references (bibtex-actions-select-keys)))
     (if multiple
         references
       (car references))))

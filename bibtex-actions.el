@@ -529,8 +529,6 @@ TEMPLATE."
 
 ;;; Org-cite
 
-;; This function will likely be removed if and when bibtex-completions adds
-;; something equivalent.
 (defun bibtex-actions-get-key-org-cite ()
   "Return key at point for org-cite citation-reference."
   (when-let (((eq major-mode 'org-mode))
@@ -542,7 +540,6 @@ TEMPLATE."
        (org-cite-get-references elt t)))))
 
 ;;; Embark
-
 
 (defun bibtex-actions-citation-key-at-point ()
   "Return citation keys at point as a list for `embark'."
