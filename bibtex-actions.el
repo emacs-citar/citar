@@ -265,8 +265,10 @@ offering the selection candidates"
            'bibtex-actions-history bibtex-actions-presets nil)))
     (cl-loop for choice in chosen
              ;; Collect citation keys of selected candidate(s).
-             collect (cdr (or (assoc choice candidates)
-                              (rassoc choice candidates))))))
+             collect (bibtex-actions-get-value
+                      "=key="
+                      (or (assoc choice candidates)
+                          (rassoc choice candidates))))))
 
 (defun bibtex-actions--local-files-to-cache ()
   "The local bibliographic files not included in the global bibliography."
@@ -354,7 +356,7 @@ key associated with each one."
                   (propertize candidate-main 'face 'bibtex-actions-highlight) " "
                   (propertize candidate-suffix 'face 'bibtex-actions) " "
                   (propertize candidate-hidden 'invisible t)))
-                citekey)))))
+                candidate)))))
 
 (defun bibtex-actions--affixation (cands)
   "Add affixation prefix to CANDS."
