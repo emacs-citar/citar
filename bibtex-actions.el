@@ -36,7 +36,6 @@
 ;;
 ;;; Code:
 
-(require 'bibtex-actions-select)
 (require 'bibtex-actions-file)
 (require 'bibtex-completion)
 (require 'parsebib)
@@ -242,6 +241,7 @@ means no action."
   "Keymap for Embark citation-key actions.")
 
 ;;; Completion functions
+
 (cl-defun bibtex-actions-select-keys (&optional &key rebuild-cache)
   "Read bibtex-completion entries.
 
@@ -269,6 +269,27 @@ offering the selection candidates"
                       "=key="
                       (or (assoc choice candidates)
                           (rassoc choice candidates))))))
+
+(defun bibtex-actions-select-files (files)
+  "Select file(s) from a list of FILES."
+  (completing-read-multiple
+   "Files: "
+   (lambda (string predicate action)
+     (if (eq action 'metadata)
+         `(metadata
+           (group-function . bibtex-actions-select-group-related-sources)
+           (category . file))
+       (complete-with-action action files string predicate)))))
+
+(defun bibtex-actions-select-group-related-sources (file transform)
+  "Group by FILE by source, TRANSFORM."
+    (let ((extension (file-name-extension file)))
+      (if transform file
+        ;; Transform for grouping and group title display.
+        (cond
+         ((string= extension (or "org" "md")) "Notes")
+          (t "Library Files")))))
+
 
 (defun bibtex-actions--local-files-to-cache ()
   "The local bibliographic files not included in the global bibliography."
@@ -601,11 +622,13 @@ With prefix, rebuild the cache before offering candidates."
                       :rebuild-cache current-prefix-arg)))
   (cl-loop for key in keys do
            (let* ((entry (bibtex-actions-get-entry key))
-                  (doi (concat
-                        "https://doi.org/"
-                        (bibtex-actions-get-value "doi" entry)))
+                  (doi
+                   (bibtex-actions-get-value "doi" entry))
+                  (doi-url
+                   (when doi
+                     (concat "https://doi.org/" doi)))
                   (url (bibtex-actions-get-value "url" entry))
-                  (link (or doi url)))
+                  (link (or doi-url url)))
              (if link
                  (browse-url-default-browser link)
                (message "No link found for %s" key)))))
