@@ -116,7 +116,7 @@
   (cons
    "${author editor:30}   ${date year issued:4}  ${title:48}"
    "          ${=key= id:15}    ${=type=:12}    ${tags keywords keywords:*}")
-  "Configures formatting for the BibTeX entry.
+  "Configures formatting for the bibliographic entry.
 car is for the main body of the candidate and cdr is for suffix.
 The same string is used for display and for search."
     :group 'bibtex-actions
@@ -272,7 +272,7 @@ offering the selection candidates"
     (seq-difference local-bib-files bibtex-actions-bibliography)))
 
 (defun bibtex-actions-get-value (fields item)
-  "Return biblatex FIELD value for ITEM."
+  "Return the first non nil biblatex field value for ITEM among FIELDS."
   (cl-flet ((get-value (field) (cdr (assoc-string field item 'case-fold))))
       (get-value (seq-find #'get-value fields))))
 
@@ -482,8 +482,11 @@ TEMPLATE."
             ;; Make sure we always return a string, even if empty.
             (field-value (or (bibtex-completion-clean-string
                               (bibtex-actions-get-value field-names entry))
-                             " ")))
-       (truncate-string-to-width field-value display-width 0 ?\s)))))
+                             ""))
+            (formatted-value (if (seq-intersection '("author" "editor") field-names)
+                                 (bibtex-actions-shorten-names field-value)
+                               field-value)))
+       (truncate-string-to-width formatted-value display-width 0 ?\s)))))
 
 ;;; At-point functions
 
@@ -555,7 +558,7 @@ With prefix, rebuild the cache before offering candidates."
 
 ;;;###autoload
 (defun bibtex-actions-open-entry (keys)
-  "Open BibTeX entry associated with the KEYS.
+  "Open bibliographic entry associated with the KEYS.
 With prefix, rebuild the cache before offering candidates."
   (interactive (list (bibtex-actions-select-keys
                       :rebuild-cache current-prefix-arg)))
@@ -607,7 +610,7 @@ With prefix, rebuild the cache before offering candidates."
 
 ;;;###autoload
 (defun bibtex-actions-insert-bibtex (keys)
-  "Insert BibTeX entry associated with the KEYS.
+  "Insert bibliographic entry associated with the KEYS.
 With prefix, rebuild the cache before offering candidates."
   (interactive (list (bibtex-actions-select-keys
                       :rebuild-cache current-prefix-arg)))
