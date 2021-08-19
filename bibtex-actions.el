@@ -59,7 +59,7 @@
 (defvar embark-meta-map)
 (defvar bibtex-actions-file-open-note-function)
 (defvar bibtex-actions-file-extensions)
-(defvar  bibtex-actions-file-open-prompt)
+(defvar bibtex-actions-file-open-prompt)
 
 ;;; Variables
 
@@ -113,31 +113,19 @@
 
 
 (defcustom bibtex-actions-template
-  '((t . "${author:30}   ${date:8}  ${title:48}"))
+  (cons
+   "${author editor:30}   ${date year issued:8}  ${title:48}"
+   "          ${=key= id:15}    ${=type=:12}    ${tags keywords keywords:*}")
   "Configures formatting for the BibTeX entry.
-When combined with the suffix, the same string is used for
-display and for search."
+car is for the main body of the candidate and cdr is for suffix.
+The same string is used for display and for search."
     :group 'bibtex-actions
-    :type  '(alist :key-type symbol :value-type function))
-
-(defcustom bibtex-actions-template-suffix
-  '((t . "          ${=key=:15}    ${=type=:12}    ${tags:*}"))
-  "Configures formatting for the BibTeX entry suffix.
-When combined with the main template, the same string is used for
-display and for search."
-    :group 'bibtex-actions
-    :type  '(alist :key-type symbol :value-type function))
-
-(defcustom bibtex-actions-link-symbol "🔗"
-  "Symbol to indicate a DOI or URL link is available for a publication.
-This should be a single character."
-  :group 'bibtex-actions
-  :type 'string)
+    :type  '(cons string string))
 
 (defcustom bibtex-actions-symbols
-  `((file  .     (,bibtex-completion-pdf-symbol . " "))
-    (note .     (,bibtex-completion-notes-symbol . " "))
-    (link .     (,bibtex-actions-link-symbol . " ")))
+  `((file  .  ("⌘" . " "))
+    (note .   ("✎" . " "))
+    (link .   ("🔗" . " ")))
   "Configuration alist specifying which symbol or icon to pick for a bib entry.
 This leaves room for configurations where the absense of an item
 may be indicated with the same icon but a different face."
@@ -158,23 +146,6 @@ recreate entire bibliography files using an external reference
 manager like Zotero or JabRef."
   :group 'bibtex-actions
   :type '(repeat function))
-
-(defvar bibtex-actions-field-map
-  '(("date" "year" "issued")
-    ("=key=" "id")
-    ("=type=" "type")
-    ("tags" "keywords" "keyword")
-    ("booktitle" "container-title")
-    ("journaltitle" "journal" "container-title")
-    ("number" "issue")))
-
-(defvar bibtex-actions-field-mapping
-  '(("issued" "date" "year")
-    ("=key=" "id")
-    ("=type=" "type")
-    ("keyword" "tags" "keywords")
-    ("container-title" "booktitle" "journaltitle" "journal")
-    ("issue" "number")))
 
 (defcustom bibtex-actions-default-action 'bibtex-actions-open
   "The default action for the `bibtex-actions-at-point' command."
@@ -300,14 +271,10 @@ offering the selection candidates"
            (bibtex-completion-find-local-bibliography))))
     (seq-difference local-bib-files bibtex-actions-bibliography)))
 
-(defun bibtex-actions-get-value (field item &optional default)
-  "Return biblatex FIELD value for ITEM.
-When nil, return DEFAULT."
-  (or (cdr (assoc-string field item 'case-fold))
-      (cl-loop for fname in (cdr (assoc field bibtex-actions-field-map))
-               when (cdr (assoc-string fname item 'case-fold))
-                         return (cdr (assoc-string fname item 'case-fold)))
-      default))
+(defun bibtex-actions-get-value (fields item)
+  "Return biblatex FIELD value for ITEM."
+  (cl-flet ((get-value (field) (cdr (assoc-string field item 'case-fold))))
+      (get-value (seq-find #'get-value fields))))
 
 (defun bibtex-actions-get-entry (key)
   "Return the cached entry for KEY."
@@ -335,59 +302,54 @@ personal names of the form 'family, given'."
              (format-string)
              (split-string
               (s-format format-string
-                        (lambda (fields-string) (car (split-string fields-string ":")))))))
-    (seq-uniq
-     (seq-mapcat (lambda (format) (fields-for-format (cdr format)))
-              (seq-concatenate 'list
-                               bibtex-actions-template
-                               bibtex-actions-template-suffix)))))
+                        (lambda (fields-string) (car (split-string fields-string ":"))))
+             "[ ]+")))
+     (seq-mapcat #'fields-for-format
+                 (list (car bibtex-actions-template)
+                       (cdr bibtex-actions-template)))))
 
 (defun bibtex-actions--fields-to-parse ()
   "Determine the fields to parse from the template and field map."
   (let* ((fields-in-format (bibtex-actions--fields-in-formats))
-         (fields-for-symbols (list "doi" "url" bibtex-actions-file-variable))
-         (canonical-fields (seq-concatenate 'list fields-in-format fields-for-symbols))
-         (equivalent-fields (cons '("author" "editor") bibtex-actions-field-map)))
+         (fields-for-symbols (list "doi" "url" bibtex-actions-file-variable)))
     (seq-concatenate 'list
-                     canonical-fields
-                     (seq-mapcat (lambda (field) (cdr (assoc field equivalent-fields)))
-                                 canonical-fields))))
+                     fields-in-format
+                     fields-for-symbols)))
 
 (defun bibtex-actions--format-candidates (files &optional context)
   "Format candidates from FILES, with optional hidden CONTEXT metadata.
 This both propertizes the candidates for display, and grabs the
 key associated with each one."
-  (let* ((main-width (bibtex-actions--format-width bibtex-actions-template))
-         (suffix-width (bibtex-actions--format-width bibtex-actions-template-suffix))
+  (let* ((main-width (bibtex-actions--format-width (car bibtex-actions-template)))
+         (suffix-width (bibtex-actions--format-width (cdr bibtex-actions-template)))
          (symbols-width (string-width (bibtex-actions--symbols-string t t t)))
          (star-width (- (frame-width) (+ 1 symbols-width main-width suffix-width))))
     (cl-loop for candidate being the hash-values of
              (parsebib-parse files :fields (bibtex-actions--fields-to-parse))
-             using (hash-key key)
+             using (hash-key citekey)
              collect
              (let* ((files
                      (when (or (bibtex-actions-get-value
-                                bibtex-actions-file-variable candidate)
+                                '(bibtex-actions-file-variable) candidate)
                                (bibtex-actions-file--files-for-key
-                                key bibtex-actions-library-paths bibtex-actions-file-extensions))
+                                citekey bibtex-actions-library-paths bibtex-actions-file-extensions))
                        " has:files"))
                     (notes
                      (when (bibtex-actions-file--files-for-key
-                            key bibtex-actions-notes-paths bibtex-actions-file-extensions)
+                            citekey bibtex-actions-notes-paths bibtex-actions-file-extensions)
                        " has:notes"))
-                    (link (when (or (assoc "doi" (cdr candidate))
-                                    (assoc "url" (cdr candidate))) "has:link"))
-                    (citekey (bibtex-actions-get-value "=key=" candidate))
+                    (link (when (bibtex-actions-get-value '("doi" "url") candidate)
+                            "has:link"))
                     (candidate-main
                      (bibtex-actions--format-entry
                       candidate
                       star-width
-                      bibtex-actions-template))
+                      (car bibtex-actions-template)))
                     (candidate-suffix
                      (bibtex-actions--format-entry
                       candidate
                       star-width
-                      bibtex-actions-template-suffix))
+                      (cdr bibtex-actions-template)))
                     ;; We display this content already using symbols; here we add back
                     ;; text to allow it to be searched, and citekey to ensure uniqueness
                     ;; of the candidate.
@@ -405,7 +367,7 @@ key associated with each one."
                   (propertize candidate-main 'face 'bibtex-actions-highlight) " "
                   (propertize candidate-suffix 'face 'bibtex-actions) " "
                   (propertize candidate-hidden 'invisible t)))
-                (cons key candidate))))))
+                (cons citekey candidate))))))
 
 (defun bibtex-actions--affixation (cands)
   "Add affixation prefix to CANDS."
@@ -493,61 +455,35 @@ are refreshed."
 ;;  when this PR is merged:
 ;;    https://github.com/tmalsburg/helm-bibtex/pull/367
 
-(defun bibtex-actions--format-width (formats)
+(defun bibtex-actions--format-width (format-string)
   "Pre-calculate minimal widths needed by the FORMATS strings for various entry types."
-  ;; Adapted from bibtex-completion.
-  (apply #'max
-         (cl-loop
-          for format in formats
-          collect
-          (let* ((format-string (cdr format))
-                 (content-width (apply #'+
-                                       (seq-map #'string-to-number
-                                                (split-string format-string ":"))))
-                 (whitespace-width (string-width (s-format format-string
-                                                           (lambda (_) "")))))
-            (+ content-width whitespace-width)))))
+  (let ((content-width (apply #'+
+                              (seq-map #'string-to-number
+                                       (split-string format-string ":"))))
+        (whitespace-width (string-width (s-format format-string
+                                                  (lambda (_) "")))))
+    (+ content-width whitespace-width)))
 
-(defun bibtex-actions--format-entry (entry width template)
+(defun bibtex-actions--format-entry (entry width format-string)
   "Formats a BibTeX ENTRY for display in results list.
 WIDTH is the width of the results list, and the display format is governed by
 TEMPLATE."
-  ;; Adapted from bibtex-completion.
-  (let* ((format
-          (or
-           ;; If there's a template specific to the type, use that.
-           (assoc-string
-            (bibtex-actions-get-value "=type=" entry) template 'case-fold)
-           ;; Otherwise, use the generic template.
-           (assoc t template)))
-         (format-string (cdr format)))
-    (s-format
-     format-string
-     (lambda (raw-field)
-       (let* ((field (split-string raw-field ":"))
-              (field-name (car field))
-              (field-width (string-to-number (cadr field)))
-              (display-width (if (> field-width 0)
-                                 ;; If user specifies field width of "*", use
-                                 ;; WIDTH; else use the explicit 'field-width'.
-                                 field-width
-                               width))
-              ;; Make sure we always return a string, even if empty.
-              (field-value (or (bibtex-actions--field-value-for-formatting field-name entry)
-                               " ")))
-         (truncate-string-to-width field-value display-width 0 ?\s))))))
-
-(defun bibtex-actions--field-value-for-formatting (field-name entry)
-  "Field formatting for ENTRY FIELD-NAME."
-  (let ((field-value (bibtex-completion-clean-string
-                      (bibtex-actions-get-value field-name entry))))
-    (pcase field-name
-      ("author" (if field-value
-                    (bibtex-actions-shorten-names field-value)
-                  (bibtex-actions--field-value-for-formatting "editor" entry)))
-      ("editor" (bibtex-actions-shorten-names field-value))
-      ("date" (string-limit field-value 4))
-      (_ field-value))))
+  (s-format
+   format-string
+   (lambda (raw-field)
+     (let* ((field (split-string raw-field ":"))
+            (field-names (split-string (car field) "[ ]+"))
+            (field-width (string-to-number (cadr field)))
+            (display-width (if (> field-width 0)
+                               ;; If user specifies field width of "*", use
+                               ;; WIDTH; else use the explicit 'field-width'.
+                               field-width
+                             width))
+            ;; Make sure we always return a string, even if empty.
+            (field-value (or (bibtex-completion-clean-string
+                              (bibtex-actions-get-value field-names entry))
+                             " ")))
+       (truncate-string-to-width field-value display-width 0 ?\s)))))
 
 ;;; At-point functions
 
@@ -635,11 +571,11 @@ With prefix, rebuild the cache before offering candidates."
   (cl-loop for key in keys do
            (let* ((entry (bibtex-actions-get-entry key))
                   (doi
-                   (bibtex-actions-get-value "doi" entry))
+                   (bibtex-actions-get-value '("doi") entry))
                   (doi-url
                    (when doi
                      (concat "https://doi.org/" doi)))
-                  (url (bibtex-actions-get-value "url" entry))
+                  (url (bibtex-actions-get-value '("url") entry))
                   (link (or doi-url url)))
              (if link
                  (browse-url-default-browser link)
