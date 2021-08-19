@@ -313,11 +313,10 @@ When nil, return DEFAULT."
 
 (defun bibtex-actions-get-entry (key)
   "Return the cached entry for KEY."
-  (seq-find
-   (lambda (entry)
-     (string-equal key
-                   (bibtex-actions-get-value "=key=" entry)))
-   (bibtex-actions--get-candidates)))
+  (cddr (seq-find
+         (lambda (entry)
+           (string-equal key (cadr entry)))
+         (bibtex-actions--get-candidates))))
 
 (defun bibtex-actions-shorten-names (names)
   "Return a list of family names from a list of full NAMES.
@@ -366,21 +365,20 @@ key associated with each one."
          (star-width (- (frame-width) (+ 1 symbols-width main-width suffix-width))))
     (cl-loop for candidate being the hash-values of
              (parsebib-parse files :fields (bibtex-actions--fields-to-parse))
+             using (hash-key key)
              collect
              (let* ((files
                      (when (or (bibtex-actions-get-value
                                 bibtex-actions-file-variable candidate)
                                (bibtex-actions-file--files-for-key
-                                (bibtex-actions-get-value "=key=" candidate)
-                                bibtex-actions-library-paths bibtex-actions-file-extensions))
+                                key bibtex-actions-library-paths bibtex-actions-file-extensions))
                        " has:files"))
                     (notes
                      (when (bibtex-actions-file--files-for-key
-                            (bibtex-actions-get-value "=key=" candidate)
-                            bibtex-actions-notes-paths bibtex-actions-file-extensions)
-                           " has:notes"))
+                            key bibtex-actions-notes-paths bibtex-actions-file-extensions)
+                       " has:notes"))
                     (link (when (or (assoc "doi" (cdr candidate))
-                                  (assoc "url" (cdr candidate))) "has:link"))
+                                    (assoc "url" (cdr candidate))) "has:link"))
                     (citekey (bibtex-actions-get-value "=key=" candidate))
                     (candidate-main
                      (bibtex-actions--format-entry
@@ -409,7 +407,7 @@ key associated with each one."
                   (propertize candidate-main 'face 'bibtex-actions-highlight) " "
                   (propertize candidate-suffix 'face 'bibtex-actions) " "
                   (propertize candidate-hidden 'invisible t)))
-                candidate)))))
+                (cons key candidate))))))
 
 (defun bibtex-actions--affixation (cands)
   "Add affixation prefix to CANDS."
