@@ -21,6 +21,9 @@
 
 (require 'cl-lib)
 
+(declare-function bibtex-actions-get-entry "bibtex-actions")
+(declare-function bibtex-actions-get-value "bibtex-actions")
+
 ;;;; File related variables
 
 (defcustom bibtex-actions-file-open-function 'find-file
@@ -126,9 +129,11 @@ If you use 'org-roam' and 'org-roam-bibtex, you should use
           (caar (bibtex-actions-file--files-to-open-or-create
                  (list key)
                  bibtex-actions-notes-paths '("org"))))
-         (template "#+title: ${title}\n"))
-    ;; TODO how to insert the template-expanded content in the new file?
-    (funcall bibtex-actions-file-open-function file)))
+         (title (bibtex-actions-get-value "title" (bibtex-actions-get-entry key)))
+         (content
+          (concat "#+title: Notes on " title "\n")))
+    (funcall bibtex-actions-file-open-function file)
+    (insert content)))
 
 (provide 'bibtex-actions-file)
 ;;; bibtex-actions-file.el ends here
