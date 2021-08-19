@@ -122,11 +122,12 @@ If you use 'org-roam' and 'org-roam-bibtex, you should use
 
 (defun bibtex-actions-file-open-notes-default (key)
   "Open a note file from KEY."
-  ;; TODO add template; markdown?
-  (let ((file
-         (caar (bibtex-actions-file--files-to-open-or-create
-               (list key)
-               bibtex-actions-notes-paths '("org")))))
+  (let* ((file
+          (caar (bibtex-actions-file--files-to-open-or-create
+                 (list key)
+                 bibtex-actions-notes-paths '("org"))))
+         (template "#+title: ${title}\n"))
+    ;; TODO how to insert the template-expanded content in the new file?
     (funcall bibtex-actions-file-open-function file)))
 
 (provide 'bibtex-actions-file)
