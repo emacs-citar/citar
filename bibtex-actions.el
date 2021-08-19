@@ -266,9 +266,7 @@ offering the selection candidates"
            'bibtex-actions-history bibtex-actions-presets nil)))
     (cl-loop for choice in chosen
              ;; Collect citation keys of selected candidate(s).
-             collect (or (bibtex-actions-get-value
-                          "=key="
-                          (assoc choice candidates))
+             collect (or (cadr (assoc choice candidates))
              ;; Key is literal coming from embark, just pass it on
                           choice))))
 
