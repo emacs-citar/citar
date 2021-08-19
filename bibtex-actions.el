@@ -252,7 +252,7 @@ the following optional arguments:
 'REBUILD-CACHE' if t, forces rebuilding the cache before
 offering the selection candidates"
   (let* ((crm-separator "\\s-*&\\s-*")
-	 (candidates (bibtex-actions--get-candidates rebuild-cache))
+         (candidates (bibtex-actions--get-candidates rebuild-cache))
          (chosen
           (completing-read-multiple
            "References: "
@@ -266,10 +266,11 @@ offering the selection candidates"
            'bibtex-actions-history bibtex-actions-presets nil)))
     (cl-loop for choice in chosen
              ;; Collect citation keys of selected candidate(s).
-             collect (bibtex-actions-get-value
-                      "=key="
-                      (or (assoc choice candidates)
-                          (rassoc choice candidates))))))
+             collect (or (bibtex-actions-get-value
+                          "=key="
+                          (assoc choice candidates))
+             ;; Key is literal coming from embark, just pass it on
+                          choice))))
 
 (defun bibtex-actions-select-files (files)
   "Select file(s) from a list of FILES."
