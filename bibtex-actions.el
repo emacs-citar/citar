@@ -1,4 +1,4 @@
-;;; bibtex-actions.el --- Biblographic commands based on completing-read -*- lexical-binding: t; -*-
+;;; bibtex-actions.el --- Bibliographic commands based on completing-read -*- lexical-binding: t; -*-
 ;;
 ;; Copyright (C) 2021 Bruce D'Arcus
 ;;
@@ -323,7 +323,7 @@ key associated with each one."
   (let* ((main-width (bibtex-actions--format-width (car bibtex-actions-template)))
          (suffix-width (bibtex-actions--format-width (cdr bibtex-actions-template)))
          (symbols-width (string-width (bibtex-actions--symbols-string t t t)))
-         (star-width (- (frame-width) (+ 1 symbols-width main-width suffix-width))))
+         (star-width (- (frame-width) (+ 2 symbols-width main-width suffix-width))))
     (cl-loop for candidate being the hash-values of
              (parsebib-parse files :fields (bibtex-actions--fields-to-parse))
              using (hash-key citekey)
@@ -371,15 +371,18 @@ key associated with each one."
 
 (defun bibtex-actions--affixation (cands)
   "Add affixation prefix to CANDS."
-  (cl-loop
-   for candidate in cands
-   collect
-   (list candidate
-         (bibtex-actions--symbols-string
-          (string-match "has:files" candidate)
-          (string-match "has:note" candidate)
-          (string-match "has:link" candidate) )
-         "")))
+  (let ((width (string-width (bibtex-actions--symbols-string t t t))))
+    (cl-loop
+     for candidate in cands
+     collect
+     (list candidate
+           (truncate-string-to-width
+            (bibtex-actions--symbols-string
+             (string-match "has:files" candidate)
+             (string-match "has:note" candidate)
+             (string-match "has:link" candidate))
+            width 0 ?\s)
+           ""))))
 
 (defun bibtex-actions--symbols-string (has-files has-note has-link)
   "String for display from booleans HAS-FILES HAS-LINK HAS-NOTE."
@@ -392,7 +395,7 @@ key associated with each one."
              (list (thing-string has-files 'file)
                    (thing-string has-note 'note)
                    (thing-string has-link 'link)))
-     "	")))
+     "   ")))
 
 (defvar bibtex-actions--candidates-cache 'uninitialized
   "Store the global candidates list.
