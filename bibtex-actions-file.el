@@ -133,7 +133,8 @@ If you use 'org-roam' and 'org-roam-bibtex, you should use
          (content
           (concat "#+title: Notes on " title "\n")))
     (funcall bibtex-actions-file-open-function file)
-    (insert content)))
+    (unless (file-exists-p file)
+      (insert content))))
 
 (provide 'bibtex-actions-file)
 ;;; bibtex-actions-file.el ends here
