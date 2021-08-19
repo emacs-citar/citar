@@ -114,7 +114,7 @@
 
 (defcustom bibtex-actions-template
   (cons
-   "${author editor:30}   ${date year issued:4}  ${title:48}"
+   "${author editor:30}     ${date year issued:4}     ${title:48}"
    "          ${=key= id:15}    ${=type=:12}    ${tags keywords keywords:*}")
   "Configures formatting for the bibliographic entry.
 car is for the main body of the candidate and cdr is for suffix.
