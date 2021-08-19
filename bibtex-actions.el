@@ -272,7 +272,7 @@ offering the selection candidates"
     (seq-difference local-bib-files bibtex-actions-bibliography)))
 
 (defun bibtex-actions-get-value (fields item)
-  "Return the first non nil biblatex field value for ITEM among FIELDS."
+  "Return the first non nil biblatex field value for ITEM among FIELDS ."
   (cl-flet ((get-value (field) (cdr (assoc-string field item 'case-fold))))
       (get-value (seq-find #'get-value fields))))
 
@@ -456,7 +456,7 @@ are refreshed."
 ;;    https://github.com/tmalsburg/helm-bibtex/pull/367
 
 (defun bibtex-actions--format-width (format-string)
-  "Pre-calculate minimal widths needed by the FORMATS strings for various entry types."
+  "Calculate minimal width needed by the FORMAT-STRING"
   (let ((content-width (apply #'+
                               (seq-map #'string-to-number
                                        (split-string format-string ":"))))
@@ -466,8 +466,8 @@ are refreshed."
 
 (defun bibtex-actions--format-entry (entry width format-string)
   "Formats a BibTeX ENTRY for display in results list.
-WIDTH is the width of the results list, and the display format is governed by
-TEMPLATE."
+WIDTH is the width for the * field, and the display format is governed by
+FORMAT-STRING."
   (s-format
    format-string
    (lambda (raw-field)
