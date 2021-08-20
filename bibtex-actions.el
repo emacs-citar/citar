@@ -123,9 +123,9 @@ The same string is used for display and for search."
     :type  '(cons string string))
 
 (defcustom bibtex-actions-symbols
-  `((file  .  ("⌘" . " "))
+  `((file  .  ("📄" . "  "))
     (note .   ("✎" . " "))
-    (link .   ("🔗" . " ")))
+    (link .   ("🔗" . "  ")))
   "Configuration alist specifying which symbol or icon to pick for a bib entry.
 This leaves room for configurations where the absense of an item
 may be indicated with the same icon but a different face."
@@ -330,7 +330,7 @@ key associated with each one."
              collect
              (let* ((files
                      (when (or (bibtex-actions-get-value
-                                '(bibtex-actions-file-variable) candidate)
+                                (list bibtex-actions-file-variable) candidate)
                                (bibtex-actions-file--files-for-key
                                 citekey bibtex-actions-library-paths bibtex-actions-file-extensions))
                        " has:files"))
@@ -395,7 +395,7 @@ key associated with each one."
              (list (thing-string has-files 'file)
                    (thing-string has-note 'note)
                    (thing-string has-link 'link)))
-     "   ")))
+     "  ")))
 
 (defvar bibtex-actions--candidates-cache 'uninitialized
   "Store the global candidates list.
