@@ -56,10 +56,13 @@ In addition, the following packages are strongly recommended for the best experi
 This is the minimal configuration, and will work with any completing-read compliant vertical completion UI, like Vertico, Selectrum, or the built-in icomplete-vertical, with actions available via =M-x= commands.
 
 #+BEGIN_SRC emacs-lisp
+(use-package bibtex-completion)
+
 (use-package bibtex-actions
   :bind (("C-c b" . bibtex-actions-insert-citation)
          :map minibuffer-local-map
          ("M-b" . bibtex-actions-insert-preset))
+  :after (bibtex-completion)
   :config
   (setq bibtex-actions-bibliography '("~/bib/references.bib"))
 #+END_SRC
@@ -100,7 +103,7 @@ In other supported modes, it will work the same as the embark option above.
 
 #+BEGIN_SRC emacs-lisp
 ;; Set bibliography paths so they are the same.
-(my/bibs '("~/bib/references.bib"))
+(defvar my/bibs '("~/bib/references.bib"))
 
 (use-package oc-bibtex-actions
   :bind (("C-c b" . org-cite-insert)
