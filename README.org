@@ -236,7 +236,7 @@ Although not default, =bibtex-actions= also provides convenience functions for a
 The simplest use of this functionality is
 
 #+BEGIN_SRC emacs-lisp
-(bibtex-actions-filenotify-setup '(LaTeX-mode-hook org-mode-hook))
+(bibtex-actions-file-notify-setup '(LaTeX-mode-hook org-mode-hook))
 #+END_SRC
 
 This will add watches for the global bib files and in addition add a hook to =LaTeX-mode-hook= and =org-mode-hook= to add watches for local bibliographic files.
@@ -244,11 +244,11 @@ By default this will invalidate the cache if a bib file changes. If the bib file
 This can be achieved by
 
 #+BEGIN_SRC emacs-lisp
-(setq bibtex-actions-filenotify-callback 'refresh-cache)
+(setq bibtex-actions-file-notify-callback 'refresh-cache)
 #+END_SRC
 
-The behavior can be tweaked more thoroughly by setting =bibtex-actions-filenotify-callback= to a function. See its documentation for details.
-Watches can be also placed on additional files. This is controlled by the variable =bibtex-actions-filenotify-files=.
+The behavior can be tweaked more thoroughly by setting =bibtex-actions-file-notify-callback= to a function. See its documentation for details.
+Watches can be also placed on additional files. This is controlled by the variable =bibtex-actions-file-notify-files=.
 
 Another option to make the completion interface more seamless is to add a hook which generates the cache after a buffer is opened. This can be done when emacs has been idle (half a second in the example below) with something like this:
 
