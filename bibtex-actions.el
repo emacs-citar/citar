@@ -289,7 +289,7 @@ offering the selection candidates"
   (cdr (assoc-string field item 'case-fold)))
 
 (defun bibtex-actions-has-a-value (fields item)
-  "Retuns the first field that has a value in ITEM among FIELDS ."
+  "Return the first field that has a value in ITEM among FIELDS ."
   (seq-find (lambda (field) (bibtex-actions-get-value field item)) fields))
 
 (defun bibtex-actions-display-value (fields item)
