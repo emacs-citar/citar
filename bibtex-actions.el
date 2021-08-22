@@ -241,11 +241,11 @@ offering the selection candidates"
              ;; Key is literal coming from embark, just pass it on
                           choice))))
 
-(defun bibtex-actions-select-files (files)
+(defun bibtex-actions-select-file (files)
   "Select file(s) from a list of FILES."
   ;; TODO add links to candidates
-  (completing-read-multiple
-   "Files: "
+  (completing-read
+   "Open related resource: "
    (lambda (string predicate action)
      (if (eq action 'metadata)
          `(metadata
@@ -459,7 +459,7 @@ are refreshed."
 ;;    https://github.com/tmalsburg/helm-bibtex/pull/367
 
 (defun bibtex-actions--format-width (format-string)
-  "Calculate minimal width needed by the FORMAT-STRING"
+  "Calculate minimal width needed by the FORMAT-STRING."
   (let ((content-width (apply #'+
                               (seq-map #'string-to-number
                                        (split-string format-string ":"))))
@@ -521,14 +521,21 @@ FORMAT-STRING."
 
 ;;;###autoload
 (defun bibtex-actions-open (keys)
- "Open PDF, or URL or DOI link.
-Opens the PDF(s) associated with the KEYS.  If multiple PDFs are
-found, ask for the one to open using ‘completing-read’.  If no
-PDF is found, try to open a URL or DOI in the browser instead.
-With prefix, rebuild the cache before offering candidates."
+  "Open related resource (link or file) for KEYS."
+  ;; TODO add links
   (interactive (list (bibtex-actions-select-keys
                       :rebuild-cache current-prefix-arg)))
-  (bibtex-completion-open-any keys))
+  (let* ((files
+         (bibtex-actions-file--files-for-multiple-keys
+          keys
+          (append bibtex-actions-library-paths bibtex-actions-notes-paths)
+          bibtex-actions-file-extensions))
+        (resource (completing-read "Related Files: " files)))
+        (cond ((string-search "http" resource 0)
+           (browse-url resource))
+          ((equal (file-name-extension resource) (or "org" "md"))
+           (funcall bibtex-actions-open-file-function resource))
+          (t (bibtex-actions-file-open-external resource)))))
 
 ;;;###autoload
 (defun bibtex-actions-open-library-files (keys)
