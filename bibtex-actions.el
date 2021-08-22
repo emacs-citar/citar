@@ -122,13 +122,28 @@ The same string is used for display and for search."
     :group 'bibtex-actions
     :type  '(cons string string))
 
+(defcustom bibtex-actions-display-transform-functions
+  '((t  . bibtex-completion-clean-string)
+    (("author" "editor") . bibtex-actions-shorten-names))
+  "This variable configures the transformation of field values from raw values
+in bib files to those displayed when using `bibtex-actions-select-keys'.
+All functions that match a particular field are run in order."
+  :group 'bibtex-actions
+  :type '(alist :key-type   (choice (const t) (repeat string))
+                :value-type function))
+
 (defcustom bibtex-actions-symbols
   `((file  .  ("📄" . "  "))
     (note .   ("✎" . " "))
     (link .   ("🔗" . "  ")))
   "Configuration alist specifying which symbol or icon to pick for a bib entry.
 This leaves room for configurations where the absense of an item
-may be indicated with the same icon but a different face."
+may be indicated with the same icon but a different face.
+
+To avoid alignment issues make sure that both the car and cdr of a symbol have
+the same width. In addition, the `string-width' of the symbols should be
+accurate for the font being used. See the documentation of `string-wdith'
+for the caveats."
   :group 'bibtex-actions
   :type '(alist :key-type string
                 :value-type (choice (string :tag "Symbol"))))
@@ -271,10 +286,26 @@ offering the selection candidates"
            (bibtex-completion-find-local-bibliography))))
     (seq-difference local-bib-files bibtex-actions-bibliography)))
 
-(defun bibtex-actions-get-value (fields item)
-  "Return the first non nil biblatex field value for ITEM among FIELDS ."
-  (cl-flet ((get-value (field) (cdr (assoc-string field item 'case-fold))))
-      (get-value (seq-find #'get-value fields))))
+(defun bibtex-actions-get-value (field item)
+  "Return the FIELD value for ITEM."
+  (cdr (assoc-string field item 'case-fold)))
+
+(defun bibtex-actions-has-a-value (fields item)
+  "Retuns the first field that has a value in ITEM among FIELDS ."
+  (seq-find (lambda (field) (bibtex-actions-get-value field item)) fields))
+
+(defun bibtex-actions-display-value (fields item)
+  "Return the first non nil value for ITEM among FIELDS .
+
+The value is transformed using `bibtex-actions-display-transform-functions'"
+  (let ((field (bibtex-actions-has-a-value fields item)))
+    (seq-reduce (lambda (string fun)
+                  (if (or (eq t (car fun))
+                          (member field (car fun)))
+                      (funcall (cdr fun) string)
+                    string))
+                bibtex-actions-display-transform-functions
+                (bibtex-actions-get-value field item))))
 
 (defun bibtex-actions-get-entry (key)
   "Return the cached entry for KEY."
@@ -309,12 +340,10 @@ personal names of the form 'family, given'."
                        (cdr bibtex-actions-template)))))
 
 (defun bibtex-actions--fields-to-parse ()
-  "Determine the fields to parse from the template and field map."
-  (let* ((fields-in-format (bibtex-actions--fields-in-formats))
-         (fields-for-symbols (list "doi" "url" bibtex-actions-file-variable)))
-    (seq-concatenate 'list
-                     fields-in-format
-                     fields-for-symbols)))
+  "Determine the fields to parse from the template."
+  (seq-concatenate 'list
+                   (bibtex-actions--fields-in-formats)
+                   (list "doi" "url" bibtex-actions-file-variable)))
 
 (defun bibtex-actions--format-candidates (files &optional context)
   "Format candidates from FILES, with optional hidden CONTEXT metadata.
@@ -330,7 +359,7 @@ key associated with each one."
              collect
              (let* ((files
                      (when (or (bibtex-actions-get-value
-                                (list bibtex-actions-file-variable) candidate)
+                                bibtex-actions-file-variable candidate)
                                (bibtex-actions-file--files-for-key
                                 citekey bibtex-actions-library-paths bibtex-actions-file-extensions))
                        " has:files"))
@@ -338,7 +367,7 @@ key associated with each one."
                      (when (bibtex-actions-file--files-for-key
                             citekey bibtex-actions-notes-paths bibtex-actions-file-extensions)
                        " has:notes"))
-                    (link (when (bibtex-actions-get-value '("doi" "url") candidate)
+                    (link (when (bibtex-actions-has-a-value '("doi" "url") candidate)
                             "has:link"))
                     (candidate-main
                      (bibtex-actions--format-entry
@@ -483,13 +512,8 @@ FORMAT-STRING."
                                field-width
                              width))
             ;; Make sure we always return a string, even if empty.
-            (field-value (or (bibtex-completion-clean-string
-                              (bibtex-actions-get-value field-names entry))
-                             ""))
-            (formatted-value (if (seq-intersection '("author" "editor") field-names)
-                                 (bibtex-actions-shorten-names field-value)
-                               field-value)))
-       (truncate-string-to-width formatted-value display-width 0 ?\s)))))
+            (display-value (or (bibtex-actions-display-value field-names entry) "")))
+       (truncate-string-to-width display-value display-width 0 ?\s)))))
 
 ;;; At-point functions
 
@@ -577,11 +601,11 @@ With prefix, rebuild the cache before offering candidates."
   (cl-loop for key in keys do
            (let* ((entry (bibtex-actions-get-entry key))
                   (doi
-                   (bibtex-actions-get-value '("doi") entry))
+                   (bibtex-actions-get-value "doi" entry))
                   (doi-url
                    (when doi
                      (concat "https://doi.org/" doi)))
-                  (url (bibtex-actions-get-value '("url") entry))
+                  (url (bibtex-actions-get-value "url" entry))
                   (link (or doi-url url)))
              (if link
                  (browse-url-default-browser link)
