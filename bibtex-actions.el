@@ -133,8 +133,8 @@ All functions that match a particular field are run in order."
                 :value-type function))
 
 (defcustom bibtex-actions-symbols
-  `((file  .  ("📄" . "  "))
-    (note .   ("✎" . " "))
+  `((file  .  ("⌘" . " "))
+    (note .   ("✎ " . " "))
     (link .   ("🔗" . "  ")))
   "Configuration alist specifying which symbol or icon to pick for a bib entry.
 This leaves room for configurations where the absense of an item
@@ -404,14 +404,11 @@ key associated with each one."
     (cl-loop
      for candidate in cands
      collect
-     (list candidate
-           (truncate-string-to-width
-            (bibtex-actions--symbols-string
-             (string-match "has:files" candidate)
-             (string-match "has:note" candidate)
-             (string-match "has:link" candidate))
-            width 0 ?\s)
-           ""))))
+     (let ((candidate-symbols (bibtex-actions--symbols-string
+                               (string-match "has:files" candidate)
+                               (string-match "has:note" candidate)
+                               (string-match "has:link" candidate))))
+       (list candidate candidate-symbols "")))))
 
 (defun bibtex-actions--symbols-string (has-files has-note has-link)
   "String for display from booleans HAS-FILES HAS-LINK HAS-NOTE."
@@ -419,12 +416,19 @@ key associated with each one."
                           (if has-thing
                               (cadr (assoc thing-symbol bibtex-actions-symbols))
                             (cddr (assoc thing-symbol bibtex-actions-symbols)))))
-    (concat
-     (s-join bibtex-actions-symbol-separator
-             (list (thing-string has-files 'file)
-                   (thing-string has-note 'note)
-                   (thing-string has-link 'link)))
-     "  ")))
+    (seq-reduce (lambda (constructed newpart)
+                  (let* ((str (concat constructed newpart
+                                      bibtex-actions-symbol-separator))
+                         (pos (length str)))
+                    (put-text-property (- pos 1) pos 'display
+                                       (cons 'space (list :align-to (string-width str)))
+                                       str)
+                    str))
+                (list (thing-string has-files 'file)
+                      (thing-string has-note 'note)
+                      (thing-string has-link 'link)
+                      "")
+                "")))
 
 (defvar bibtex-actions--candidates-cache 'uninitialized
   "Store the global candidates list.
