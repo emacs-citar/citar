@@ -134,16 +134,14 @@ All functions that match a particular field are run in order."
 
 (defcustom bibtex-actions-symbols
   `((file  .  ("⌘" . " "))
-    (note .   ("✎ " . " "))
+    (note .   ("✎" . " "))
     (link .   ("🔗" . "  ")))
   "Configuration alist specifying which symbol or icon to pick for a bib entry.
 This leaves room for configurations where the absense of an item
 may be indicated with the same icon but a different face.
 
 To avoid alignment issues make sure that both the car and cdr of a symbol have
-the same width. In addition, the `string-width' of the symbols should be
-accurate for the font being used. See the documentation of `string-wdith'
-for the caveats."
+the same width."
   :group 'bibtex-actions
   :type '(alist :key-type string
                 :value-type (choice (string :tag "Symbol"))))
