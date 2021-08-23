@@ -123,7 +123,7 @@ The same string is used for display and for search."
     :type  '(cons string string))
 
 (defcustom bibtex-actions-display-transform-functions
-  '((t  . bibtex-completion-clean-string)
+  '((t  . bibtex-actions-clean-string)
     (("author" "editor") . bibtex-actions-shorten-names))
   "This variable configures the transformation of field values from raw values
 in bib files to those displayed when using `bibtex-actions-select-keys'.
@@ -303,7 +303,14 @@ The value is transformed using `bibtex-actions-display-transform-functions'"
                       (funcall (cdr fun) string)
                     string))
                 bibtex-actions-display-transform-functions
-                (bibtex-actions-get-value field item))))
+            ;; Make sure we always return a string, even if empty.
+                (or (bibtex-actions-get-value field item) ""))))
+
+;; Lifted from bibtex-completion
+(defun bibtex-actions-clean-string (s)
+  "Remove quoting brackets and superfluous whitespace from string S."
+  (replace-regexp-in-string "[\n\t ]+" " "
+         (replace-regexp-in-string "[\"{}]+" "" s)))
 
 (defun bibtex-actions-get-entry (key)
   "Return the cached entry for KEY."
@@ -514,7 +521,7 @@ FORMAT-STRING."
                                field-width
                              width))
             ;; Make sure we always return a string, even if empty.
-            (display-value (or (bibtex-actions-display-value field-names entry) "")))
+            (display-value (bibtex-actions-display-value field-names entry)))
        (truncate-string-to-width display-value display-width 0 ?\s)))))
 
 ;;; At-point functions
