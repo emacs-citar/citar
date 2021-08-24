@@ -587,12 +587,13 @@ FORMAT-STRING."
          (links
           (cl-loop for key in keys collect
                    (bibtex-actions-get-link key)))
-        (resource (completing-read "Related resources: " (append files links))))
-        (cond ((string-search "http" resource 0)
-           (browse-url resource))
-          ((equal (file-name-extension resource) (or "org" "md"))
-           (funcall bibtex-actions-open-file-function resource))
-          (t (bibtex-actions-file-open-external resource)))))
+        (resources (completing-read-multiple "Related resources: " (append files links))))
+    (cl-loop for resource in resources do
+             (cond ((string-search "http" resource 0)
+                    (browse-url resource))
+                   ((equal (file-name-extension resource) (or "org" "md"))
+                    (funcall bibtex-actions-open-file-function resource))
+                   (t (bibtex-actions-file-open-external resource))))))
 
 ;;;###autoload
 (defun bibtex-actions-open-library-files (keys)
