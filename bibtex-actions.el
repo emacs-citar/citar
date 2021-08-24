@@ -505,6 +505,15 @@ are refreshed."
                                                   (lambda (_) "")))))
     (+ content-width whitespace-width)))
 
+(defun bibtex-actions--fit-to-width (value width)
+  "Propertize the string VALUE so that only the WIDTH columns are visible"
+  (let* ((truncated-value (truncate-string-to-width value width 0 ?\s))
+         (display-value (truncate-string-to-width truncated-value width 0 ?\s)))
+    (if (> (string-width value) width)
+        (concat display-value (propertize (substring value (length truncated-value))
+                                          'invisible t))
+      display-value)))
+
 (defun bibtex-actions--format-entry (entry width format-string)
   "Formats a BibTeX ENTRY for display in results list.
 WIDTH is the width for the * field, and the display format is governed by
@@ -522,7 +531,7 @@ FORMAT-STRING."
                              width))
             ;; Make sure we always return a string, even if empty.
             (display-value (bibtex-actions-display-value field-names entry)))
-       (truncate-string-to-width display-value display-width 0 ?\s)))))
+       (bibtex-actions--fit-to-width display-value display-width)))))
 
 ;;; At-point functions
 
