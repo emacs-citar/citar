@@ -123,10 +123,11 @@ The same string is used for display and for search."
     :type  '(cons string string))
 
 (defcustom bibtex-actions-display-transform-functions
+  ;; TODO change this name, as it might be confusing?
   '((t  . bibtex-actions-clean-string)
     (("author" "editor") . bibtex-actions-shorten-names))
-  "This variable configures the transformation of field values from raw values
-in bib files to those displayed when using `bibtex-actions-select-keys'.
+  "Configure transformation of field display values from raw values.
+
 All functions that match a particular field are run in order."
   :group 'bibtex-actions
   :type '(alist :key-type   (choice (const t) (repeat string))
@@ -254,11 +255,11 @@ offering the selection candidates"
              ;; Key is literal coming from embark, just pass it on
                           choice))))
 
-(defun bibtex-actions-select-files (files)
+(defun bibtex-actions-select-file (files)
   "Select file(s) from a list of FILES."
   ;; TODO add links to candidates
-  (completing-read-multiple
-   "Files: "
+  (completing-read
+   "Open related resource: "
    (lambda (string predicate action)
      (if (eq action 'metadata)
          `(metadata
@@ -405,15 +406,14 @@ key associated with each one."
 
 (defun bibtex-actions--affixation (cands)
   "Add affixation prefix to CANDS."
-  (let ((width (string-width (bibtex-actions--symbols-string t t t))))
-    (cl-loop
-     for candidate in cands
-     collect
-     (let ((candidate-symbols (bibtex-actions--symbols-string
-                               (string-match "has:files" candidate)
-                               (string-match "has:note" candidate)
-                               (string-match "has:link" candidate))))
-       (list candidate candidate-symbols "")))))
+  (cl-loop
+   for candidate in cands
+   collect
+   (let ((candidate-symbols (bibtex-actions--symbols-string
+                             (string-match "has:files" candidate)
+                             (string-match "has:note" candidate)
+                             (string-match "has:link" candidate))))
+     (list candidate candidate-symbols ""))))
 
 (defun bibtex-actions--symbols-string (has-files has-note has-link)
   "String for display from booleans HAS-FILES HAS-LINK HAS-NOTE."
@@ -459,6 +459,18 @@ If FORCE-REBUILD-CACHE is t, force reload the cache."
                    bibtex-actions--local-candidates-cache
                    bibtex-actions--candidates-cache))
 
+(defun bibtex-actions-get-link (key)
+  "Return a link for a KEY."
+  (let* ((entry (bibtex-actions-get-entry key))
+         (field (bibtex-actions-has-a-value '(doi pmid pmcid url) entry))
+         (base-url (pcase field
+                     ('doi "https://doi.org/")
+                     ('pmid "https://www.ncbi.nlm.nih.gov/pubmed/")
+                     ('pmcid "https://www.ncbi.nlm.nih.gov/pmc/articles/"))))
+    (if field
+        (concat base-url (bibtex-actions-get-value field entry))
+      (message "No link found for %s" key))))
+
 ;;;###autoload
 (defun bibtex-actions-refresh (&optional force-rebuild-cache scope)
   "Reload the candidates cache.
@@ -497,7 +509,7 @@ are refreshed."
 ;;    https://github.com/tmalsburg/helm-bibtex/pull/367
 
 (defun bibtex-actions--format-width (format-string)
-  "Calculate minimal width needed by the FORMAT-STRING"
+  "Calculate minimal width needed by the FORMAT-STRING."
   (let ((content-width (apply #'+
                               (seq-map #'string-to-number
                                        (split-string format-string ":"))))
@@ -506,7 +518,7 @@ are refreshed."
     (+ content-width whitespace-width)))
 
 (defun bibtex-actions--fit-to-width (value width)
-  "Propertize the string VALUE so that only the WIDTH columns are visible"
+  "Propertize the string VALUE so that only the WIDTH columns are visible."
   (let* ((truncated-value (truncate-string-to-width value width))
          (display-value (truncate-string-to-width truncated-value width 0 ?\s)))
     (if (> (string-width value) width)
@@ -563,14 +575,25 @@ FORMAT-STRING."
 
 ;;;###autoload
 (defun bibtex-actions-open (keys)
- "Open PDF, or URL or DOI link.
-Opens the PDF(s) associated with the KEYS.  If multiple PDFs are
-found, ask for the one to open using ‘completing-read’.  If no
-PDF is found, try to open a URL or DOI in the browser instead.
-With prefix, rebuild the cache before offering candidates."
+  "Open related resource (link or file) for KEYS."
+  ;; TODO add links
   (interactive (list (bibtex-actions-select-keys
                       :rebuild-cache current-prefix-arg)))
-  (bibtex-completion-open-any keys))
+  (let* ((files
+         (bibtex-actions-file--files-for-multiple-keys
+          keys
+          (append bibtex-actions-library-paths bibtex-actions-notes-paths)
+          bibtex-actions-file-extensions))
+         (links
+          (cl-loop for key in keys collect
+                   (bibtex-actions-get-link key)))
+        (resources (completing-read-multiple "Related resources: " (append files links))))
+    (cl-loop for resource in resources do
+             (cond ((string-search "http" resource 0)
+                    (browse-url resource))
+                   ((equal (file-name-extension resource) (or "org" "md"))
+                    (funcall bibtex-actions-open-file-function resource))
+                   (t (bibtex-actions-file-open-external resource))))))
 
 ;;;###autoload
 (defun bibtex-actions-open-library-files (keys)
