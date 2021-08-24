@@ -7,7 +7,6 @@
 ;; Created: August 17, 2021
 ;; Modified: August 17, 2021
 ;; Version: 0.1
-;; Keywords: Symbol’s value as variable is void: finder-known-keywords
 ;; Homepage: https://github.com/bdarcus/bibtex-actions
 ;; Package-Requires: ((emacs "26.3"))
 ;;
@@ -19,7 +18,8 @@
 ;;
 ;;; Code:
 
-(require 'cl-lib)
+(eval-when-compile
+  (require 'cl-lib))
 (require 'seq)
 
 (declare-function bibtex-actions-get-entry "bibtex-actions")
