@@ -129,7 +129,7 @@ If you use 'org-roam' and 'org-roam-bibtex, you should use
           (caar (bibtex-actions-file--files-to-open-or-create
                  (list key)
                  bibtex-actions-notes-paths '("org"))))
-         (title (bibtex-actions-get-value '("title") (bibtex-actions-get-entry key)))
+         (title (bibtex-actions-get-value "title" (bibtex-actions-get-entry key)))
          (content
           (concat "#+title: Notes on " title "\n")))
     (funcall bibtex-actions-file-open-function file)
