@@ -20,6 +20,7 @@
 ;;; Code:
 
 (require 'cl-lib)
+(require 'seq)
 
 (declare-function bibtex-actions-get-entry "bibtex-actions")
 (declare-function bibtex-actions-get-value "bibtex-actions")
