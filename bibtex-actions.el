@@ -507,7 +507,7 @@ are refreshed."
 
 (defun bibtex-actions--fit-to-width (value width)
   "Propertize the string VALUE so that only the WIDTH columns are visible"
-  (let* ((truncated-value (truncate-string-to-width value width 0 ?\s))
+  (let* ((truncated-value (truncate-string-to-width value width))
          (display-value (truncate-string-to-width truncated-value width 0 ?\s)))
     (if (> (string-width value) width)
         (concat display-value (propertize (substring value (length truncated-value))
