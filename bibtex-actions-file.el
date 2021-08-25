@@ -1,13 +1,11 @@
-;;; bibtex-actions-file.el --- file functions for bibtex-actions -*- lexical-binding: t; -*-
+;;; bibtex-actions-file.el --- File functions for bibtex-actions -*- lexical-binding: t; -*-
 ;;
 ;; Copyright (C) 2021 Bruce D'Arcus
 ;;
 ;; Author: Bruce D'Arcus <https://github.com/bdarcus>
 ;; Maintainer: Bruce D'Arcus <bdarcus@gmail.com>
 ;; Created: August 17, 2021
-;; Modified: August 17, 2021
-;; Version: 0.1
-;; Keywords: Symbol’s value as variable is void: finder-known-keywords
+;; Version: 0.4
 ;; Homepage: https://github.com/bdarcus/bibtex-actions
 ;; Package-Requires: ((emacs "26.3"))
 ;;
@@ -19,7 +17,8 @@
 ;;
 ;;; Code:
 
-(require 'cl-lib)
+(eval-when-compile
+  (require 'cl-lib))
 (require 'seq)
 
 (declare-function bibtex-actions-get-entry "bibtex-actions")

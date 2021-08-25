@@ -15,4 +15,4 @@ If you do submit a PR, details:
 
 - Follow the [[https://github.com/bbatsov/emacs-lisp-style-guide][elisp style guide]].
 - If the CI flags any errors or warnings, which it will report on the "files" tab, please fix them.
-- Just by way of explanation, I use =cl-loop= here rather than =mapcar=, because it's slightly more clear to me, and is [[https://nullprogram.com/blog/2017/01/30/][supposedly faster]].
+- For working on lists and such, we primarily use the =seq= functions, and would like to remove the dependence on =s= and =bibtex-completion= in general.

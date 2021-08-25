@@ -36,6 +36,10 @@
 ;;
 ;;; Code:
 
+(eval-when-compile
+  (require 'cl-lib)
+  (require 'subr-x))
+(require 'seq)
 (require 'bibtex-actions-file)
 (require 'bibtex-completion)
 (require 'parsebib)
@@ -249,11 +253,13 @@ offering the selection candidates"
                (complete-with-action action candidates string predicate)))
            nil nil nil
            'bibtex-actions-history bibtex-actions-presets nil)))
-    (cl-loop for choice in chosen
-             ;; Collect citation keys of selected candidate(s).
-             collect (or (cadr (assoc choice candidates))
-             ;; Key is literal coming from embark, just pass it on
-                          choice))))
+    (seq-map
+     (lambda (choice)
+       ;; Collect citation keys of selected candidate(s).
+       (or (cadr (assoc choice candidates))
+           ;; Key is literal coming from embark, just pass it on
+           choice))
+     chosen)))
 
 (defun bibtex-actions-select-file (files)
   "Select file(s) from a list of FILES."
@@ -355,65 +361,70 @@ personal names of the form 'family, given'."
   "Format candidates from FILES, with optional hidden CONTEXT metadata.
 This both propertizes the candidates for display, and grabs the
 key associated with each one."
-  (let* ((main-width (bibtex-actions--format-width (car bibtex-actions-template)))
+  (let* ((candidates ())
+         (raw-candidates
+          (parsebib-parse files :fields (bibtex-actions--fields-to-parse)))
+         (main-width (bibtex-actions--format-width (car bibtex-actions-template)))
          (suffix-width (bibtex-actions--format-width (cdr bibtex-actions-template)))
          (symbols-width (string-width (bibtex-actions--symbols-string t t t)))
          (star-width (- (frame-width) (+ 2 symbols-width main-width suffix-width))))
-    (cl-loop for candidate being the hash-values of
-             (parsebib-parse files :fields (bibtex-actions--fields-to-parse))
-             using (hash-key citekey)
-             collect
-             (let* ((files
-                     (when (or (bibtex-actions-get-value
-                                bibtex-actions-file-variable candidate)
-                               (bibtex-actions-file--files-for-key
-                                citekey bibtex-actions-library-paths bibtex-actions-file-extensions))
-                       " has:files"))
-                    (notes
-                     (when (bibtex-actions-file--files-for-key
-                            citekey bibtex-actions-notes-paths bibtex-actions-file-extensions)
-                       " has:notes"))
-                    (link (when (bibtex-actions-has-a-value '("doi" "url") candidate)
-                            "has:link"))
-                    (candidate-main
-                     (bibtex-actions--format-entry
-                      candidate
-                      star-width
-                      (car bibtex-actions-template)))
-                    (candidate-suffix
-                     (bibtex-actions--format-entry
-                      candidate
-                      star-width
-                      (cdr bibtex-actions-template)))
-                    ;; We display this content already using symbols; here we add back
-                    ;; text to allow it to be searched, and citekey to ensure uniqueness
-                    ;; of the candidate.
-                    (candidate-hidden (s-join " " (list files notes link context citekey))))
-               (cons
-                ;; If we don't trim the trailing whitespace,
-                ;; 'completing-read-multiple' will get confused when there are
-                ;; multiple selected candidates.
-                (s-trim-right
-                 (concat
-                  ;; We need all of these searchable:
-                  ;;   1. the 'candidate-main' variable to be displayed
-                  ;;   2. the 'candidate-suffix' variable to be displayed with a different face
-                  ;;   3. the 'candidate-hidden' variable to be hidden
-                  (propertize candidate-main 'face 'bibtex-actions-highlight) " "
-                  (propertize candidate-suffix 'face 'bibtex-actions) " "
-                  (propertize candidate-hidden 'invisible t)))
-                (cons citekey candidate))))))
+    (maphash
+     (lambda (citekey entry)
+       (let* ((files
+               (when (or (bibtex-actions-get-value
+                          bibtex-actions-file-variable entry)
+                         (bibtex-actions-file--files-for-key
+                          citekey bibtex-actions-library-paths bibtex-actions-file-extensions))
+                 " has:files"))
+              (notes
+               (when (bibtex-actions-file--files-for-key
+                      citekey bibtex-actions-notes-paths bibtex-actions-file-extensions)
+                 " has:notes"))
+              (link (when (bibtex-actions-has-a-value '("doi" "url") entry)
+                      "has:link"))
+              (candidate-main
+               (bibtex-actions--format-entry
+                entry
+                star-width
+                (car bibtex-actions-template)))
+              (candidate-suffix
+               (bibtex-actions--format-entry
+                entry
+                star-width
+                (cdr bibtex-actions-template)))
+              ;; We display this content already using symbols; here we add back
+              ;; text to allow it to be searched, and citekey to ensure uniqueness
+              ;; of the candidate.
+              (candidate-hidden (s-join " " (list files notes link context citekey))))
+         (push
+          (cons
+           ;; If we don't trim the trailing whitespace,
+           ;; 'completing-read-multiple' will get confused when there are
+           ;; multiple selected candidates.
+           (string-trim-right
+            (concat
+             ;; We need all of these searchable:
+             ;;   1. the 'candidate-main' variable to be displayed
+             ;;   2. the 'candidate-suffix' variable to be displayed with a different face
+             ;;   3. the 'candidate-hidden' variable to be hidden
+             (propertize candidate-main 'face 'bibtex-actions-highlight) " "
+             (propertize candidate-suffix 'face 'bibtex-actions) " "
+             (propertize candidate-hidden 'invisible t)))
+           (cons citekey entry))
+          candidates)))
+       raw-candidates)
+    candidates))
 
-(defun bibtex-actions--affixation (cands)
-  "Add affixation prefix to CANDS."
-  (cl-loop
-   for candidate in cands
-   collect
-   (let ((candidate-symbols (bibtex-actions--symbols-string
-                             (string-match "has:files" candidate)
-                             (string-match "has:note" candidate)
-                             (string-match "has:link" candidate))))
-     (list candidate candidate-symbols ""))))
+  (defun bibtex-actions--affixation (cands)
+    "Add affixation prefix to CANDS."
+    (seq-map
+     (lambda (candidate)
+       (let ((candidate-symbols (bibtex-actions--symbols-string
+                                 (string-match "has:files" candidate)
+                                 (string-match "has:note" candidate)
+                                 (string-match "has:link" candidate))))
+         (list candidate candidate-symbols "")))
+     cands))
 
 (defun bibtex-actions--symbols-string (has-files has-note has-link)
   "String for display from booleans HAS-FILES HAS-LINK HAS-NOTE."
@@ -467,9 +478,8 @@ If FORCE-REBUILD-CACHE is t, force reload the cache."
                      ('doi "https://doi.org/")
                      ('pmid "https://www.ncbi.nlm.nih.gov/pubmed/")
                      ('pmcid "https://www.ncbi.nlm.nih.gov/pmc/articles/"))))
-    (if field
-        (concat base-url (bibtex-actions-get-value field entry))
-      (message "No link found for %s" key))))
+    (when field
+      (concat base-url (bibtex-actions-get-value field entry)))))
 
 ;;;###autoload
 (defun bibtex-actions-refresh (&optional force-rebuild-cache scope)
@@ -479,7 +489,7 @@ If called interactively with a prefix or if FORCE-REBUILD-CACHE
 is non-nil, also run the `bibtex-actions-before-refresh-hook' hook.
 
 If SCOPE is `global' only global cache is refreshed, if it is
-`local' only local cache is refreshed. With any other value both
+`local' only local cache is refreshed.  With any other value both
 are refreshed."
   (interactive (list current-prefix-arg nil))
   (when force-rebuild-cache
@@ -585,15 +595,19 @@ FORMAT-STRING."
           (append bibtex-actions-library-paths bibtex-actions-notes-paths)
           bibtex-actions-file-extensions))
          (links
-          (cl-loop for key in keys collect
-                   (bibtex-actions-get-link key)))
-        (resources (completing-read-multiple "Related resources: " (append files links))))
-    (cl-loop for resource in resources do
-             (cond ((string-search "http" resource 0)
-                    (browse-url resource))
-                   ((equal (file-name-extension resource) (or "org" "md"))
-                    (funcall bibtex-actions-open-file-function resource))
-                   (t (bibtex-actions-file-open-external resource))))))
+          (seq-map
+           (lambda (key)
+             (bibtex-actions-get-link key))
+           keys))
+        (resources
+         (completing-read-multiple "Related resources: "
+                                   (append files (remq nil links)))))
+    (dolist (resource resources)
+      (cond ((string-search "http" resource 0)
+             (browse-url resource))
+            ((equal (file-name-extension resource) (or "org" "md"))
+             (funcall bibtex-actions-open-file-function resource))
+            (t (bibtex-actions-file-open-external resource))))))
 
 ;;;###autoload
 (defun bibtex-actions-open-library-files (keys)
@@ -606,10 +620,10 @@ With prefix, rebuild the cache before offering candidates."
          (bibtex-actions-file--files-for-multiple-keys
           keys bibtex-actions-library-paths bibtex-actions-file-extensions)))
     (if files
-        (cl-loop for file in files do
-                 (if bibtex-actions-open-library-file-external
-                     (bibtex-actions-file-open-external file)
-                   (funcall bibtex-actions-file-open-function file)))
+        (dolist (file files)
+          (if bibtex-actions-open-library-file-external
+              (bibtex-actions-file-open-external file)
+            (funcall bibtex-actions-file-open-function file)))
       (message "No file(s) found for %s" keys))))
 
 (make-obsolete 'bibtex-actions-open-pdf
@@ -621,8 +635,8 @@ With prefix, rebuild the cache before offering candidates."
 With prefix, rebuild the cache before offering candidates."
   (interactive (list (bibtex-actions-select-keys
                       :rebuild-cache current-prefix-arg)))
-  (cl-loop for key in keys do
-           (funcall bibtex-actions-file-open-note-function key)))
+  (dolist (key keys)
+    (funcall bibtex-actions-file-open-note-function key)))
 
 ;;;###autoload
 (defun bibtex-actions-open-entry (keys)
@@ -639,18 +653,18 @@ With prefix, rebuild the cache before offering candidates."
   ;;      (browse-url-default-browser "https://google.com")
   (interactive (list (bibtex-actions-select-keys
                       :rebuild-cache current-prefix-arg)))
-  (cl-loop for key in keys do
-           (let* ((entry (bibtex-actions-get-entry key))
-                  (doi
-                   (bibtex-actions-get-value "doi" entry))
-                  (doi-url
-                   (when doi
-                     (concat "https://doi.org/" doi)))
-                  (url (bibtex-actions-get-value "url" entry))
-                  (link (or doi-url url)))
-             (if link
-                 (browse-url-default-browser link)
-               (message "No link found for %s" key)))))
+  (dolist (key keys)
+    (let* ((entry (bibtex-actions-get-entry key))
+           (doi
+            (bibtex-actions-get-value "doi" entry))
+           (doi-url
+            (when doi
+              (concat "https://doi.org/" doi)))
+           (url (bibtex-actions-get-value "url" entry))
+           (link (or doi-url url)))
+      (if link
+          (browse-url-default-browser link)
+        (message "No link found for %s" key)))))
 
 ;;;###autoload
 (defun bibtex-actions-insert-citation (keys)
