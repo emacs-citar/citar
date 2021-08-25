@@ -478,9 +478,8 @@ If FORCE-REBUILD-CACHE is t, force reload the cache."
                      ('doi "https://doi.org/")
                      ('pmid "https://www.ncbi.nlm.nih.gov/pubmed/")
                      ('pmcid "https://www.ncbi.nlm.nih.gov/pmc/articles/"))))
-    (if field
-        (concat base-url (bibtex-actions-get-value field entry))
-      (message "No link found for %s" key))))
+    (when field
+      (concat base-url (bibtex-actions-get-value field entry)))))
 
 ;;;###autoload
 (defun bibtex-actions-refresh (&optional force-rebuild-cache scope)
@@ -600,7 +599,9 @@ FORMAT-STRING."
            (lambda (key)
              (bibtex-actions-get-link key))
            keys))
-        (resources (completing-read-multiple "Related resources: " (append files links))))
+        (resources
+         (completing-read-multiple "Related resources: "
+                                   (append files (remq nil links)))))
     (seq-do
      (lambda (resource)
        (cond ((string-search "http" resource 0)
