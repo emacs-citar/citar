@@ -602,14 +602,12 @@ FORMAT-STRING."
         (resources
          (completing-read-multiple "Related resources: "
                                    (append files (remq nil links)))))
-    (seq-do
-     (lambda (resource)
-       (cond ((string-search "http" resource 0)
-              (browse-url resource))
-             ((equal (file-name-extension resource) (or "org" "md"))
-              (funcall bibtex-actions-open-file-function resource))
-             (t (bibtex-actions-file-open-external resource))))
-     resources)))
+    (dolist (resource resources)
+      (cond ((string-search "http" resource 0)
+             (browse-url resource))
+            ((equal (file-name-extension resource) (or "org" "md"))
+             (funcall bibtex-actions-open-file-function resource))
+            (t (bibtex-actions-file-open-external resource))))))
 
 ;;;###autoload
 (defun bibtex-actions-open-library-files (keys)
@@ -622,12 +620,10 @@ With prefix, rebuild the cache before offering candidates."
          (bibtex-actions-file--files-for-multiple-keys
           keys bibtex-actions-library-paths bibtex-actions-file-extensions)))
     (if files
-        (seq-do
-         (lambda (file)
-           (if bibtex-actions-open-library-file-external
-               (bibtex-actions-file-open-external file)
-             (funcall bibtex-actions-file-open-function file)))
-         files)
+        (dolist (file files)
+          (if bibtex-actions-open-library-file-external
+              (bibtex-actions-file-open-external file)
+            (funcall bibtex-actions-file-open-function file)))
       (message "No file(s) found for %s" keys))))
 
 (make-obsolete 'bibtex-actions-open-pdf
@@ -639,10 +635,8 @@ With prefix, rebuild the cache before offering candidates."
 With prefix, rebuild the cache before offering candidates."
   (interactive (list (bibtex-actions-select-keys
                       :rebuild-cache current-prefix-arg)))
-  (seq-do
-   (lambda (key)
-     (funcall bibtex-actions-file-open-note-function key))
-   keys))
+  (dolist (key keys)
+    (funcall bibtex-actions-file-open-note-function key)))
 
 ;;;###autoload
 (defun bibtex-actions-open-entry (keys)
@@ -659,20 +653,18 @@ With prefix, rebuild the cache before offering candidates."
   ;;      (browse-url-default-browser "https://google.com")
   (interactive (list (bibtex-actions-select-keys
                       :rebuild-cache current-prefix-arg)))
-  (seq-do
-   (lambda (key)
-     (let* ((entry (bibtex-actions-get-entry key))
-            (doi
-             (bibtex-actions-get-value "doi" entry))
-            (doi-url
-             (when doi
-               (concat "https://doi.org/" doi)))
-            (url (bibtex-actions-get-value "url" entry))
-            (link (or doi-url url)))
-       (if link
-           (browse-url-default-browser link)
-         (message "No link found for %s" key))))
-   keys))
+  (dolist (key keys)
+    (let* ((entry (bibtex-actions-get-entry key))
+           (doi
+            (bibtex-actions-get-value "doi" entry))
+           (doi-url
+            (when doi
+              (concat "https://doi.org/" doi)))
+           (url (bibtex-actions-get-value "url" entry))
+           (link (or doi-url url)))
+      (if link
+          (browse-url-default-browser link)
+        (message "No link found for %s" key)))))
 
 ;;;###autoload
 (defun bibtex-actions-insert-citation (keys)

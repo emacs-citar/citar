@@ -187,8 +187,8 @@ This functions adds watches to the files in
 local bib files.  These local watches are removed when the buffer
 closes."
   (bibtex-actions-filenotify-global-watches)
-  (mapc (lambda (mode)
-          (add-hook mode #'bibtex-actions-filenotify-local-watches)) mode-hooks))
+  (dolist (mode mode-hooks)
+    (add-hook mode #'bibtex-actions-filenotify-local-watches)))
 
 (provide 'bibtex-actions-filenotify)
 ;;; bibtex-actions-filenotify.el ends here
