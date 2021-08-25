@@ -1,12 +1,11 @@
-;;; bibtex-actions-filenotify.el --- filenotify functions for bibtex-actions -*- lexical-binding: t; -*-
+;;; bibtex-actions-filenotify.el --- Filenotify functions for bibtex-actions -*- lexical-binding: t; -*-
 ;;
 ;; Copyright (C) 2021 Bruce D'Arcus
 ;;
 ;; Author: Bruce D'Arcus <https://github.com/bdarcus>
 ;; Maintainer: Bruce D'Arcus <bdarcus@gmail.com>
 ;; Created: August 17, 2021
-;; Modified: August 17, 2021
-;; Version: 0.1
+;; Version: 0.4
 ;; Keywords: bib files frames games hardware help
 ;; Homepage: https://github.com/bdarcus/bibtex-actions
 ;; Package-Requires: ((emacs "26.3"))
@@ -14,10 +13,10 @@
 ;; This file is not part of GNU Emacs.
 ;;
 ;;; Commentary:
+;;
 ;; A companion to the bibtex-actions for auto-invalidation and auto-refreshing
 ;; of cache when a bib file or a related file such notes directory or library
-;; changes. Uses filenotify api to acheive this.
-;;
+;; changes.  Uses filenotify api to acheive this.
 ;;
 ;;; Code:
 
@@ -36,12 +35,18 @@
 
 (defcustom bibtex-actions-filenotify-callback 'invalidate-cache
   "The callback that is run when the bibliography related files change.
+
 Its value can be either 'invalidate-cache, 'refresh-cache or else a function.
-The function takes two arguments. The first is the scope, which is `global' when
-the changed file is in `bibtex-actions-filenotify-files' and `local' otherwise.
-The second is the change that occured. This is the argument that the callback of
-`file-notify-add-watch' accepts. This argument must be optional. The callback is
-called without it when `bibtex-actions-filenotify-refresh' is run"
+
+The function takes two arguments.
+
+The first is the scope, which is `global' when the changed file
+is in `bibtex-actions-filenotify-files' and `local' otherwise.
+
+The second is the change that occured.  This is the argument that
+the callback of `file-notify-add-watch' accepts, and is optional.
+The callback is called without it when
+`bibtex-actions-filenotify-refresh' is run"
   :group 'bibtex-actions
   :type '(choice (const invalidate-cache)
                  (const refresh-cache)
@@ -112,8 +117,8 @@ CHANGE refers to the filenotify argument."
   "Hook to add and remove watches on local bib files.
 
 The watches are added only if `bibtex-actions--local-watches' has the
-default value `uninitialized'. This is to ensure that duplicate
-watches aren't added. This means a mode hook containing this
+default value `uninitialized'.  This is to ensure that duplicate
+watches aren't added.  This means a mode hook containing this
 function can run several times without adding duplicate watches."
   (when (eq 'uninitialized bibtex-actions-filenotify--local-watches)
     (bibtex-actions-filenotify--add-local-watches))
@@ -138,7 +143,7 @@ function can run several times without adding duplicate watches."
   "Add watches on the global files in `bibtex-actions-filenotify-files'.
 
 Unlike `bibtex-actions-filenotify-local-watches' these
-watches have to be removed manually. To remove them call
+watches have to be removed manually.  To remove them call
 `bibtex-actions-rm-global-watches'"
   (setq bibtex-actions-filenotify--global-watches
         (seq-map
@@ -179,7 +184,7 @@ This function only needs to be called if a bib file has been added or removed."
 This functions adds watches to the files in
 `bibtex-actions-filenotify-files' and adds a hook to the
 'major-mode' hooks in 'MODE-HOOKS' which adds watches for the
-local bib files. These local watches are removed when the buffer
+local bib files.  These local watches are removed when the buffer
 closes."
   (bibtex-actions-filenotify-global-watches)
   (mapc (lambda (mode)
