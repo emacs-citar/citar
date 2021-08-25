@@ -361,17 +361,16 @@ personal names of the form 'family, given'."
   "Format candidates from FILES, with optional hidden CONTEXT metadata.
 This both propertizes the candidates for display, and grabs the
 key associated with each one."
-  (let* ((candidates
-          (hash-table-values
-           (parsebib-parse files :fields (bibtex-actions--fields-to-parse))))
+  (let* ((candidates ())
+         (raw-candidates
+          (parsebib-parse files :fields (bibtex-actions--fields-to-parse)))
          (main-width (bibtex-actions--format-width (car bibtex-actions-template)))
          (suffix-width (bibtex-actions--format-width (cdr bibtex-actions-template)))
          (symbols-width (string-width (bibtex-actions--symbols-string t t t)))
          (star-width (- (frame-width) (+ 2 symbols-width main-width suffix-width))))
-    (seq-map
-     (lambda (entry)
-       (let* ((citekey (bibtex-actions-get-value "=key=" entry))
-              (files
+    (maphash
+     (lambda (citekey entry)
+       (let* ((files
                (when (or (bibtex-actions-get-value
                           bibtex-actions-file-variable entry)
                          (bibtex-actions-file--files-for-key
@@ -397,21 +396,24 @@ key associated with each one."
               ;; text to allow it to be searched, and citekey to ensure uniqueness
               ;; of the candidate.
               (candidate-hidden (s-join " " (list files notes link context citekey))))
-         (cons
-          ;; If we don't trim the trailing whitespace,
-          ;; 'completing-read-multiple' will get confused when there are
-          ;; multiple selected candidates.
-          (string-trim-right
-           (concat
-            ;; We need all of these searchable:
-            ;;   1. the 'candidate-main' variable to be displayed
-            ;;   2. the 'candidate-suffix' variable to be displayed with a different face
-            ;;   3. the 'candidate-hidden' variable to be hidden
-            (propertize candidate-main 'face 'bibtex-actions-highlight) " "
-            (propertize candidate-suffix 'face 'bibtex-actions) " "
-            (propertize candidate-hidden 'invisible t)))
-          (cons citekey entry))))
-     candidates)))
+         (push
+          (cons
+           ;; If we don't trim the trailing whitespace,
+           ;; 'completing-read-multiple' will get confused when there are
+           ;; multiple selected candidates.
+           (string-trim-right
+            (concat
+             ;; We need all of these searchable:
+             ;;   1. the 'candidate-main' variable to be displayed
+             ;;   2. the 'candidate-suffix' variable to be displayed with a different face
+             ;;   3. the 'candidate-hidden' variable to be hidden
+             (propertize candidate-main 'face 'bibtex-actions-highlight) " "
+             (propertize candidate-suffix 'face 'bibtex-actions) " "
+             (propertize candidate-hidden 'invisible t)))
+           (cons citekey entry))
+          candidates)))
+       raw-candidates)
+    candidates))
 
   (defun bibtex-actions--affixation (cands)
     "Add affixation prefix to CANDS."
