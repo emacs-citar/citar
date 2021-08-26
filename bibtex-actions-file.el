@@ -72,8 +72,14 @@ If you use 'org-roam' and 'org-roam-bibtex, you should use
                 (expand-file-name
                  (concat key "." extension) directory))
               dirs)))
-    (seq-mapcat #'possible-file-names-with-extension
-                extensions)))
+    (let* ((entry (bibtex-actions-get-entry key))
+           (file-field (bibtex-actions-get-value
+                        'bibtex-actions-file-variable entry))
+           (results (seq-mapcat
+                     #'possible-file-names-with-extension
+                     extensions)))
+      (when file-field (push file-field results))
+      results)))
 
 (defun bibtex-actions-file--files-for-key (key dirs extensions)
     "Find files related to KEY in DIRS with extension in EXTENSIONS."
