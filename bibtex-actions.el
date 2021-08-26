@@ -319,13 +319,6 @@ The value is transformed using `bibtex-actions-display-transform-functions'"
   (replace-regexp-in-string "[\n\t ]+" " "
          (replace-regexp-in-string "[\"{}]+" "" s)))
 
-(defun bibtex-actions-get-entry (key)
-  "Return the cached entry for KEY."
-  (cddr (seq-find
-         (lambda (entry)
-           (string-equal key (cadr entry)))
-         (bibtex-actions--get-candidates))))
-
 (defun bibtex-actions-shorten-names (names)
   "Return a list of family names from a list of full NAMES.
 
@@ -455,6 +448,16 @@ has not yet been created")
 (defvar-local bibtex-actions--local-candidates-cache 'uninitialized
   ;; We use defvar-local so can maintain per-buffer candidate caches.
   "Store the local (per-buffer) candidates list.")
+
+(defun bibtex-actions-get-entry (key)
+  "Return the cached entry for KEY."
+  (if (or (eq 'uninitialized bibtex-actions--candidates-cache)
+          (eq 'uninitialized bibtex-actions--local-candidates-cache))
+      (message "Something is wrong; your library is not initialized.")
+    (cddr (seq-find
+           (lambda (entry)
+             (string-equal key (cadr entry)))
+           (bibtex-actions--get-candidates)))))
 
 (defun bibtex-actions--get-candidates (&optional force-rebuild-cache)
   "Get the cached candidates.
