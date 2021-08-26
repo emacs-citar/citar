@@ -20,7 +20,7 @@ jobs:
           - true
         include:
           - emacs_version: snapshot
-            ignore_warnings: false
+            ignore_warnings: true
     steps:
     - uses: actions/checkout@v2
     - uses: purcell/setup-emacs@master

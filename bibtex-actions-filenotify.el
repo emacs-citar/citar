@@ -78,7 +78,7 @@ If it is other than 'global or 'local invalidate both"
   "The callback FUNC by SCOPE used to update cache for default options.
 
 CHANGE refers to the notify argument."
-  ;; FIX pcase instead?
+  ;; FIX pcase instead
   (cl-case (cadr change)
     ((nil changed) (funcall func scope))
     ((created deleted renamed) (if (member (nth 2 change)
@@ -94,6 +94,7 @@ CHANGE refers to the notify argument."
 This callback can be passed to the `file-notify-add-watch'.
 
 CHANGE refers to the filenotify argument."
+  ;; FIX use pcase instead
   (cl-case bibtex-actions-filenotify-callback
     (invalidate-cache (bibtex-actions-filenotify--make-default-callback
                        #'bibtex-actions-filenotify--invalidate-cache scope change))
@@ -133,7 +134,7 @@ function can run several times without adding duplicate watches."
   "Get the list of files to watch from `bibtex-actions-filenotify-files'."
   (seq-mapcat (lambda (x)
                 (bibtex-actions-file--normalize-paths
-                 ;; FIX could this not use pcase?
+                 ;; FIX use pcase instead
                  (cl-case x
                    (bibliography bibtex-actions-bibliography)
                    (library bibtex-actions-library-paths)

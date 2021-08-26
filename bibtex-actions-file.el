@@ -26,6 +26,11 @@
 
 ;;;; File related variables
 
+(defcustom  bibtex-actions-file-variable "file"
+  "The field key to look for in an entry for PDF, etc."
+  :group 'bibtex-actions
+  :type '(string))
+
 (defcustom bibtex-actions-file-open-function 'find-file
   "Function to open a file."
   :group 'bibtex-actions
@@ -72,8 +77,14 @@ If you use 'org-roam' and 'org-roam-bibtex, you should use
                 (expand-file-name
                  (concat key "." extension) directory))
               dirs)))
-    (seq-mapcat #'possible-file-names-with-extension
-                extensions)))
+    (let* ((entry (bibtex-actions-get-entry key))
+           (results (seq-mapcat
+                     #'possible-file-names-with-extension
+                     extensions))
+           (file-field (bibtex-actions-get-value
+                        bibtex-actions-file-variable entry)))
+      (when file-field (push file-field results))
+      results)))
 
 (defun bibtex-actions-file--files-for-key (key dirs extensions)
     "Find files related to KEY in DIRS with extension in EXTENSIONS."

@@ -64,6 +64,7 @@
 (defvar bibtex-actions-file-open-note-function)
 (defvar bibtex-actions-file-extensions)
 (defvar bibtex-actions-file-open-prompt)
+(defvar bibtex-actions-file-variable)
 
 ;;; Variables
 
@@ -98,10 +99,6 @@
   :group 'bibtex-actions
   :type '(repeat path))
 
-(defcustom  bibtex-actions-file-variable "file"
-  "The field key to look for in an entry for PDF, etc."
-  :group 'bibtex-actions
-  :type '(string))
 
 (defcustom bibtex-actions-open-file-function 'find-file
   "Function to use to open files."
