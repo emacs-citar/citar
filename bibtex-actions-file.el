@@ -78,8 +78,12 @@ If you use 'org-roam' and 'org-roam-bibtex, you should use
                  (concat key "." extension) directory))
               dirs)))
     (let* ((entry (bibtex-actions-get-entry key))
-           (file-field (bibtex-actions-get-value
-                        bibtex-actions-file-variable entry))
+           (file-field (concat
+                        "'"
+                        (bibtex-actions-file--normalize-paths
+                         (bibtex-actions-get-value
+                          bibtex-actions-file-variable entry))
+                        "'"))
            (results (seq-mapcat
                      #'possible-file-names-with-extension
                      extensions)))
