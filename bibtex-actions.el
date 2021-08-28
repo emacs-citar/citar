@@ -603,7 +603,7 @@ FORMAT-STRING."
          (completing-read-multiple "Related resources: "
                                    (append files (remq nil links)))))
     (dolist (resource resources)
-      (cond ((string-search "http" resource 0)
+      (cond ((string-match "http" resource 0)
              (browse-url resource))
             ((equal (file-name-extension resource) (or "org" "md"))
              (funcall bibtex-actions-open-file-function resource))
