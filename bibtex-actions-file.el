@@ -81,8 +81,9 @@ If you use 'org-roam' and 'org-roam-bibtex, you should use
            (results (seq-mapcat
                      #'possible-file-names-with-extension
                      extensions))
-           (file-field (bibtex-actions-get-value
-                        bibtex-actions-file-variable entry)))
+           (file-field (expand-file-name
+                        (bibtex-actions-get-value
+                         bibtex-actions-file-variable entry))))
       (when file-field (push file-field results))
       results)))
 
