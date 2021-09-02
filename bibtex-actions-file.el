@@ -50,6 +50,12 @@ If you use 'org-roam' and 'org-roam-bibtex, you should use
   :group 'bibtex-actions
   :type '(function))
 
+(defcustom bibtex-actions-file-parser-function
+  'bibtex-actions-file-parser-default
+  "Function to parse file field."
+  :group 'bibtex-actions
+  :type '(function))
+
 (defcustom bibtex-actions-file-extensions '("pdf" "org" "md")
   "A list of file extensions to recognize for related files."
   :group 'bibtex-actions
@@ -68,6 +74,20 @@ If you use 'org-roam' and 'org-roam-bibtex, you should use
      (mapcar
       (lambda (p) (file-truename p)) file-paths))))
 
+(defun bibtex-actions-file-parser-default (dirs file-field)
+  "Return a list of files from base directories DIRS and FILE-FIELD."
+  (seq-map (lambda (dir) (expand-file-name file-field dir)) dirs))
+
+(defun bibtex-actions-file-parser-zotero (dirs file-field)
+  "Return a list of files from DIRS and a Zotero formatted FILE-FIELD."
+  (let ((files (split-string file-field ";")))
+    (seq-mapcat
+     (lambda (dir)
+       (mapcar
+        (lambda (file)
+          (expand-file-name file dir)) files))
+     dirs)))
+
 (defun bibtex-actions-file--possible-names (key dirs extensions)
   "Possible names for files correponding to KEY with EXTENSIONS in DIRS."
   (cl-flet ((possible-file-names-with-extension
@@ -77,14 +97,14 @@ If you use 'org-roam' and 'org-roam-bibtex, you should use
                 (expand-file-name
                  (concat key "." extension) directory))
               dirs)))
-    (let* ((entry (bibtex-actions-get-entry key))
-           (results (seq-mapcat
-                     #'possible-file-names-with-extension
-                     extensions))
+    (let* ((results-key (seq-mapcat
+                         #'possible-file-names-with-extension
+                         extensions))
+           (entry (bibtex-actions-get-entry key))
            (file-field (bibtex-actions-get-value
-                        bibtex-actions-file-variable entry)))
-      (when file-field (push file-field results))
-      results)))
+                        bibtex-actions-file-variable entry))
+           (results-file (funcall bibtex-actions-file-parser-function dirs file-field)))
+      (append results-key results-file))))
 
 (defun bibtex-actions-file--files-for-key (key dirs extensions)
     "Find files related to KEY in DIRS with extension in EXTENSIONS."
