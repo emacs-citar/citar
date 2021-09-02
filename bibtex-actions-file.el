@@ -20,6 +20,7 @@
 (eval-when-compile
   (require 'cl-lib))
 (require 'seq)
+(require 'org-id)
 
 (declare-function bibtex-actions-get-entry "bibtex-actions")
 (declare-function bibtex-actions-get-value "bibtex-actions")
@@ -45,8 +46,8 @@
   'bibtex-actions-file-open-notes-default
   "Function to open and existing or create a new note.
 
-If you use 'org-roam' and 'org-roam-bibtex, you should use
-'orb-edit-notes' for this value."
+If you use 'org-roam' and 'org-roam-bibtex', for example, you can
+use 'orb-edit-note' for this value."
   :group 'bibtex-actions
   :type '(function))
 
@@ -156,15 +157,17 @@ If you use 'org-roam' and 'org-roam-bibtex, you should use
 
 (defun bibtex-actions-file-open-notes-default (key)
   "Open a note file from KEY."
-  (let* ((file
-          (caar (bibtex-actions-file--files-to-open-or-create
-                 (list key)
-                 bibtex-actions-notes-paths '("org"))))
-         (title (bibtex-actions-get-value "title" (bibtex-actions-get-entry key)))
-         (content
-          (concat "#+title: Notes on " title "\n")))
-    (funcall bibtex-actions-file-open-function file)
-    (unless (file-exists-p file)
+  (if-let* ((file
+             (caar (bibtex-actions-file--files-to-open-or-create
+                    (list key)
+                    bibtex-actions-notes-paths '("org"))))
+            (file-exists (file-exists-p file)))
+      (funcall bibtex-actions-file-open-function file)
+    (let* ((uuid (org-id-new))
+           (title (bibtex-actions-get-value "title" (bibtex-actions-get-entry key)))
+           (content
+            (concat ":PROPERTIES:\n:ID:  " uuid "\n:END:\n#+title: Notes on " title "\n")))
+      (funcall bibtex-actions-file-open-function file)
       (insert content))))
 
 (provide 'bibtex-actions-file)

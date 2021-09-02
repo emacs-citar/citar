@@ -250,10 +250,13 @@ This can be achieved by
 (setq bibtex-actions-filenotify-callback 'refresh-cache)
 #+END_SRC
 
-The behavior can be tweaked more thoroughly by setting =bibtex-actions-filenotify-callback= to a function. See its documentation for details.
-Watches can be also placed on additional files. This is controlled by the variable =bibtex-actions-filenotify-files=.
+The behavior can be tweaked more thoroughly by setting =bibtex-actions-filenotify-callback= to a function.
+See its documentation for details.
+Watches can be also placed on additional files.
+This is controlled by the variable =bibtex-actions-filenotify-files=.
 
-Another option to make the completion interface more seamless is to add a hook which generates the cache after a buffer is opened. This can be done when emacs has been idle (half a second in the example below) with something like this:
+Another option to make the completion interface more seamless is to add a hook which generates the cache after a buffer is opened.
+This can be done when emacs has been idle (half a second in the example below) with something like this:
 
 #+BEGIN_SRC emacs-lisp
 (defun gen-bib-cache-idle ()
@@ -271,7 +274,8 @@ For additional configuration options on this, see [[https://github.com/bdarcus/b
     :CUSTOM_ID: finding-citation-keys-at-point
     :END:
 
-=bibtex-actions-at-point= can find citation keys at point in org-mode buffer, latex-mode buffer, etc. To add support for other major modes or citation syntax, you can write a function (below is an example for =org-cite=) and add it to =bibtex-completion-key-at-point-functions=.
+=bibtex-actions-at-point= can find citation keys at point in org-mode buffer, latex-mode buffer, etc.
+To add support for other major modes or citation syntax, you can write a function (below is an example for =org-cite=) and add it to =bibtex-completion-key-at-point-functions=.
 
 #+begin_src emacs-lisp
 (defun bibtex-actions-get-key-org-cite ()
@@ -284,6 +288,15 @@ For additional configuration options on this, see [[https://github.com/bdarcus/b
       ('citation
        (org-cite-get-references elt t)))))
 #+end_src
+
+** Notes
+
+This package provides a =bibtex-actions-file-open-note-function= variable, and a simple default function.
+To substitute, for example, the org-roam-bibtex =orb-edit-note= function, you can do:
+
+#+BEGIN_SRC emacs-lisp
+(setq bibtex-actions-file-open-note-function 'orb-edit-note)
+#+END_SRC
 
 ** Usage
    :PROPERTIES:
