@@ -105,7 +105,7 @@ use 'orb-edit-note' for this value."
            (file-field (bibtex-actions-get-value
                         bibtex-actions-file-variable entry))
            (results-file
-            (if file-field (funcall bibtex-actions-file-parser-function dirs file-field))))
+            (when file-field (funcall bibtex-actions-file-parser-function dirs file-field))))
       (append results-key results-file))))
 
 (defun bibtex-actions-file--files-for-key (key dirs extensions)
