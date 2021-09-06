@@ -449,13 +449,10 @@ has not yet been created")
 
 (defun bibtex-actions-get-entry (key)
   "Return the cached entry for KEY."
-  (if (or (eq 'uninitialized bibtex-actions--candidates-cache)
-          (eq 'uninitialized bibtex-actions--local-candidates-cache))
-      (message "Something is wrong; your library is not initialized.")
-    (cddr (seq-find
-           (lambda (entry)
-             (string-equal key (cadr entry)))
-           (bibtex-actions--get-candidates)))))
+  (cddr (seq-find
+         (lambda (entry)
+           (string-equal key (cadr entry)))
+         (bibtex-actions--get-candidates))))
 
 (defun bibtex-actions-get-template (template-name)
   "Return template string for TEMPLATE-NAME."
@@ -467,10 +464,10 @@ If the cache is unintialized, this will load the cache.
 If FORCE-REBUILD-CACHE is t, force reload the cache."
   (if force-rebuild-cache
       (bibtex-actions-refresh force-rebuild-cache)
-      (when (eq 'uninitialized bibtex-actions--candidates-cache)
-        (bibtex-actions-refresh nil 'global))
-      (when (eq 'uninitialized bibtex-actions--local-candidates-cache)
-        (bibtex-actions-refresh nil 'local)))
+    (when (eq 'uninitialized bibtex-actions--candidates-cache)
+      (bibtex-actions-refresh nil 'global))
+    (when (eq 'uninitialized bibtex-actions--local-candidates-cache)
+      (bibtex-actions-refresh nil 'local)))
   (seq-concatenate 'list
                    bibtex-actions--local-candidates-cache
                    bibtex-actions--candidates-cache))

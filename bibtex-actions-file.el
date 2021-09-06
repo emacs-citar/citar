@@ -45,7 +45,7 @@
   :type '(boolean))
 
 (defcustom bibtex-actions-file-open-note-function
-  'bibtex-actions-file-open-notes-default
+  'bibtex-actions-file-open-notes-default-org
   "Function to open and existing or create a new note.
 
 If you use 'org-roam' and 'org-roam-bibtex', for example, you can
@@ -158,7 +158,7 @@ use 'orb-edit-note' for this value."
                   nil 0 nil
                   file)))
 
-(defun bibtex-actions-file-open-notes-default (key)
+(defun bibtex-actions-file-open-notes-default-org (key)
   "Open a note file from KEY."
   (if-let* ((file
              (caar (bibtex-actions-file--files-to-open-or-create
@@ -168,12 +168,12 @@ use 'orb-edit-note' for this value."
       (funcall bibtex-actions-file-open-function file)
     (let* ((uuid (org-id-new))
            (entry (bibtex-actions-get-entry key))
-           (note-title
+           (note-meta
             (bibtex-actions--format-entry-no-widths
              entry
              (bibtex-actions-get-template 'note)))
            (content
-            (concat ":PROPERTIES:\n:ID:  " uuid "\n:END:\n" note-title "\n")))
+            (concat ":PROPERTIES:\n:ID:  " uuid "\n:END:\n" note-meta "\n")))
       (funcall bibtex-actions-file-open-function file)
       (insert content))))
 
