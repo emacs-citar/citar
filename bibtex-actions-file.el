@@ -24,6 +24,8 @@
 
 (declare-function bibtex-actions-get-entry "bibtex-actions")
 (declare-function bibtex-actions-get-value "bibtex-actions")
+(declare-function bibtex-actions-get-template "bibtex-actions")
+(declare-function bibtex-actions--format-entry-no-widths "bibtex-actions")
 
 ;;;; File related variables
 
@@ -165,9 +167,13 @@ use 'orb-edit-note' for this value."
             (file-exists (file-exists-p file)))
       (funcall bibtex-actions-file-open-function file)
     (let* ((uuid (org-id-new))
-           (title (bibtex-actions-get-value "title" (bibtex-actions-get-entry key)))
+           (entry (bibtex-actions-get-entry key))
+           (note-title
+            (bibtex-actions--format-entry-no-widths
+             entry
+             (bibtex-actions-get-template 'note)))
            (content
-            (concat ":PROPERTIES:\n:ID:  " uuid "\n:END:\n#+title: Notes on " title "\n")))
+            (concat ":PROPERTIES:\n:ID:  " uuid "\n:END:\n" note-title "\n")))
       (funcall bibtex-actions-file-open-function file)
       (insert content))))
 

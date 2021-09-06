@@ -116,7 +116,7 @@
 (defcustom bibtex-actions-templates
   '((main . "${author editor:30}     ${date year issued:4}     ${title:48}")
     (suffix . "          ${=key= id:15}    ${=type=:12}    ${tags keywords keywords:*}")
-    (note . "Notes on ${author editor}, ${title}"))
+    (note . "#+title: Notes on ${author editor}, ${title}"))
   "Configures formatting for the bibliographic entry.
 
 The main and suffix templates are for candidate display, and note
