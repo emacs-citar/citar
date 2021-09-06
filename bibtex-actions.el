@@ -114,14 +114,15 @@
 
 
 (defcustom bibtex-actions-template
-  (cons
-   "${author editor:30}     ${date year issued:4}     ${title:48}"
-   "          ${=key= id:15}    ${=type=:12}    ${tags keywords keywords:*}")
+  '((main . "${author editor:30}     ${date year issued:4}     ${title:48}")
+    (suffix . "          ${=key= id:15}    ${=type=:12}    ${tags keywords keywords:*}")
+    (note . "Notes on ${author editor}, ${title}"))
   "Configures formatting for the bibliographic entry.
-car is for the main body of the candidate and cdr is for suffix.
-The same string is used for display and for search."
+
+The main and suffix templates are for candidate display, and note
+for the title field for new notes."
     :group 'bibtex-actions
-    :type  '(cons string string))
+    :type  '(alist :key-type string))
 
 (defcustom bibtex-actions-display-transform-functions
   ;; TODO change this name, as it might be confusing?
