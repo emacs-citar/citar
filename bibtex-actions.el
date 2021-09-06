@@ -113,7 +113,7 @@
   :type '(boolean))
 
 
-(defcustom bibtex-actions-template
+(defcustom bibtex-actions-templates
   '((main . "${author editor:30}     ${date year issued:4}     ${title:48}")
     (suffix . "          ${=key= id:15}    ${=type=:12}    ${tags keywords keywords:*}")
     (note . "Notes on ${author editor}, ${title}"))
@@ -339,8 +339,8 @@ personal names of the form 'family, given'."
                         (lambda (fields-string) (car (split-string fields-string ":"))))
              "[ ]+")))
      (seq-mapcat #'fields-for-format
-                 (list (car bibtex-actions-template)
-                       (cdr bibtex-actions-template)))))
+                 (list (bibtex-actions-get-template 'main)
+                       (bibtex-actions-get-template 'suffix)))))
 
 (defun bibtex-actions--fields-to-parse ()
   "Determine the fields to parse from the template."
@@ -355,8 +355,8 @@ key associated with each one."
   (let* ((candidates ())
          (raw-candidates
           (parsebib-parse files :fields (bibtex-actions--fields-to-parse)))
-         (main-width (bibtex-actions--format-width (car bibtex-actions-template)))
-         (suffix-width (bibtex-actions--format-width (cdr bibtex-actions-template)))
+         (main-width (bibtex-actions--format-width (bibtex-actions-get-template 'main)))
+         (suffix-width (bibtex-actions--format-width (bibtex-actions-get-template 'suffix)))
          (symbols-width (string-width (bibtex-actions--symbols-string t t t)))
          (star-width (- (frame-width) (+ 2 symbols-width main-width suffix-width))))
     (maphash
@@ -377,12 +377,12 @@ key associated with each one."
                (bibtex-actions--format-entry
                 entry
                 star-width
-                (car bibtex-actions-template)))
+                (bibtex-actions-get-template 'main)))
               (candidate-suffix
                (bibtex-actions--format-entry
                 entry
                 star-width
-                (cdr bibtex-actions-template)))
+                (bibtex-actions-get-template 'suffix)))
               ;; We display this content already using symbols; here we add back
               ;; text to allow it to be searched, and citekey to ensure uniqueness
               ;; of the candidate.
@@ -456,6 +456,10 @@ has not yet been created")
            (lambda (entry)
              (string-equal key (cadr entry)))
            (bibtex-actions--get-candidates)))))
+
+(defun bibtex-actions-get-template (template-name)
+  "Return template string for TEMPLATE-NAME."
+  (cdr (assoc template-name bibtex-actions-templates)))
 
 (defun bibtex-actions--get-candidates (&optional force-rebuild-cache)
   "Get the cached candidates.
