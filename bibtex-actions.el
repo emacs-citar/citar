@@ -555,6 +555,14 @@ FORMAT-STRING."
             (display-value (bibtex-actions-display-value field-names entry)))
        (bibtex-actions--fit-to-width display-value display-width)))))
 
+(defun bibtex-actions--format-entry-no-widths (entry format-string)
+  "Format ENTRY for display per FORMAT-STRING."
+  (s-format
+   format-string
+   (lambda (raw-field)
+     (let ((field-names (split-string raw-field "[ ]+")))
+       (bibtex-actions-display-value field-names entry)))))
+
 ;;; At-point functions
 
 ;;; Org-cite
