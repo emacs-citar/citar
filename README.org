@@ -141,16 +141,6 @@ If you prefer to use a hydra-based in-buffer interface, you can also use that pr
 (setq org-cite-activate-processor 'org-ref-cite-follow)
 #+END_SRC
 
-** Test Script
-    :PROPERTIES:
-    :CUSTOM_ID: test-script
-    :END:
-
-The repository =test= directory also includes a script you can use to run this and associated packages in the =emacs -Q= sandbox.
-To do that, simply run =./run.sh= from the =test= directory.
-By default, this will use selectrum as the completion system.
-If you would like to try vertico instead, just do =M-x vertico-mode=.
-
 ** Rich UI
     :PROPERTIES:
     :CUSTOM_ID: rich-ui
@@ -168,17 +158,26 @@ For the prefix, you can filter for associated PDFs or notes using =has:pdf= or =
 #+CAPTION: UI sections
 [[file:images/ui-segments.png]]
 
-You can configure both of the last two similar as you do with bibtex-completion.
+*** Templates
+
+The =bibtex-actions-templates= variable configures formatting for these sections, as well as the default note function.
+Here's the defaults:
 
 #+BEGIN_SRC emacs-lisp
-  (setq bibtex-actions-template '((t . " ${title:*}")))
-  (setq bibtex-actions-template-suffix '((t . "          ${=key=:15}")))
+(setq bibtex-actions-templates
+      '((main . "${author editor:30}     ${date year issued:4}     ${title:48}")
+        (suffix . "          ${=key= id:15}    ${=type=:12}    ${tags keywords:*}")
+        (note . "#+title: Notes on ${author editor}, ${title}")))
 #+END_SRC
 
 Note:
 
-1. the asterisk signals to the formatter to use available space for the column: you should only use this on one field total, across the two templates, for the formatting to work correctly.
-2. the inclusion of CSL-JSON support is currently experimental, and relies on =bibtex-actions-field-map= variable to map among the different supported formats, and is subject to change.
+1. You may include multiple variables in a field; the formatter will print the first one it finds.
+2. If you plan to use CSL JSON at all, you can and should include CSL JSON variables names where appropriate as such options. The default main template dates field demonstrates this.
+3. The asterisk signals to the formatter to use available space for the column.
+4. The note template does not take widths, as formatting is inline there rather than columnar.
+
+*** Icons
 
 By default, this UI is plain text, but you can configure it to use icons instead.
 
@@ -203,6 +202,16 @@ Here's how to configure it to use =all-the-icons=:
        "Face for obscuring/dimming icons"
        :group 'all-the-icons-faces)
 #+END_SRC
+
+** Test Script
+    :PROPERTIES:
+    :CUSTOM_ID: test-script
+    :END:
+
+The repository =test= directory also includes a script you can use to run this and associated packages in the =emacs -Q= sandbox.
+To do that, simply run =./run.sh= from the =test= directory.
+By default, this will use selectrum as the completion system.
+If you would like to try vertico instead, just do =M-x vertico-mode=.
 
 ** History and predefined searches
     :PROPERTIES:

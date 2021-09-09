@@ -113,15 +113,16 @@
   :type '(boolean))
 
 
-(defcustom bibtex-actions-template
-  (cons
-   "${author editor:30}     ${date year issued:4}     ${title:48}"
-   "          ${=key= id:15}    ${=type=:12}    ${tags keywords keywords:*}")
+(defcustom bibtex-actions-templates
+  '((main . "${author editor:30}     ${date year issued:4}     ${title:48}")
+    (suffix . "          ${=key= id:15}    ${=type=:12}    ${tags keywords keywords:*}")
+    (note . "#+title: Notes on ${author editor}, ${title}"))
   "Configures formatting for the bibliographic entry.
-car is for the main body of the candidate and cdr is for suffix.
-The same string is used for display and for search."
+
+The main and suffix templates are for candidate display, and note
+for the title field for new notes."
     :group 'bibtex-actions
-    :type  '(cons string string))
+    :type  '(alist :key-type string))
 
 (defcustom bibtex-actions-display-transform-functions
   ;; TODO change this name, as it might be confusing?
@@ -333,19 +334,22 @@ personal names of the form 'family, given'."
   "Find the fields to mentioned in the templates."
   (cl-flet ((fields-for-format
              (format-string)
-             (split-string
+             (remq
+              ;; FIX need to add this to remove emptry string. Why?
+              "" (split-string
               (s-format format-string
                         (lambda (fields-string) (car (split-string fields-string ":"))))
-             "[ ]+")))
+             "[ ]+"))))
      (seq-mapcat #'fields-for-format
-                 (list (car bibtex-actions-template)
-                       (cdr bibtex-actions-template)))))
+                 (list (bibtex-actions-get-template 'main)
+                       (bibtex-actions-get-template 'suffix)))))
 
 (defun bibtex-actions--fields-to-parse ()
   "Determine the fields to parse from the template."
-  (seq-concatenate 'list
-                   (bibtex-actions--fields-in-formats)
-                   (list "doi" "url" bibtex-actions-file-variable)))
+  (seq-concatenate
+   'list
+   (bibtex-actions--fields-in-formats)
+   (list "doi" "url" bibtex-actions-file-variable)))
 
 (defun bibtex-actions--format-candidates (files &optional context)
   "Format candidates from FILES, with optional hidden CONTEXT metadata.
@@ -354,8 +358,8 @@ key associated with each one."
   (let* ((candidates ())
          (raw-candidates
           (parsebib-parse files :fields (bibtex-actions--fields-to-parse)))
-         (main-width (bibtex-actions--format-width (car bibtex-actions-template)))
-         (suffix-width (bibtex-actions--format-width (cdr bibtex-actions-template)))
+         (main-width (bibtex-actions--format-width (bibtex-actions-get-template 'main)))
+         (suffix-width (bibtex-actions--format-width (bibtex-actions-get-template 'suffix)))
          (symbols-width (string-width (bibtex-actions--symbols-string t t t)))
          (star-width (- (frame-width) (+ 2 symbols-width main-width suffix-width))))
     (maphash
@@ -376,16 +380,16 @@ key associated with each one."
                (bibtex-actions--format-entry
                 entry
                 star-width
-                (car bibtex-actions-template)))
+                (bibtex-actions-get-template 'main)))
               (candidate-suffix
                (bibtex-actions--format-entry
                 entry
                 star-width
-                (cdr bibtex-actions-template)))
+                (bibtex-actions-get-template 'suffix)))
               ;; We display this content already using symbols; here we add back
               ;; text to allow it to be searched, and citekey to ensure uniqueness
               ;; of the candidate.
-              (candidate-hidden (s-join " " (list files notes link context citekey))))
+              (candidate-hidden (string-join (list files notes link context citekey) " ")))
          (push
           (cons
            ;; If we don't trim the trailing whitespace,
@@ -448,13 +452,19 @@ has not yet been created")
 
 (defun bibtex-actions-get-entry (key)
   "Return the cached entry for KEY."
-  (if (or (eq 'uninitialized bibtex-actions--candidates-cache)
-          (eq 'uninitialized bibtex-actions--local-candidates-cache))
+  ;; FIX without this check, get a hard recursion error.
+  ;; But I don't think this should be needed.
+  (if (and (eq 'uninitialized bibtex-actions--candidates-cache)
+           (eq 'uninitialized bibtex-actions--local-candidates-cache))
       (message "Something is wrong; your library is not initialized.")
     (cddr (seq-find
            (lambda (entry)
              (string-equal key (cadr entry)))
            (bibtex-actions--get-candidates)))))
+
+(defun bibtex-actions-get-template (template-name)
+  "Return template string for TEMPLATE-NAME."
+  (cdr (assoc template-name bibtex-actions-templates)))
 
 (defun bibtex-actions--get-candidates (&optional force-rebuild-cache)
   "Get the cached candidates.
@@ -462,10 +472,10 @@ If the cache is unintialized, this will load the cache.
 If FORCE-REBUILD-CACHE is t, force reload the cache."
   (if force-rebuild-cache
       (bibtex-actions-refresh force-rebuild-cache)
-      (when (eq 'uninitialized bibtex-actions--candidates-cache)
-        (bibtex-actions-refresh nil 'global))
-      (when (eq 'uninitialized bibtex-actions--local-candidates-cache)
-        (bibtex-actions-refresh nil 'local)))
+    (when (eq 'uninitialized bibtex-actions--candidates-cache)
+      (bibtex-actions-refresh nil 'global))
+    (when (eq 'uninitialized bibtex-actions--local-candidates-cache)
+      (bibtex-actions-refresh nil 'local)))
   (seq-concatenate 'list
                    bibtex-actions--local-candidates-cache
                    bibtex-actions--candidates-cache))
@@ -554,6 +564,14 @@ FORMAT-STRING."
             ;; Make sure we always return a string, even if empty.
             (display-value (bibtex-actions-display-value field-names entry)))
        (bibtex-actions--fit-to-width display-value display-width)))))
+
+(defun bibtex-actions--format-entry-no-widths (entry format-string)
+  "Format ENTRY for display per FORMAT-STRING."
+  (s-format
+   format-string
+   (lambda (raw-field)
+     (let ((field-names (split-string raw-field "[ ]+")))
+       (bibtex-actions-display-value field-names entry)))))
 
 ;;; At-point functions
 
