@@ -334,19 +334,22 @@ personal names of the form 'family, given'."
   "Find the fields to mentioned in the templates."
   (cl-flet ((fields-for-format
              (format-string)
-             (split-string
+             (remq
+              ;; FIX need to add this to remove emptry string. Why?
+              "" (split-string
               (s-format format-string
                         (lambda (fields-string) (car (split-string fields-string ":"))))
-             "[ ]+")))
+             "[ ]+"))))
      (seq-mapcat #'fields-for-format
                  (list (bibtex-actions-get-template 'main)
                        (bibtex-actions-get-template 'suffix)))))
 
 (defun bibtex-actions--fields-to-parse ()
   "Determine the fields to parse from the template."
-  (seq-concatenate 'list
-                   (bibtex-actions--fields-in-formats)
-                   (list "doi" "url" bibtex-actions-file-variable)))
+  (seq-concatenate
+   'list
+   (bibtex-actions--fields-in-formats)
+   (list "doi" "url" bibtex-actions-file-variable)))
 
 (defun bibtex-actions--format-candidates (files &optional context)
   "Format candidates from FILES, with optional hidden CONTEXT metadata.
@@ -386,7 +389,7 @@ key associated with each one."
               ;; We display this content already using symbols; here we add back
               ;; text to allow it to be searched, and citekey to ensure uniqueness
               ;; of the candidate.
-              (candidate-hidden (s-join " " (list files notes link context citekey))))
+              (candidate-hidden (string-join (list files notes link context citekey) " ")))
          (push
           (cons
            ;; If we don't trim the trailing whitespace,
@@ -449,10 +452,15 @@ has not yet been created")
 
 (defun bibtex-actions-get-entry (key)
   "Return the cached entry for KEY."
-  (cddr (seq-find
-         (lambda (entry)
-           (string-equal key (cadr entry)))
-         (bibtex-actions--get-candidates))))
+  ;; FIX without this check, get a hard recursion error.
+  ;; But I don't think this should be needed.
+  (if (and (eq 'uninitialized bibtex-actions--candidates-cache)
+           (eq 'uninitialized bibtex-actions--local-candidates-cache))
+      (message "Something is wrong; your library is not initialized.")
+    (cddr (seq-find
+           (lambda (entry)
+             (string-equal key (cadr entry)))
+           (bibtex-actions--get-candidates)))))
 
 (defun bibtex-actions-get-template (template-name)
   "Return template string for TEMPLATE-NAME."
