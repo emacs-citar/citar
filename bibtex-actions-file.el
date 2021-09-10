@@ -175,6 +175,8 @@ use 'orb-edit-note' for this value."
            (content
             (concat ":PROPERTIES:\n:ID:  " uuid "\n:END:\n" note-meta "\n")))
       (funcall bibtex-actions-file-open-function file)
+      ;; This just overrides other template insertion.
+      (erase-buffer)
       (insert content))))
 
 (provide 'bibtex-actions-file)
