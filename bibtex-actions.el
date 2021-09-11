@@ -231,13 +231,15 @@ and nil means no action."
 ;;; Completion functions
 
 (cl-defun bibtex-actions-select-keys (&optional &key rebuild-cache)
-  "Read bibliographic entries for completing citekeys.
+  "Read bibliographic entries for completing bibliographic entries.
 
 This provides a wrapper around 'completing-read-multiple', with
 the following optional arguments:
 
 'REBUILD-CACHE' if t, forces rebuilding the cache before
-offering the selection candidates"
+offering the selection candidates.
+
+It returns an alist of key-entry, where the entry is a field-value alist."
   (let* ((crm-separator "\\s-*&\\s-*")
          (candidates (bibtex-actions--get-candidates rebuild-cache))
          (chosen
@@ -254,7 +256,7 @@ offering the selection candidates"
     (seq-map
      (lambda (choice)
        ;; Collect citation keys of selected candidate(s).
-       (or (cadr (assoc choice candidates))
+       (or (cdr (assoc choice candidates))
            ;; Key is literal coming from embark, just pass it on
            choice))
      chosen)))
@@ -490,16 +492,9 @@ If FORCE-REBUILD-CACHE is t, force reload the cache."
                    bibtex-actions--local-candidates-cache
                    bibtex-actions--candidates-cache))
 
-(defun bibtex-actions-get-entry (key)
-  "Return the cached entry for KEY."
-  (cddr (seq-find
-         (lambda (entry)
-           (string-equal key (cadr entry)))
-         (bibtex-actions--get-candidates))))
-
 (defun bibtex-actions-get-link (key)
   "Return a link for a KEY."
-  (let* ((entry (bibtex-actions-get-entry key))
+  (let* ((entry (cdr key))
          (field (bibtex-actions-has-a-value '(doi pmid pmcid url) entry))
          (base-url (pcase field
                      ('doi "https://doi.org/")
@@ -519,9 +514,6 @@ If FORCE-REBUILD-CACHE is t, force reload the cache."
     (insert search)))
 
 ;;; Formatting functions
-;;  NOTE this section will be removed, or dramatically simplified, if and
-;;  when this PR is merged:
-;;    https://github.com/tmalsburg/helm-bibtex/pull/367
 
 (defun bibtex-actions--format-width (format-string)
   "Calculate minimal width needed by the FORMAT-STRING."
@@ -597,21 +589,21 @@ FORMAT-STRING."
 ;;; Commands
 
 ;;;###autoload
-(defun bibtex-actions-open (keys)
-  "Open related resource (link or file) for KEYS."
+(defun bibtex-actions-open (keys-entries)
+  "Open related resource (link or file) for KEYS-ENTRIES."
   ;; TODO add links
   (interactive (list (bibtex-actions-select-keys
                       :rebuild-cache current-prefix-arg)))
   (let* ((files
          (bibtex-actions-file--files-for-multiple-keys
-          keys
+          (car keys-entries)
           (append bibtex-actions-library-paths bibtex-actions-notes-paths)
           bibtex-actions-file-extensions))
          (links
           (seq-map
            (lambda (key)
-             (bibtex-actions-get-link key))
-           keys))
+             (bibtex-actions-get-link (cdr key)))
+           keys-entries))
         (resources
          (completing-read-multiple "Related resources: "
                                    (append files (remq nil links)))))
@@ -623,118 +615,136 @@ FORMAT-STRING."
             (t (bibtex-actions-file-open-external resource))))))
 
 ;;;###autoload
-(defun bibtex-actions-open-library-files (keys)
- "Open library files associated with the KEYS.
+(defun bibtex-actions-open-library-files (keys-entries)
+ "Open library files associated with the KEYS-ENTRIES.
 
 With prefix, rebuild the cache before offering candidates."
   (interactive (list (bibtex-actions-select-keys
                       :rebuild-cache current-prefix-arg)))
   (let ((files
          (bibtex-actions-file--files-for-multiple-keys
-          keys bibtex-actions-library-paths bibtex-actions-file-extensions)))
+          keys-entries
+          bibtex-actions-library-paths bibtex-actions-file-extensions)))
     (if files
         (dolist (file files)
           (if bibtex-actions-open-library-file-external
               (bibtex-actions-file-open-external file)
             (funcall bibtex-actions-file-open-function file)))
-      (message "No file(s) found for %s" keys))))
+      (message "No file(s) found for %s"
+               (bibtex-actions--extract-keys keys-entries)))))
 
 (make-obsolete 'bibtex-actions-open-pdf
                'bibtex-actions-open-library-files "1.0")
 
 ;;;###autoload
-(defun bibtex-actions-open-notes (keys)
-  "Open notes associated with the KEYS.
+(defun bibtex-actions-open-notes (keys-entries)
+  "Open notes associated with the KEYS-ENTRIES.
 With prefix, rebuild the cache before offering candidates."
   (interactive (list (bibtex-actions-select-keys
                       :rebuild-cache current-prefix-arg)))
-  (dolist (key keys)
-    (funcall bibtex-actions-file-open-note-function key)))
+  (dolist (key-entry keys-entries)
+    ;; REVIEW doing this means the function won't be compatible with, for
+    ;; example, 'orb-edit-note'.
+    (funcall bibtex-actions-file-open-note-function key-entry)))
 
 ;;;###autoload
-(defun bibtex-actions-open-entry (keys)
-  "Open bibliographic entry associated with the KEYS.
+(defun bibtex-actions-open-entry (keys-entries)
+  "Open bibliographic entry associated with the KEYS-ENTRIES.
 With prefix, rebuild the cache before offering candidates."
   (interactive (list (bibtex-actions-select-keys
                       :rebuild-cache current-prefix-arg)))
- (bibtex-completion-show-entry keys))
+ (bibtex-completion-show-entry (caar keys-entries)))
 
 ;;;###autoload
-(defun bibtex-actions-open-link (keys)
-  "Open URL or DOI link associated with the KEYS in a browser.
+(defun bibtex-actions-open-link (keys-entries)
+  "Open URL or DOI link associated with the KEYS-ENTRIES in a browser.
+
 With prefix, rebuild the cache before offering candidates."
   ;;      (browse-url-default-browser "https://google.com")
   (interactive (list (bibtex-actions-select-keys
                       :rebuild-cache current-prefix-arg)))
-  (dolist (key keys)
-    (let* ((entry (bibtex-actions-get-entry key))
-           (doi
-            (bibtex-actions-get-value "doi" entry))
+  (dolist (key-entry keys-entries)
+    (let* ((doi
+            (bibtex-actions-get-value "doi" (cdr key-entry)))
            (doi-url
             (when doi
               (concat "https://doi.org/" doi)))
-           (url (bibtex-actions-get-value "url" entry))
+           (url (bibtex-actions-get-value "url" (cdr key-entry)))
            (link (or doi-url url)))
       (if link
           (browse-url-default-browser link)
-        (message "No link found for %s" key)))))
+        (message "No link found for %s" key-entry)))))
 
 ;;;###autoload
-(defun bibtex-actions-insert-citation (keys)
-  "Insert citation for the KEYS.
+(defun bibtex-actions-insert-citation (keys-entries)
+  "Insert citation for the KEYS-ENTRIES.
 With prefix, rebuild the cache before offering candidates."
   (interactive (list (bibtex-actions-select-keys
                       :rebuild-cache current-prefix-arg)))
- (bibtex-completion-insert-citation keys))
+  ;; TODO
+  (bibtex-completion-insert-citation
+   (bibtex-actions--extract-keys
+    keys-entries)))
 
 ;;;###autoload
-(defun bibtex-actions-insert-reference (keys)
-  "Insert formatted reference(s) associated with the KEYS.
+(defun bibtex-actions-insert-reference (keys-entries)
+  "Insert formatted reference(s) associated with the KEYS-ENTRIES.
 With prefix, rebuild the cache before offering candidates."
   (interactive (list (bibtex-actions-select-keys
                       :rebuild-cache current-prefix-arg)))
-  (bibtex-completion-insert-reference keys))
+  (bibtex-completion-insert-reference
+   (bibtex-actions--extract-keys
+    keys-entries)))
 
 ;;;###autoload
-(defun bibtex-actions-insert-key (keys)
-  "Insert BibTeX KEYS.
+(defun bibtex-actions-insert-key (keys-entries)
+  "Insert BibTeX KEYS-ENTRIES.
 With prefix, rebuild the cache before offering candidates."
   (interactive (list (bibtex-actions-select-keys
                       :rebuild-cache current-prefix-arg)))
- (bibtex-completion-insert-key keys))
+ (bibtex-completion-insert-key
+  (bibtex-actions--extract-keys
+   keys-entries)))
 
 ;;;###autoload
-(defun bibtex-actions-insert-bibtex (keys)
-  "Insert bibliographic entry associated with the KEYS.
+(defun bibtex-actions-insert-bibtex (keys-entries)
+  "Insert bibliographic entry associated with the KEYS-ENTRIES.
 With prefix, rebuild the cache before offering candidates."
   (interactive (list (bibtex-actions-select-keys
                       :rebuild-cache current-prefix-arg)))
- (bibtex-completion-insert-bibtex keys))
+ (bibtex-completion-insert-bibtex
+  (bibtex-actions--extract-keys
+   keys-entries)))
 
 ;;;###autoload
-(defun bibtex-actions-add-pdf-attachment (keys)
-  "Attach PDF(s) associated with the KEYS to email.
+(defun bibtex-actions-add-pdf-attachment (keys-entries)
+  "Attach PDF(s) associated with the KEYS-ENTRIES to email.
 With prefix, rebuild the cache before offering candidates."
   (interactive (list (bibtex-actions-select-keys
                       :rebuild-cache current-prefix-arg)))
- (bibtex-completion-add-PDF-attachment keys))
+ (bibtex-completion-add-PDF-attachment
+  (bibtex-actions--extract-keys
+   keys-entries)))
 
 ;;;###autoload
-(defun bibtex-actions-add-pdf-to-library (keys)
- "Add PDF associated with the KEYS to library.
+(defun bibtex-actions-add-pdf-to-library (keys-entries)
+ "Add PDF associated with the KEYS-ENTRIES to library.
 The PDF can be added either from an open buffer, a file, or a
 URL.
 With prefix, rebuild the cache before offering candidates."
   (interactive (list (bibtex-actions-select-keys
                       :rebuild-cache current-prefix-arg)))
-  (bibtex-completion-add-pdf-to-library keys))
+  (bibtex-completion-add-pdf-to-library
+   (bibtex-actions--extract-keys
+    keys-entries)))
 
-(defun bibtex-actions-run-default-action (keys)
-  "Run the default action `bibtex-actions-default-action' on KEYS."
-  (funcall bibtex-actions-default-action
-           (if (stringp keys)
-               (split-string keys " & ")
-             (split-string (cdr keys) " & "))))
+(defun bibtex-actions-run-default-action (keys-entries)
+  "Run the default action `bibtex-actions-default-action' on KEYS-ENTRIES."
+  (let ((keys (bibtex-actions--extract-keys keys-entries)))
+    (funcall bibtex-actions-default-action
+             (if (stringp keys)
+                 (split-string keys " & ")
+               (split-string (cdr keys) " & ")))))
 
 ;;;###autoload
 (defun bibtex-actions-dwim ()
@@ -742,6 +752,13 @@ With prefix, rebuild the cache before offering candidates."
   (interactive)
   (if-let ((keys (cdr (bibtex-actions-citation-key-at-point))))
       (bibtex-actions-run-default-action keys)))
+
+(defun bibtex-actions--extract-keys (keys-entries)
+  "Extract list of keys from KEYS-ENTRIES alist."
+  (seq-map
+   (lambda (key-entry)
+     (car key-entry))
+   keys-entries))
 
 (provide 'bibtex-actions)
 ;;; bibtex-actions.el ends here

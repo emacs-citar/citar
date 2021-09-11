@@ -137,7 +137,7 @@ use 'orb-edit-note' for this value."
   "Find files related to a list of KEYS in DIRS with extension in EXTENSIONS."
   (seq-mapcat
    (lambda (key)
-     (bibtex-actions-file--files-for-key key dirs extensions)) keys))
+     (bibtex-actions-file--files-for-key (car key) dirs extensions)) keys))
 
 ;;;; Opening and creating files functions
 
@@ -158,16 +158,16 @@ use 'orb-edit-note' for this value."
                   nil 0 nil
                   file)))
 
-(defun bibtex-actions-file-open-notes-default-org (key)
-  "Open a note file from KEY."
+(defun bibtex-actions-file-open-notes-default-org (key-entry)
+  "Open a note file from KEY-ENTRY."
   (if-let* ((file
              (caar (bibtex-actions-file--files-to-open-or-create
-                    (list key)
+                    (list key-entry)
                     bibtex-actions-notes-paths '("org"))))
             (file-exists (file-exists-p file)))
       (funcall bibtex-actions-file-open-function file)
     (let* ((uuid (org-id-new))
-           (entry (bibtex-actions-get-entry key))
+           (entry (cdr key-entry))
            (note-meta
             (bibtex-actions--format-entry-no-widths
              entry
