@@ -91,29 +91,29 @@ use 'orb-edit-note' for this value."
           (expand-file-name file dir)) files))
      dirs)))
 
-(defun bibtex-actions-file--possible-names (key dirs extensions)
-  "Possible names for files correponding to KEY with EXTENSIONS in DIRS."
+(defun bibtex-actions-file--possible-names (entry dirs extensions)
+  "Possible names for files correponding to ENTRY with EXTENSIONS in DIRS."
   (cl-flet ((possible-file-names-with-extension
              (extension)
              (seq-map
               (lambda (directory)
                 (expand-file-name
-                 (concat key "." extension) directory))
+                 (concat
+                  (bibtex-actions-get-value "=Key=" entry) "." extension) directory))
               dirs)))
     (let* ((results-key (seq-mapcat
                          #'possible-file-names-with-extension
                          extensions))
-           (entry (bibtex-actions-get-entry key))
            (file-field (bibtex-actions-get-value
                         bibtex-actions-file-variable entry))
            (results-file
             (when file-field (funcall bibtex-actions-file-parser-function dirs file-field))))
       (append results-key results-file))))
 
-(defun bibtex-actions-file--files-for-key (key dirs extensions)
-    "Find files related to KEY in DIRS with extension in EXTENSIONS."
+(defun bibtex-actions-file--files-for-key (entry dirs extensions)
+    "Find files related to ENTRY in DIRS with extension in EXTENSIONS."
     (seq-filter #'file-exists-p
-                (bibtex-actions-file--possible-names key dirs extensions)))
+                (bibtex-actions-file--possible-names entry dirs extensions)))
 
 (defun bibtex-actions-file--files-to-open-or-create (keys dirs extensions)
   "Find files related to a list of KEYS in DIRS with extension in EXTENSIONS."

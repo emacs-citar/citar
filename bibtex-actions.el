@@ -351,13 +351,13 @@ personal names of the form 'family, given'."
    (bibtex-actions--fields-in-formats)
    (list "doi" "url" bibtex-actions-file-variable)))
 
-(defun bibtex-actions--format-candidates (files &optional context)
-  "Format candidates from FILES, with optional hidden CONTEXT metadata.
+(defun bibtex-actions--format-candidates (bib-files &optional context)
+  "Format candidates from BIB-FILES, with optional hidden CONTEXT metadata.
 This both propertizes the candidates for display, and grabs the
 key associated with each one."
   (let* ((candidates ())
          (raw-candidates
-          (parsebib-parse files :fields (bibtex-actions--fields-to-parse)))
+          (parsebib-parse bib-files :fields (bibtex-actions--fields-to-parse)))
          (main-width (bibtex-actions--format-width (bibtex-actions-get-template 'main)))
          (suffix-width (bibtex-actions--format-width (bibtex-actions-get-template 'suffix)))
          (symbols-width (string-width (bibtex-actions--symbols-string t t t)))
@@ -368,11 +368,11 @@ key associated with each one."
                (when (or (bibtex-actions-get-value
                           bibtex-actions-file-variable entry)
                          (bibtex-actions-file--files-for-key
-                          citekey bibtex-actions-library-paths bibtex-actions-file-extensions))
+                          entry bibtex-actions-library-paths bibtex-actions-file-extensions))
                  " has:files"))
               (notes
                (when (bibtex-actions-file--files-for-key
-                      citekey bibtex-actions-notes-paths bibtex-actions-file-extensions)
+                      entry bibtex-actions-notes-paths bibtex-actions-file-extensions)
                  " has:notes"))
               (link (when (bibtex-actions-has-a-value '("doi" "url") entry)
                       "has:link"))
@@ -450,47 +450,6 @@ has not yet been created")
   ;; We use defvar-local so can maintain per-buffer candidate caches.
   "Store the local (per-buffer) candidates list.")
 
-(defun bibtex-actions-get-entry (key)
-  "Return the cached entry for KEY."
-  ;; FIX without this check, get a hard recursion error.
-  ;; But I don't think this should be needed.
-  (if (and (eq 'uninitialized bibtex-actions--candidates-cache)
-           (eq 'uninitialized bibtex-actions--local-candidates-cache))
-      (message "Something is wrong; your library is not initialized.")
-    (cddr (seq-find
-           (lambda (entry)
-             (string-equal key (cadr entry)))
-           (bibtex-actions--get-candidates)))))
-
-(defun bibtex-actions-get-template (template-name)
-  "Return template string for TEMPLATE-NAME."
-  (cdr (assoc template-name bibtex-actions-templates)))
-
-(defun bibtex-actions--get-candidates (&optional force-rebuild-cache)
-  "Get the cached candidates.
-If the cache is unintialized, this will load the cache.
-If FORCE-REBUILD-CACHE is t, force reload the cache."
-  (if force-rebuild-cache
-      (bibtex-actions-refresh force-rebuild-cache)
-    (when (eq 'uninitialized bibtex-actions--candidates-cache)
-      (bibtex-actions-refresh nil 'global))
-    (when (eq 'uninitialized bibtex-actions--local-candidates-cache)
-      (bibtex-actions-refresh nil 'local)))
-  (seq-concatenate 'list
-                   bibtex-actions--local-candidates-cache
-                   bibtex-actions--candidates-cache))
-
-(defun bibtex-actions-get-link (key)
-  "Return a link for a KEY."
-  (let* ((entry (bibtex-actions-get-entry key))
-         (field (bibtex-actions-has-a-value '(doi pmid pmcid url) entry))
-         (base-url (pcase field
-                     ('doi "https://doi.org/")
-                     ('pmid "https://www.ncbi.nlm.nih.gov/pubmed/")
-                     ('pmcid "https://www.ncbi.nlm.nih.gov/pmc/articles/"))))
-    (when field
-      (concat base-url (bibtex-actions-get-value field entry)))))
-
 ;;;###autoload
 (defun bibtex-actions-refresh (&optional force-rebuild-cache scope)
   "Reload the candidates cache.
@@ -512,6 +471,42 @@ are refreshed."
     (setq bibtex-actions--local-candidates-cache
           (bibtex-actions--format-candidates
            (bibtex-actions--local-files-to-cache) "is:local"))))
+
+(defun bibtex-actions-get-template (template-name)
+  "Return template string for TEMPLATE-NAME."
+  (cdr (assoc template-name bibtex-actions-templates)))
+
+(defun bibtex-actions--get-candidates (&optional force-rebuild-cache)
+  "Get the cached candidates.
+If the cache is unintialized, this will load the cache.
+If FORCE-REBUILD-CACHE is t, force reload the cache."
+  (when force-rebuild-cache
+    (bibtex-actions-refresh force-rebuild-cache))
+  (when (eq 'uninitialized bibtex-actions--candidates-cache)
+    (bibtex-actions-refresh nil 'global))
+  (when (eq 'uninitialized bibtex-actions--local-candidates-cache)
+    (bibtex-actions-refresh nil 'local))
+  (seq-concatenate 'list
+                   bibtex-actions--local-candidates-cache
+                   bibtex-actions--candidates-cache))
+
+(defun bibtex-actions-get-entry (key)
+  "Return the cached entry for KEY."
+  (cddr (seq-find
+         (lambda (entry)
+           (string-equal key (cadr entry)))
+         (bibtex-actions--get-candidates))))
+
+(defun bibtex-actions-get-link (key)
+  "Return a link for a KEY."
+  (let* ((entry (bibtex-actions-get-entry key))
+         (field (bibtex-actions-has-a-value '(doi pmid pmcid url) entry))
+         (base-url (pcase field
+                     ('doi "https://doi.org/")
+                     ('pmid "https://www.ncbi.nlm.nih.gov/pubmed/")
+                     ('pmcid "https://www.ncbi.nlm.nih.gov/pmc/articles/"))))
+    (when field
+      (concat base-url (bibtex-actions-get-value field entry)))))
 
 ;;;###autoload
 (defun bibtex-actions-insert-preset ()
