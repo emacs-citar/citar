@@ -230,18 +230,19 @@ and nil means no action."
 
 ;;; Completion functions
 
-(cl-defun bibtex-actions-select-keys (&optional &key rebuild-cache)
-  "Read bibliographic entries for completing bibliographic entries.
+(cl-defun bibtex-actions-select-refs (&optional &key rebuild-cache)
+  "Select bibliographic references.
 
-This provides a wrapper around 'completing-read-multiple', with
-the following optional arguments:
+Provides a wrapper around 'completing-read-multiple, and returns
+an alist of key-entry, where the entry is a field-value alist.
+
+Therefore, for each returned candidate, 'car' is the citekey, and
+'cdr' is an alist of structured data.
+
+Includes the following optional argument:
 
 'REBUILD-CACHE' if t, forces rebuilding the cache before
-offering the selection candidates.
-
-It returns an alist of key-entry, where the entry is a
-field-value alist. Therefore, for each returned candidate, 'car'
-is the citekey, and 'cdr' is the alist of structured data."
+offering the selection candidates."
   (let* ((crm-separator "\\s-*&\\s-*")
          (candidates (bibtex-actions--get-candidates rebuild-cache))
          (chosen
@@ -594,7 +595,7 @@ FORMAT-STRING."
 (defun bibtex-actions-open (keys-entries)
   "Open related resource (link or file) for KEYS-ENTRIES."
   ;; TODO add links
-  (interactive (list (bibtex-actions-select-keys
+  (interactive (list (bibtex-actions-select-refs
                       :rebuild-cache current-prefix-arg)))
   (let* ((files
          (bibtex-actions-file--files-for-multiple-keys
@@ -621,7 +622,7 @@ FORMAT-STRING."
  "Open library files associated with the KEYS-ENTRIES.
 
 With prefix, rebuild the cache before offering candidates."
-  (interactive (list (bibtex-actions-select-keys
+  (interactive (list (bibtex-actions-select-refs
                       :rebuild-cache current-prefix-arg)))
   (let ((files
          (bibtex-actions-file--files-for-multiple-keys
@@ -643,7 +644,7 @@ With prefix, rebuild the cache before offering candidates."
 (defun bibtex-actions-open-notes (keys-entries)
   "Open notes associated with the KEYS-ENTRIES.
 With prefix, rebuild the cache before offering candidates."
-  (interactive (list (bibtex-actions-select-keys
+  (interactive (list (bibtex-actions-select-refs
                       :rebuild-cache current-prefix-arg)))
   (dolist (key-entry keys-entries)
     ;; REVIEW doing this means the function won't be compatible with, for
@@ -654,7 +655,7 @@ With prefix, rebuild the cache before offering candidates."
 (defun bibtex-actions-open-entry (keys-entries)
   "Open bibliographic entry associated with the KEYS-ENTRIES.
 With prefix, rebuild the cache before offering candidates."
-  (interactive (list (bibtex-actions-select-keys
+  (interactive (list (bibtex-actions-select-refs
                       :rebuild-cache current-prefix-arg)))
  (bibtex-completion-show-entry (caar keys-entries)))
 
@@ -664,7 +665,7 @@ With prefix, rebuild the cache before offering candidates."
 
 With prefix, rebuild the cache before offering candidates."
   ;;      (browse-url-default-browser "https://google.com")
-  (interactive (list (bibtex-actions-select-keys
+  (interactive (list (bibtex-actions-select-refs
                       :rebuild-cache current-prefix-arg)))
   (dolist (key-entry keys-entries)
     (let* ((doi
@@ -682,7 +683,7 @@ With prefix, rebuild the cache before offering candidates."
 (defun bibtex-actions-insert-citation (keys-entries)
   "Insert citation for the KEYS-ENTRIES.
 With prefix, rebuild the cache before offering candidates."
-  (interactive (list (bibtex-actions-select-keys
+  (interactive (list (bibtex-actions-select-refs
                       :rebuild-cache current-prefix-arg)))
   ;; TODO
   (bibtex-completion-insert-citation
@@ -693,7 +694,7 @@ With prefix, rebuild the cache before offering candidates."
 (defun bibtex-actions-insert-reference (keys-entries)
   "Insert formatted reference(s) associated with the KEYS-ENTRIES.
 With prefix, rebuild the cache before offering candidates."
-  (interactive (list (bibtex-actions-select-keys
+  (interactive (list (bibtex-actions-select-refs
                       :rebuild-cache current-prefix-arg)))
   (bibtex-completion-insert-reference
    (bibtex-actions--extract-keys
@@ -703,7 +704,7 @@ With prefix, rebuild the cache before offering candidates."
 (defun bibtex-actions-insert-key (keys-entries)
   "Insert BibTeX KEYS-ENTRIES.
 With prefix, rebuild the cache before offering candidates."
-  (interactive (list (bibtex-actions-select-keys
+  (interactive (list (bibtex-actions-select-refs
                       :rebuild-cache current-prefix-arg)))
  (bibtex-completion-insert-key
   (bibtex-actions--extract-keys
@@ -713,7 +714,7 @@ With prefix, rebuild the cache before offering candidates."
 (defun bibtex-actions-insert-bibtex (keys-entries)
   "Insert bibliographic entry associated with the KEYS-ENTRIES.
 With prefix, rebuild the cache before offering candidates."
-  (interactive (list (bibtex-actions-select-keys
+  (interactive (list (bibtex-actions-select-refs
                       :rebuild-cache current-prefix-arg)))
  (bibtex-completion-insert-bibtex
   (bibtex-actions--extract-keys
@@ -723,7 +724,7 @@ With prefix, rebuild the cache before offering candidates."
 (defun bibtex-actions-add-pdf-attachment (keys-entries)
   "Attach PDF(s) associated with the KEYS-ENTRIES to email.
 With prefix, rebuild the cache before offering candidates."
-  (interactive (list (bibtex-actions-select-keys
+  (interactive (list (bibtex-actions-select-refs
                       :rebuild-cache current-prefix-arg)))
  (bibtex-completion-add-PDF-attachment
   (bibtex-actions--extract-keys
@@ -735,7 +736,7 @@ With prefix, rebuild the cache before offering candidates."
 The PDF can be added either from an open buffer, a file, or a
 URL.
 With prefix, rebuild the cache before offering candidates."
-  (interactive (list (bibtex-actions-select-keys
+  (interactive (list (bibtex-actions-select-refs
                       :rebuild-cache current-prefix-arg)))
   (bibtex-completion-add-pdf-to-library
    (bibtex-actions--extract-keys
@@ -754,6 +755,7 @@ With prefix, rebuild the cache before offering candidates."
   "Run the default action on citation keys found at point."
   (interactive)
   (if-let ((keys (cdr (bibtex-actions-citation-key-at-point))))
+      ;; FIX how?
       (bibtex-actions-run-default-action keys)))
 
 (defun bibtex-actions--extract-keys (keys-entries)
