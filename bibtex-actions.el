@@ -239,7 +239,9 @@ the following optional arguments:
 'REBUILD-CACHE' if t, forces rebuilding the cache before
 offering the selection candidates.
 
-It returns an alist of key-entry, where the entry is a field-value alist."
+It returns an alist of key-entry, where the entry is a
+field-value alist. Therefore, for each returned candidate, 'car'
+is the citekey, and 'cdr' is the alist of structured data."
   (let* ((crm-separator "\\s-*&\\s-*")
          (candidates (bibtex-actions--get-candidates rebuild-cache))
          (chosen
@@ -257,8 +259,8 @@ It returns an alist of key-entry, where the entry is a field-value alist."
      (lambda (choice)
        ;; Collect citation keys of selected candidate(s).
        (or (cdr (assoc choice candidates))
-           ;; Key is literal coming from embark, just pass it on
-           choice))
+           ;; REVIEW for embark at-point; how to explain?
+           (cdr (seq-find (lambda (cand) (equal choice (cadr cand))) candidates))))
      chosen)))
 
 (defun bibtex-actions-select-file (files)
@@ -367,10 +369,10 @@ key associated with each one."
     (maphash
      (lambda (citekey entry)
        (let* ((files
-               (when (or (bibtex-actions-get-value
-                          bibtex-actions-file-variable entry)
-                         (bibtex-actions-file--files-for-key
-                          entry bibtex-actions-library-paths bibtex-actions-file-extensions))
+               (when (bibtex-actions-file--files-for-key
+                      entry
+                      bibtex-actions-library-paths
+                      bibtex-actions-file-extensions)
                  " has:files"))
               (notes
                (when (bibtex-actions-file--files-for-key
@@ -624,7 +626,8 @@ With prefix, rebuild the cache before offering candidates."
   (let ((files
          (bibtex-actions-file--files-for-multiple-keys
           keys-entries
-          bibtex-actions-library-paths bibtex-actions-file-extensions)))
+          bibtex-actions-library-paths
+          bibtex-actions-file-extensions)))
     (if files
         (dolist (file files)
           (if bibtex-actions-open-library-file-external
