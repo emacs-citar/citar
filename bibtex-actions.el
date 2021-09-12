@@ -258,9 +258,11 @@ offering the selection candidates."
            'bibtex-actions-history bibtex-actions-presets nil)))
     (seq-map
      (lambda (choice)
-       ;; Collect citation keys of selected candidate(s).
+       ;; Collect citation key-entry of selected candidate(s).
        (or (cdr (assoc choice candidates))
-           ;; REVIEW for embark at-point; how to explain?
+           ;; When calling embark at-point, use keys to look up and return the
+           ;; selected candidates.
+           ;; See https://github.com/bdarcus/bibtex-actions/issues/233#issuecomment-901536901
            (cdr (seq-find (lambda (cand) (equal choice (cadr cand))) candidates))))
      chosen)))
 
