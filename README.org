@@ -113,7 +113,10 @@ In other supported modes, it will work the same as the embark option above.
   :after (embark oc)
   :config
   (setq bibtex-actions-bibliography my/bibs
-        org-cite-global-bibliography my/bibs))
+        org-cite-global-bibliography my/bibs
+        org-cite-insert-processor 'oc-bibtex-actions
+        org-cite-follow-processor 'oc-bibtex-actions
+        org-cite-activate-processor 'basic))
 
 ;; Use consult-completing-read for enhanced interface.
 (advice-add #'completing-read-multiple :override #'consult-completing-read-multiple)
