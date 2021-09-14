@@ -92,6 +92,7 @@ use 'orb-edit-note' for this value."
      dirs)))
 
 (defun bibtex-actions-file-parser-calibre (dirs file-field)
+  "Return a list of files from DIRS and a Calibre formatted FILE-FIELD."
   (let ((parts (split-string file-field ", *" 'omit-nulls)))
     (seq-mapcat
      (lambda (part)
