@@ -372,17 +372,20 @@ key associated with each one."
     (maphash
      (lambda (citekey entry)
        (let* ((files
-               (when (bibtex-actions-file--files-for-key
+               (when (bibtex-actions-file--files-for-entry
                       entry
                       bibtex-actions-library-paths
                       bibtex-actions-file-extensions)
                  " has:files"))
               (notes
-               (when (bibtex-actions-file--files-for-key
-                      entry bibtex-actions-notes-paths bibtex-actions-file-extensions)
+               (when (bibtex-actions-file--files-for-entry
+                      entry
+                      bibtex-actions-notes-paths
+                      bibtex-actions-file-extensions)
                  " has:notes"))
-              (link (when (bibtex-actions-has-a-value '("doi" "url") entry)
-                      "has:link"))
+              (link
+               (when (bibtex-actions-has-a-value '("doi" "url") entry)
+                 "has:link"))
               (candidate-main
                (bibtex-actions--format-entry
                 entry
@@ -497,10 +500,9 @@ If FORCE-REBUILD-CACHE is t, force reload the cache."
                    bibtex-actions--local-candidates-cache
                    bibtex-actions--candidates-cache))
 
-(defun bibtex-actions-get-link (key)
-  "Return a link for a KEY."
-  (let* ((entry (cdr key))
-         (field (bibtex-actions-has-a-value '(doi pmid pmcid url) entry))
+(defun bibtex-actions-get-link (entry)
+  "Return a link for an ENTRY."
+  (let* ((field (bibtex-actions-has-a-value '(doi pmid pmcid url) entry))
          (base-url (pcase field
                      ('doi "https://doi.org/")
                      ('pmid "https://www.ncbi.nlm.nih.gov/pubmed/")
@@ -604,14 +606,14 @@ FORMAT-STRING."
   (interactive (list (bibtex-actions-select-refs
                       :rebuild-cache current-prefix-arg)))
   (let* ((files
-         (bibtex-actions-file--files-for-multiple-keys
-          (car keys-entries)
+         (bibtex-actions-file--files-for-multiple-entries
+          keys-entries
           (append bibtex-actions-library-paths bibtex-actions-notes-paths)
           bibtex-actions-file-extensions))
          (links
           (seq-map
-           (lambda (key)
-             (bibtex-actions-get-link (cdr key)))
+           (lambda (key-entry)
+             (bibtex-actions-get-link (cdr key-entry)))
            keys-entries))
         (resources
          (completing-read-multiple "Related resources: "
@@ -631,7 +633,7 @@ With prefix, rebuild the cache before offering candidates."
   (interactive (list (bibtex-actions-select-refs
                       :rebuild-cache current-prefix-arg)))
   (let ((files
-         (bibtex-actions-file--files-for-multiple-keys
+         (bibtex-actions-file--files-for-multiple-entries
           keys-entries
           bibtex-actions-library-paths
           bibtex-actions-file-extensions)))

@@ -99,7 +99,7 @@ use 'orb-edit-note' for this value."
               (lambda (directory)
                 (expand-file-name
                  (concat
-                  (bibtex-actions-get-value "=Key=" entry) "." extension) directory))
+                  (bibtex-actions-get-value "=key=" entry) "." extension) directory))
               dirs)))
     (let* ((results-key (seq-mapcat
                          #'possible-file-names-with-extension
@@ -110,7 +110,7 @@ use 'orb-edit-note' for this value."
             (when file-field (funcall bibtex-actions-file-parser-function dirs file-field))))
       (append results-key results-file))))
 
-(defun bibtex-actions-file--files-for-key (entry dirs extensions)
+(defun bibtex-actions-file--files-for-entry (entry dirs extensions)
     "Find files related to ENTRY in DIRS with extension in EXTENSIONS."
     (seq-filter #'file-exists-p
                 (bibtex-actions-file--possible-names entry dirs extensions)))
@@ -132,12 +132,11 @@ use 'orb-edit-note' for this value."
                   possible-files)))))
     (seq-mapcat #'files-for-key keys)))
 
-
-(defun bibtex-actions-file--files-for-multiple-keys (keys dirs extensions)
-  "Find files related to a list of KEYS in DIRS with extension in EXTENSIONS."
+(defun bibtex-actions-file--files-for-multiple-entries (keys-entries dirs extensions)
+  "Find files related to a list of KEYS-ENTRIES in DIRS with extension in EXTENSIONS."
   (seq-mapcat
-   (lambda (key)
-     (bibtex-actions-file--files-for-key (car key) dirs extensions)) keys))
+   (lambda (key-entry)
+     (bibtex-actions-file--files-for-entry (cdr key-entry) dirs extensions)) keys-entries))
 
 ;;;; Opening and creating files functions
 
