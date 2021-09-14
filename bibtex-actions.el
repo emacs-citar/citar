@@ -508,6 +508,10 @@ If FORCE-REBUILD-CACHE is t, force reload the cache."
     (when field
       (concat base-url (bibtex-actions-get-value field entry)))))
 
+(defun bibtex-actions--extract-keys (keys-entries)
+  "Extract list of keys from KEYS-ENTRIES alist."
+  (seq-map #'car keys-entries))
+
 ;;;###autoload
 (defun bibtex-actions-insert-preset ()
   "Prompt for and insert a predefined search."
@@ -759,13 +763,6 @@ With prefix, rebuild the cache before offering candidates."
   (if-let ((keys (cdr (bibtex-actions-citation-key-at-point))))
       ;; FIX how?
       (bibtex-actions-run-default-action keys)))
-
-(defun bibtex-actions--extract-keys (keys-entries)
-  "Extract list of keys from KEYS-ENTRIES alist."
-  (seq-map
-   (lambda (key-entry)
-     (car key-entry))
-   keys-entries))
 
 (provide 'bibtex-actions)
 ;;; bibtex-actions.el ends here
