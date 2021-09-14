@@ -160,6 +160,8 @@ use 'orb-edit-note' for this value."
 
 (defun bibtex-actions-file-open-notes-default-org (key-entry)
   "Open a note file from KEY-ENTRY."
+  ;; modify when this addressed:
+  ;; https://github.com/org-roam/org-roam-bibtex/issues/211
   (if-let* ((file
              (caar (bibtex-actions-file--files-to-open-or-create
                     (list key-entry)
