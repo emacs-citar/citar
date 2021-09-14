@@ -53,11 +53,11 @@ use 'orb-edit-note' for this value."
   :group 'bibtex-actions
   :type '(function))
 
-(defcustom bibtex-actions-file-parser-function
-  'bibtex-actions-file-parser-default
-  "Function to parse file field."
+(defcustom bibtex-actions-file-parser-functions
+  '(bibtex-actions-file-parser-default)
+  "List of functions to parse file field."
   :group 'bibtex-actions
-  :type '(function))
+  :type '(repeat function))
 
 (defcustom bibtex-actions-file-extensions '("pdf" "org" "md")
   "A list of file extensions to recognize for related files."
@@ -91,6 +91,15 @@ use 'orb-edit-note' for this value."
           (expand-file-name file dir)) files))
      dirs)))
 
+(defun bibtex-actions-file-parser-calibre (dirs file-field)
+  "Return a list of files from DIRS and a Calibre formatted FILE-FIELD."
+  (let ((parts (split-string file-field ", *" 'omit-nulls)))
+    (seq-mapcat
+     (lambda (part)
+       (let ((fn (car (split-string part ":" t))))
+         (mapcar (apply-partially #'expand-file-name fn) dirs)))
+     parts)))
+
 (defun bibtex-actions-file--possible-names (entry dirs extensions)
   "Possible names for files correponding to ENTRY with EXTENSIONS in DIRS."
   (cl-flet ((possible-file-names-with-extension
@@ -107,7 +116,11 @@ use 'orb-edit-note' for this value."
            (file-field (bibtex-actions-get-value
                         bibtex-actions-file-variable entry))
            (results-file
-            (when file-field (funcall bibtex-actions-file-parser-function dirs file-field))))
+            (when file-field
+              (seq-mapcat
+               (lambda (func)
+                 (funcall func dirs file-field))
+               bibtex-actions-file-parser-functions))))
       (append results-key results-file))))
 
 (defun bibtex-actions-file--files-for-entry (entry dirs extensions)
