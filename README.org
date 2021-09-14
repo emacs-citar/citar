@@ -17,7 +17,7 @@
    :CUSTOM_ID: features
    :END:
 
-This package provides a completing-read front-end to browse and act on BibTeX, BibLaTeX, and CSL JSON bibliographic data.
+This package provides a completing-read front-end to browse and act on BibTeX, BibLaTeX, and CSL JSON bibliographic data, and LaTeX, markdown, and org-cite editing support.
 
 When used with vertico (or selectrum), embark, and marginalia, it provides similar functionality to helm-bibtex and ivy-bibtex: quick filtering and selecting of bibliographic entries from the minibuffer, and the option to run different commands against them.
 
@@ -113,7 +113,10 @@ In other supported modes, it will work the same as the embark option above.
   :after (embark oc)
   :config
   (setq bibtex-actions-bibliography my/bibs
-        org-cite-global-bibliography my/bibs))
+        org-cite-global-bibliography my/bibs
+        org-cite-insert-processor 'oc-bibtex-actions
+        org-cite-follow-processor 'oc-bibtex-actions
+        org-cite-activate-processor 'basic))
 
 ;; Use consult-completing-read for enhanced interface.
 (advice-add #'completing-read-multiple :override #'consult-completing-read-multiple)

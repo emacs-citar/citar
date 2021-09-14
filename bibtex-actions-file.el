@@ -91,29 +91,29 @@ use 'orb-edit-note' for this value."
           (expand-file-name file dir)) files))
      dirs)))
 
-(defun bibtex-actions-file--possible-names (key dirs extensions)
-  "Possible names for files correponding to KEY with EXTENSIONS in DIRS."
+(defun bibtex-actions-file--possible-names (entry dirs extensions)
+  "Possible names for files correponding to ENTRY with EXTENSIONS in DIRS."
   (cl-flet ((possible-file-names-with-extension
              (extension)
              (seq-map
               (lambda (directory)
                 (expand-file-name
-                 (concat key "." extension) directory))
+                 (concat
+                  (bibtex-actions-get-value "=key=" entry) "." extension) directory))
               dirs)))
     (let* ((results-key (seq-mapcat
                          #'possible-file-names-with-extension
                          extensions))
-           (entry (bibtex-actions-get-entry key))
            (file-field (bibtex-actions-get-value
                         bibtex-actions-file-variable entry))
            (results-file
             (when file-field (funcall bibtex-actions-file-parser-function dirs file-field))))
       (append results-key results-file))))
 
-(defun bibtex-actions-file--files-for-key (key dirs extensions)
-    "Find files related to KEY in DIRS with extension in EXTENSIONS."
+(defun bibtex-actions-file--files-for-entry (entry dirs extensions)
+    "Find files related to ENTRY in DIRS with extension in EXTENSIONS."
     (seq-filter #'file-exists-p
-                (bibtex-actions-file--possible-names key dirs extensions)))
+                (bibtex-actions-file--possible-names entry dirs extensions)))
 
 (defun bibtex-actions-file--files-to-open-or-create (keys dirs extensions)
   "Find files related to a list of KEYS in DIRS with extension in EXTENSIONS."
@@ -132,12 +132,11 @@ use 'orb-edit-note' for this value."
                   possible-files)))))
     (seq-mapcat #'files-for-key keys)))
 
-
-(defun bibtex-actions-file--files-for-multiple-keys (keys dirs extensions)
-  "Find files related to a list of KEYS in DIRS with extension in EXTENSIONS."
+(defun bibtex-actions-file--files-for-multiple-entries (keys-entries dirs extensions)
+  "Find files related to a list of KEYS-ENTRIES in DIRS with extension in EXTENSIONS."
   (seq-mapcat
-   (lambda (key)
-     (bibtex-actions-file--files-for-key key dirs extensions)) keys))
+   (lambda (key-entry)
+     (bibtex-actions-file--files-for-entry (cdr key-entry) dirs extensions)) keys-entries))
 
 ;;;; Opening and creating files functions
 
@@ -158,16 +157,18 @@ use 'orb-edit-note' for this value."
                   nil 0 nil
                   file)))
 
-(defun bibtex-actions-file-open-notes-default-org (key)
-  "Open a note file from KEY."
+(defun bibtex-actions-file-open-notes-default-org (key-entry)
+  "Open a note file from KEY-ENTRY."
+  ;; modify when this addressed:
+  ;; https://github.com/org-roam/org-roam-bibtex/issues/211
   (if-let* ((file
              (caar (bibtex-actions-file--files-to-open-or-create
-                    (list key)
+                    (list key-entry)
                     bibtex-actions-notes-paths '("org"))))
             (file-exists (file-exists-p file)))
       (funcall bibtex-actions-file-open-function file)
     (let* ((uuid (org-id-new))
-           (entry (bibtex-actions-get-entry key))
+           (entry (cdr key-entry))
            (note-meta
             (bibtex-actions--format-entry-no-widths
              entry
