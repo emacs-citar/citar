@@ -91,6 +91,14 @@ use 'orb-edit-note' for this value."
           (expand-file-name file dir)) files))
      dirs)))
 
+(defun bibtex-actions-file-parser-calibre (dirs file-field)
+  (let ((parts (split-string file-field ", *" 'omit-nulls)))
+    (seq-mapcat
+     (lambda (part)
+       (let ((fn (car (split-string part ":" t))))
+         (mapcar (apply-partially #'expand-file-name fn) dirs)))
+     parts)))
+
 (defun bibtex-actions-file--possible-names (entry dirs extensions)
   "Possible names for files correponding to ENTRY with EXTENSIONS in DIRS."
   (cl-flet ((possible-file-names-with-extension
