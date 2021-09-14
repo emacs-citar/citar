@@ -665,7 +665,8 @@ With prefix, rebuild the cache before offering candidates."
 With prefix, rebuild the cache before offering candidates."
   (interactive (list (bibtex-actions-select-refs
                       :rebuild-cache current-prefix-arg)))
- (bibtex-completion-show-entry (caar keys-entries)))
+ (bibtex-completion-show-entry
+  (bibtex-actions--extract-keys keys-entries)))
 
 ;;;###autoload
 (defun bibtex-actions-open-link (keys-entries)
