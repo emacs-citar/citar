@@ -124,7 +124,11 @@ If you use 'org-roam' and 'org-roam-bibtex', you can use
             (when file-field
               (seq-mapcat
                (lambda (func)
-                 (funcall func dirs file-field))
+                 (funcall
+                  func
+                  ;; Avoid an empty dirs arg.
+                  (or dirs (list default-directory))
+                  file-field))
                bibtex-actions-file-parser-functions))))
       (append results-key results-file))))
 
