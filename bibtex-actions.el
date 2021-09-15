@@ -657,7 +657,8 @@ With prefix, rebuild the cache before offering candidates."
   (dolist (key-entry keys-entries)
     ;; REVIEW doing this means the function won't be compatible with, for
     ;; example, 'orb-edit-note'.
-    (funcall bibtex-actions-file-open-note-function key-entry)))
+    (funcall bibtex-actions-file-open-note-function
+             (car key-entry) (cdr key-entry))))
 
 ;;;###autoload
 (defun bibtex-actions-open-entry (keys-entries)

@@ -48,8 +48,13 @@
   'bibtex-actions-file-open-notes-default-org
   "Function to open and existing or create a new note.
 
-If you use 'org-roam' and 'org-roam-bibtex', for example, you can
-use 'orb-edit-note' for this value."
+A note function must take two arguments:
+
+KEY: a string to represent the citekey
+ENTRY: an alist with the structured data (title, author, etc.)
+
+If you use 'org-roam' and 'org-roam-bibtex', you can use
+'orb-bibtex-actions-edit-note' for this value."
   :group 'bibtex-actions
   :type '(function))
 
@@ -170,18 +175,17 @@ use 'orb-edit-note' for this value."
                   nil 0 nil
                   file)))
 
-(defun bibtex-actions-file-open-notes-default-org (key-entry)
-  "Open a note file from KEY-ENTRY."
+(defun bibtex-actions-file-open-notes-default-org (key entry)
+  "Open a note file from KEY and ENTRY."
   ;; modify when this addressed:
   ;; https://github.com/org-roam/org-roam-bibtex/issues/211
   (if-let* ((file
              (caar (bibtex-actions-file--files-to-open-or-create
-                    (list key-entry)
+                    (list key)
                     bibtex-actions-notes-paths '("org"))))
             (file-exists (file-exists-p file)))
       (funcall bibtex-actions-file-open-function file)
     (let* ((uuid (org-id-new))
-           (entry (cdr key-entry))
            (note-meta
             (bibtex-actions--format-entry-no-widths
              entry
