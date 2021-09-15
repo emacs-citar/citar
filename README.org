@@ -281,26 +281,6 @@ This can be done when emacs has been idle (half a second in the example below) w
 
 For additional configuration options on this, see [[https://github.com/bdarcus/bibtex-actions/wiki/Configuration#automating-path-watches][the wiki]].
 
-** Finding citation keys at point
-    :PROPERTIES:
-    :CUSTOM_ID: finding-citation-keys-at-point
-    :END:
-
-=bibtex-actions-at-point= can find citation keys at point in org-mode buffer, latex-mode buffer, etc.
-To add support for other major modes or citation syntax, you can write a function (below is an example for =org-cite=) and add it to =bibtex-completion-key-at-point-functions=.
-
-#+begin_src emacs-lisp
-(defun bibtex-actions-get-key-org-cite ()
-  "Return key at point for org-cite citation-reference."
-  (when-let (((eq major-mode 'org-mode))
-             (elt (org-element-context)))
-    (pcase (org-element-type elt)
-      ('citation-reference
-       (org-element-property :key elt))
-      ('citation
-       (org-cite-get-references elt t)))))
-#+end_src
-
 ** Notes
 
 This package provides a =bibtex-actions-file-open-note-function= variable, and a simple default function.
@@ -317,7 +297,7 @@ Note, however: if you use that function you need to ensure that the =bibtex-comp
    :CUSTOM_ID: usage
    :END:
 
-You have a few different ways to interact with these commands.
+You have a few different ways to use bibtex-actions.
 
 *** Org-cite
 
