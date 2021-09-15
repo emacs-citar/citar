@@ -304,11 +304,13 @@ To add support for other major modes or citation syntax, you can write a functio
 ** Notes
 
 This package provides a =bibtex-actions-file-open-note-function= variable, and a simple default function.
-To substitute, for example, the org-roam-bibtex =orb-edit-note= function, you can do:
+To replace the default with one from org-roam-bibtex, you can do:
 
 #+BEGIN_SRC emacs-lisp
-(setq bibtex-actions-file-open-note-function 'orb-edit-note)
+(setq bibtex-actions-file-open-note-function 'orb-bibtex-actions-edit-note)
 #+END_SRC
+
+Note, however: if you use that function you need to ensure that the =bibtex-completion-bibliography= variable is correctly set to the same paths as =bibtex-actions-bibliographic=.
 
 ** Usage
    :PROPERTIES:
@@ -321,7 +323,7 @@ You have a few different ways to interact with these commands.
 
 Bibtex-actions includes org-cite integration in =oc-bibtex-actions=, which includes a processor with "follow" and "insert" capabilities.
 
-The "insert processor" will use =bibtex-actions-read= to browse your library to insert and edit citations and citation references using the =org-cite-insert= command.
+The "insert processor" will use =bibtex-actions-select-refs= to browse your library to insert and edit citations and citation references using the =org-cite-insert= command.
 
 The "follow processor" provides at-point functionality accessible via the =org-open-at-point= command.
 By default, in org-mode with org-cite support, when point is on a citation or citation-reference, and you invoke =org-open-at-point=, it will run the default command, which is =bibtex-actions-open=.
