@@ -105,15 +105,14 @@ If you use 'org-roam' and 'org-roam-bibtex', you can use
          (mapcar (apply-partially #'expand-file-name fn) dirs)))
      parts)))
 
-(defun bibtex-actions-file--possible-names (entry dirs extensions)
-  "Possible names for files correponding to ENTRY with EXTENSIONS in DIRS."
+(defun bibtex-actions-file--possible-names (key entry dirs extensions)
+  "Possible names for files correponding to KEY, ENTRY with EXTENSIONS in DIRS."
   (cl-flet ((possible-file-names-with-extension
              (extension)
              (seq-map
               (lambda (directory)
                 (expand-file-name
-                 (concat
-                  (bibtex-actions-get-value "=key=" entry) "." extension) directory))
+                 (concat key "." extension) directory))
               dirs)))
     (let* ((results-key (seq-mapcat
                          #'possible-file-names-with-extension
@@ -124,21 +123,24 @@ If you use 'org-roam' and 'org-roam-bibtex', you can use
             (when file-field
               (seq-mapcat
                (lambda (func)
-                 (funcall func dirs file-field))
+                 (funcall
+                  func
+                  ;; Make sure this arg is non-nil.
+                  (or dirs default-directory)
+                  file-field))
                bibtex-actions-file-parser-functions))))
       (append results-key results-file))))
 
-(defun bibtex-actions-file--files-for-entry (entry dirs extensions)
-    "Find files related to ENTRY in DIRS with extension in EXTENSIONS."
+(defun bibtex-actions-file--files-for-entry (key entry dirs extensions)
+    "Find files related to KEY, ENTRY in DIRS with extension in EXTENSIONS."
     (seq-filter #'file-exists-p
-                (bibtex-actions-file--possible-names entry dirs extensions)))
+                (bibtex-actions-file--possible-names key entry dirs extensions)))
 
-(defun bibtex-actions-file--files-to-open-or-create (keys dirs extensions)
-  "Find files related to a list of KEYS in DIRS with extension in EXTENSIONS."
-  (cl-flet ((files-for-key
-             (key)
+(defun bibtex-actions-file--files-to-open-or-create (key entry dirs extensions)
+  "Find files related to a KEY, ENTRY in DIRS with extension in EXTENSIONS."
+  (cl-flet ((files-for-key (k)
              (let* ((possible-files
-                     (bibtex-actions-file--possible-names key dirs extensions))
+                     (bibtex-actions-file--possible-names k entry dirs extensions))
                     (existing-files
                      (seq-filter #'file-exists-p possible-files)))
                (if existing-files
@@ -148,13 +150,14 @@ If you use 'org-roam' and 'org-roam-bibtex', you can use
                  (seq-map
                   (lambda (file) (cons file 'new))
                   possible-files)))))
-    (seq-mapcat #'files-for-key keys)))
+    (seq-mapcat #'files-for-key key)))
 
 (defun bibtex-actions-file--files-for-multiple-entries (keys-entries dirs extensions)
   "Find files related to a list of KEYS-ENTRIES in DIRS with extension in EXTENSIONS."
   (seq-mapcat
    (lambda (key-entry)
-     (bibtex-actions-file--files-for-entry (cdr key-entry) dirs extensions)) keys-entries))
+     (bibtex-actions-file--files-for-entry
+      (car key-entry) (cdr key-entry) dirs extensions)) keys-entries))
 
 ;;;; Opening and creating files functions
 
@@ -177,11 +180,10 @@ If you use 'org-roam' and 'org-roam-bibtex', you can use
 
 (defun bibtex-actions-file-open-notes-default-org (key entry)
   "Open a note file from KEY and ENTRY."
-  ;; modify when this addressed:
-  ;; https://github.com/org-roam/org-roam-bibtex/issues/211
   (if-let* ((file
              (caar (bibtex-actions-file--files-to-open-or-create
-                    (list key)
+                    key
+                    entry
                     bibtex-actions-notes-paths '("org"))))
             (file-exists (file-exists-p file)))
       (funcall bibtex-actions-file-open-function file)

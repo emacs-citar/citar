@@ -373,12 +373,14 @@ key associated with each one."
      (lambda (citekey entry)
        (let* ((files
                (when (bibtex-actions-file--files-for-entry
+                      citekey
                       entry
                       bibtex-actions-library-paths
                       bibtex-actions-file-extensions)
                  " has:files"))
               (notes
                (when (bibtex-actions-file--files-for-entry
+                      citekey
                       entry
                       bibtex-actions-notes-paths
                       bibtex-actions-file-extensions)
