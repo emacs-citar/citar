@@ -138,9 +138,9 @@ If you use 'org-roam' and 'org-roam-bibtex', you can use
 
 (defun bibtex-actions-file--files-to-open-or-create (key entry dirs extensions)
   "Find files related to a KEY, ENTRY in DIRS with extension in EXTENSIONS."
-  (cl-flet ((files-for-key (k)
+  (cl-flet ((files-for-key ()
              (let* ((possible-files
-                     (bibtex-actions-file--possible-names k entry dirs extensions))
+                     (bibtex-actions-file--possible-names key entry dirs extensions))
                     (existing-files
                      (seq-filter #'file-exists-p possible-files)))
                (if existing-files
@@ -150,7 +150,7 @@ If you use 'org-roam' and 'org-roam-bibtex', you can use
                  (seq-map
                   (lambda (file) (cons file 'new))
                   possible-files)))))
-    (seq-mapcat #'files-for-key key)))
+    (files-for-key)))
 
 (defun bibtex-actions-file--files-for-multiple-entries (keys-entries dirs extensions)
   "Find files related to a list of KEYS-ENTRIES in DIRS with extension in EXTENSIONS."
