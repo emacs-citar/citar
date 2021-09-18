@@ -166,7 +166,7 @@ If you use 'org-roam' and 'org-roam-bibtex', you can use
 (defun bibtex-actions-file-open-notes-default-org (key entry)
   "Open a note file from KEY and ENTRY."
   (if-let* ((file
-             (caar (bibtex-actions-file--files-to-open-or-create
+             (caar (bibtex-actions-file--get-note-filename
                     key
                     bibtex-actions-notes-paths '("org"))))
             (file-exists (file-exists-p file)))
@@ -183,8 +183,14 @@ If you use 'org-roam' and 'org-roam-bibtex', you can use
       (erase-buffer)
       (insert content))))
 
-(defun bibtex-actions-file--files-to-open-or-create (key dirs extensions)
-  "Find files related to a KEY in DIRS with extension in EXTENSIONS."
+(defun bibtex-actions-file--get-note-filename (key dirs extensions)
+  "Return existing or new filename for KEY in DIRS with extension in EXTENSIONS.
+
+This is for use in a note function where notes are one-per-file,
+with citekey as filename.
+
+Returns the filename whether or not the file exists, to support a
+function that will open a new file if the note is not present."
   (let* ((possible-files
           (bibtex-actions-file--possible-names key dirs extensions))
          (existing-files
