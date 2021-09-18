@@ -680,13 +680,7 @@ With prefix, rebuild the cache before offering candidates."
   (interactive (list (bibtex-actions-select-refs
                       :rebuild-cache current-prefix-arg)))
   (dolist (key-entry keys-entries)
-    (let* ((doi
-            (bibtex-actions-get-value "doi" (cdr key-entry)))
-           (doi-url
-            (when doi
-              (concat "https://doi.org/" doi)))
-           (url (bibtex-actions-get-value "url" (cdr key-entry)))
-           (link (or doi-url url)))
+    (let ((link (bibtex-actions-get-link (cdr key-entry))))
       (if link
           (browse-url-default-browser link)
         (message "No link found for %s" key-entry)))))
