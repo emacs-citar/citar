@@ -64,8 +64,24 @@ If you use 'org-roam' and 'org-roam-bibtex', you can use
   :group 'bibtex-actions
   :type '(repeat function))
 
+(defcustom bibtex-actions-file-open-function 'find-file
+  "Function to use to open files."
+  :group 'bibtex-actions
+  :type '(function))
+
 (defcustom bibtex-actions-file-extensions '("pdf" "org" "md")
-  "A list of file extensions to recognize for related files."
+  "List of file extensions to recognize for related files.
+
+These are the extensions the 'bibtex-actions-file-open-function'
+will open, via `bibtex-actions-file-open'."
+  :group 'bibtex-actions
+  :type '(repeat string))
+
+(defcustom bibtex-actions-file-extensions-external '("html")
+  "List of file extensions to open in an external application.
+
+These are the extensions 'bibtex-actions-file-open-external' will
+open."
   :group 'bibtex-actions
   :type '(repeat string))
 

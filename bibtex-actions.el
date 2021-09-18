@@ -63,6 +63,7 @@
 (defvar embark-meta-map)
 (defvar bibtex-actions-file-open-note-function)
 (defvar bibtex-actions-file-extensions)
+(defvar bibtex-actions-file-extensions-external)
 (defvar bibtex-actions-file-open-prompt)
 (defvar bibtex-actions-file-variable)
 
@@ -98,20 +99,6 @@
   ;; The bibtex-completion default is likely to be removed in the future.
   :group 'bibtex-actions
   :type '(repeat path))
-
-
-(defcustom bibtex-actions-open-file-function 'find-file
-  "Function to use to open files."
-  ;; tODO maybe this should be higher-level; eg:
-  ;; 'bibtex-actions-open-file?
-  :group 'bibtex-actions
-  :type '(function))
-
-(defcustom bibtex-actions-open-library-file-external t
-  "Whether to open a library file in an external application."
-  :group 'bibtex-actions
-  :type '(boolean))
-
 
 (defcustom bibtex-actions-templates
   '((main . "${author editor:30}     ${date year issued:4}     ${title:48}")
@@ -624,7 +611,8 @@ FORMAT-STRING."
       (cond ((string-match "http" resource 0)
              (browse-url resource))
             ((equal (file-name-extension resource) (or "org" "md"))
-             (funcall bibtex-actions-open-file-function resource))
+             (bibtex-actions-file-open resource))
+            ;; FIX
             (t (bibtex-actions-file-open-external resource))))))
 
 ;;;###autoload
@@ -641,9 +629,10 @@ With prefix, rebuild the cache before offering candidates."
           bibtex-actions-file-extensions)))
     (if files
         (dolist (file files)
-          (if bibtex-actions-open-library-file-external
+          ;; FIX
+          (if bibtex-actions-file-extensions-external
               (bibtex-actions-file-open-external file)
-            (funcall bibtex-actions-file-open-function file)))
+            (bibtex-actions-file-open file)))
       (message "No file(s) found for %s"
                (bibtex-actions--extract-keys keys-entries)))))
 
