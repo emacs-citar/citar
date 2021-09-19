@@ -489,6 +489,13 @@ If FORCE-REBUILD-CACHE is t, force reload the cache."
                    bibtex-actions--local-candidates-cache
                    bibtex-actions--candidates-cache))
 
+(defun bibtex-actions--get-entry (key)
+  "Return the cached entry for KEY."
+    (cddr (seq-find
+           (lambda (entry)
+             (string-equal key (cadr entry)))
+           (bibtex-actions--get-candidates))))
+
 (defun bibtex-actions-get-link (entry)
   "Return a link for an ENTRY."
   (let* ((field (bibtex-actions-has-a-value '(doi pmid pmcid url) entry))
