@@ -622,19 +622,20 @@ FORMAT-STRING."
 With prefix, rebuild the cache before offering candidates."
   (interactive (list (bibtex-actions-select-refs
                       :rebuild-cache current-prefix-arg)))
-  (let ((files
+  (let* ((files
          (bibtex-actions-file--files-for-multiple-entries
           keys-entries
           bibtex-actions-library-paths
-          bibtex-actions-file-extensions)))
-    (if files
-        (dolist (file files)
-          ;; FIX
-          (if bibtex-actions-file-extensions-external
-              (bibtex-actions-file-open-external file)
-            (bibtex-actions-file-open file)))
-      (message "No file(s) found for %s"
-               (bibtex-actions--extract-keys keys-entries)))))
+          bibtex-actions-file-extensions))
+         (files-external
+          (bibtex-actions-file--files-for-multiple-entries
+           keys-entries
+           bibtex-actions-library-paths
+           bibtex-actions-file-extensions-external)))
+    (dolist (file files)
+      (bibtex-actions-file-open file))
+    (dolist (file-external files-external)
+        (bibtex-actions-file-open-external file-external))))
 
 (make-obsolete 'bibtex-actions-open-pdf
                'bibtex-actions-open-library-files "1.0")
