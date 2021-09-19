@@ -610,10 +610,11 @@ FORMAT-STRING."
     (dolist (resource resources)
       (cond ((string-match "http" resource 0)
              (browse-url resource))
-            ((equal (file-name-extension resource) (or "org" "md"))
-             (bibtex-actions-file-open resource))
-            ;; FIX
-            (t (bibtex-actions-file-open-external resource))))))
+            ((member
+              (file-name-extension resource)
+              bibtex-actions-file-extensions-external)
+             (bibtex-actions-file-open-external resource))
+            (t (bibtex-actions-file-open resource))))))
 
 ;;;###autoload
 (defun bibtex-actions-open-library-files (keys-entries)
