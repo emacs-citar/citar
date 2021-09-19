@@ -152,7 +152,6 @@ open."
     (seq-filter #'file-exists-p
                 (bibtex-actions-file--possible-names key dirs extensions entry)))
 
-
 (defun bibtex-actions-file--files-for-multiple-entries (keys-entries dirs extensions)
   "Find files related to a list of KEYS-ENTRIES in DIRS with extension in EXTENSIONS."
   (seq-mapcat
