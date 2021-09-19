@@ -305,6 +305,15 @@ If you have a mix of entries created with Zotero and Calibre, for example, you c
     bibtex-actions-file-parser-calibre))
 #+END_SRC
 
+These two variables govern what functions will open which extensions.
+
+#+BEGIN_SRC emacs-lisp
+(setq bibtex-actions-file-extensions '("org" "md" "pdf")
+      bibtex-actions-file-extensions-external '("mp3" "png" "tiff" "html"))
+#+END_SRC
+
+The first will open using =bibtex-actions-open=, which uses the function specified in =bibtex-actions-file-open-function= (the default here is =find-file=), while the second will use =bibtex-actions-file-open-external=.
+
 ** Usage
    :PROPERTIES:
    :CUSTOM_ID: usage
