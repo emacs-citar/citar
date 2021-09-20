@@ -144,8 +144,12 @@ open."
                   ;; Make sure this arg is non-nil.
                   (or dirs "")
                   file-field))
-               bibtex-actions-file-parser-functions))))
-      (append results-key results-file))))
+               bibtex-actions-file-parser-functions)))
+           (results-file-filtered
+            (seq-filter
+             (lambda (file)
+               (member (file-name-extension file) extensions)) results-file)))
+      (append results-key results-file-filtered))))
 
 (defun bibtex-actions-file--files-for-entry (key entry dirs extensions)
     "Find files related to KEY, ENTRY in DIRS with extension in EXTENSIONS."

@@ -363,14 +363,16 @@ key associated with each one."
                       citekey
                       entry
                       bibtex-actions-library-paths
-                      bibtex-actions-file-extensions)
+                      (append bibtex-actions-file-extensions
+                              bibtex-actions-file-extensions-external))
                  " has:files"))
               (notes
                (when (bibtex-actions-file--files-for-entry
                       citekey
                       entry
                       bibtex-actions-notes-paths
-                      bibtex-actions-file-extensions)
+                      (append bibtex-actions-file-extensions
+                              bibtex-actions-file-extensions-external))
                  " has:notes"))
               (link
                (when (bibtex-actions-has-a-value '("doi" "url") entry)
@@ -605,7 +607,7 @@ FORMAT-STRING."
          (bibtex-actions-file--files-for-multiple-entries
           keys-entries
           (append bibtex-actions-library-paths bibtex-actions-notes-paths)
-          bibtex-actions-file-extensions))
+          (append bibtex-actions-file-extensions bibtex-actions-file-extensions-external))
          (links
           (seq-map
            (lambda (key-entry)
