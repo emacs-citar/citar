@@ -77,14 +77,6 @@ will open, via `bibtex-actions-file-open'."
   :group 'bibtex-actions
   :type '(repeat string))
 
-(defcustom bibtex-actions-file-extensions-external '("html")
-  "List of file extensions to open in an external application.
-
-These are the extensions 'bibtex-actions-file-open-external' will
-open."
-  :group 'bibtex-actions
-  :type '(repeat string))
-
 (defvar bibtex-actions-notes-paths)
 
 ;;;; Convenience functions for files and paths
@@ -144,12 +136,8 @@ open."
                   ;; Make sure this arg is non-nil.
                   (or dirs "")
                   file-field))
-               bibtex-actions-file-parser-functions)))
-           (results-file-filtered
-            (seq-filter
-             (lambda (file)
-               (member (file-name-extension file) extensions)) results-file)))
-      (append results-key results-file-filtered))))
+               bibtex-actions-file-parser-functions))))
+      (append results-key results-file))))
 
 (defun bibtex-actions-file--files-for-entry (key entry dirs extensions)
     "Find files related to KEY, ENTRY in DIRS with extension in EXTENSIONS."

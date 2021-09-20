@@ -363,16 +363,14 @@ key associated with each one."
                       citekey
                       entry
                       bibtex-actions-library-paths
-                      (append bibtex-actions-file-extensions
-                              bibtex-actions-file-extensions-external))
+                      bibtex-actions-file-extensions)
                  " has:files"))
               (notes
                (when (bibtex-actions-file--files-for-entry
                       citekey
                       entry
                       bibtex-actions-notes-paths
-                      (append bibtex-actions-file-extensions
-                              bibtex-actions-file-extensions-external))
+                      bibtex-actions-file-extensions)
                  " has:notes"))
               (link
                (when (bibtex-actions-has-a-value '("doi" "url") entry)
@@ -607,7 +605,7 @@ FORMAT-STRING."
          (bibtex-actions-file--files-for-multiple-entries
           keys-entries
           (append bibtex-actions-library-paths bibtex-actions-notes-paths)
-          (append bibtex-actions-file-extensions bibtex-actions-file-extensions-external))
+          (append bibtex-actions-file-extensions bibtex-actions-file-extensions-external)))
          (links
           (seq-map
            (lambda (key-entry)
@@ -615,14 +613,10 @@ FORMAT-STRING."
            keys-entries))
         (resources
          (completing-read-multiple "Related resources: "
-                                   (append files (remq nil links)))))
+                                   (delete-dups (append files (remq nil links))))))
     (dolist (resource resources)
       (cond ((string-match "http" resource 0)
              (browse-url resource))
-            ((member
-              (file-name-extension resource)
-              bibtex-actions-file-extensions-external)
-             (bibtex-actions-file-open-external resource))
             (t (bibtex-actions-file-open resource))))))
 
 ;;;###autoload
@@ -636,16 +630,9 @@ With prefix, rebuild the cache before offering candidates."
          (bibtex-actions-file--files-for-multiple-entries
           keys-entries
           bibtex-actions-library-paths
-          bibtex-actions-file-extensions))
-         (files-external
-          (bibtex-actions-file--files-for-multiple-entries
-           keys-entries
-           bibtex-actions-library-paths
-           bibtex-actions-file-extensions-external)))
+          bibtex-actions-file-extensions)))
     (dolist (file files)
-      (bibtex-actions-file-open file))
-    (dolist (file-external files-external)
-        (bibtex-actions-file-open-external file-external))))
+      (bibtex-actions-file-open file))))
 
 (make-obsolete 'bibtex-actions-open-pdf
                'bibtex-actions-open-library-files "1.0")
