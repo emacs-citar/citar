@@ -253,10 +253,10 @@ offering the selection candidates."
            (cdr (seq-find (lambda (cand) (equal choice (cadr cand))) candidates))))
      chosen)))
 
-(defun bibtex-actions-select-file (files)
+(defun bibtex-actions-select-files (files)
   "Select file(s) from a list of FILES."
   ;; TODO add links to candidates
-  (completing-read
+  (completing-read-multiple
    "Open related file(s): "
    (lambda (string predicate action)
      (if (eq action 'metadata)
@@ -633,7 +633,7 @@ With prefix, rebuild the cache before offering candidates."
           bibtex-actions-file-extensions)))
     (if bibtex-actions-file-open-prompt
         (let ((selected-files
-          (bibtex-actions-select-file files)))
+               (bibtex-actions-select-files files)))
           (dolist (file selected-files)
             (bibtex-actions-file-open file))))
       (dolist (file files)
