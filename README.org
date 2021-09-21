@@ -292,7 +292,7 @@ To replace the default with one from org-roam-bibtex, you can do:
 
 Note, however: if you use that function you need to ensure that the =bibtex-completion-bibliography= variable is correctly set to the same paths as =bibtex-actions-bibliographic=.
 
-** File association and file-field parsing
+** Files, file association and file-field parsing
 
 If you have =bibtex-actions-library-paths= set, the relevant open commands will look in those directories for file names of =CITEKEY.EXTENSION=.
 They will also parse contents of a file-field.
@@ -306,6 +306,12 @@ If you have a mix of entries created with Zotero and Calibre, for example, you c
 #+END_SRC
 
 The =bibtex-actions-file-extension= variable governs which file extensions the open commands will recognize.
+
+The =bibtex-actions-open-library-files= command includes an optional file browser, which can be set with the =bibtex-actions-file-open-prompt= boolean variable.
+When used with embark and consult, you will have a range of alternate actions available for the candidates.
+
+#+CAPTION: File candidates with embark options
+[[file:images/file-browser-embark.png]]
 
 ** Usage
    :PROPERTIES:
