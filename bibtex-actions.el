@@ -257,7 +257,7 @@ offering the selection candidates."
   "Select file(s) from a list of FILES."
   ;; TODO add links to candidates
   (completing-read
-   "Open related resource: "
+   "Open related file(s): "
    (lambda (string predicate action)
      (if (eq action 'metadata)
          `(metadata
@@ -626,13 +626,18 @@ FORMAT-STRING."
 With prefix, rebuild the cache before offering candidates."
   (interactive (list (bibtex-actions-select-refs
                       :rebuild-cache current-prefix-arg)))
-  (let* ((files
+  (let ((files
          (bibtex-actions-file--files-for-multiple-entries
           keys-entries
           bibtex-actions-library-paths
           bibtex-actions-file-extensions)))
-    (dolist (file files)
-      (bibtex-actions-file-open file))))
+    (if bibtex-actions-file-open-prompt
+        (let ((selected-files
+          (bibtex-actions-select-file files)))
+          (dolist (file selected-files)
+            (bibtex-actions-file-open file))))
+      (dolist (file files)
+        (bibtex-actions-file-open file))))
 
 (make-obsolete 'bibtex-actions-open-pdf
                'bibtex-actions-open-library-files "1.0")
