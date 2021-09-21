@@ -253,15 +253,15 @@ offering the selection candidates."
            (cdr (seq-find (lambda (cand) (equal choice (cadr cand))) candidates))))
      chosen)))
 
-(defun bibtex-actions-select-file (files)
+(defun bibtex-actions-select-files (files)
   "Select file(s) from a list of FILES."
   ;; TODO add links to candidates
-  (completing-read
-   "Open related resource: "
+  (completing-read-multiple
+   "Open related file(s): "
    (lambda (string predicate action)
      (if (eq action 'metadata)
          `(metadata
-           (group-function . bibtex-actions-select-group-related-sources)
+        ; (group-function . bibtex-actions-select-group-related-sources)
            (category . file))
        (complete-with-action action files string predicate)))))
 
@@ -626,13 +626,18 @@ FORMAT-STRING."
 With prefix, rebuild the cache before offering candidates."
   (interactive (list (bibtex-actions-select-refs
                       :rebuild-cache current-prefix-arg)))
-  (let* ((files
+  (let ((files
          (bibtex-actions-file--files-for-multiple-entries
           keys-entries
           bibtex-actions-library-paths
           bibtex-actions-file-extensions)))
-    (dolist (file files)
-      (bibtex-actions-file-open file))))
+    (if bibtex-actions-file-open-prompt
+        (let ((selected-files
+               (bibtex-actions-select-files files)))
+          (dolist (file selected-files)
+            (bibtex-actions-file-open file))))
+      (dolist (file files)
+        (bibtex-actions-file-open file))))
 
 (make-obsolete 'bibtex-actions-open-pdf
                'bibtex-actions-open-library-files "1.0")
