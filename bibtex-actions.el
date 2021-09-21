@@ -261,7 +261,7 @@ offering the selection candidates."
    (lambda (string predicate action)
      (if (eq action 'metadata)
          `(metadata
-           (group-function . bibtex-actions-select-group-related-sources)
+        ; (group-function . bibtex-actions-select-group-related-sources)
            (category . file))
        (complete-with-action action files string predicate)))))
 
