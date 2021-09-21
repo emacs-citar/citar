@@ -106,7 +106,7 @@ will open, via `bibtex-actions-file-open'."
 
 (defun bibtex-actions-file-parser-calibre (dirs file-field)
   "Return a list of files from DIRS and a Calibre formatted FILE-FIELD."
-  (let ((parts (split-string file-field ", *" 'omit-nulls)))
+  (let ((parts (split-string file-field "[,;]" 'omit-nulls)))
     (seq-mapcat
      (lambda (part)
        (let ((fn (car (split-string part ":" t))))
