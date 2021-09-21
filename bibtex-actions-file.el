@@ -91,11 +91,7 @@ will open, via `bibtex-actions-file-open'."
       (lambda (p) (file-truename p)) file-paths))))
 
 (defun bibtex-actions-file-parser-default (dirs file-field)
-  "Return a list of files from base directories DIRS and FILE-FIELD."
-  (seq-map (lambda (dir) (expand-file-name file-field dir)) dirs))
-
-(defun bibtex-actions-file-parser-zotero (dirs file-field)
-  "Return a list of files from DIRS and a Zotero formatted FILE-FIELD."
+  "Return a list of files from DIRS and FILE-FIELD."
   (let ((files (split-string file-field ";")))
     (seq-mapcat
      (lambda (dir)
