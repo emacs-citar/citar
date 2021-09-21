@@ -100,8 +100,10 @@ will open, via `bibtex-actions-file-open'."
           (expand-file-name file dir)) files))
      dirs)))
 
-(defun bibtex-actions-file-parser-calibre (dirs file-field)
-  "Return a list of files from DIRS and a Calibre formatted FILE-FIELD."
+(defun bibtex-actions-file-parser-triplet (dirs file-field)
+  "Return a list of files from DIRS and a FILE-FIELD formatted as a triplet.
+
+Example: ':/path/to/test.pdf:PDF'."
   (let ((parts (split-string file-field "[,;]" 'omit-nulls)))
     (seq-mapcat
      (lambda (part)
