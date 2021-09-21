@@ -64,8 +64,16 @@ If you use 'org-roam' and 'org-roam-bibtex', you can use
   :group 'bibtex-actions
   :type '(repeat function))
 
+(defcustom bibtex-actions-file-open-function 'find-file
+  "Function to use to open files."
+  :group 'bibtex-actions
+  :type '(function))
+
 (defcustom bibtex-actions-file-extensions '("pdf" "org" "md")
-  "A list of file extensions to recognize for related files."
+  "List of file extensions to recognize for related files.
+
+These are the extensions the 'bibtex-actions-file-open-function'
+will open, via `bibtex-actions-file-open'."
   :group 'bibtex-actions
   :type '(repeat string))
 
@@ -135,7 +143,6 @@ If you use 'org-roam' and 'org-roam-bibtex', you can use
     "Find files related to KEY, ENTRY in DIRS with extension in EXTENSIONS."
     (seq-filter #'file-exists-p
                 (bibtex-actions-file--possible-names key dirs extensions entry)))
-
 
 (defun bibtex-actions-file--files-for-multiple-entries (keys-entries dirs extensions)
   "Find files related to a list of KEYS-ENTRIES in DIRS with extension in EXTENSIONS."

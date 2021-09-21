@@ -63,6 +63,7 @@
 (defvar embark-meta-map)
 (defvar bibtex-actions-file-open-note-function)
 (defvar bibtex-actions-file-extensions)
+(defvar bibtex-actions-file-extensions-external)
 (defvar bibtex-actions-file-open-prompt)
 (defvar bibtex-actions-file-variable)
 
@@ -98,20 +99,6 @@
   ;; The bibtex-completion default is likely to be removed in the future.
   :group 'bibtex-actions
   :type '(repeat path))
-
-
-(defcustom bibtex-actions-open-file-function 'find-file
-  "Function to use to open files."
-  ;; tODO maybe this should be higher-level; eg:
-  ;; 'bibtex-actions-open-file?
-  :group 'bibtex-actions
-  :type '(function))
-
-(defcustom bibtex-actions-open-library-file-external t
-  "Whether to open a library file in an external application."
-  :group 'bibtex-actions
-  :type '(boolean))
-
 
 (defcustom bibtex-actions-templates
   '((main . "${author editor:30}     ${date year issued:4}     ${title:48}")
@@ -502,6 +489,13 @@ If FORCE-REBUILD-CACHE is t, force reload the cache."
                    bibtex-actions--local-candidates-cache
                    bibtex-actions--candidates-cache))
 
+(defun bibtex-actions--get-entry (key)
+  "Return the cached entry for KEY."
+    (cddr (seq-find
+           (lambda (entry)
+             (string-equal key (cadr entry)))
+           (bibtex-actions--get-candidates))))
+
 (defun bibtex-actions-get-link (entry)
   "Return a link for an ENTRY."
   (let* ((field (bibtex-actions-has-a-value '(doi pmid pmcid url) entry))
@@ -611,7 +605,7 @@ FORMAT-STRING."
          (bibtex-actions-file--files-for-multiple-entries
           keys-entries
           (append bibtex-actions-library-paths bibtex-actions-notes-paths)
-          bibtex-actions-file-extensions))
+          (append bibtex-actions-file-extensions bibtex-actions-file-extensions-external)))
          (links
           (seq-map
            (lambda (key-entry)
@@ -619,13 +613,11 @@ FORMAT-STRING."
            keys-entries))
         (resources
          (completing-read-multiple "Related resources: "
-                                   (append files (remq nil links)))))
+                                   (delete-dups (append files (remq nil links))))))
     (dolist (resource resources)
       (cond ((string-match "http" resource 0)
              (browse-url resource))
-            ((equal (file-name-extension resource) (or "org" "md"))
-             (funcall bibtex-actions-open-file-function resource))
-            (t (bibtex-actions-file-open-external resource))))))
+            (t (bibtex-actions-file-open resource))))))
 
 ;;;###autoload
 (defun bibtex-actions-open-library-files (keys-entries)
@@ -634,18 +626,13 @@ FORMAT-STRING."
 With prefix, rebuild the cache before offering candidates."
   (interactive (list (bibtex-actions-select-refs
                       :rebuild-cache current-prefix-arg)))
-  (let ((files
+  (let* ((files
          (bibtex-actions-file--files-for-multiple-entries
           keys-entries
           bibtex-actions-library-paths
           bibtex-actions-file-extensions)))
-    (if files
-        (dolist (file files)
-          (if bibtex-actions-open-library-file-external
-              (bibtex-actions-file-open-external file)
-            (funcall bibtex-actions-file-open-function file)))
-      (message "No file(s) found for %s"
-               (bibtex-actions--extract-keys keys-entries)))))
+    (dolist (file files)
+      (bibtex-actions-file-open file))))
 
 (make-obsolete 'bibtex-actions-open-pdf
                'bibtex-actions-open-library-files "1.0")
@@ -680,13 +667,7 @@ With prefix, rebuild the cache before offering candidates."
   (interactive (list (bibtex-actions-select-refs
                       :rebuild-cache current-prefix-arg)))
   (dolist (key-entry keys-entries)
-    (let* ((doi
-            (bibtex-actions-get-value "doi" (cdr key-entry)))
-           (doi-url
-            (when doi
-              (concat "https://doi.org/" doi)))
-           (url (bibtex-actions-get-value "url" (cdr key-entry)))
-           (link (or doi-url url)))
+    (let ((link (bibtex-actions-get-link (cdr key-entry))))
       (if link
           (browse-url-default-browser link)
         (message "No link found for %s" key-entry)))))
