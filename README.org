@@ -296,13 +296,17 @@ Note, however: if you use that function you need to ensure that the =bibtex-comp
 
 If you have =bibtex-actions-library-paths= set, the relevant open commands will look in those directories for file names of =CITEKEY.EXTENSION=.
 They will also parse contents of a file-field.
-The =bibtex-actions-file-parser-functions= variable governs which parsers to use.
-If you have a mix of entries created with Zotero and Calibre, for example, you can set it like so and it will parse both:
+The =bibtex-actions-file-parser-functions= variable governs which parsers to use, and there are two included parsers:
+
+1. The default =bibtex-actions-file-parser-default= parser works for simple semi-colon-delimited lists of file paths, as in Zotero.
+2. The =bibtex-actions-file-parser-triplet= works for Mendeley and Calibre, which represent files using a format like =:/path/file.pdf:PDF=.
+
+If you have a mix of entries created with Zotero and Calibre, you can set it like so and it will parse both:
 
 #+BEGIN_SRC emacs-lisp
 (setq bibtex-actions-file-parser-functions
-  '(bibtex-actions-file-parser-zotero
-    bibtex-actions-file-parser-calibre))
+  '(bibtex-actions-file-parser-default
+    bibtex-actions-file-parser-triplet))
 #+END_SRC
 
 The =bibtex-actions-file-extension= variable governs which file extensions the open commands will recognize.
