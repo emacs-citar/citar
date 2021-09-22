@@ -132,7 +132,7 @@ Example: ':/path/to/test.pdf:PDF'."
                  (funcall
                   func
                   ;; Make sure this arg is non-nil.
-                  (or dirs "")
+                  (or dirs "/")
                   file-field))
                bibtex-actions-file-parser-functions))))
       (append results-key results-file))))
