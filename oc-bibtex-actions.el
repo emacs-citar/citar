@@ -223,6 +223,27 @@ strings by style."
   (when-let ((keys (bibtex-actions-get-key-org-cite)))
     (cons 'oc-citation (bibtex-actions--stringify-keys keys))))
 
+;;; Functions for editing/modifying citations
+
+(defun oc-bibtex-actions-delete-citation ()
+  "Delete the citation-reference or citation at point."
+  (interactive)
+  (org-cite-delete-citation (org-element-context)))
+
+(defun oc-bibtex-actions--shift-reference (direction)
+  "When point is on a citation-reference, shift it in DIRECTION."
+  (when direction "TODO"))
+
+(defun oc-bibtex-actions-shift-reference-left ()
+  "When point is on a citation-reference, shift it left."
+  (interactive)
+  (oc-bibtex-actions--shift-reference 'left))
+
+(defun oc-bibtex-actions-shift-reference-right ()
+  "When point is on a citation-reference, shift it right."
+  (interactive)
+  (oc-bibtex-actions--shift-reference 'right))
+
 ;;; Keymap
 
 (defvar oc-bibtex-actions-map
@@ -233,6 +254,18 @@ strings by style."
     (define-key map (kbd "l") '("open source link" . bibtex-actions-open-link))
     (define-key map (kbd "n") '("open notes" . bibtex-actions-open-notes))
     (define-key map (kbd "r") '("refresh" . bibtex-actions-refresh))
+    map)
+  "Keymap for 'oc-bibtex-actions' `embark' minibuffer functionality.")
+
+(defvar oc-bibtex-actions-buffer-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map (kbd "o") '("open source (file or link)" . bibtex-actions-open))
+    (define-key map (kbd "e") '("open bibtex entry" . bibtex-actions-open-entry))
+    (define-key map (kbd "f") '("open source file" . bibtex-actions-open-library-files))
+    (define-key map (kbd "l") '("open source link" . bibtex-actions-open-link))
+    (define-key map (kbd "n") '("open notes" . bibtex-actions-open-notes))
+    (define-key map (kbd "r") '("refresh" . bibtex-actions-refresh))
+    (define-key map (kbd "d") '("delete citation" . oc-bibtex-actions-delete-citation))
     map)
   "Keymap for 'oc-bibtex-actions' `embark' at-point functionality.")
 
