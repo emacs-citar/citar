@@ -107,9 +107,10 @@ Example: ':/path/to/test.pdf:PDF'."
   (let ((parts (split-string file-field "[,;]" 'omit-nulls)))
     (seq-mapcat
      (lambda (part)
-       (when (string-match ":\\(.*\\):.*" part)
-	 (let ((fn (replace-regexp-in-string "\\\\:" ":" (match-string 1 part))))
-           (mapcar (apply-partially #'expand-file-name fn) dirs))))
+	   (let ((fn (if (string-match ":\\(.*\\):.*" part)
+					 (replace-regexp-in-string "\\\\:" ":" (match-string 1 part))
+				   part)))
+		 (mapcar (apply-partially #'expand-file-name fn) dirs)))
      parts)))
 
 (defun bibtex-actions-file--possible-names (key dirs extensions &optional entry)
