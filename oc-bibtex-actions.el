@@ -44,7 +44,10 @@
 
 (declare-function bibtex-actions-at-point "bibtex-actions")
 (declare-function org-open-at-point "org")
+(declare-function org-element-property "org")
+(declare-function org-element-type "org")
 (declare-function org-cite-make-insert-processor "oc")
+(declare-function org-cite-get-references "oc")
 
 (defface oc-bibtex-actions-style-preview
   ;; Not sure if this is the best parent face.
@@ -225,24 +228,63 @@ strings by style."
 
 ;;; Functions for editing/modifying citations
 
+;; most of this section is adapted from org-ref-cite
+
 (defun oc-bibtex-actions-delete-citation ()
   "Delete the citation-reference or citation at point."
   (interactive)
   (org-cite-delete-citation (org-element-context)))
 
-(defun oc-bibtex-actions--shift-reference (direction)
-  "When point is on a citation-reference, shift it in DIRECTION."
-  (when direction "TODO"))
+(defun oc-bibtex-actions-cite-swap (i j lst)
+  "Swap index I and J in the list LST."
+  (let ((tempi (nth i lst)))
+    (setf (nth i lst) (nth j lst))
+    (setf (nth j lst) tempi))
+  lst)
+
+(defun oc-bibtex-actions--shift-reference (datum direction)
+  "When point is on a citation-reference DATUM, shift it in DIRECTION."
+  (let*  ((current-citation (if (eq 'citation (org-element-type datum)) datum
+                             (org-element-property :parent datum)))
+          (current-ref (when (eq 'citation-reference (org-element-type datum)) datum))
+          (refs (org-cite-get-references current-citation))
+          (index
+           (seq-position refs current-ref
+                         (lambda (r1 r2)
+                           (string= (org-element-property :key r1)
+                                    (org-element-property :key r2))))))
+
+    (when (= 1 (length refs))
+      (error "You only have one reference; you cannot shift this"))
+    (when (null index)
+      (error "Nothing to shift here"))
+    (setf (buffer-substring (org-element-property :contents-begin current-citation)
+                            (org-element-property :contents-end current-citation))
+          (org-element-interpret-data
+           (oc-bibtex-actions-cite-swap
+            index
+            (if (eq 'left direction) (- index 1) (+ index 1)) refs)))
+    ;; Now get on the original ref.
+    (let* ((newrefs (org-cite-get-references current-citation))
+           (index
+            (seq-position newrefs current-ref
+                          (lambda (r1 r2)
+                            (string= (org-element-property :key r1)
+                                     (org-element-property :key r2))))))
+
+      (goto-char (org-element-property :begin (nth index newrefs))))))
 
 (defun oc-bibtex-actions-shift-reference-left ()
   "When point is on a citation-reference, shift it left."
   (interactive)
-  (oc-bibtex-actions--shift-reference 'left))
+  (let ((datum (org-element-context)))
+    (oc-bibtex-actions--shift-reference datum 'left)))
 
 (defun oc-bibtex-actions-shift-reference-right ()
   "When point is on a citation-reference, shift it right."
   (interactive)
-  (oc-bibtex-actions--shift-reference 'right))
+  (let ((datum (org-element-context)))
+    (oc-bibtex-actions--shift-reference datum 'right)))
 
 ;;; Keymap
 
