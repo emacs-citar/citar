@@ -103,14 +103,16 @@ will open, via `bibtex-actions-file-open'."
 (defun bibtex-actions-file-parser-triplet (dirs file-field)
   "Return a list of files from DIRS and a FILE-FIELD formatted as a triplet.
 
+This is file-field format seen in, for example, Calibre and Mendeley.
+
 Example: ':/path/to/test.pdf:PDF'."
   (let ((parts (split-string file-field "[,;]" 'omit-nulls)))
     (seq-mapcat
      (lambda (part)
-	   (let ((fn (if (string-match ":\\(.*\\):.*" part)
-					 (replace-regexp-in-string "\\\\:" ":" (match-string 1 part))
-				   part)))
-		 (mapcar (apply-partially #'expand-file-name fn) dirs)))
+       (let ((fn (if (string-match ":\\(.*\\):.*" part)
+                     (replace-regexp-in-string "\\\\:" ":" (match-string 1 part))
+                   part)))
+         (mapcar (apply-partially #'expand-file-name fn) dirs)))
      parts)))
 
 (defun bibtex-actions-file--possible-names (key dirs extensions &optional entry)
