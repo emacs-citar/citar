@@ -94,7 +94,6 @@ CHANGE refers to the notify argument."
 This callback can be passed to the `file-notify-add-watch'.
 
 CHANGE refers to the filenotify argument."
-  ;; FIX use pcase instead
   (pcase bibtex-actions-filenotify-callback
     ('invalidate-cache (bibtex-actions-filenotify--make-default-callback
                        #'bibtex-actions-filenotify--invalidate-cache scope change))
@@ -134,7 +133,6 @@ function can run several times without adding duplicate watches."
   "Get the list of files to watch from `bibtex-actions-filenotify-files'."
   (seq-mapcat (lambda (x)
                 (bibtex-actions-file--normalize-paths
-                 ;; FIX use pcase instead
                  (pcase x
                    ('bibliography bibtex-actions-bibliography)
                    ('library bibtex-actions-library-paths)
