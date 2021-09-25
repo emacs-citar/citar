@@ -740,13 +740,17 @@ With prefix, rebuild the cache before offering candidates."
    (bibtex-actions--extract-keys
     keys-entries)))
 
-(defun bibtex-actions-run-default-action (keys-entries)
-  "Run the default action `bibtex-actions-default-action' on KEYS-ENTRIES."
-  (let ((keys (bibtex-actions--extract-keys keys-entries)))
-    (funcall bibtex-actions-default-action
-             (if (stringp keys)
-                 (split-string keys " & ")
-               (split-string (cdr keys) " & ")))))
+(defun bibtex-actions-run-default-action (keys)
+  "Run the default action `bibtex-actions-default-action' on KEYS."
+  (let* ((keys-parsed
+          (if (stringp keys)
+              (split-string keys " & ")
+            (split-string (cdr keys) " & ")))
+         (keys-entries
+          (seq-map
+           (lambda (key)
+             (cons key (bibtex-actions--get-entry key))) keys-parsed)))
+    (funcall bibtex-actions-default-action keys-entries)))
 
 ;;;###autoload
 (defun bibtex-actions-dwim ()
