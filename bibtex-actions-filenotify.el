@@ -168,7 +168,6 @@ This function only needs to be called if a bib file has been added or removed."
   (interactive)
   (unless (eq 'global scope)
     (seq-map #'file-notify-rm-watch bibtex-actions-filenotify--local-watches)
-    (reftex-access-scan-info t)
     (bibtex-actions-filenotify--add-local-watches)
     (bibtex-actions-filenotify--callback 'local))
   (unless (eq 'local scope)
