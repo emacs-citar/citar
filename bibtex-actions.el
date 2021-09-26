@@ -45,7 +45,6 @@
 (require 'parsebib)
 (require 's)
 ;; Not ideal, find a better FIX
-(require 'reftex)
 (require 'oc)
 
 (declare-function org-element-context "org-element")
@@ -173,11 +172,7 @@ and nil means no action."
   :type 'function)
 
 (defcustom bibtex-actions-major-mode-functions
-  '(((latex-mode) .
-     ((local-bib-files . bibtex-actions-latex--local-bib-files)
-      (insert-keys . bibtex-actions-latex--insert-keys)
-      (keys-at-point . bibtex-actions-latex--keys-at-point)))
-    ((org-mode) .
+  '(((org-mode) .
      ((local-bib-files . org-cite-list-bibliography-files)
       (insert-keys . bibtex-actions--insert-keys-org-cite)
       (keys-at-point . bibtex-actions-get-key-org-cite))))
@@ -198,7 +193,8 @@ point."
   :type '(alist :key-type (repeat string :tag "Major modes")
                 :value-type (set (cons (const local-bib-files) function)
                                  (cons (const insert-keys) function)
-                                 (cons (const keys-at-pont function)))))
+                                 (cons (const insert-citations) function)
+                                 (cons (const keys-at-pont) function))))
 
 ;;; History, including future history list.
 
@@ -304,21 +300,6 @@ offering the selection candidates."
         (cond
          ((string= extension (or "org" "md")) "Notes")
           (t "Library Files")))))
-
-(defun bibtex-actions-latex--local-bib-files ()
-  "Retrieve local bibliographic files for a latex buffer using reftex."
-  (reftex-access-scan-info t)
-  (ignore-errors (reftex-get-bibfile-list)))
-
-(defun bibtex-actions-latex--keys-at-point ()
-  "Returns a list of keys at point in a latex buffer."
-  (let ((macro (TeX-current-macro)))
-    (when (string-match-p "cite" macro)
-      (split-string (thing-at-point 'list t) "," t "[{} ]+"))))
-
-(defun bibtex-actions-latex--insert-keys (keys)
-  "Insert comma sperated KEYS in a latex buffer."
-  (string-join keys ", "))
 
 (defun bibtex-actions--major-mode-function (key &rest args)
   "Function for the major mode corresponding to KEY applied to ARGS"
@@ -736,7 +717,7 @@ With prefix, rebuild the cache before offering candidates."
   (interactive (list (bibtex-actions-select-refs
                       :rebuild-cache current-prefix-arg)))
   ;; TODO
-  (bibtex-completion-insert-citation
+  (bibtex-actions--major-mode-function 'insert-citations
    (bibtex-actions--extract-keys
     keys-entries)))
 
