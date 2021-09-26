@@ -37,7 +37,7 @@
 
 (require 'bibtex-actions)
 (require 'tex)
-(require 'reftex)
+(require 'reftex-parse)
 
 (defcustom bibtex-actions-latex-cite-commands
   '((("cite" "Cite" "parencite"
