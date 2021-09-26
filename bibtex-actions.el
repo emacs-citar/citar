@@ -172,6 +172,7 @@ and nil means no action."
 (defcustom bibtex-actions-major-mode-functions
   '(((latex-mode) .
      ((local-bib-files . bibtex-actions-latex--local-bib-files)
+      (insert-keys . bibtex-actions-latex--insert-keys)
       (keys-at-point . bibtex-actions-latex--keys-at-point)))
     ((org-mode) .
      ((local-bib-files . org-cite-list-bibliography-files)
@@ -301,20 +302,25 @@ offering the selection candidates."
           (t "Library Files")))))
 
 (defun bibtex-actions-latex--local-bib-files ()
-  "Retrieve local bibliographic files for a latex buffer using reftex"
+  "Retrieve local bibliographic files for a latex buffer using reftex."
   (reftex-access-scan-info t)
   (ignore-errors (reftex-get-bibfile-list)))
 
 (defun bibtex-actions-latex--keys-at-point ()
-  "Returns a list of keys at point in latex buffers"
+  "Returns a list of keys at point in a latex buffer."
   (let ((macro (TeX-current-macro)))
     (when (string-match-p "cite" macro)
       (split-string (thing-at-point 'list t) "," t "[{} ]+"))))
 
-(defun bibtex-actions--major-mode-function (key)
+(defun bibtex-actions-latex--insert-keys (keys)
+  "Insert comma sperated KEYS in a latex buffer."
+  (string-join keys ", "))
+
+(defun bibtex-actions--major-mode-function (key &rest args)
   "Function for the major mode corresponding to KEY applied to ARGS"
-  (funcall (alist-get key (cdr (seq-find (lambda (x) (memq major-mode (car x)))
-                                bibtex-actions-major-mode-functions)))))
+  (apply (alist-get key (cdr (seq-find (lambda (x) (memq major-mode (car x)))
+                                bibtex-actions-major-mode-functions)))
+         args))
 
 (defun bibtex-actions--local-files-to-cache ()
   "The local bibliographic files not included in the global bibliography."
@@ -742,7 +748,7 @@ With prefix, rebuild the cache before offering candidates."
 With prefix, rebuild the cache before offering candidates."
   (interactive (list (bibtex-actions-select-refs
                       :rebuild-cache current-prefix-arg)))
- (bibtex-completion-insert-key
+ (bibtex-actions--major-mode-function 'insert-keys
   (bibtex-actions--extract-keys
    keys-entries)))
 
