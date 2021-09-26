@@ -301,7 +301,7 @@ offering the selection candidates."
           (t "Library Files")))))
 
 (defun bibtex-actions-latex--local-bib-files ()
-  "Local bibliographic for latex retrieved using reftex"
+  "Retrieve local bibliographic files for a latex buffer using reftex"
   (reftex-access-scan-info t)
   (ignore-errors (reftex-get-bibfile-list)))
 
