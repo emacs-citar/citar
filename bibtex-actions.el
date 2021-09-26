@@ -44,6 +44,9 @@
 (require 'bibtex-completion)
 (require 'parsebib)
 (require 's)
+;; Not ideal, find a better FIX
+(require 'reftex)
+(require 'oc)
 
 (declare-function org-element-context "org-element")
 (declare-function org-element-property "org-element")
