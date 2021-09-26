@@ -63,7 +63,6 @@
 (defvar embark-meta-map)
 (defvar bibtex-actions-file-open-note-function)
 (defvar bibtex-actions-file-extensions)
-(defvar bibtex-actions-file-extensions-external)
 (defvar bibtex-actions-file-open-prompt)
 (defvar bibtex-actions-file-variable)
 
@@ -605,7 +604,7 @@ FORMAT-STRING."
          (bibtex-actions-file--files-for-multiple-entries
           keys-entries
           (append bibtex-actions-library-paths bibtex-actions-notes-paths)
-          (append bibtex-actions-file-extensions bibtex-actions-file-extensions-external)))
+          bibtex-actions-file-extensions))
          (links
           (seq-map
            (lambda (key-entry)
