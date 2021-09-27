@@ -18,7 +18,11 @@ If you do submit a PR, details:
 
 ** Extending bibtex-actions
 
-Most user-accessible bibtex-actions  functions take an argument ~key-entry~ or ~keys-entries~. These expect, respectively, a cons cell of a citation key (a string like "SmithWritingHistory1987") and the corresponding bibliography entry for that citation, or a list of such cons cells.  If you wish to extend bibtex-actions at the user-action level, perhaps by adding a function to one of the embark keymaps, you will find it easiest to reproduce this pattern.  If you need to build the cons cells manually, this can be accomplished via ~bibtex-actions--get-entry~.  So, for example, to insert the annotations from a pdf into a buffer, the following pair of functions might be used:
+Most user-accessible bibtex-actions functions take an argument ~key-entry~ or ~keys-entries~.
+These expect, respectively, a cons cell of a citation key (a string like "SmithWritingHistory1987") and the corresponding bibliography entry for that citation, or a list of such cons cells.
+If you wish to extend bibtex-actions at the user-action level, perhaps by adding a function to one of the embark keymaps, you will find it easiest to reproduce this pattern.
+If you need to build the cons cells manually, this can be accomplished via ~bibtex-actions--get-entry~.
+So, for example, to insert the annotations from a pdf into a buffer, the following pair of functions might be used:
 
 #+begin_src emacs-lisp
 
