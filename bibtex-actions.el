@@ -40,6 +40,7 @@
   (require 'cl-lib)
   (require 'subr-x))
 (require 'seq)
+(require 'bibtex)
 (require 'bibtex-actions-file)
 (require 'bibtex-completion)
 (require 'parsebib)
@@ -693,8 +694,10 @@ With prefix, rebuild the cache before offering candidates."
 With prefix, rebuild the cache before offering candidates."
   (interactive (list (bibtex-actions-select-refs
                       :rebuild-cache current-prefix-arg)))
- (bibtex-completion-show-entry
-  (bibtex-actions--extract-keys keys-entries)))
+ (let ((bibtex-files (seq-concatenate 'list
+                                      bibtex-actions-bibliography
+                                      (bibtex-actions--local-files-to-cache))))
+  (mapc (lambda (key) (bibtex-find-entry key t nil t)) (bibtex-actions--extract-keys keys-entries))))
 
 ;;;###autoload
 (defun bibtex-actions-open-link (keys-entries)
