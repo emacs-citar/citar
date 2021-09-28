@@ -95,24 +95,25 @@ The availiable commands and how to provide them arguments are configured
 by `bibtex-actions-latex-cite-commands'. If
 `bibtex-actions-latex-prompt-for-extra-arguments' is `nil`, every
 command is assumed to have a single argument into which keys are inserted."
-  (if (bibtex-actions-latex-is-a-cite-command (TeX-current-macro))
-      (progn (skip-chars-forward "^,}")
-             (unless (equal ?} (preceding-char)) (insert ", ")))
-    (let ((macro (or command
-                     (completing-read "Cite command: "
-                                    (seq-mapcat #'car bibtex-actions-latex-cite-commands)
-                                    nil nil nil
-                                    'bibtex-actions-latex-cite-command-history nil nil))))
-      (TeX-parse-macro macro
-                       (when bibtex-actions-latex-prompt-for-extra-arguments
-                         (bibtex-actions-latex-is-a-cite-command macro)))))
-  (bibtex-actions-latex--insert-keys keys)
-  (skip-chars-forward "^}") (forward-char 1))
+  (when keys
+    (if (bibtex-actions-latex-is-a-cite-command (TeX-current-macro))
+        (progn (skip-chars-forward "^,}")
+               (unless (equal ?} (preceding-char)) (insert ", ")))
+      (let ((macro (or command
+                       (completing-read "Cite command: "
+                                        (seq-mapcat #'car bibtex-actions-latex-cite-commands)
+                                        nil nil nil
+                                        'bibtex-actions-latex-cite-command-history nil nil))))
+        (TeX-parse-macro macro
+                         (when bibtex-actions-latex-prompt-for-extra-arguments
+                           (cdr (bibtex-actions-latex-is-a-cite-command macro))))))
+    (bibtex-actions-latex--insert-keys keys)
+    (skip-chars-forward "^}") (forward-char 1)))
 
 (defun bibtex-actions-latex-is-a-cite-command (command)
-  "Returns arg spec of COMMAND if it is in `bibtex-actions-latex-cite-commands"
-  (cdr (seq-find (lambda (x) (member command (car x)))
-                 bibtex-actions-latex-cite-commands)))
+  "Returns element of `bibtex-actions-latex-cite-commands` containing COMMAND"
+  (seq-find (lambda (x) (member command (car x)))
+                 bibtex-actions-latex-cite-commands))
 
 (provide 'bibtex-actions-latex)
 ;;; bibtex-actions-latex.el ends here
