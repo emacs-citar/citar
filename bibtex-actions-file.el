@@ -181,16 +181,18 @@ Example: ':/path/to/test.pdf:PDF'."
             (file-exists (file-exists-p file)))
       (funcall bibtex-actions-file-open-function file)
     (let* ((uuid (org-id-new))
+           (template (bibtex-actions-get-template 'note))
            (note-meta
-            (bibtex-actions--format-entry-no-widths
-             entry
-             (bibtex-actions-get-template 'note)))
+            (when template
+              (bibtex-actions--format-entry-no-widths
+               entry
+               template)))
            (content
             (concat ":PROPERTIES:\n:ID:  " uuid "\n:END:\n" note-meta "\n")))
       (funcall bibtex-actions-file-open-function file)
       ;; This just overrides other template insertion.
       (erase-buffer)
-      (insert content))))
+      (when template (insert content)))))
 
 (defun bibtex-actions-file--get-note-filename (key dirs extensions)
   "Return existing or new filename for KEY in DIRS with extension in EXTENSIONS.
