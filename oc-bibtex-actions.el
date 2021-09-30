@@ -230,6 +230,13 @@ strings by style."
 
 ;; most of this section is adapted from org-ref-cite
 
+(defun oc-bibtex-actions--get-ref-index (refs ref)
+  "Return index of citation-reference REF within REFS."
+  (seq-position refs ref
+                (lambda (r1 r2)
+                  (and (string= (org-element-property :key r1)
+                                (org-element-property :key r2))))))
+
 (defun oc-bibtex-actions-delete-citation ()
   "Delete the citation or citation-reference at point."
   (interactive)
@@ -255,10 +262,7 @@ strings by style."
           (current-ref (when (eq 'citation-reference (org-element-type datum)) datum))
           (refs (org-cite-get-references current-citation))
           (index
-           (seq-position refs current-ref
-                         (lambda (r1 r2)
-                           (string= (org-element-property :key r1)
-                                    (org-element-property :key r2))))))
+           (oc-bibtex-actions--get-ref-index refs current-ref)))
 
     (when (= 1 (length refs))
       (error "You only have one reference; you cannot shift this"))
@@ -273,10 +277,7 @@ strings by style."
     ;; Now get on the original ref.
     (let* ((newrefs (org-cite-get-references current-citation))
            (index
-            (seq-position newrefs current-ref
-                          (lambda (r1 r2)
-                            (string= (org-element-property :key r1)
-                                     (org-element-property :key r2))))))
+            (oc-bibtex-actions--get-ref-index newrefs current-ref)))
 
       (goto-char (org-element-property :begin (nth index newrefs))))))
 
@@ -314,7 +315,9 @@ strings by style."
     (define-key map (kbd "n") '("open notes" . bibtex-actions-open-notes))
     (define-key map (kbd "r") '("refresh" . bibtex-actions-refresh))
     (define-key map (kbd "d") '("delete citation" . oc-bibtex-actions-delete-citation))
-    (define-key map (kbd "k") '("kill/copy citation" . oc-bibtex-actions-kill-citation))
+    (define-key map (kbd "k") '("kill citation" . oc-bibtex-actions-kill-citation))
+    (define-key map (kbd "S-<left>") '("shift left" . oc-bibtex-actions-shift-reference-left))
+    (define-key map (kbd "S-<right>") '("shift right" . oc-bibtex-actions-shift-reference-right))
     map)
   "Keymap for 'oc-bibtex-actions' `embark' at-point functionality.")
 
@@ -322,7 +325,7 @@ strings by style."
 
 (add-to-list 'embark-target-finders 'oc-bibtex-actions-citation-finder)
 (add-to-list 'embark-keymap-alist '(bib-reference . oc-bibtex-actions-map))
-(add-to-list 'embark-keymap-alist '(oc-citation . oc-bibtex-actions-map))
+(add-to-list 'embark-keymap-alist '(oc-citation . oc-bibtex-actions-buffer-map))
 (when (boundp 'embark-pre-action-hooks)
   ;; Ensure that Embark ignores the target for 'org-cite-insert'.
   (add-to-list 'embark-pre-action-hooks '(org-cite-insert embark--ignore-target)))
