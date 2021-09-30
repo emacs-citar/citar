@@ -231,9 +231,15 @@ strings by style."
 ;; most of this section is adapted from org-ref-cite
 
 (defun oc-bibtex-actions-delete-citation ()
-  "Delete the citation-reference or citation at point."
+  "Delete the citation or citation-reference at point."
   (interactive)
   (org-cite-delete-citation (org-element-context)))
+
+(defun oc-bibtex-actions-kill-citation ()
+  "Kill (copy) the citation or citation-reference at point."
+  (interactive)
+  (let* ((datum (org-element-context)))
+    (kill-region (org-element-property :begin datum) (org-element-property :end datum))))
 
 (defun oc-bibtex-actions-cite-swap (i j lst)
   "Swap index I and J in the list LST."
@@ -308,6 +314,7 @@ strings by style."
     (define-key map (kbd "n") '("open notes" . bibtex-actions-open-notes))
     (define-key map (kbd "r") '("refresh" . bibtex-actions-refresh))
     (define-key map (kbd "d") '("delete citation" . oc-bibtex-actions-delete-citation))
+    (define-key map (kbd "k") '("kill/copy citation" . oc-bibtex-actions-kill-citation))
     map)
   "Keymap for 'oc-bibtex-actions' `embark' at-point functionality.")
 
