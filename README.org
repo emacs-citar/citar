@@ -312,9 +312,9 @@ You have a few different ways to use bibtex-actions.
 
 *** Org-cite
 
-Bibtex-actions includes org-cite integration in =oc-bibtex-actions=, which includes a processor with "follow" and "insert" capabilities.
+Bibtex-actions includes org-cite integration in =oc-bibtex-actions=, which includes a processor with "insert," "activate" and "follow" capabilities.
 
-The "insert processor" will use =bibtex-actions-select-refs= to browse your library to insert and edit citations and citation references using the =org-cite-insert= command.
+The "insert processor" uses =bibtex-actions-select-refs= to browse your library to insert and edit citations and citation references using the =org-cite-insert= command.
 
 The "activate processor" runs the list of functions in ~oc-bibtex-activation-functions~, which by default is the ~basic~ processor from ~oc-basic~ to provide fontification, and also a little function that adds a keymap for editing citations at point.
 That keymap includes the following bindings.
