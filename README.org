@@ -116,7 +116,7 @@ In other supported modes, it will work the same as the embark option above.
         org-cite-global-bibliography my/bibs
         org-cite-insert-processor 'oc-bibtex-actions
         org-cite-follow-processor 'oc-bibtex-actions
-        org-cite-activate-processor 'basic))
+        org-cite-activate-processor 'oc-basic))
 
 ;; Use consult-completing-read for enhanced interface.
 (advice-add #'completing-read-multiple :override #'consult-completing-read-multiple)
@@ -330,8 +330,19 @@ Bibtex-actions includes org-cite integration in =oc-bibtex-actions=, which inclu
 
 The "insert processor" will use =bibtex-actions-select-refs= to browse your library to insert and edit citations and citation references using the =org-cite-insert= command.
 
+The "activate processor" runs the list of functions in ~oc-bibtex-activation-functions~, which by default is the ~basic~ processor from ~oc-basic~ to provide fontification, and also a little function that adds a keymap for editing citations at point.
+That keymap includes the following bindings.
+
+| key       | binding                                 |
+|-----------+-----------------------------------------|
+| C-d       | oc-bibtex-actions-delete-citation       |
+| C-k       | oc-bibtex-actions-kill-citation         |
+| S-<left>  | oc-bibtex-actions-shift-reference-left  |
+| S-<right> | oc-bibtex-actions-shift-reference-right |
+
 The "follow processor" provides at-point functionality accessible via the =org-open-at-point= command.
 By default, in org-mode with org-cite support, when point is on a citation or citation-reference, and you invoke =org-open-at-point=, it will run the default command, which is =bibtex-actions-open=.
+Changing this value to =embark-act= with embark installed and configured will provide access to the standard bibtex-actions commands at point.
 
 Org-cite citations include optional "styles" and "variants" to locally modify the citation rendering.
 To edit these, just make sure point is on the citation prefix before running =org-cite-insert=, and you will get a list of available styles.

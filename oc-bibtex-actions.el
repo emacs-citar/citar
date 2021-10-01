@@ -69,6 +69,14 @@ If nil, use 'org-cite-supported-styles'."
   :group 'oc-bibtex-actions
   :type '(repeat :tag "org-cite export processor" symbol))
 
+(defcustom oc-bibtex-actions-activation-functions
+  '(org-cite-basic-activate
+    oc-bibtex-actions-activate-keymap)
+  "List of activation functions for a citation.
+Each function takes one argument, a citation."
+  :group 'oc-bibtex-actions
+  :type '(repeat function))
+
 ;;; Internal variables
 
 (defvar oc-bibtex-actions--csl-processor-cache nil
@@ -230,6 +238,26 @@ strings by style."
 
 ;; most of this section is adapted from org-ref-cite
 
+(defvar oc-bibtex-actions-citation-keymap
+  (let ((map (make-sparse-keymap)))
+    (define-key map (kbd "C-d") '("delete citation" . oc-bibtex-actions-delete-citation))
+    (define-key map (kbd "C-k") '("kill citation" . oc-bibtex-actions-kill-citation))
+    (define-key map (kbd "S-<left>") '("shift left" . oc-bibtex-actions-shift-reference-left))
+    (define-key map (kbd "S-<right>") '("shift right" . oc-bibtex-actions-shift-reference-right))
+    map)
+  "A keymap for editing org citations.")
+
+(defun oc-bibtex-actions-describe-keymap ()
+  "Describe the `oc-bibtex-actions-citation-keymap' keymap."
+  (interactive)
+  (describe-keymap oc-bibtex-actions-citation-keymap))
+
+(defun oc-bibtex-actions-activate-keymap (citation)
+  "Activation function for CITATION to add keymap and tooltip."
+  (pcase-let ((`(,beg . ,end) (org-cite-boundaries citation)))
+    ;; Put the keymap on a citation
+    (put-text-property beg end 'keymap oc-bibtex-actions-citation-keymap)))
+
 (defun oc-bibtex-actions--get-ref-index (refs ref)
   "Return index of citation-reference REF within REFS."
   (seq-position refs ref
@@ -314,10 +342,6 @@ strings by style."
     (define-key map (kbd "l") '("open source link" . bibtex-actions-open-link))
     (define-key map (kbd "n") '("open notes" . bibtex-actions-open-notes))
     (define-key map (kbd "r") '("refresh" . bibtex-actions-refresh))
-    (define-key map (kbd "d") '("delete citation" . oc-bibtex-actions-delete-citation))
-    (define-key map (kbd "k") '("kill citation" . oc-bibtex-actions-kill-citation))
-    (define-key map (kbd "S-<left>") '("shift left" . oc-bibtex-actions-shift-reference-left))
-    (define-key map (kbd "S-<right>") '("shift right" . oc-bibtex-actions-shift-reference-right))
     map)
   "Keymap for 'oc-bibtex-actions' `embark' at-point functionality.")
 
@@ -332,12 +356,18 @@ strings by style."
 
 ;; Load this last.
 
+(defun oc-bibtex-actions-activate (citation)
+  "Run all the activation functions in `oc-bibtex-actions-activation-functions'.
+Argument CITATION is an org-element holding the references."
+  (dolist (activate-func oc-bibtex-actions-activation-functions)
+    (funcall activate-func citation)))
+
 (org-cite-register-processor 'oc-bibtex-actions
   :insert (org-cite-make-insert-processor
            #'oc-bibtex-actions-insert
-         ;  #'org-cite-basic--complete-style)
            #'oc-bibtex-actions-select-style)
-  :follow #'oc-bibtex-actions-follow)
+  :follow #'oc-bibtex-actions-follow
+  :activate #'oc-bibtex-actions-activate)
 
 (provide 'oc-bibtex-actions)
 ;;; oc-bibtex-actions.el ends here
