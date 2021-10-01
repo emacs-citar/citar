@@ -116,7 +116,7 @@ In other supported modes, it will work the same as the embark option above.
         org-cite-global-bibliography my/bibs
         org-cite-insert-processor 'oc-bibtex-actions
         org-cite-follow-processor 'oc-bibtex-actions
-        org-cite-activate-processor 'oc-basic))
+        org-cite-activate-processor 'oc-bibtex-actions))
 
 ;; Use consult-completing-read for enhanced interface.
 (advice-add #'completing-read-multiple :override #'consult-completing-read-multiple)
@@ -129,20 +129,6 @@ If you prefer to have the embark menu open with =org-open-at-point=, you should 
 #+END_SRC
 
 You can invoke both =embark-act= and =embark-dwim=, however, independently of =org-at-point=, and in other modes such as =latex-mode=.
-
-Oc-bibtex-actions does not provide activate functionality. 
-For that, try [[https://github.com/jkitchin/org-ref-cite][org-ref-cite]]. 
-Once installed and loaded, you can configure that like so:
-
-#+BEGIN_SRC
-(setq org-cite-activate-processor 'org-ref-cite-activate)
-#+END_SRC
-
-If you prefer to use a hydra-based in-buffer interface, you can also use that project's "follow processor":
-
-#+BEGIN_SRC
-(setq org-cite-activate-processor 'org-ref-cite-follow)
-#+END_SRC
 
 ** Rich UI
     :PROPERTIES:
