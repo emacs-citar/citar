@@ -647,6 +647,8 @@ With prefix, rebuild the cache before offering candidates."
 With prefix, rebuild the cache before offering candidates."
   (interactive (list (bibtex-actions-select-refs
                       :rebuild-cache current-prefix-arg)))
+  (when (equal bibtex-actions-notes-paths nil)
+    (error "You must set 'bibtex-actions-notes-paths' to open notes"))
   (dolist (key-entry keys-entries)
     ;; REVIEW doing this means the function won't be compatible with, for
     ;; example, 'orb-edit-note'.
