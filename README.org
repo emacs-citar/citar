@@ -177,7 +177,7 @@ Here's how to configure it to use =all-the-icons=:
 
 #+BEGIN_SRC emacs-lisp
   (setq bibtex-actions-symbols
-    `((pdf . (,(all-the-icons-icon-for-file "foo.pdf" :face 'all-the-icons-dred) .
+    `((file . (,(all-the-icons-icon-for-file "foo.pdf" :face 'all-the-icons-dred) .
               ,(all-the-icons-icon-for-file "foo.pdf" :face 'bibtex-actions-icon-dim)))
       (note . (,(all-the-icons-icon-for-file "foo.txt") .
               ,(all-the-icons-icon-for-file "foo.txt" :face 'bibtex-actions-icon-dim)))        
