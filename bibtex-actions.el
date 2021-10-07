@@ -122,9 +122,9 @@ All functions that match a particular field are run in order."
                 :value-type function))
 
 (defcustom bibtex-actions-symbols
-  `((file  .  ("⌘" . " "))
-    (note .   ("✎" . " "))
-    (link .   ("🔗" . "  ")))
+  `((file  .  ("F" . " "))
+    (note .   ("N" . " "))
+    (link .   ("L" . " ")))
   "Configuration alist specifying which symbol or icon to pick for a bib entry.
 This leaves room for configurations where the absense of an item
 may be indicated with the same icon but a different face.
