@@ -123,36 +123,24 @@ Each function takes one argument, a citation."
     ("noauthor" . "(2019)")
     ("noauthor/b" . "2019")))
 
-;TODO
-;(defvar oc-bibtex-actions-open-default
-
 (defun oc-bibtex-actions--style-candidates (&optional proc)
   "Return a flat list of supported styles.
 
-This converts 'org-cite-supported-styles' to a flat list for use
-as completion candidates.
+Convert 'org-cite-supported-styles' to a flat list for use as
+completion candidates.
 
-With PROC list, limits to specific processors."
+With PROC list, limit to specific processor(s)."
   (let ((styles (list)))
-    (cl-loop for s in
-             (org-cite-supported-styles
-              (or proc oc-bibtex-actions-style-targets)) do
-             (let* ((style-name
-                     (if (eq 'long oc-bibtex-actions-styles-format)
-                         (caar s)(cadar s)))
-                    (style
-                     (if (string= "nil" style-name) "" style-name)))
-               (push
-                ;; Highlight the styles without variant.
-                (propertize
-                 (if (string= "" style) "/" style) 'face 'bibtex-actions-highlight)
-                styles)
-               (cl-loop for v in (cdr s) do
-                        (push
-                         (propertize
-                          (concat style "/" (cadr v)) 'face 'bibtex-actions)
-                         styles))))
-    styles))
+    (dolist (style-variants (org-cite-supported-styles proc))
+      (seq-let (style &rest variants) style-variants
+        (let ((style-name (if (string= "nil" (car style)) "" (car style))))
+          (push (propertize
+                 (if (string= "" style-name) "/" style-name) 'face 'bibtex-actions-highlight) styles)
+          (dolist (variant variants)
+            (let ((fstyle
+                   (concat style-name "/" (cadr variant))))
+              (push (propertize fstyle 'face 'bibtex-actions) styles))))))
+      styles))
 
 ;;; Org-cite processors
 
