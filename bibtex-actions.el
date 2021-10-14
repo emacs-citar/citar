@@ -267,12 +267,11 @@ offering the selection candidates."
 (defun bibtex-actions-select-group-related-sources (file transform)
   "Group by FILE by source, TRANSFORM."
     (let ((extension (file-name-extension file)))
-      (if transform file
+      (when transform file
         ;; Transform for grouping and group title display.
-        (cond
-         ((string= extension (or "org" "md")) "Notes")
-          (t "Library Files")))))
-
+        (pcase extension
+          ((or "org" "md") "Notes")
+          (_ "Library Files")))))
 
 (defun bibtex-actions--local-files-to-cache ()
   "The local bibliographic files not included in the global bibliography."

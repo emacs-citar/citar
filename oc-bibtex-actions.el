@@ -200,14 +200,14 @@ strings by style."
         ;; Use the candidate string as is, but add back whitespace alignment.
         (concat "  " (truncate-string-to-width style-str 20 nil 32))
       ;; Transform for grouping and display.
-      (cond
-       ((string= short-style "default") "Default")
-       ((string= short-style "author") "Author-Only")
-       ((string= short-style "locators") "Locators-Only")
-       ((string= short-style "text") "Textual/Narrative")
-       ((string= short-style "nocite") "No Cite")
-       ((string= short-style "year") "Year-Only")
-       ((string= short-style "noauthor") "Suppress Author")))))
+      (pcase short-style
+       ("author" "Author-Only")
+       ("locators" "Locators-Only")
+       ("text" "Textual/Narrative")
+       ("nocite" "No Cite")
+       ("year" "Year-Only")
+       ("noauthor" "Suppress Author")
+       (_ (upcase-initials short-style))))))
 
 (defun oc-bibtex-actions-csl-render-citation (citation)
   "Render CITATION."
