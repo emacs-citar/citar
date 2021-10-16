@@ -315,9 +315,15 @@ You have a few different ways to use bibtex-actions.
 Bibtex-actions includes org-cite integration in =oc-bibtex-actions=, which includes a processor with "insert," "activate" and "follow" capabilities.
 
 The "insert processor" uses =bibtex-actions-select-refs= to browse your library to insert and edit citations and citation references using the =org-cite-insert= command.
+The command is context-aware, so depending on where point is in the buffer, will behave differently.
+For example, if point:
+
+- precedes the colon, you will be prompted to edit the style
+- is on an existing citation-reference, you will be prompted to replace it
+- follows or precedes a citation-reference, you will be prompted to add a new citation-reference
 
 The "activate processor" runs the list of functions in ~oc-bibtex-activation-functions~, which by default is the ~basic~ processor from ~oc-basic~ to provide fontification, and also a little function that adds a keymap for editing citations at point.
-That keymap includes the following bindings.
+That keymap includes the following bindings that provide additional citation and citation-reference editing options.
 
 | key       | binding                                 |
 |-----------+-----------------------------------------|
