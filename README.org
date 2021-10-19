@@ -248,10 +248,10 @@ This can be achieved by
 (setq bibtex-actions-filenotify-callback 'refresh-cache)
 #+END_SRC
 
-The behavior can be tweaked more thoroughly by setting =bibtex-actions-filenotify-callback= to a function.
+The behavior can be tweaked more thoroughly by setting ~bibtex-actions-filenotify-callback~ to a function.
 See its documentation for details.
 Watches can be also placed on additional files.
-This is controlled by the variable =bibtex-actions-filenotify-files=.
+This is controlled by the variable ~bibtex-actions-filenotify-files~.
 
 Another option to make the completion interface more seamless is to add a hook which generates the cache after a buffer is opened.
 This can be done when emacs has been idle (half a second in the example below) with something like this:
@@ -269,20 +269,32 @@ For additional configuration options on this, see [[https://github.com/bdarcus/b
 
 ** Notes
 
-This package provides a =bibtex-actions-file-open-note-function= variable, and a simple default function.
+This package provides a ~bibtex-actions-file-open-note-function~ variable, and a simple default function.
 To replace the default with one from org-roam-bibtex, you can do:
 
 #+BEGIN_SRC emacs-lisp
 (setq bibtex-actions-file-open-note-function 'orb-bibtex-actions-edit-note)
 #+END_SRC
 
-Note, however: if you use that function you need to ensure that the =bibtex-completion-bibliography= variable is correctly set to the same paths as =bibtex-actions-bibliographic=.
+Note, however: if you use that function you need to ensure that the ~bibtex-completion-bibliography~ variable is correctly set to the same paths as ~bibtex-actions-bibliography~.
+
+Beyond the note template, there is ~bibtex-actions-file-note-org-include~, which defines content to include in the document property drawer, primarily for us with org-roam.
+Current options are:
+
+- ~org-id~ :: required for org-roam v2 to identify the note document
+- ~org-roam-ref~ :: adds the citation key to identify it as a bibliographic note
+
+To set both:
+
+#+begin_src emacs-lisp
+(setq bibtex-actions-file-note-org-include '(org-id org-roam-ref))
+#+end_src
 
 ** Files, file association and file-field parsing
 
-If you have =bibtex-actions-library-paths= set, the relevant open commands will look in those directories for file names of =CITEKEY.EXTENSION=.
+If you have ~bibtex-actions-library-paths~ set, the relevant open commands will look in those directories for file names of =CITEKEY.EXTENSION=.
 They will also parse contents of a file-field.
-The =bibtex-actions-file-parser-functions= variable governs which parsers to use, and there are two included parsers:
+The ~bibtex-actions-file-parser-functions~ variable governs which parsers to use, and there are two included parsers:
 
 1. The default =bibtex-actions-file-parser-default= parser works for simple semi-colon-delimited lists of file paths, as in Zotero.
 2. The =bibtex-actions-file-parser-triplet= works for Mendeley and Calibre, which represent files using a format like =:/path/file.pdf:PDF=.
@@ -295,9 +307,9 @@ If you have a mix of entries created with Zotero and Calibre, you can set it lik
     bibtex-actions-file-parser-triplet))
 #+END_SRC
 
-The =bibtex-actions-file-extension= variable governs which file extensions the open commands will recognize.
+The ~bibtex-actions-file-extension~ variable governs which file extensions the open commands will recognize.
 
-The =bibtex-actions-open-library-files= command includes an optional file browser, which can be set with the =bibtex-actions-file-open-prompt= boolean variable.
+The =bibtex-actions-open-library-files= command includes an optional file browser, which can be set with the ~bibtex-actions-file-open-prompt~ boolean variable.
 When used with embark and consult, you will have a range of alternate actions available for the candidates.
 
 #+CAPTION: File candidates with embark options
@@ -366,7 +378,7 @@ A note on multiple candidate selection:
 
 These commands do allow you to select multiple items, with two caveats:
 
-1. For this to work correctly, you /must/ use the ampersand (=&=) as =crm-separator= to separate the candidates.
+1. For this to work correctly, you /must/ use the ampersand (=&=) as ~crm-separator~ to separate the candidates.
 2. We use long candidate strings, so if you use a completion system that requires you to =TAB=-complete, the experience is less-than-ideal.
 
 *** Access an alternate action via =embark-act=
