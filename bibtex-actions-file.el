@@ -58,6 +58,13 @@ If you use 'org-roam' and 'org-roam-bibtex', you can use
   :group 'bibtex-actions
   :type '(function))
 
+(defcustom bibtex-actions-file-note-org-type
+  'default
+  "The org note type."
+  :group 'bibtex-actions
+  :type '(choice (const :tag "Default" 'default)
+                 (const :tag "Org-Roam" 'org-roam)))
+
 (defcustom bibtex-actions-file-parser-functions
   '(bibtex-actions-file-parser-default)
   "List of functions to parse file field."
@@ -187,8 +194,10 @@ Example: ':/path/to/test.pdf:PDF'."
               (bibtex-actions--format-entry-no-widths
                entry
                template)))
+           (org-roam-key (when (equal 'org-roam bibtex-actions-file-note-org-type)
+                           (concat "\n:ROAM_REFS: cite:" key)))
            (content
-            (concat ":PROPERTIES:\n:ID:  " uuid "\n:END:\n" note-meta "\n")))
+            (concat ":PROPERTIES:" org-roam-key "\n:ID:  " uuid "\n:END:\n" note-meta "\n")))
       (funcall bibtex-actions-file-open-function file)
       ;; This just overrides other template insertion.
       (erase-buffer)
