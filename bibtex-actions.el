@@ -334,7 +334,8 @@ personal names of the form 'family, given'."
              "[ ]+"))))
      (seq-mapcat #'fields-for-format
                  (list (bibtex-actions-get-template 'main)
-                       (bibtex-actions-get-template 'suffix)))))
+                       (bibtex-actions-get-template 'suffix)
+                       (bibtex-actions-get-template 'note)))))
 
 (defun bibtex-actions--fields-to-parse ()
   "Determine the fields to parse from the template."
@@ -649,7 +650,7 @@ With prefix, rebuild the cache before offering candidates."
   (when (and (equal bibtex-actions-notes-paths nil)
              (equal bibtex-actions-file-open-note-function
                     'bibtex-actions-file-open-notes-default-org))
-    (error "You must set 'bibtex-actions-notes-paths' to open notes with default notes function"))
+    (message "You must set 'bibtex-actions-notes-paths' to open notes with default notes function"))
   (dolist (key-entry keys-entries)
     ;; REVIEW doing this means the function won't be compatible with, for
     ;; example, 'orb-edit-note'.
