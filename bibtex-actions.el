@@ -322,20 +322,23 @@ personal names of the form 'family, given'."
          (car (split-string name ", "))))
      (split-string names " and ") ", ")))
 
+(defun bibtex-actions--fields-for-format (template)
+  "Return list of fields for TEMPLATE."
+  ;; REVIEW I don't really like this code, but it works correctly.
+  ;;        Would be good to at least refactor to remove s dependency.
+  (let* ((fields-rx "${\\([^}]+\\)}")
+         (raw-fields (seq-mapcat #'cdr (s-match-strings-all fields-rx template))))
+    (seq-map
+     (lambda (field)
+       (car (split-string field ":")))
+     (seq-mapcat (lambda (raw-field) (split-string raw-field " ")) raw-fields))))
+
 (defun bibtex-actions--fields-in-formats ()
   "Find the fields to mentioned in the templates."
-  (cl-flet ((fields-for-format
-             (format-string)
-             (remq
-              ;; FIX need to add this to remove emptry string. Why?
-              "" (split-string
-              (s-format format-string
-                        (lambda (fields-string) (car (split-string fields-string ":"))))
-             "[ ]+"))))
-     (seq-mapcat #'fields-for-format
-                 (list (bibtex-actions-get-template 'main)
-                       (bibtex-actions-get-template 'suffix)
-                       (bibtex-actions-get-template 'note)))))
+  (seq-mapcat #'bibtex-actions--fields-for-format
+              (list (bibtex-actions-get-template 'main)
+                    (bibtex-actions-get-template 'suffix)
+                    (bibtex-actions-get-template 'note))))
 
 (defun bibtex-actions--fields-to-parse ()
   "Determine the fields to parse from the template."
