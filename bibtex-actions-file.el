@@ -196,7 +196,7 @@ Example: ':/path/to/test.pdf:PDF'."
            (org-id (when (member 'org-id bibtex-actions-file-note-org-include)
                      (concat "\n:ID:   " uuid)))
            (org-roam-key (when (member 'org-roam-ref bibtex-actions-file-note-org-include)
-                           (concat "\n:ROAM_REFS: cite:" key)))
+                           (concat "\n:ROAM_REFS: @" key)))
            (prop-drawer (or org-id org-roam-key))
            (content
             (concat (when prop-drawer ":PROPERTIES:")
