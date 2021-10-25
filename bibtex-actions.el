@@ -613,13 +613,16 @@ FORMAT-STRING."
            (lambda (key-entry)
              (bibtex-actions-get-link (cdr key-entry)))
            keys-entries))
-        (resources
-         (completing-read-multiple "Related resources: "
-                                   (delete-dups (append files (remq nil links))))))
-    (dolist (resource resources)
-      (cond ((string-match "http" resource 0)
-             (browse-url resource))
-            (t (bibtex-actions-file-open resource))))))
+         (resource-candidates (delete-dups (append files (remq nil links))))
+         (resources
+          (when resource-candidates
+            (completing-read-multiple "Related resources: " resource-candidates))))
+    (if resource-candidates
+        (dolist (resource resources)
+          (cond ((string-match "http" resource 0)
+                 (browse-url resource))
+                (t (bibtex-actions-file-open resource))))
+      (message "No associated resources"))))
 
 ;;;###autoload
 (defun bibtex-actions-open-library-files (keys-entries)
