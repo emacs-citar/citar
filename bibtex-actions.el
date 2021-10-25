@@ -322,33 +322,6 @@ personal names of the form 'family, given'."
          (car (split-string name ", "))))
      (split-string names " and ") ", ")))
 
-(defvar bibtex-actions-field-regex "${\\([^}]+\\)}"
-  "Regex for fields in templates.")
-
-(defun bibtex-actions--fields-for-format-alt (template)
-  "Return list of fields for TEMPLATE."
-  ;; An adaption of 's-match-strings-all'.
-  (declare (side-effect-free t))
-  (save-match-data
-    (let ((all-strings ())
-          (i 0))
-      (while (and (< i (length template))
-                  (string-match bibtex-actions-field-regex template i))
-        (setq i (1+ (match-beginning 0)))
-        (let (strings
-              (num-matches (/ (length (match-data)) 2))
-              (match 0))
-          (while (/= match num-matches)
-            (push (match-string match template) strings)
-            (setq match (1+ match)))
-          (push (nreverse strings) all-strings)))
-      ;; I'd rather construct the simple list to begin with, but not sure
-      ;; how ATM.
-      (seq-mapcat
-       (lambda (field)
-         (split-string (car (split-string field ":")) " "))
-       (seq-mapcat #'cdr (nreverse all-strings))))))
-
 (defun bibtex-actions--fields-for-format (template)
   "Return list of fields for TEMPLATE."
   ;; REVIEW I don't really like this code, but it works correctly.
