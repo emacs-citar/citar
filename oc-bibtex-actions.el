@@ -212,6 +212,7 @@ strings by style."
     (define-key map (kbd "C-k") '("kill citation" . oc-bibtex-actions-kill-citation))
     (define-key map (kbd "S-<left>") '("shift left" . oc-bibtex-actions-shift-reference-left))
     (define-key map (kbd "S-<right>") '("shift right" . oc-bibtex-actions-shift-reference-right))
+    (define-key map (kbd "C-p") '("update prefix/suffix" . oc-bibtex-actions-update-pre-suffix))
     map)
   "A keymap for editing org citations.")
 
@@ -288,6 +289,25 @@ strings by style."
   (interactive)
   (let ((datum (org-element-context)))
     (oc-bibtex-actions--shift-reference datum 'right)))
+
+(defun oc-bibtex-actions-update-pre-suffix ()
+  "Change the pre/suffix text of the reference at point."
+  ;; TODO I want this to also work for global affixes on the citation,
+  ;;      but haven't figured that out yet.
+  (interactive)
+  (let* ((datum (org-element-context))
+         (datum-type (org-element-type datum))
+         (ref (if (eq datum-type 'citation-reference) datum
+                (error "Not on a citation reference")))
+         (key (org-element-property :key ref))
+         ;; TODO handle space delimiter elegantly.
+         (pre (read-string "Prefix text: " (org-element-property :prefix ref)))
+         (post (read-string "Suffix text: " (org-element-property :suffix ref))))
+    (setf (buffer-substring (org-element-property :begin ref)
+                            (org-element-property :end ref))
+          (org-element-interpret-data
+           `(citation-reference
+             (:key ,key :prefix ,pre :suffix ,post))))))
 
 ;;; Keymap
 
