@@ -143,7 +143,6 @@ With PROC list, limit to specific processor(s)."
 ;;;###autoload
 (defun oc-bibtex-actions-select-style ()
   "Complete a citation style for org-cite with preview."
-  (interactive)
   (let* ((oc-styles
           ;; Sort the list upfront, but let completion UI handle beyond that.
           (sort (oc-bibtex-actions--style-candidates) 'string-lessp))
