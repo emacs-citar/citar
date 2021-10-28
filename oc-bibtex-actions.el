@@ -39,7 +39,6 @@
 (require 'oc)
 (require 'oc-basic)
 (require 'oc-csl)
-(require 'citeproc)
 (require 'embark)
 
 (declare-function bibtex-actions-at-point "bibtex-actions")
@@ -76,25 +75,6 @@ If nil, use 'org-cite-supported-styles'."
 Each function takes one argument, a citation."
   :group 'oc-bibtex-actions
   :type '(repeat function))
-
-;;; Internal variables
-
-(defvar oc-bibtex-actions--csl-processor-cache nil
-  "Cache for the citation preview processor.")
-
-(make-variable-buffer-local 'bibtex-actions--csl-processor-cache)
-
-(defun oc-bibtex-actions--csl-processor ()
-  "Return a `citeproc-el' processor for style preview."
-  (or oc-bibtex-actions--csl-processor-cache
-      (let* ((bibliography (org-cite-list-bibliography-files))
-             (processor
-              (citeproc-create
-               org-cite-csl--fallback-style-file
-               (org-cite-csl--itemgetter bibliography)
-               (org-cite-csl--locale-getter))))
-        (setq oc-bibtex-actions--csl-processor-cache processor)
-        processor)))
 
 ;; TODO maybe connvert to defcustoms. But this is not really the right approach;
 ;; better to just run the export processors to get the previews. But we need
