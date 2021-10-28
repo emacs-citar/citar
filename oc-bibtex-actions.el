@@ -126,6 +126,7 @@ With PROC list, limit to specific processor(s)."
 
 ;; NOTE I may move some or all of these to a separate project
 
+;;;###autoload
 (defun oc-bibtex-actions-insert (&optional multiple)
   "Return a list of keys when MULTIPLE, or else a key string."
   (let ((references (bibtex-actions--extract-keys
@@ -134,10 +135,12 @@ With PROC list, limit to specific processor(s)."
         references
       (car references))))
 
+;;;###autoload
 (defun oc-bibtex-actions-follow (_datum _arg)
   "Follow processor for org-cite."
   (call-interactively bibtex-actions-at-point-function))
 
+;;;###autoload
 (defun oc-bibtex-actions-select-style ()
   "Complete a citation style for org-cite with preview."
   (interactive)
@@ -176,16 +179,6 @@ strings by style."
        ("year" "Year-Only")
        ("noauthor" "Suppress Author")
        (_ (upcase-initials short-style))))))
-
-(defun oc-bibtex-actions-csl-render-citation (citation)
-  "Render CITATION."
-  ;; TODO hook this up to previews.
-  (let ((proc (oc-bibtex-actions--csl-processor)))
-    (citeproc-clear proc)
-    (let* ((info (list :cite-citeproc-processor proc))
-	   (cit-struct (org-cite-csl--create-structure citation info)))
-      (citeproc-append-citations (list cit-struct) proc)
-      (car (citeproc-render-citations proc 'plain t)))))
 
 (defun oc-bibtex-actions--style-preview-annote (style &optional _citation)
   "Annotate STYLE with CITATION preview."
@@ -344,6 +337,7 @@ strings by style."
 
 ;; Load this last.
 
+;;;###autoload
 (defun oc-bibtex-actions-activate (citation)
   "Run all the activation functions in `oc-bibtex-actions-activation-functions'.
 Argument CITATION is an org-element holding the references."
