@@ -180,7 +180,7 @@ and nil means no action."
 
 ;;; Keymaps
 
-(defvar bibtex-actions-map
+(defcustom bibtex-actions-map
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "t") '("add pdf attachment" . bibtex-actions-add-pdf-attachment))
     (define-key map (kbd "a") '("add pdf to library" . bibtex-actions-add-pdf-to-library))
@@ -198,9 +198,11 @@ and nil means no action."
     ;; https://github.com/oantolin/embark/issues/251
     (define-key map (kbd "RET") '("default action" . bibtex-actions-run-default-action))
     map)
-  "Keymap for 'bibtex-actions'.")
+  "Keymap for Embark minibuffer actions."
+  :group 'oc-bibtex-actions
+  :type '(restricted-sexp :match-alternatives (keymapp)))
 
-(defvar bibtex-actions-buffer-map
+(defcustom bibtex-actions-buffer-map
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "o") '("open source document" . bibtex-actions-open))
     (define-key map (kbd "e") '("open bibtex entry" . bibtex-actions-open-entry))
@@ -212,7 +214,22 @@ and nil means no action."
     ;; https://github.com/oantolin/embark/issues/251
     (define-key map (kbd "RET") '("default action" . bibtex-actions-run-default-action))
     map)
-  "Keymap for Embark citation-key actions.")
+  "Keymap for Embark citation-key actions."
+  :group 'bibtex-actions
+  :type '(restricted-sexp :match-alternatives (keymapp)))
+
+;;; Describe keymaps
+
+(defvar bibtex-actions-keymaps
+  (list
+   'bibtex-actions-map
+   'bibtex-actions-buffer-map))
+
+(defun bibtex-actions-describe-keymap ()
+  "Describe the selected keymap."
+  (interactive)
+  (let ((km (completing-read "Keymap: " (sort bibtex-actions-keymaps #'string<))))
+    (describe-keymap km)))
 
 ;;; Completion functions
 
