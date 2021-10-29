@@ -200,13 +200,15 @@ strings by style."
 
 (defvar oc-bibtex-actions-citation-keymap
   (let ((map (make-sparse-keymap)))
+    (define-key map (kbd "<mouse-1>") '("default action" . bibtex-actions-dwim))
+    (define-key map (kbd "<mouse-3>") '("embark act" . embark-act))
     (define-key map (kbd "C-d") '("delete citation" . oc-bibtex-actions-delete-citation))
     (define-key map (kbd "C-k") '("kill citation" . oc-bibtex-actions-kill-citation))
     (define-key map (kbd "S-<left>") '("shift left" . oc-bibtex-actions-shift-reference-left))
     (define-key map (kbd "S-<right>") '("shift right" . oc-bibtex-actions-shift-reference-right))
     (define-key map (kbd "C-p") '("update prefix/suffix" . oc-bibtex-actions-update-pre-suffix))
     map)
-  "A keymap for editing org citations.")
+  "A keymap for interacting with org citations.")
 
 (defun oc-bibtex-actions-describe-keymap ()
   "Describe the `oc-bibtex-actions-citation-keymap' keymap."
