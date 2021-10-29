@@ -76,6 +76,48 @@ Each function takes one argument, a citation."
   :group 'oc-bibtex-actions
   :type '(repeat function))
 
+;;; Keymaps
+
+(defcustom oc-bibtex-actions-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map (kbd "o") '("open source (file or link)" . bibtex-actions-open))
+    (define-key map (kbd "e") '("open bibtex entry" . bibtex-actions-open-entry))
+    (define-key map (kbd "f") '("open source file" . bibtex-actions-open-library-files))
+    (define-key map (kbd "l") '("open source link" . bibtex-actions-open-link))
+    (define-key map (kbd "n") '("open notes" . bibtex-actions-open-notes))
+    (define-key map (kbd "r") '("refresh" . bibtex-actions-refresh))
+    map)
+  "Keymap for 'oc-bibtex-actions' `embark' minibuffer functionality."
+  :group 'oc-bibtex-actions
+  :type '(restricted-sexp :match-alternatives (keymapp)))
+
+(defcustom oc-bibtex-actions-buffer-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map (kbd "o") '("open source (file or link)" . bibtex-actions-open))
+    (define-key map (kbd "e") '("open bibtex entry" . bibtex-actions-open-entry))
+    (define-key map (kbd "f") '("open source file" . bibtex-actions-open-library-files))
+    (define-key map (kbd "l") '("open source link" . bibtex-actions-open-link))
+    (define-key map (kbd "n") '("open notes" . bibtex-actions-open-notes))
+    (define-key map (kbd "r") '("refresh" . bibtex-actions-refresh))
+    map)
+  "Keymap for 'oc-bibtex-actions' `embark' at-point functionality."
+  :group 'oc-bibtex-actions
+  :type '(restricted-sexp :match-alternatives (keymapp)))
+
+(defcustom oc-bibtex-actions-citation-keymap
+  (let ((map (make-sparse-keymap)))
+    (define-key map (kbd "<mouse-1>") '("default action" . bibtex-actions-dwim))
+    (define-key map (kbd "<mouse-3>") '("embark act" . embark-act))
+    (define-key map (kbd "C-d") '("delete citation" . oc-bibtex-actions-delete-citation))
+    (define-key map (kbd "C-k") '("kill citation" . oc-bibtex-actions-kill-citation))
+    (define-key map (kbd "S-<left>") '("shift left" . oc-bibtex-actions-shift-reference-left))
+    (define-key map (kbd "S-<right>") '("shift right" . oc-bibtex-actions-shift-reference-right))
+    (define-key map (kbd "C-p") '("update prefix/suffix" . oc-bibtex-actions-update-pre-suffix))
+    map)
+  "A keymap for interacting with org citations."
+  :group 'oc-bibtex-actions
+  :type '(restricted-sexp :match-alternatives (keymapp)))
+
 ;; TODO maybe connvert to defcustoms. But this is not really the right approach;
 ;; better to just run the export processors to get the previews. But we need
 ;; citation context for that, or some other solution to have a citation to
@@ -198,18 +240,6 @@ strings by style."
 
 ;; most of this section is adapted from org-ref-cite
 
-(defvar oc-bibtex-actions-citation-keymap
-  (let ((map (make-sparse-keymap)))
-    (define-key map (kbd "<mouse-1>") '("default action" . bibtex-actions-dwim))
-    (define-key map (kbd "<mouse-3>") '("embark act" . embark-act))
-    (define-key map (kbd "C-d") '("delete citation" . oc-bibtex-actions-delete-citation))
-    (define-key map (kbd "C-k") '("kill citation" . oc-bibtex-actions-kill-citation))
-    (define-key map (kbd "S-<left>") '("shift left" . oc-bibtex-actions-shift-reference-left))
-    (define-key map (kbd "S-<right>") '("shift right" . oc-bibtex-actions-shift-reference-right))
-    (define-key map (kbd "C-p") '("update prefix/suffix" . oc-bibtex-actions-update-pre-suffix))
-    map)
-  "A keymap for interacting with org citations.")
-
 (defun oc-bibtex-actions-describe-keymap ()
   "Describe the `oc-bibtex-actions-citation-keymap' keymap."
   (interactive)
@@ -302,30 +332,6 @@ strings by style."
           (org-element-interpret-data
            `(citation-reference
              (:key ,key :prefix ,pre :suffix ,post))))))
-
-;;; Keymap
-
-(defvar oc-bibtex-actions-map
-  (let ((map (make-sparse-keymap)))
-    (define-key map (kbd "o") '("open source (file or link)" . bibtex-actions-open))
-    (define-key map (kbd "e") '("open bibtex entry" . bibtex-actions-open-entry))
-    (define-key map (kbd "f") '("open source file" . bibtex-actions-open-library-files))
-    (define-key map (kbd "l") '("open source link" . bibtex-actions-open-link))
-    (define-key map (kbd "n") '("open notes" . bibtex-actions-open-notes))
-    (define-key map (kbd "r") '("refresh" . bibtex-actions-refresh))
-    map)
-  "Keymap for 'oc-bibtex-actions' `embark' minibuffer functionality.")
-
-(defvar oc-bibtex-actions-buffer-map
-  (let ((map (make-sparse-keymap)))
-    (define-key map (kbd "o") '("open source (file or link)" . bibtex-actions-open))
-    (define-key map (kbd "e") '("open bibtex entry" . bibtex-actions-open-entry))
-    (define-key map (kbd "f") '("open source file" . bibtex-actions-open-library-files))
-    (define-key map (kbd "l") '("open source link" . bibtex-actions-open-link))
-    (define-key map (kbd "n") '("open notes" . bibtex-actions-open-notes))
-    (define-key map (kbd "r") '("refresh" . bibtex-actions-refresh))
-    map)
-  "Keymap for 'oc-bibtex-actions' `embark' at-point functionality.")
 
 ;; Embark configuration for org-cite
 
