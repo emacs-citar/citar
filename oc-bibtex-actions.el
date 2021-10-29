@@ -87,7 +87,7 @@ Each function takes one argument, a citation."
     (define-key map (kbd "n") '("open notes" . bibtex-actions-open-notes))
     (define-key map (kbd "r") '("refresh" . bibtex-actions-refresh))
     map)
-  "Keymap for 'oc-bibtex-actions' `embark' minibuffer functionality."
+  "Keymap for org-cite Embark minibuffer functionality."
   :group 'oc-bibtex-actions
   :type '(restricted-sexp :match-alternatives (keymapp)))
 
@@ -100,11 +100,11 @@ Each function takes one argument, a citation."
     (define-key map (kbd "n") '("open notes" . bibtex-actions-open-notes))
     (define-key map (kbd "r") '("refresh" . bibtex-actions-refresh))
     map)
-  "Keymap for 'oc-bibtex-actions' `embark' at-point functionality."
+  "Keymap for org-cite Embark at-point functionality."
   :group 'oc-bibtex-actions
   :type '(restricted-sexp :match-alternatives (keymapp)))
 
-(defcustom oc-bibtex-actions-citation-keymap
+(defcustom oc-bibtex-actions-citation-map
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "<mouse-1>") '("default action" . bibtex-actions-dwim))
     (define-key map (kbd "<mouse-3>") '("embark act" . embark-act))
@@ -114,9 +114,15 @@ Each function takes one argument, a citation."
     (define-key map (kbd "S-<right>") '("shift right" . oc-bibtex-actions-shift-reference-right))
     (define-key map (kbd "C-p") '("update prefix/suffix" . oc-bibtex-actions-update-pre-suffix))
     map)
-  "A keymap for interacting with org citations."
+  "Keymap for interacting with org citations at point."
   :group 'oc-bibtex-actions
   :type '(restricted-sexp :match-alternatives (keymapp)))
+
+;; Add keymaps to list.
+(defvar bibtex-actions-keymaps)
+
+(dolist (km '(oc-bibtex-actions-map oc-bibtex-actions-citation-map))
+  (push km bibtex-actions-keymaps))
 
 ;; TODO maybe connvert to defcustoms. But this is not really the right approach;
 ;; better to just run the export processors to get the previews. But we need
@@ -240,16 +246,11 @@ strings by style."
 
 ;; most of this section is adapted from org-ref-cite
 
-(defun oc-bibtex-actions-describe-keymap ()
-  "Describe the `oc-bibtex-actions-citation-keymap' keymap."
-  (interactive)
-  (describe-keymap oc-bibtex-actions-citation-keymap))
-
 (defun oc-bibtex-actions-activate-keymap (citation)
   "Activation function for CITATION to add keymap and tooltip."
   (pcase-let ((`(,beg . ,end) (org-cite-boundaries citation)))
     ;; Put the keymap on a citation
-    (put-text-property beg end 'keymap oc-bibtex-actions-citation-keymap)))
+    (put-text-property beg end 'keymap oc-bibtex-actions-citation-map)))
 
 (defun oc-bibtex-actions--get-ref-index (refs ref)
   "Return index of citation-reference REF within REFS."
