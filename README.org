@@ -343,6 +343,10 @@ That keymap includes the following bindings that provide additional citation and
 | C-k       | oc-bibtex-actions-kill-citation         |
 | S-<left>  | oc-bibtex-actions-shift-reference-left  |
 | S-<right> | oc-bibtex-actions-shift-reference-right |
+| C-p       | oc-bibtex-actions-update-pre-suffix     |
+| <mouse-1> | bibtex-actions-dwim                     |
+| <mouse-3> | embark-act                              |
+
 
 The "follow processor" provides at-point functionality accessible via the =org-open-at-point= command.
 By default, in org-mode with org-cite support, when point is on a citation or citation-reference, and you invoke =org-open-at-point=, it will run the default command, which is =bibtex-actions-open=.
