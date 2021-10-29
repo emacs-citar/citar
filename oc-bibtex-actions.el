@@ -118,12 +118,6 @@ Each function takes one argument, a citation."
   :group 'oc-bibtex-actions
   :type '(restricted-sexp :match-alternatives (keymapp)))
 
-;; Add keymaps to list.
-(defvar bibtex-actions-keymaps)
-
-(dolist (km '(oc-bibtex-actions-map oc-bibtex-actions-citation-map))
-  (push km bibtex-actions-keymaps))
-
 ;; TODO maybe connvert to defcustoms. But this is not really the right approach;
 ;; better to just run the export processors to get the previews. But we need
 ;; citation context for that, or some other solution to have a citation to
