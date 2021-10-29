@@ -218,19 +218,6 @@ and nil means no action."
   :group 'bibtex-actions
   :type '(restricted-sexp :match-alternatives (keymapp)))
 
-;;; Describe keymaps
-
-(defvar bibtex-actions-keymaps
-  (list
-   'bibtex-actions-map
-   'bibtex-actions-buffer-map))
-
-(defun bibtex-actions-describe-keymap ()
-  "Describe the selected keymap."
-  (interactive)
-  (let ((km (completing-read "Keymap: " (sort bibtex-actions-keymaps #'string<))))
-    (describe-keymap km)))
-
 ;;; Completion functions
 
 (cl-defun bibtex-actions-select-refs (&optional &key rebuild-cache)
