@@ -1,4 +1,4 @@
-;;; oc-bibtex-actions.el --- Org-cite support for bibtex-actions -*- lexical-binding: t; -*-
+;;; citar-org.el --- Org-cite support for citar -*- lexical-binding: t; -*-
 ;;
 ;; Copyright (C) 2021 Bruce D'Arcus
 ;;
@@ -7,7 +7,7 @@
 ;; Created: July 11, 2021
 ;; License: GPL-3.0-or-later
 ;; Version: 0.4
-;; Homepage: https://github.com/bdarcus/bibtex-actions
+;; Homepage: https://github.com/bdarcus/citar
 ;; Package-Requires: ((emacs "26.3")(org "9.5"))
 ;;
 ;; This file is not part of GNU Emacs.
@@ -27,95 +27,98 @@
 ;;
 ;;; Commentary:
 ;;
-;;  This is a small package that intergrates bibtex-actions and org-cite.  It
+;;  This is a small package that intergrates citar and org-cite.  It
 ;;  provides a simple org-cite processor with "follow" and "insert" capabilties.
 ;;
 ;;  Simply load this file and it will configure them for 'org-cite.'
 ;;
 ;;; Code:
 
-(require 'bibtex-actions)
+(require 'citar)
 (require 'org)
 (require 'oc)
 (require 'oc-basic)
 (require 'oc-csl)
-(require 'embark)
 
-(declare-function bibtex-actions-at-point "bibtex-actions")
+(declare-function citar-at-point "citar")
 (declare-function org-open-at-point "org")
 (declare-function org-element-property "org")
 (declare-function org-element-type "org")
 (declare-function org-cite-make-insert-processor "oc")
 (declare-function org-cite-get-references "oc")
+(defvar embark-target-finders)
+(defvar embark-keymap-alist)
+(defvar embark-pre-action-hooks)
 
-(defface oc-bibtex-actions-style-preview
+(defface citar-org-style-preview
   ;; Not sure if this is the best parent face.
-    '((t :inherit bibtex-actions))
+    '((t :inherit citar))
   "Face for org-cite previews."
-  :group 'oc-bibtex-actions)
+  :group 'citar-org)
 
-(defcustom oc-bibtex-actions-styles-format 'long
+(defcustom citar-org-styles-format 'long
   "Style format; whether to use full style names or shortcuts."
-  :group 'oc-bibtex-actions
+  :group 'citar-org
   :type '(choice
           (const long)
           (const short)))
 
-(defcustom oc-bibtex-actions-style-targets nil
+(defcustom citar-org-style-targets nil
   "Export processor targets to include in styles list.
 
 If nil, use 'org-cite-supported-styles'."
-  :group 'oc-bibtex-actions
+  :group 'citar-org
   :type '(repeat :tag "org-cite export processor" symbol))
 
-(defcustom oc-bibtex-actions-activation-functions
+(defcustom citar-org-activation-functions
   '(org-cite-basic-activate
-    oc-bibtex-actions-activate-keymap)
+    citar-org-activate-keymap)
   "List of activation functions for a citation.
 Each function takes one argument, a citation."
-  :group 'oc-bibtex-actions
+  :group 'citar-org
   :type '(repeat function))
 
 ;;; Keymaps
 
-(defcustom oc-bibtex-actions-map
+(defcustom citar-org-map
   (let ((map (make-sparse-keymap)))
-    (define-key map (kbd "o") '("open source (file or link)" . bibtex-actions-open))
-    (define-key map (kbd "e") '("open bibtex entry" . bibtex-actions-open-entry))
-    (define-key map (kbd "f") '("open source file" . bibtex-actions-open-library-files))
-    (define-key map (kbd "l") '("open source link" . bibtex-actions-open-link))
-    (define-key map (kbd "n") '("open notes" . bibtex-actions-open-notes))
-    (define-key map (kbd "r") '("refresh" . bibtex-actions-refresh))
+    (define-key map (kbd "o") '("open source (file or link)" . citar-open))
+    (define-key map (kbd "e") '("open bibtex entry" . citar-open-entry))
+    (define-key map (kbd "f") '("open source file" . citar-open-library-files))
+    (define-key map (kbd "l") '("open source link" . citar-open-link))
+    (define-key map (kbd "n") '("open notes" . citar-open-notes))
+    (define-key map (kbd "r") '("refresh" . citar-refresh))
     map)
   "Keymap for org-cite Embark minibuffer functionality."
-  :group 'oc-bibtex-actions
+  :group 'citar-org
   :type '(restricted-sexp :match-alternatives (keymapp)))
 
-(defcustom oc-bibtex-actions-buffer-map
+(defcustom citar-org-buffer-map
   (let ((map (make-sparse-keymap)))
-    (define-key map (kbd "o") '("open source (file or link)" . bibtex-actions-open))
-    (define-key map (kbd "e") '("open bibtex entry" . bibtex-actions-open-entry))
-    (define-key map (kbd "f") '("open source file" . bibtex-actions-open-library-files))
-    (define-key map (kbd "l") '("open source link" . bibtex-actions-open-link))
-    (define-key map (kbd "n") '("open notes" . bibtex-actions-open-notes))
-    (define-key map (kbd "r") '("refresh" . bibtex-actions-refresh))
+    (define-key map (kbd "o") '("open source (file or link)" . citar-open))
+    (define-key map (kbd "e") '("open bibtex entry" . citar-open-entry))
+    (define-key map (kbd "f") '("open source file" . citar-open-library-files))
+    (define-key map (kbd "l") '("open source link" . citar-open-link))
+    (define-key map (kbd "n") '("open notes" . citar-open-notes))
+    (define-key map (kbd "r") '("refresh" . citar-refresh))
     map)
   "Keymap for org-cite Embark at-point functionality."
-  :group 'oc-bibtex-actions
+  :group 'citar-org
   :type '(restricted-sexp :match-alternatives (keymapp)))
 
-(defcustom oc-bibtex-actions-citation-map
+(defcustom citar-org-citation-map
   (let ((map (make-sparse-keymap)))
-    (define-key map (kbd "<mouse-1>") '("default action" . bibtex-actions-dwim))
-    (define-key map (kbd "<mouse-3>") '("embark act" . embark-act))
-    (define-key map (kbd "C-d") '("delete citation" . oc-bibtex-actions-delete-citation))
-    (define-key map (kbd "C-k") '("kill citation" . oc-bibtex-actions-kill-citation))
-    (define-key map (kbd "S-<left>") '("shift left" . oc-bibtex-actions-shift-reference-left))
-    (define-key map (kbd "S-<right>") '("shift right" . oc-bibtex-actions-shift-reference-right))
-    (define-key map (kbd "C-p") '("update prefix/suffix" . oc-bibtex-actions-update-pre-suffix))
+    (define-key map (kbd "<mouse-1>") '("default action" . citar-dwim))
+    (with-eval-after-load 'embark
+      (define-key map (kbd "<mouse-3>") '("embark act" . embark-act)))
+    (define-key map (kbd "C-d") '("delete citation" . citar-org-delete-citation))
+    (define-key map (kbd "C-k") '("kill citation" . citar-org-kill-citation))
+    (define-key map (kbd "S-<left>") '("shift left" . citar-org-shift-reference-left))
+    (define-key map (kbd "S-<right>") '("shift right" . citar-org-shift-reference-right))
+    (define-key map (kbd "C-p") '("update prefix/suffix" . citar-org-update-pre-suffix))
     map)
   "Keymap for interacting with org citations at point."
-  :group 'oc-bibtex-actions
+  :group 'citar-org
   :type '(restricted-sexp :match-alternatives (keymapp)))
 
 ;; TODO maybe connvert to defcustoms. But this is not really the right approach;
@@ -123,7 +126,7 @@ Each function takes one argument, a citation."
 ;; citation context for that, or some other solution to have a citation to
 ;; process.
 
-(defvar oc-bibtex-actions-style-preview-alist
+(defvar citar-org-style-preview-alist
   '(("/" . "(de Villiers et al, 2019)")
     ("/b" . "de Villiers et al, 2019")
     ("/c" . "(De Villiers et al, 2019)")
@@ -145,7 +148,7 @@ Each function takes one argument, a citation."
     ("noauthor" . "(2019)")
     ("noauthor/b" . "2019")))
 
-(defun oc-bibtex-actions--style-candidates (&optional proc)
+(defun citar-org--style-candidates (&optional proc)
   "Return a flat list of supported styles.
 
 Convert 'org-cite-supported-styles' to a flat list for use as
@@ -157,11 +160,11 @@ With PROC list, limit to specific processor(s)."
       (seq-let (style &rest variants) style-variants
         (let ((style-name (if (string= "nil" (car style)) "" (car style))))
           (push (propertize
-                 (if (string= "" style-name) "/" style-name) 'face 'bibtex-actions-highlight) styles)
+                 (if (string= "" style-name) "/" style-name) 'face 'citar-highlight) styles)
           (dolist (variant variants)
             (let ((fstyle
                    (concat style-name "/" (cadr variant))))
-              (push (propertize fstyle 'face 'bibtex-actions) styles))))))
+              (push (propertize fstyle 'face 'citar) styles))))))
       styles))
 
 ;;; Org-cite processors
@@ -169,38 +172,38 @@ With PROC list, limit to specific processor(s)."
 ;; NOTE I may move some or all of these to a separate project
 
 ;;;###autoload
-(defun oc-bibtex-actions-insert (&optional multiple)
+(defun citar-org-insert (&optional multiple)
   "Return a list of keys when MULTIPLE, or else a key string."
-  (let ((references (bibtex-actions--extract-keys
-                     (bibtex-actions-select-refs))))
+  (let ((references (citar--extract-keys
+                     (citar-select-refs))))
     (if multiple
         references
       (car references))))
 
 ;;;###autoload
-(defun oc-bibtex-actions-follow (_datum _arg)
+(defun citar-org-follow (_datum _arg)
   "Follow processor for org-cite."
-  (call-interactively bibtex-actions-at-point-function))
+  (call-interactively citar-at-point-function))
 
 ;;;###autoload
-(defun oc-bibtex-actions-select-style ()
+(defun citar-org-select-style ()
   "Complete a citation style for org-cite with preview."
   (let* ((oc-styles
           ;; Sort the list upfront, but let completion UI handle beyond that.
-          (sort (oc-bibtex-actions--style-candidates) 'string-lessp))
+          (sort (citar-org--style-candidates) 'string-lessp))
          (style
           (completing-read
            "Styles: "
            (lambda (str pred action)
              (if (eq action 'metadata)
                  `(metadata
-                   (annotation-function . oc-bibtex-actions--style-preview-annote)
-                   (group-function . oc-bibtex-actions--styles-group-fn))
+                   (annotation-function . citar-org--style-preview-annote)
+                   (group-function . citar-org--styles-group-fn))
                (complete-with-action action oc-styles str pred)))))
          (style-final (string-trim style)))
     (if (string= style-final "/") "" style-final)))
 
-(defun oc-bibtex-actions--styles-group-fn (style transform)
+(defun citar-org--styles-group-fn (style transform)
   "Return group title of STYLE or TRANSFORM the candidate.
 This is a group-function that groups org-cite style/variant
 strings by style."
@@ -221,64 +224,64 @@ strings by style."
        ("noauthor" "Suppress Author")
        (_ (upcase-initials short-style))))))
 
-(defun oc-bibtex-actions--style-preview-annote (style &optional _citation)
+(defun citar-org--style-preview-annote (style &optional _citation)
   "Annotate STYLE with CITATION preview."
   ;; TODO rather than use the alist, run the export processors on the citation..
-  (let* ((preview (or (cdr (assoc style oc-bibtex-actions-style-preview-alist)) ""))
+  (let* ((preview (or (cdr (assoc style citar-org-style-preview-alist)) ""))
          ;; TODO look at how define-face does this.
          (formatted-preview (truncate-string-to-width preview 50 nil 32)))
-    (propertize formatted-preview 'face 'oc-bibtex-actions-style-preview)))
+    (propertize formatted-preview 'face 'citar-org-style-preview)))
 
 ;;; Embark target finder
 
-(defun oc-bibtex-actions-citation-finder ()
+(defun citar-org-citation-finder ()
   "Return org-cite citation keys at point as a list for `embark'."
-  (when-let ((keys (bibtex-actions-get-key-org-cite)))
-    (cons 'oc-citation (bibtex-actions--stringify-keys keys))))
+  (when-let ((keys (citar-get-key-org-cite)))
+    (cons 'oc-citation (citar--stringify-keys keys))))
 
 ;;; Functions for editing/modifying citations
 
 ;; most of this section is adapted from org-ref-cite
 
-(defun oc-bibtex-actions-activate-keymap (citation)
+(defun citar-org-activate-keymap (citation)
   "Activation function for CITATION to add keymap and tooltip."
   (pcase-let ((`(,beg . ,end) (org-cite-boundaries citation)))
     ;; Put the keymap on a citation
-    (put-text-property beg end 'keymap oc-bibtex-actions-citation-map)))
+    (put-text-property beg end 'keymap citar-org-citation-map)))
 
-(defun oc-bibtex-actions--get-ref-index (refs ref)
+(defun citar-org--get-ref-index (refs ref)
   "Return index of citation-reference REF within REFS."
   (seq-position refs ref
                 (lambda (r1 r2)
                   (and (string= (org-element-property :key r1)
                                 (org-element-property :key r2))))))
 
-(defun oc-bibtex-actions-delete-citation ()
+(defun citar-org-delete-citation ()
   "Delete the citation or citation-reference at point."
   (interactive)
   (org-cite-delete-citation (org-element-context)))
 
-(defun oc-bibtex-actions-kill-citation ()
+(defun citar-org-kill-citation ()
   "Kill (copy) the citation or citation-reference at point."
   (interactive)
   (let* ((datum (org-element-context)))
     (kill-region (org-element-property :begin datum) (org-element-property :end datum))))
 
-(defun oc-bibtex-actions-cite-swap (i j lst)
+(defun citar-org-cite-swap (i j lst)
   "Swap index I and J in the list LST."
   (let ((tempi (nth i lst)))
     (setf (nth i lst) (nth j lst))
     (setf (nth j lst) tempi))
   lst)
 
-(defun oc-bibtex-actions--shift-reference (datum direction)
+(defun citar-org--shift-reference (datum direction)
   "When point is on a citation-reference DATUM, shift it in DIRECTION."
   (let*  ((current-citation (if (eq 'citation (org-element-type datum)) datum
                              (org-element-property :parent datum)))
           (current-ref (when (eq 'citation-reference (org-element-type datum)) datum))
           (refs (org-cite-get-references current-citation))
           (index
-           (oc-bibtex-actions--get-ref-index refs current-ref)))
+           (citar-org--get-ref-index refs current-ref)))
 
     (when (= 1 (length refs))
       (error "You only have one reference; you cannot shift this"))
@@ -287,29 +290,29 @@ strings by style."
     (setf (buffer-substring (org-element-property :contents-begin current-citation)
                             (org-element-property :contents-end current-citation))
           (org-element-interpret-data
-           (oc-bibtex-actions-cite-swap
+           (citar-org-cite-swap
             index
             (if (eq 'left direction) (- index 1) (+ index 1)) refs)))
     ;; Now get on the original ref.
     (let* ((newrefs (org-cite-get-references current-citation))
            (index
-            (oc-bibtex-actions--get-ref-index newrefs current-ref)))
+            (citar-org--get-ref-index newrefs current-ref)))
 
       (goto-char (org-element-property :begin (nth index newrefs))))))
 
-(defun oc-bibtex-actions-shift-reference-left ()
+(defun citar-org-shift-reference-left ()
   "When point is on a citation-reference, shift it left."
   (interactive)
   (let ((datum (org-element-context)))
-    (oc-bibtex-actions--shift-reference datum 'left)))
+    (citar-org--shift-reference datum 'left)))
 
-(defun oc-bibtex-actions-shift-reference-right ()
+(defun citar-org-shift-reference-right ()
   "When point is on a citation-reference, shift it right."
   (interactive)
   (let ((datum (org-element-context)))
-    (oc-bibtex-actions--shift-reference datum 'right)))
+    (citar-org--shift-reference datum 'right)))
 
-(defun oc-bibtex-actions-update-pre-suffix ()
+(defun citar-org-update-pre-suffix ()
   "Change the pre/suffix text of the reference at point."
   ;; TODO I want this to also work for global affixes on the citation,
   ;;      but haven't figured that out yet.
@@ -330,28 +333,27 @@ strings by style."
 
 ;; Embark configuration for org-cite
 
-(add-to-list 'embark-target-finders 'oc-bibtex-actions-citation-finder)
-(add-to-list 'embark-keymap-alist '(bib-reference . oc-bibtex-actions-map))
-(add-to-list 'embark-keymap-alist '(oc-citation . oc-bibtex-actions-buffer-map))
-(when (boundp 'embark-pre-action-hooks)
-  ;; Ensure that Embark ignores the target for 'org-cite-insert'.
+(with-eval-after-load 'embark
+  (add-to-list 'embark-target-finders 'citar-org-citation-finder)
+  (add-to-list 'embark-keymap-alist '(bib-reference . citar-org-map))
+  (add-to-list 'embark-keymap-alist '(oc-citation . citar-org-buffer-map))
   (add-to-list 'embark-pre-action-hooks '(org-cite-insert embark--ignore-target)))
 
 ;; Load this last.
 
 ;;;###autoload
-(defun oc-bibtex-actions-activate (citation)
-  "Run all the activation functions in `oc-bibtex-actions-activation-functions'.
+(defun citar-org-activate (citation)
+  "Run all the activation functions in `citar-org-activation-functions'.
 Argument CITATION is an org-element holding the references."
-  (dolist (activate-func oc-bibtex-actions-activation-functions)
+  (dolist (activate-func citar-org-activation-functions)
     (funcall activate-func citation)))
 
-(org-cite-register-processor 'oc-bibtex-actions
+(org-cite-register-processor 'citar
   :insert (org-cite-make-insert-processor
-           #'oc-bibtex-actions-insert
-           #'oc-bibtex-actions-select-style)
-  :follow #'oc-bibtex-actions-follow
-  :activate #'oc-bibtex-actions-activate)
+           #'citar-org-insert
+           #'citar-org-select-style)
+  :follow #'citar-org-follow
+  :activate #'citar-org-activate)
 
-(provide 'oc-bibtex-actions)
-;;; oc-bibtex-actions.el ends here
+(provide 'citar-org)
+;;; citar-org.el ends here
