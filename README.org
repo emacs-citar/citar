@@ -1,6 +1,6 @@
-[[https://melpa.org/#/bibtex-actions][file:https://melpa.org/packages/bibtex-actions-badge.svg]]
+[[https://melpa.org/#/bibtex-actions][file:https://melpa.org/packages/citar-badge.svg]]
 
-* BibTeX Actions
+* Citar
   :PROPERTIES:
   :CUSTOM_ID: bibtex-actions
   :END:
@@ -17,6 +17,8 @@
    :CUSTOM_ID: features
    :END:
 
+Note: this package was formerly called "bibtex-actions."
+
 This package provides a completing-read front-end to browse and act on BibTeX, BibLaTeX, and CSL JSON bibliographic data, and LaTeX, markdown, and org-cite editing support.
 
 When used with vertico (or selectrum), embark, and marginalia, it provides similar functionality to helm-bibtex and ivy-bibtex: quick filtering and selecting of bibliographic entries from the minibuffer, and the option to run different commands against them.
@@ -25,7 +27,7 @@ With embark, it also makes available at-point actions in org-mode citations.
 
 Here's a screenshot with [[https://github.com/raxod502/selectrum][vertico]], [[https://github.com/oantolin/embark/][embark]]. and =consult-completing-read-multiple=.
 
-#+CAPTION: vertico with bibtex-actions
+#+CAPTION: vertico with citar
 [[file:images/vertico.png]]
 
 ** Installation
@@ -33,7 +35,7 @@ Here's a screenshot with [[https://github.com/raxod502/selectrum][vertico]], [[h
    :CUSTOM_ID: installation
    :END:
 
-Bibtex-actions is available for installation from [[https://melpa.org][MELPA]].
+citar is available for installation from [[https://melpa.org][MELPA]].
 
 In addition, the following packages are strongly recommended for the best experience.
 
@@ -58,13 +60,13 @@ This is the minimal configuration, and will work with any completing-read compli
 #+BEGIN_SRC emacs-lisp
 (use-package bibtex-completion)
 
-(use-package bibtex-actions
-  :bind (("C-c b" . bibtex-actions-insert-citation)
+(use-package citar
+  :bind (("C-c b" . citar-insert-citation)
          :map minibuffer-local-map
-         ("M-b" . bibtex-actions-insert-preset))
+         ("M-b" . citar-insert-preset))
   :after (bibtex-completion)
   :config
-  (setq bibtex-actions-bibliography '("~/bib/references.bib"))
+  (setq citar-bibliography '("~/bib/references.bib"))
 #+END_SRC
 
 Since most of the command logic resides in bibtex-completion, that is where to look for different [[https://github.com/tmalsburg/helm-bibtex#basic-configuration-recommended][configuration options]].
@@ -74,17 +76,17 @@ Since most of the command logic resides in bibtex-completion, that is where to l
 Highly recommended, this option adds embark, for contextual access to actions in the minibuffer and at-point.
 
 #+BEGIN_SRC emacs-lisp
-(use-package bibtex-actions
-  :bind (("C-c b" . bibtex-actions-insert-citation)
+(use-package citar
+  :bind (("C-c b" . citar-insert-citation)
          :map minibuffer-local-map
-         ("M-b" . bibtex-actions-insert-preset))
+         ("M-b" . citar-insert-preset))
   :after (embark bibtex-completion)
   :config
-  ;; Make the 'bibtex-actions' bindings and targets available to `embark'.
-  (add-to-list 'embark-target-finders 'bibtex-actions-citation-key-at-point)
-  (add-to-list 'embark-keymap-alist '(bib-reference . bibtex-actions-map))
-  (add-to-list 'embark-keymap-alist '(citation-key . bibtex-actions-buffer-map))
-  (setq bibtex-actions-bibliography '("~/bib/references.bib"))
+  ;; Make the 'citar' bindings and targets available to `embark'.
+  (add-to-list 'embark-target-finders 'citar-citation-key-at-point)
+  (add-to-list 'embark-keymap-alist '(bib-reference . citar-map))
+  (add-to-list 'embark-keymap-alist '(citation-key . citar-buffer-map))
+  (setq citar-bibliography '("~/bib/references.bib"))
 
 ;; use consult-completing-read for enhanced interface
 (advice-add #'completing-read-multiple :override #'consult-completing-read-multiple)
@@ -105,18 +107,18 @@ In other supported modes, it will work the same as the embark option above.
 ;; Set bibliography paths so they are the same.
 (defvar my/bibs '("~/bib/references.bib"))
 
-(use-package oc-bibtex-actions
+(use-package citar-org
   :bind (("C-c b" . org-cite-insert)
          ("M-o" . org-open-at-point)
          :map minibuffer-local-map
-         ("M-b" . bibtex-actions-insert-preset))
+         ("M-b" . citar-insert-preset))
   :after (embark oc)
   :config
-  (setq bibtex-actions-bibliography my/bibs
+  (setq citar-bibliography my/bibs
         org-cite-global-bibliography my/bibs
-        org-cite-insert-processor 'oc-bibtex-actions
-        org-cite-follow-processor 'oc-bibtex-actions
-        org-cite-activate-processor 'oc-bibtex-actions))
+        org-cite-insert-processor 'citar
+        org-cite-follow-processor 'citar
+        org-cite-activate-processor 'citar))
 
 ;; Use consult-completing-read for enhanced interface.
 (advice-add #'completing-read-multiple :override #'consult-completing-read-multiple)
@@ -125,7 +127,7 @@ In other supported modes, it will work the same as the embark option above.
 If you prefer to have the embark menu open with =org-open-at-point=, you should set this variable.
 
 #+BEGIN_SRC emacs-lisp
-(setq bibtex-actions-at-point-function 'embark-act)
+(setq citar-at-point-function 'embark-act)
 #+END_SRC
 
 You can invoke both =embark-act= and =embark-dwim=, however, independently of =org-at-point=, and in other modes such as =latex-mode=.
@@ -149,11 +151,11 @@ For the prefix, you can filter for associated PDFs or notes using =has:pdf= or =
 
 *** Templates
 
-The =bibtex-actions-templates= variable configures formatting for these sections, as well as the default note function.
+The =citar-templates= variable configures formatting for these sections, as well as the default note function.
 Here's the defaults:
 
 #+BEGIN_SRC emacs-lisp
-(setq bibtex-actions-templates
+(setq citar-templates
       '((main . "${author editor:30}     ${date year issued:4}     ${title:48}")
         (suffix . "          ${=key= id:15}    ${=type=:12}    ${tags keywords:*}")
         (note . "#+title: Notes on ${author editor}, ${title}")))
@@ -176,16 +178,16 @@ By default, this UI is plain text, but you can configure it to use icons instead
 Here's how to configure it to use =all-the-icons=:
 
 #+BEGIN_SRC emacs-lisp
-  (setq bibtex-actions-symbols
+  (setq citar-symbols
     `((file . (,(all-the-icons-icon-for-file "foo.pdf" :face 'all-the-icons-dred) .
-              ,(all-the-icons-icon-for-file "foo.pdf" :face 'bibtex-actions-icon-dim)))
+              ,(all-the-icons-icon-for-file "foo.pdf" :face 'citar-icon-dim)))
       (note . (,(all-the-icons-icon-for-file "foo.txt") .
-              ,(all-the-icons-icon-for-file "foo.txt" :face 'bibtex-actions-icon-dim)))        
+              ,(all-the-icons-icon-for-file "foo.txt" :face 'citar-icon-dim)))
       (link . 
           (,(all-the-icons-faicon "external-link-square" :v-adjust 0.02 :face 'all-the-icons-dpurple) .
-          ,(all-the-icons-faicon "external-link-square" :v-adjust 0.02 :face 'bibtex-actions-icon-dim)))))
+          ,(all-the-icons-faicon "external-link-square" :v-adjust 0.02 :face 'citar-icon-dim)))))
   ;; Here we define a face to dim non 'active' icons, but preserve alignment
-  (defface bibtex-actions-icon-dim
+  (defface citar-icon-dim
       '((((background dark)) :foreground "#282c34")
        (((background light)) :foreground "#fafafa"))
        "Face for obscuring/dimming icons"
@@ -207,37 +209,37 @@ If you would like to try vertico instead, just do =M-x vertico-mode=.
     :CUSTOM_ID: history-and-predefined-searches
     :END:
 
-=Bibtex-actions= has functionality similar to the [[https://github.com/tmalsburg/helm-bibtex#p][predefined search]] functionality in =helm-bibtex= and =ivy-bibtex=, but with a different implementation.
-Rather than create a new command with the search terms as argument, you just set the =bibtex-actions-presets= variable, and add the strings you want to access:
+=citar= has functionality similar to the [[https://github.com/tmalsburg/helm-bibtex#p][predefined search]] functionality in =helm-bibtex= and =ivy-bibtex=, but with a different implementation.
+Rather than create a new command with the search terms as argument, you just set the =citar-presets= variable, and add the strings you want to access:
 
 #+begin_src emacs-lisp
-(setq bibtex-actions-presets '("one search string" "another search string"))
+(setq citar-presets '("one search string" "another search string"))
 #+end_src
 
 You then have two ways to access these strings from the completion prompt:
 
 1. by using =M-n= from the prompt, which will cycle through the strings
-2. by calling =bibtex-actions-insert-preset= with a keybinding, and then selecting the string
+2. by calling =citar-insert-preset= with a keybinding, and then selecting the string
 
-=Bibtex-actions= also preserves the history of your selections (see caveat below about multiple candidate selection though), which are also accessible in your completion UI, but by using =M-p=.
-You can save this history across sessions by adding =bibtex-actions-history= to =savehist-additional-variables=.
+=citar= also preserves the history of your selections (see caveat below about multiple candidate selection though), which are also accessible in your completion UI, but by using =M-p=.
+You can save this history across sessions by adding =citar-history= to =savehist-additional-variables=.
 
 ** Refreshing the library display
     :PROPERTIES:
     :CUSTOM_ID: refreshing-the-library-display
     :END:
 
-=Bibtex-actions= uses two caches to speed up library display; one for the global bibliography, and another for local files specific to a buffer.
+=citar= uses two caches to speed up library display; one for the global bibliography, and another for local files specific to a buffer.
 This is great for performance, but means the data can become stale if you modify it.
 
-The =bibtex-actions-refresh= command will reload the caches, and you can call this manually.
-You can also call any of the =bibtex-actions= commands with a prefix argument: =C-u M-x bibtex-actions-insert-key=.
+The =citar-refresh= command will reload the caches, and you can call this manually.
+You can also call any of the =citar= commands with a prefix argument: =C-u M-x citar-insert-key=.
 
-Although not default, =bibtex-actions= also provides convenience functions for auto-refreshing cache when bib files change using filenotify.
+Although not default, =citar= also provides convenience functions for auto-refreshing cache when bib files change using filenotify.
 The simplest use of this functionality is
 
 #+BEGIN_SRC emacs-lisp
-(bibtex-actions-filenotify-setup '(LaTeX-mode-hook org-mode-hook))
+(citar-filenotify-setup '(LaTeX-mode-hook org-mode-hook))
 #+END_SRC
 
 This will add watches for the global bib files and in addition add a hook to =LaTeX-mode-hook= and =org-mode-hook= to add watches for local bibliographic files.
@@ -245,13 +247,13 @@ By default this will invalidate the cache if a bib file changes. If the bib file
 This can be achieved by
 
 #+BEGIN_SRC emacs-lisp
-(setq bibtex-actions-filenotify-callback 'refresh-cache)
+(setq citar-filenotify-callback 'refresh-cache)
 #+END_SRC
 
-The behavior can be tweaked more thoroughly by setting ~bibtex-actions-filenotify-callback~ to a function.
+The behavior can be tweaked more thoroughly by setting ~citar-filenotify-callback~ to a function.
 See its documentation for details.
 Watches can be also placed on additional files.
-This is controlled by the variable ~bibtex-actions-filenotify-files~.
+This is controlled by the variable ~citar-filenotify-files~.
 
 Another option to make the completion interface more seamless is to add a hook which generates the cache after a buffer is opened.
 This can be done when emacs has been idle (half a second in the example below) with something like this:
@@ -259,7 +261,7 @@ This can be done when emacs has been idle (half a second in the example below) w
 #+BEGIN_SRC emacs-lisp
 (defun gen-bib-cache-idle ()
   "Generate bib item caches with idle timer"
-  (run-with-idle-timer 0.5 nil #'bibtex-actions-refresh))
+  (run-with-idle-timer 0.5 nil #'citar-refresh))
 
 (add-hook 'LaTeX-mode-hook #'gen-bib-cache-idle)
 (add-hook 'org-mode-hook #'gen-bib-cache-idle)
@@ -269,16 +271,16 @@ For additional configuration options on this, see [[https://github.com/bdarcus/b
 
 ** Notes
 
-This package provides a ~bibtex-actions-file-open-note-function~ variable, and a simple default function.
+This package provides a ~citar-file-open-note-function~ variable, and a simple default function.
 To replace the default with one from org-roam-bibtex, you can do:
 
 #+BEGIN_SRC emacs-lisp
-(setq bibtex-actions-file-open-note-function 'orb-bibtex-actions-edit-note)
+(setq citar-file-open-note-function 'orb-citar-edit-note)
 #+END_SRC
 
-Note, however: if you use that function you need to ensure that the ~bibtex-completion-bibliography~ variable is correctly set to the same paths as ~bibtex-actions-bibliography~.
+Note, however: if you use that function you need to ensure that the ~bibtex-completion-bibliography~ variable is correctly set to the same paths as ~citar-bibliography~.
 
-Beyond the note template, there is ~bibtex-actions-file-note-org-include~, which defines content to include in the document property drawer, primarily for us with org-roam.
+Beyond the note template, there is ~citar-file-note-org-include~, which defines content to include in the document property drawer, primarily for us with org-roam.
 Current options are:
 
 - ~org-id~ :: required for org-roam v2 to identify the note document
@@ -287,29 +289,29 @@ Current options are:
 To set both:
 
 #+begin_src emacs-lisp
-(setq bibtex-actions-file-note-org-include '(org-id org-roam-ref))
+(setq citar-file-note-org-include '(org-id org-roam-ref))
 #+end_src
 
 ** Files, file association and file-field parsing
 
-If you have ~bibtex-actions-library-paths~ set, the relevant open commands will look in those directories for file names of =CITEKEY.EXTENSION=.
+If you have ~citar-library-paths~ set, the relevant open commands will look in those directories for file names of =CITEKEY.EXTENSION=.
 They will also parse contents of a file-field.
-The ~bibtex-actions-file-parser-functions~ variable governs which parsers to use, and there are two included parsers:
+The ~citar-file-parser-functions~ variable governs which parsers to use, and there are two included parsers:
 
-1. The default =bibtex-actions-file-parser-default= parser works for simple semi-colon-delimited lists of file paths, as in Zotero.
-2. The =bibtex-actions-file-parser-triplet= works for Mendeley and Calibre, which represent files using a format like =:/path/file.pdf:PDF=.
+1. The default =citar-file-parser-default= parser works for simple semi-colon-delimited lists of file paths, as in Zotero.
+2. The =citar-file-parser-triplet= works for Mendeley and Calibre, which represent files using a format like =:/path/file.pdf:PDF=.
 
 If you have a mix of entries created with Zotero and Calibre, you can set it like so and it will parse both:
 
 #+BEGIN_SRC emacs-lisp
-(setq bibtex-actions-file-parser-functions
-  '(bibtex-actions-file-parser-default
-    bibtex-actions-file-parser-triplet))
+(setq citar-file-parser-functions
+  '(citar-file-parser-default
+    citar-file-parser-triplet))
 #+END_SRC
 
-The ~bibtex-actions-file-extension~ variable governs which file extensions the open commands will recognize.
+The ~citar-file-extension~ variable governs which file extensions the open commands will recognize.
 
-The =bibtex-actions-open-library-files= command includes an optional file browser, which can be set with the ~bibtex-actions-file-open-prompt~ boolean variable.
+The =citar-open-library-files= command includes an optional file browser, which can be set with the ~citar-file-open-prompt~ boolean variable.
 When used with embark and consult, you will have a range of alternate actions available for the candidates.
 
 #+CAPTION: File candidates with embark options
@@ -320,13 +322,13 @@ When used with embark and consult, you will have a range of alternate actions av
    :CUSTOM_ID: usage
    :END:
 
-You have a few different ways to use bibtex-actions.
+You have a few different ways to use citar.
 
 *** Org-cite
 
-Bibtex-actions includes org-cite integration in =oc-bibtex-actions=, which includes a processor with "insert," "activate" and "follow" capabilities.
+citar includes org-cite integration in =oc-citar=, which includes a processor with "insert," "activate" and "follow" capabilities.
 
-The "insert processor" uses =bibtex-actions-select-refs= to browse your library to insert and edit citations and citation references using the =org-cite-insert= command.
+The "insert processor" uses =citar-select-refs= to browse your library to insert and edit citations and citation references using the =org-cite-insert= command.
 The command is context-aware, so depending on where point is in the buffer, will behave differently.
 For example, if point:
 
@@ -339,18 +341,18 @@ That keymap includes the following bindings that provide additional citation and
 
 | key       | binding                                 |
 |-----------+-----------------------------------------|
-| C-d       | oc-bibtex-actions-delete-citation       |
-| C-k       | oc-bibtex-actions-kill-citation         |
-| S-<left>  | oc-bibtex-actions-shift-reference-left  |
-| S-<right> | oc-bibtex-actions-shift-reference-right |
-| C-p       | oc-bibtex-actions-update-pre-suffix     |
-| <mouse-1> | bibtex-actions-dwim                     |
+| C-d       | oc-citar-delete-citation       |
+| C-k       | oc-citar-kill-citation         |
+| S-<left>  | oc-citar-shift-reference-left  |
+| S-<right> | oc-citar-shift-reference-right |
+| C-p       | oc-citar-update-pre-suffix     |
+| <mouse-1> | citar-dwim                     |
 | <mouse-3> | embark-act                              |
 
 
 The "follow processor" provides at-point functionality accessible via the =org-open-at-point= command.
-By default, in org-mode with org-cite support, when point is on a citation or citation-reference, and you invoke =org-open-at-point=, it will run the default command, which is =bibtex-actions-open=.
-Changing this value to =embark-act= with embark installed and configured will provide access to the standard bibtex-actions commands at point.
+By default, in org-mode with org-cite support, when point is on a citation or citation-reference, and you invoke =org-open-at-point=, it will run the default command, which is =citar-open=.
+Changing this value to =embark-act= with embark installed and configured will provide access to the standard citar commands at point.
 
 Org-cite citations include optional "styles" and "variants" to locally modify the citation rendering.
 To edit these, just make sure point is on the citation prefix before running =org-cite-insert=, and you will get a list of available styles.
@@ -405,16 +407,16 @@ From there, you can run the same options discussed above using =embark-act= (whi
 So, for example, say you are working on a paper. You hold the complete super-set of items you are interested in citing at some point in that buffer.
 From there, you can run different actions on the candidates at will, rather than search individually for each item you want to cite.
 
-*** Use =bibtex-actions-dwim=
+*** Use =citar-dwim=
     :PROPERTIES:
-    :CUSTOM_ID: use-bibtex-actions-dwim
+    :CUSTOM_ID: use-citar-dwim
     :END:
 
-=M-x bibtex-actions-dwim= will run the default action on citation keys found at point directly.
+=M-x citar-dwim= will run the default action on citation keys found at point directly.
 If you have =embark= installed, you use can =embark-dwim= instead for the same behavior, and =embark-act= for additional actions at-point.
 
 If no citation key is found, the minibuffer will open for selection.
-You can disable this behavior by setting =bibtex-actions-at-point-fallback= to nil.
+You can disable this behavior by setting =citar-at-point-fallback= to nil.
 
 ** Comparisons
    :PROPERTIES:
@@ -424,15 +426,15 @@ You can disable this behavior by setting =bibtex-actions-at-point-fallback= to n
 This is inspired by =helm-bibtex= and =ivy-bibtex=, but is based on =completing-read=.
 In comparison:
 
-- like =helm-bibtex=, but unlike =ivy-bibtex=, =bibtex-actions= has support for multi-selection of candidates
-- =helm-bibtex= and =ivy-bibtex= provide a single command, and the actions accessed from there; =bibtex-actions= provides all of its actions as standard commands, available from =M-x=, without a single entry point.
-- =bibtex-actions= is based on =completing-read-multiple=, with a single dependency, and works with different completion systems (though in practice is best supported in =selectrum=) and supporting packages that are =completing-read= compliant; =helm-bibtex= and =ivy-bibtex= are based on =helm= and =ivy= respectively.
+- like =helm-bibtex=, but unlike =ivy-bibtex=, =citar= has support for multi-selection of candidates
+- =helm-bibtex= and =ivy-bibtex= provide a single command, and the actions accessed from there; =citar= provides all of its actions as standard commands, available from =M-x=, without a single entry point.
+- =citar= is based on =completing-read-multiple=, with a single dependency, and works with different completion systems (though in practice is best supported in =selectrum=) and supporting packages that are =completing-read= compliant; =helm-bibtex= and =ivy-bibtex= are based on =helm= and =ivy= respectively.
 
 What about =org-ref= and =org-ref-cite=?
 
 The future of the latter package at this point is unclear, though there is some cross-fertilization of ideas and code between this project and that.
 
-The former is an integrated package that supports citations, cross-references, acronyms and glossaries, but notably does not support org-cite; =bibtex-actions= will only ever support org-cite, and exclusively focus on citations.
+The former is an integrated package that supports citations, cross-references, acronyms and glossaries, but notably does not support org-cite; =citar= will only ever support org-cite, and exclusively focus on citations.
 
 ** Acknowledgements
    :PROPERTIES:
