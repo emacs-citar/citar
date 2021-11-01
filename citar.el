@@ -180,6 +180,7 @@ and nil means no action."
 
 ;;; Keymaps
 
+;;;###autoload
 (defcustom citar-map
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "t") '("add pdf attachment" . citar-add-pdf-attachment))
@@ -202,6 +203,7 @@ and nil means no action."
   :group 'oc-citar
   :type '(restricted-sexp :match-alternatives (keymapp)))
 
+;;;###autoload
 (defcustom citar-buffer-map
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "o") '("open source document" . citar-open))
@@ -589,6 +591,7 @@ FORMAT-STRING."
 
 ;;; Embark
 
+;;;###autoload
 (defun citar-citation-key-at-point ()
   "Return citation keys at point as a list for `embark'."
   (when-let ((keys (or (citar-get-key-org-cite)
@@ -598,6 +601,12 @@ FORMAT-STRING."
 (defun citar--stringify-keys (keys)
   "Return a list of KEYS as a crm-string for `embark'."
   (if (listp keys) (string-join keys " & ") keys))
+
+;;;###autoload
+(with-eval-after-load 'embark
+  (add-to-list 'embark-target-finders 'citar-citation-key-at-point)
+  (add-to-list 'embark-keymap-alist '(bib-reference . citar-map))
+  (add-to-list 'embark-keymap-alist '(citation-key . citar-buffer-map)))
 
 ;;; Commands
 
@@ -753,6 +762,7 @@ With prefix, rebuild the cache before offering candidates."
    (citar--extract-keys
     keys-entries)))
 
+;;;###autoload
 (defun citar-run-default-action (keys)
   "Run the default action `citar-default-action' on KEYS."
   (let* ((keys-parsed

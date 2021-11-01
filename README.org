@@ -58,73 +58,57 @@ In addition, the following packages are strongly recommended for the best experi
 This is the minimal configuration, and will work with any completing-read compliant vertical completion UI, like Vertico, Selectrum, or the built-in icomplete-vertical, with actions available via =M-x= commands.
 
 #+BEGIN_SRC emacs-lisp
-(use-package bibtex-completion)
-
 (use-package citar
   :bind (("C-c b" . citar-insert-citation)
          :map minibuffer-local-map
          ("M-b" . citar-insert-preset))
-  :after (bibtex-completion)
-  :config
-  (setq citar-bibliography '("~/bib/references.bib"))
+  :custom
+  (citar-bibliography '("~/bib/references.bib"))
 #+END_SRC
 
 Since most of the command logic resides in bibtex-completion, that is where to look for different [[https://github.com/tmalsburg/helm-bibtex#basic-configuration-recommended][configuration options]].
 
 *** Embark
 
-Highly recommended, this option adds embark, for contextual access to actions in the minibuffer and at-point.
+Citar will automatically integrate with Embark if it is installed, offering contextual access to actions in the
+minibuffer and at-point.  Some citation commands prompt for multiple citation keys, for which Consult offers an enhanced
+interface:
 
 #+BEGIN_SRC emacs-lisp
-(use-package citar
-  :bind (("C-c b" . citar-insert-citation)
-         :map minibuffer-local-map
-         ("M-b" . citar-insert-preset))
-  :after (embark bibtex-completion)
-  :config
-  ;; Make the 'citar' bindings and targets available to `embark'.
-  (add-to-list 'embark-target-finders 'citar-citation-key-at-point)
-  (add-to-list 'embark-keymap-alist '(bib-reference . citar-map))
-  (add-to-list 'embark-keymap-alist '(citation-key . citar-buffer-map))
-  (setq citar-bibliography '("~/bib/references.bib"))
-
 ;; use consult-completing-read for enhanced interface
 (advice-add #'completing-read-multiple :override #'consult-completing-read-multiple)
 #+END_SRC
 
-When using this option, these actions are generic, and work the same across org, markdown, and latex modes.
+When using Embark, the Citar actions are generic, and work the same across org, markdown, and latex modes.
 
 *** Org-Cite
 
 #+CAPTION: org-cite at-point integration with =embark-act=
 [[file:images/org-cite-embark-point.png]]
 
-If you use org-mode, this is the best option.
-It includes the embark functionality above, but customizes menus and user-experience for org-cite.
-In other supported modes, it will work the same as the embark option above.
+If you use Org-Mode, this is the best option.  Use the basic configuration above, and /in addition/, configure Org-Cite
+to use Citar:
 
 #+BEGIN_SRC emacs-lisp
 ;; Set bibliography paths so they are the same.
 (defvar my/bibs '("~/bib/references.bib"))
 
 (use-package citar-org
-  :bind (("C-c b" . org-cite-insert)
-         ("M-o" . org-open-at-point)
-         :map minibuffer-local-map
-         ("M-b" . citar-insert-preset))
-  :after (embark oc)
-  :config
-  (setq citar-bibliography my/bibs
-        org-cite-global-bibliography my/bibs
-        org-cite-insert-processor 'citar
-        org-cite-follow-processor 'citar
-        org-cite-activate-processor 'citar))
-
-;; Use consult-completing-read for enhanced interface.
-(advice-add #'completing-read-multiple :override #'consult-completing-read-multiple)
+  :no-require
+  :bind ; optional
+  (:map org-mode-map
+        ("C-c b" . #'org-cite-insert)) ; Also bound to C-c C-x C-@
+  :custom
+  (org-cite-global-bibliography my/bibs)
+  (org-cite-insert-processor 'citar)
+  (org-cite-follow-processor 'citar)
+  (org-cite-activate-processor 'citar))
 #+END_SRC
 
-If you prefer to have the embark menu open with =org-open-at-point=, you should set this variable.
+You can insert citations with the =org-cite-insert= command, which is bound to =C-c C-x C-@= in Org-Mode buffers.  The
+optional ~:bind~ command above also gives it the shorter =C-c b= binding.
+
+If you prefer to have the Embark menu open with =org-open-at-point=, you should set this variable.
 
 #+BEGIN_SRC emacs-lisp
 (setq citar-at-point-function 'embark-act)
