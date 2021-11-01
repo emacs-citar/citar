@@ -27,10 +27,15 @@
 ;;
 ;;; Commentary:
 ;;
-;;  This is a small package that intergrates citar and org-cite.  It
-;;  provides a simple org-cite processor with "follow" and "insert" capabilties.
+;;  This is a small package that integrates citar and org-cite.  It
+;;  provides a simple org-cite processor with "follow", "insert", and
+;;  "activate" capabilities.
 ;;
-;;  Simply load this file and it will configure them for 'org-cite.'
+;;  Simply load this file (or its generated autoloads) and it will
+;;  make the processor available to 'org-cite'.  To instruct org-cite
+;;  to use citar, set one or more of the customization variables
+;;  'org-cite-activate-processor', 'org-cite-follow-processor', and
+;;  'org-cite-insert-processor' to the symbol 'citar.
 ;;
 ;;; Code:
 
@@ -348,12 +353,14 @@ Argument CITATION is an org-element holding the references."
   (dolist (activate-func citar-org-activation-functions)
     (funcall activate-func citation)))
 
-(org-cite-register-processor 'citar
-  :insert (org-cite-make-insert-processor
-           #'citar-org-insert
-           #'citar-org-select-style)
-  :follow #'citar-org-follow
-  :activate #'citar-org-activate)
+;;;###autoload
+(with-eval-after-load 'oc
+  (org-cite-register-processor 'citar
+    :insert (org-cite-make-insert-processor
+             #'citar-org-insert
+             #'citar-org-select-style)
+    :follow #'citar-org-follow
+    :activate #'citar-org-activate))
 
 (provide 'citar-org)
 ;;; citar-org.el ends here
