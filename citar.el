@@ -78,22 +78,19 @@
   "Face used to highlight content in `citar' candidates."
   :group 'citar)
 
-(defcustom citar-bibliography
-  (citar-file--normalize-paths bibtex-completion-bibliography)
+(defcustom citar-bibliography bibtex-completion-bibliography
   "A list of bibliography files."
   ;; The bibtex-completion default is likely to be removed in the future.
   :group 'citar
   :type '(repeat file))
 
-(defcustom citar-library-paths
-  (citar-file--normalize-paths bibtex-completion-library-path)
+(defcustom citar-library-paths bibtex-completion-library-path
   "A list of files paths for related PDFs, etc."
   ;; The bibtex-completion default is likely to be removed in the future.
   :group 'citar
   :type '(repeat path))
 
-(defcustom citar-notes-paths
-  (citar-file--normalize-paths bibtex-completion-notes-path)
+(defcustom citar-notes-paths bibtex-completion-notes-path
   "A list of file paths for bibliographic notes."
   ;; The bibtex-completion default is likely to be removed in the future.
   :group 'citar
@@ -280,10 +277,10 @@ offering the selection candidates."
 (defun citar--local-files-to-cache ()
   "The local bibliographic files not included in the global bibliography."
   ;; We cache these locally to the buffer.
-  (let* ((local-bib-files
-          (citar-file--normalize-paths
-           (bibtex-completion-find-local-bibliography))))
-    (seq-difference local-bib-files citar-bibliography)))
+  (seq-difference (citar-file--normalize-paths
+                   (bibtex-completion-find-local-bibliography))
+                  (citar-file--normalize-paths
+                   citar-bibliography)))
 
 (defun citar-get-value (field item)
   "Return the FIELD value for ITEM."
@@ -471,7 +468,7 @@ are refreshed."
   (unless (eq 'local scope)
     (setq citar--candidates-cache
       (citar--format-candidates
-       citar-bibliography)))
+        (citar-file--normalize-paths citar-bibliography))))
   (unless (eq 'global scope)
     (setq citar--local-candidates-cache
           (citar--format-candidates
@@ -657,7 +654,7 @@ With prefix, rebuild the cache before offering candidates."
 With prefix, rebuild the cache before offering candidates."
   (interactive (list (citar-select-refs
                       :rebuild-cache current-prefix-arg)))
-  (when (and (equal citar-notes-paths nil)
+  (when (and (null citar-notes-paths)
              (equal citar-file-open-note-function
                     'citar-file-open-notes-default-org))
     (message "You must set 'citar-notes-paths' to open notes with default notes function"))

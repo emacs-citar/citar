@@ -81,10 +81,11 @@ CHANGE refers to the notify argument."
   (pcase (cadr change)
     ('(nil changed) (funcall func scope))
     ('(created deleted renamed)
-     (if (member (nth 2 change)
-                 (seq-concatenate 'list
-                                  citar-bibliography
-                                  (citar--local-files-to-cache)))
+     (if (member
+          (nth 2 change)
+          (seq-concatenate 'list
+                           (citar-file--normalize-paths citar-bibliography)
+                           (citar--local-files-to-cache)))
          (citar-filenotify-refresh scope)
        (funcall func scope)))))
 
