@@ -749,6 +749,12 @@ With prefix, rebuild the cache before offering candidates."
                                       (citar--local-files-to-cache))))
   (mapc (lambda (key) (bibtex-find-entry key t nil t)) (citar--extract-keys keys-entries))))
 
+(defun citar--open-entry (key)
+  "Open bibliographic entry asociated with the KEY."
+  (let ((bibtex-files
+         (seq-concatenate 'list citar-bibliography (citar--local-files-to-cache))))
+    (bibtex-find-entry key t nil t)))
+
 ;;;###autoload
 (defun citar-open-link (keys-entries)
   "Open URL or DOI link associated with the KEYS-ENTRIES in a browser.
@@ -803,28 +809,6 @@ With prefix, rebuild the cache before offering candidates."
  (bibtex-completion-insert-bibtex
   (citar--extract-keys
    keys-entries)))
-
-;;;###autoload
-(defun citar-add-pdf-attachment (keys-entries)
-  "Attach PDF(s) associated with the KEYS-ENTRIES to email.
-With prefix, rebuild the cache before offering candidates."
-  (interactive (list (citar-select-refs
-                      :rebuild-cache current-prefix-arg)))
- (bibtex-completion-add-PDF-attachment
-  (citar--extract-keys
-   keys-entries)))
-
-;;;###autoload
-(defun citar-add-pdf-to-library (keys-entries)
- "Add PDF associated with the KEYS-ENTRIES to library.
-The PDF can be added either from an open buffer, a file, or a
-URL.
-With prefix, rebuild the cache before offering candidates."
-  (interactive (list (citar-select-refs
-                      :rebuild-cache current-prefix-arg)))
-  (bibtex-completion-add-pdf-to-library
-   (citar--extract-keys
-    keys-entries)))
 
 ;;;###autoload
 (defun citar-run-default-action (keys)
