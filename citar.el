@@ -329,9 +329,14 @@ offering the selection candidates."
 
 (defun citar--major-mode-function (key &rest args)
   "Function for the major mode corresponding to KEY applied to ARGS."
-  (apply (alist-get key (cdr (seq-find (lambda (x) (memq major-mode (car x)))
-                                citar-major-mode-functions)))
-         args))
+  (let ((function
+         (alist-get
+          key
+          (cdr
+           (seq-find
+            (lambda (x) (memq major-mode (car x)))
+            citar-major-mode-functions)))))
+    (when function (apply function args))))
 
 (defun citar--local-files-to-cache ()
   "The local bibliographic files not included in the global bibliography."
@@ -673,7 +678,6 @@ FORMAT-STRING."
 ;;;###autoload
 (defun citar-open (keys-entries)
   "Open related resource (link or file) for KEYS-ENTRIES."
-  ;; TODO add links
   (interactive (list (citar-select-refs
                       :rebuild-cache current-prefix-arg)))
   (let* ((files
