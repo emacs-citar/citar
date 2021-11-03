@@ -744,10 +744,11 @@ With prefix, rebuild the cache before offering candidates."
 With prefix, rebuild the cache before offering candidates."
   (interactive (list (citar-select-refs
                       :rebuild-cache current-prefix-arg)))
- (let ((bibtex-files (seq-concatenate 'list
-                                      citar-bibliography
-                                      (citar--local-files-to-cache))))
-  (mapc (lambda (key) (bibtex-find-entry key t nil t)) (citar--extract-keys keys-entries))))
+  ;; REVIEW unclear what the UX here should be when
+  ;;        opening multiple entries from the same file.
+  (let ((keys (citar--extract-keys keys-entries)))
+    (dolist (key keys)
+      (citar--open-entry key))))
 
 (defun citar--open-entry (key)
   "Open bibliographic entry asociated with the KEY."
@@ -777,8 +778,7 @@ With prefix, rebuild the cache before offering candidates."
                       :rebuild-cache current-prefix-arg)))
   ;; TODO
   (citar--major-mode-function 'insert-citation
-   (citar--extract-keys
-    keys-entries)))
+   (citar--extract-keys keys-entries)))
 
 ;;;###autoload
 (defun citar-insert-reference (keys-entries)
@@ -787,8 +787,7 @@ With prefix, rebuild the cache before offering candidates."
   (interactive (list (citar-select-refs
                       :rebuild-cache current-prefix-arg)))
   (bibtex-completion-insert-reference
-   (citar--extract-keys
-    keys-entries)))
+   (citar--extract-keys keys-entries)))
 
 ;;;###autoload
 (defun citar-insert-keys (keys-entries)
@@ -797,8 +796,7 @@ With prefix, rebuild the cache before offering candidates."
   (interactive (list (citar-select-refs
                       :rebuild-cache current-prefix-arg)))
  (citar--major-mode-function 'insert-keys
-  (citar--extract-keys
-   keys-entries)))
+  (citar--extract-keys keys-entries)))
 
 ;;;###autoload
 (defun citar-insert-bibtex (keys-entries)
@@ -806,9 +804,9 @@ With prefix, rebuild the cache before offering candidates."
 With prefix, rebuild the cache before offering candidates."
   (interactive (list (citar-select-refs
                       :rebuild-cache current-prefix-arg)))
- (bibtex-completion-insert-bibtex
-  (citar--extract-keys
-   keys-entries)))
+  ;; TODO use with-temp-buffer + citar--open-entry to replace?
+  (bibtex-completion-insert-bibtex
+   (citar--extract-keys keys-entries)))
 
 ;;;###autoload
 (defun citar-run-default-action (keys)
