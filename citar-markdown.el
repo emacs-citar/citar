@@ -47,24 +47,16 @@
 
 (add-to-list 'citar-major-mode-functions
              '((markdown-mode) .
-               ((local-bib-files . citar-markdown--local-bib-files)
-                (insert-keys . citar-markdown--insert-keys)
-                (insert-citation . citar-markdown--insert-citation)
-                (keys-at-point . citar-markdown--keys-at-point))))
+               ((insert-keys . citar-markdown-insert-keys)
+                (insert-citation . citar-markdown-insert-citation))))
 
-(defun citar-markdown--local-bib-files ()
-  "Return local bib files for markdown."
-  nil)
-
-(defun citar-markdown--keys-at-point ()
-  "Return a list of keys at point in a markdown buffer."
-  (error "TODO"))
-
-(defun citar-markdown--insert-keys (keys)
+;;;###autoload
+(defun citar-markdown-insert-keys (keys)
   "Insert comma sperated KEYS in a markdown buffer."
   (insert (mapconcat (lambda (k) (concat "@" k)) keys "; ")))
 
-(defun citar-markdown--insert-citation (keys)
+;;;###autoload
+(defun citar-markdown-insert-citation (keys)
   "Insert a pandoc-style citation consisting of KEYS."
   (let* ((prenote  (if citar-markdown-prompt-for-extra-arguments
                        (read-from-minibuffer "Prenote: ")))

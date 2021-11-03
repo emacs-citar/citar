@@ -68,29 +68,33 @@ the point."
 
 (add-to-list 'citar-major-mode-functions
              '((latex-mode) .
-               ((local-bib-files . citar-latex--local-bib-files)
-                (insert-keys . citar-latex--insert-keys)
-                (insert-citation . citar-latex--insert-citation)
-                (keys-at-point . citar-latex--keys-at-point))))
+               ((local-bib-files . citar-latex-local-bib-files)
+                (insert-keys . citar-latex-insert-keys)
+                (insert-citation . citar-latex-insert-citation)
+                (keys-at-point . citar-latex-keys-at-point))))
 
-(defun citar-latex--local-bib-files ()
+;;;###autoload
+(defun citar-latex-local-bib-files ()
   "Local bibliographic for latex retrieved using reftex."
   (reftex-access-scan-info t)
   (ignore-errors (reftex-get-bibfile-list)))
 
-(defun citar-latex--keys-at-point ()
+;;;###autoload
+(defun citar-latex-keys-at-point ()
   "Return a list of keys at point in a latex buffer."
     (when (citar-latex-is-a-cite-command (TeX-current-macro))
       (split-string (thing-at-point 'list t) "," t "[{} ]+")))
 
-(defun citar-latex--insert-keys (keys)
+;;;###autoload
+(defun citar-latex-insert-keys (keys)
   "Insert comma sperated KEYS in a latex buffer."
   (insert (string-join keys ", ")))
 
 (defvar citar-latex-cite-command-history nil
   "Variable for history of cite commands.")
 
-(defun citar-latex--insert-citation (keys &optional command)
+;;;###autoload
+(defun citar-latex-insert-citation (keys &optional command)
   "Insert a citation consisting of KEYS.
 
 If the command is inside a citation command keys are added to it. Otherwise
