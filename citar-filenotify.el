@@ -5,7 +5,7 @@
 ;; Author: Bruce D'Arcus <https://github.com/bdarcus>
 ;; Maintainer: Bruce D'Arcus <bdarcus@gmail.com>
 ;; Created: August 17, 2021
-;; Version: 0.4
+;; Version: 0.8
 ;; Keywords: bib files frames games hardware help
 ;; Homepage: https://github.com/bdarcus/citar
 ;; Package-Requires: ((emacs "26.3"))
