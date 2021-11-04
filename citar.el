@@ -765,16 +765,13 @@ With prefix, rebuild the cache before offering candidates."
              (car key-entry) (cdr key-entry))))
 
 ;;;###autoload
-(defun citar-open-entry (keys-entries)
-  "Open bibliographic entry associated with the KEYS-ENTRIES.
+(defun citar-open-entry (key-entry)
+  "Open bibliographic entry associated with the KEY-ENTRY.
 With prefix, rebuild the cache before offering candidates."
   (interactive (list (citar-select-refs
                       :rebuild-cache current-prefix-arg)))
-  ;; REVIEW unclear what the UX here should be when
-  ;;        opening multiple entries from the same file.
-  (let ((keys (citar--extract-keys keys-entries)))
-    (dolist (key keys)
-      (citar--open-entry key))))
+  (let ((key (citar--extract-keys key-entry)))
+    (citar--open-entry (car key))))
 
 (defun citar--open-entry (key)
   "Open bibliographic entry asociated with the KEY."
