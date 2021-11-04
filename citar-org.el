@@ -287,8 +287,23 @@ strings by style."
 
 (defun citar-org-citation-finder ()
   "Return org-cite citation keys at point as a list for `embark'."
-  (when-let ((keys (citar-get-key-org-cite)))
+  (when-let ((keys (citar-org-keys-at-point)))
     (cons 'oc-citation (citar--stringify-keys keys))))
+
+(defun citar-org-keys-at-point ()
+  "Return key at point for org-cite citation-reference."
+  (when-let (((eq major-mode 'org-mode))
+             (elt (org-element-context)))
+    (pcase (org-element-type elt)
+      ('citation-reference
+       (org-element-property :key elt))
+      ('citation
+       (org-cite-get-references elt t)))))
+
+(defun citar-org--insert-keys (keys)
+  "Insert KEYS in org-cite format."
+  (string-join (seq-map (lambda (key) (concat "@" key)) keys) ":"))
+
 
 ;;; Functions for editing/modifying citations
 

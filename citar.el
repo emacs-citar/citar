@@ -44,8 +44,6 @@
 (require 'bibtex-completion)
 (require 'parsebib)
 (require 's)
-;; Not ideal, find a better FIX
-(require 'oc)
 
 (declare-function org-element-context "org-element")
 (declare-function org-element-property "org-element")
@@ -649,25 +647,7 @@ FORMAT-STRING."
      (let ((field-names (split-string raw-field "[ ]+")))
        (citar-display-value field-names entry)))))
 
-;;; At-point functions
-
-;;; Org-cite
-
-(defun citar-get-key-org-cite ()
-  "Return key at point for org-cite citation-reference."
-  (when-let (((eq major-mode 'org-mode))
-             (elt (org-element-context)))
-    (pcase (org-element-type elt)
-      ('citation-reference
-       (org-element-property :key elt))
-      ('citation
-       (org-cite-get-references elt t)))))
-
-(defun citar--insert-keys-org-cite (keys)
-  "Insert KEYS in org-cite format."
-  (string-join (seq-map (lambda (key) (concat "@" key)) keys) ":"))
-
-;;; Embark
+;;; At-point functions for Embark
 
 ;;;###autoload
 (defun citar-keys-at-point ()
