@@ -43,20 +43,6 @@
   :group 'citar
   :type '(boolean))
 
-(defcustom citar-file-open-note-function
-  'citar-file-open-notes-default-org
-  "Function to open and existing or create a new note.
-
-A note function must take two arguments:
-
-KEY: a string to represent the citekey
-ENTRY: an alist with the structured data (title, author, etc.)
-
-If you use 'org-roam' and 'org-roam-bibtex', you can use
-'orb-citar-edit-note' for this value."
-  :group 'citar
-  :type '(function))
-
 (defcustom citar-file-parser-functions
   '(citar-file-parser-default)
   "List of functions to parse file field."
