@@ -828,6 +828,31 @@ With prefix, rebuild the cache before offering candidates."
    (citar--extract-keys keys-entries)))
 
 ;;;###autoload
+(defun citar-add-pdf-attachment (keys-entries)
+  "Attach PDF(s) associated with the KEYS-ENTRIES to email.
+With prefix, rebuild the cache before offering candidates."
+  (interactive (list (citar-select-refs
+                      :rebuild-cache current-prefix-arg)))
+ (bibtex-completion-add-PDF-attachment
+  (citar--extract-keys
+   keys-entries)))
+
+;;;###autoload
+(defun citar-add-pdf-to-library (keys-entries)
+ "Add PDF associated with the KEYS-ENTRIES to library.
+The PDF can be added either from an open buffer, a file, or a
+URL.
+With prefix, rebuild the cache before offering candidates."
+  (interactive (list (citar-select-refs
+                      :rebuild-cache current-prefix-arg)))
+  (bibtex-completion-add-pdf-to-library
+   (citar--extract-keys
+    keys-entries)))
+
+(make-obsolete 'citar-add-pdf-to-library nil "0.9")
+(make-obsolete 'citar-add-pdf-attachment nil "0.9")
+
+;;;###autoload
 (defun citar-run-default-action (keys)
   "Run the default action `citar-default-action' on KEYS."
   (let* ((keys-parsed
