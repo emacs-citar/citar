@@ -558,6 +558,8 @@ are refreshed."
 If the cache is unintialized, this will load the cache.
 
 If FORCE-REBUILD-CACHE is t, force reload the cache."
+  (unless citar-bibliography
+    (error "Make sure to set citar-bibliography and related paths"))
   (when force-rebuild-cache
     (citar-refresh force-rebuild-cache))
   (when (eq 'uninitialized citar--candidates-cache)
