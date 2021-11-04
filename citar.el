@@ -1,4 +1,4 @@
-;;; bibtex-actions.el --- Bibliographic commands based on completing-read -*- lexical-binding: t; -*-
+;;; citar.el --- Bibliographic commands based on completing-read -*- lexical-binding: t; -*-
 ;;
 ;; Copyright (C) 2021 Bruce D'Arcus
 ;;
@@ -7,7 +7,7 @@
 ;; Created: February 27, 2021
 ;; License: GPL-3.0-or-later
 ;; Version: 0.4
-;; Homepage: https://github.com/bdarcus/bibtex-actions
+;; Homepage: https://github.com/bdarcus/citar
 ;; Package-Requires: ((emacs "26.3") (bibtex-completion "1.0") (parsebib "3.0"))
 ;;
 ;; This file is not part of GNU Emacs.
@@ -54,6 +54,10 @@
 (declare-function org-cite-basic--complete-style "org-cite")
 (declare-function embark-act "ext:embark")
 
+(declare-function reftex-access-scan-info "reftex")
+(declare-function reftex-get-bibfile-list "reftex")
+(declare-function TeX-current-macro "tex")
+
 ;;; Declare variables for byte compiler
 
 (defvar crm-separator)
@@ -78,27 +82,25 @@
   "Face used to highlight content in `citar' candidates."
   :group 'citar)
 
-(defcustom citar-bibliography bibtex-completion-bibliography
+(defcustom citar-bibliography nil
   "A list of bibliography files."
-  ;; The bibtex-completion default is likely to be removed in the future.
   :group 'citar
   :type '(repeat file))
 
-(defcustom citar-library-paths bibtex-completion-library-path
+(defcustom citar-library-paths nil
   "A list of files paths for related PDFs, etc."
-  ;; The bibtex-completion default is likely to be removed in the future.
   :group 'citar
   :type '(repeat path))
 
-(defcustom citar-notes-paths bibtex-completion-notes-path
+(defcustom citar-notes-paths nil
   "A list of file paths for bibliographic notes."
-  ;; The bibtex-completion default is likely to be removed in the future.
   :group 'citar
   :type '(repeat path))
 
 (defcustom citar-templates
   '((main . "${author editor:30}     ${date year issued:4}     ${title:48}")
     (suffix . "          ${=key= id:15}    ${=type=:12}    ${tags keywords keywords:*}")
+    (preview . "${author editor} (${year issued date}) ${title}, ${journal publisher container-title collection-title}.\n")
     (note . "#+title: Notes on ${author editor}, ${title}"))
   "Configures formatting for the bibliographic entry.
 
@@ -106,6 +108,12 @@ The main and suffix templates are for candidate display, and note
 for the title field for new notes."
     :group 'citar
     :type  '(alist :key-type string))
+
+(defcustom citar-insert-reference-function
+  'citar--insert-reference
+  "A function that takes a list of (KEY . ENTRY), and returns formatted references."
+  :group 'citar
+  :type 'function)
 
 (defcustom citar-display-transform-functions
   ;; TODO change this name, as it might be confusing?
@@ -160,10 +168,63 @@ and nil means no action."
   :type '(choice (const :tag "Prompt" 'prompt)
                  (const :tag "Ignore" nil)))
 
+(defcustom citar-open-note-function
+  'citar-org-open-notes-default
+  "Function to open and existing or create a new note.
+
+A note function must take two arguments:
+
+KEY: a string to represent the citekey
+ENTRY: an alist with the structured data (title, author, etc.)
+
+If you use 'org-roam' and 'org-roam-bibtex', you can use
+'orb-bibtex-actions-edit-note' for this value."
+  :group 'citar
+  :type 'function)
+
+
 (defcustom citar-at-point-function 'citar-dwim
   "The function to run for 'citar-at-point'."
   :group 'citar
   :type 'function)
+
+(defcustom citar-major-mode-functions
+  '(((org-mode) .
+     ((local-bib-files . citar-org-local-bibs)
+      (keys-at-point . citar-org-keys-at-point)))
+    ((latex-mode) .
+     ((local-bib-files . citar-latex-local-bib-files)
+      (insert-keys . citar-latex-insert-keys)
+      (insert-citation . citar-latex-insert-citation)
+      (keys-at-point . citar-latex-keys-at-point)))
+    ((markdown-mode) .
+     ((local-bib-files . citar-markdown-local-bib-files)
+      (insert-keys . citar-markdown-insert-keys))))
+  "The variable determining the major mode specifc functionality.
+
+It is alist with keys being a list of major modes.
+
+The value is an alist with values being functions to be used for
+these modes while the keys are symbols used to lookup them up.
+The keys are:
+
+local-bib-files: the corresponding functions should return the list of
+local bibliography files.
+
+insert-keys: the corresponding function should insert the list of keys given
+to as the argument at point in the buffer.
+
+insert-citation: the corresponding function should insert a
+complete citation from a list of keys at point.
+
+keys-at-point: the corresponding function should return the list of keys at
+point."
+  :group 'citar
+  :type '(alist :key-type (repeat string :tag "Major modes")
+                :value-type (set (cons (const local-bib-files) function)
+                                 (cons (const insert-keys) function)
+                                 (cons (const insert-citation) function)
+                                 (cons (const keys-at-pont) function))))
 
 ;;; History, including future history list.
 
@@ -272,15 +333,26 @@ offering the selection candidates."
     (let ((extension (file-name-extension file)))
       (when transform file
         ;; Transform for grouping and group title display.
-        (pcase extension
-          ((or "org" "md") "Notes")
-          (_ "Library Files")))))
+        (cond
+         ((string= extension (or "org" "md")) "Notes")
+          (t "Library Files")))))
+
+(defun citar--major-mode-function (key &rest args)
+  "Function for the major mode corresponding to KEY applied to ARGS."
+  (let ((function
+         (alist-get
+          key
+          (cdr
+           (seq-find
+            (lambda (x) (memq major-mode (car x)))
+            citar-major-mode-functions)))))
+    (when function (apply function args))))
 
 (defun citar--local-files-to-cache ()
   "The local bibliographic files not included in the global bibliography."
   ;; We cache these locally to the buffer.
   (seq-difference (citar-file--normalize-paths
-                   (bibtex-completion-find-local-bibliography))
+                   (citar--major-mode-function 'local-bib-files))
                   (citar-file--normalize-paths
                    citar-bibliography)))
 
@@ -482,7 +554,9 @@ are refreshed."
 
 (defun citar--get-candidates (&optional force-rebuild-cache)
   "Get the cached candidates.
+
 If the cache is unintialized, this will load the cache.
+
 If FORCE-REBUILD-CACHE is t, force reload the cache."
   (when force-rebuild-cache
     (citar-refresh force-rebuild-cache))
@@ -549,6 +623,7 @@ If FORCE-REBUILD-CACHE is t, force reload the cache."
   "Formats a BibTeX ENTRY for display in results list.
 WIDTH is the width for the * field, and the display format is governed by
 FORMAT-STRING."
+  ;; TODO remove s-format dependency, generalize to allow 'truncate' option
   (s-format
    format-string
    (lambda (raw-field)
@@ -572,27 +647,13 @@ FORMAT-STRING."
      (let ((field-names (split-string raw-field "[ ]+")))
        (citar-display-value field-names entry)))))
 
-;;; At-point functions
-
-;;; Org-cite
-
-(defun citar-get-key-org-cite ()
-  "Return key at point for org-cite citation-reference."
-  (when-let (((eq major-mode 'org-mode))
-             (elt (org-element-context)))
-    (pcase (org-element-type elt)
-      ('citation-reference
-       (org-element-property :key elt))
-      ('citation
-       (org-cite-get-references elt t)))))
-
-;;; Embark
+;;; At-point functions for Embark
 
 ;;;###autoload
-(defun citar-citation-key-at-point ()
-  "Return citation keys at point as a list for `embark'."
-  (when-let ((keys (or (citar-get-key-org-cite)
-                      (bibtex-completion-key-at-point))))
+(defun citar-keys-at-point ()
+  "Return the keys of the entry at point."
+  (when-let ((keys
+              (citar--major-mode-function 'keys-at-point)))
     (cons 'citation-key (citar--stringify-keys keys))))
 
 (defun citar--stringify-keys (keys)
@@ -601,7 +662,7 @@ FORMAT-STRING."
 
 ;;;###autoload
 (with-eval-after-load 'embark
-  (add-to-list 'embark-target-finders 'citar-citation-key-at-point)
+  (add-to-list 'embark-target-finders 'citar-keys-at-point)
   (add-to-list 'embark-keymap-alist '(bib-reference . citar-map))
   (add-to-list 'embark-keymap-alist '(citation-key . citar-buffer-map)))
 
@@ -610,7 +671,6 @@ FORMAT-STRING."
 ;;;###autoload
 (defun citar-open (keys-entries)
   "Open related resource (link or file) for KEYS-ENTRIES."
-  ;; TODO add links
   (interactive (list (citar-select-refs
                       :rebuild-cache current-prefix-arg)))
   (let* ((files
@@ -668,8 +728,6 @@ With prefix, rebuild the cache before offering candidates."
                     'citar-file-open-notes-default-org))
     (message "You must set 'citar-notes-paths' to open notes with default notes function"))
   (dolist (key-entry keys-entries)
-    ;; REVIEW doing this means the function won't be compatible with, for
-    ;; example, 'orb-edit-note'.
     (funcall citar-file-open-note-function
              (car key-entry) (cdr key-entry))))
 
@@ -679,8 +737,17 @@ With prefix, rebuild the cache before offering candidates."
 With prefix, rebuild the cache before offering candidates."
   (interactive (list (citar-select-refs
                       :rebuild-cache current-prefix-arg)))
- (bibtex-completion-show-entry
-  (citar--extract-keys keys-entries)))
+  ;; REVIEW unclear what the UX here should be when
+  ;;        opening multiple entries from the same file.
+  (let ((keys (citar--extract-keys keys-entries)))
+    (dolist (key keys)
+      (citar--open-entry key))))
+
+(defun citar--open-entry (key)
+  "Open bibliographic entry asociated with the KEY."
+  (let ((bibtex-files
+         (seq-concatenate 'list citar-bibliography (citar--local-files-to-cache))))
+    (bibtex-find-entry key t nil t)))
 
 ;;;###autoload
 (defun citar-open-link (keys-entries)
@@ -703,9 +770,8 @@ With prefix, rebuild the cache before offering candidates."
   (interactive (list (citar-select-refs
                       :rebuild-cache current-prefix-arg)))
   ;; TODO
-  (bibtex-completion-insert-citation
-   (citar--extract-keys
-    keys-entries)))
+  (citar--major-mode-function 'insert-citation
+   (citar--extract-keys keys-entries)))
 
 ;;;###autoload
 (defun citar-insert-reference (keys-entries)
@@ -713,19 +779,23 @@ With prefix, rebuild the cache before offering candidates."
 With prefix, rebuild the cache before offering candidates."
   (interactive (list (citar-select-refs
                       :rebuild-cache current-prefix-arg)))
-  (bibtex-completion-insert-reference
-   (citar--extract-keys
-    keys-entries)))
+  (apply citar-insert-reference-function (list keys-entries)))
+
+(defun citar--insert-reference (keys-entries)
+  "Insert formatted reference(s) associated with the KEYS-ENTRIES."
+  (let ((template (citar-get-template 'preview)))
+    (dolist (key-entry keys-entries)
+      (when template
+        (insert (citar--format-entry-no-widths (cdr key-entry) template))))))
 
 ;;;###autoload
-(defun citar-insert-key (keys-entries)
-  "Insert BibTeX KEYS-ENTRIES.
+(defun citar-insert-keys (keys-entries)
+  "Insert KEYS-ENTRIES citekeys.
 With prefix, rebuild the cache before offering candidates."
   (interactive (list (citar-select-refs
                       :rebuild-cache current-prefix-arg)))
- (bibtex-completion-insert-key
-  (citar--extract-keys
-   keys-entries)))
+ (citar--major-mode-function 'insert-keys
+  (citar--extract-keys keys-entries)))
 
 ;;;###autoload
 (defun citar-insert-bibtex (keys-entries)
@@ -733,9 +803,9 @@ With prefix, rebuild the cache before offering candidates."
 With prefix, rebuild the cache before offering candidates."
   (interactive (list (citar-select-refs
                       :rebuild-cache current-prefix-arg)))
- (bibtex-completion-insert-bibtex
-  (citar--extract-keys
-   keys-entries)))
+  ;; TODO use with-temp-buffer + citar--open-entry to replace?
+  (bibtex-completion-insert-bibtex
+   (citar--extract-keys keys-entries)))
 
 ;;;###autoload
 (defun citar-add-pdf-attachment (keys-entries)
@@ -759,6 +829,9 @@ With prefix, rebuild the cache before offering candidates."
    (citar--extract-keys
     keys-entries)))
 
+(make-obsolete 'citar-add-pdf-to-library nil "0.9")
+(make-obsolete 'citar-add-pdf-attachment nil "0.9")
+
 ;;;###autoload
 (defun citar-run-default-action (keys)
   "Run the default action `citar-default-action' on KEYS."
@@ -776,7 +849,7 @@ With prefix, rebuild the cache before offering candidates."
 (defun citar-dwim ()
   "Run the default action on citation keys found at point."
   (interactive)
-  (if-let ((keys (cdr (citar-citation-key-at-point))))
+  (if-let ((keys (cdr (citar-keys-at-point))))
       ;; FIX how?
       (citar-run-default-action keys)))
 

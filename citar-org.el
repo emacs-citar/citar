@@ -41,6 +41,7 @@
 
 (require 'citar)
 (require 'org)
+(require 'org-id)
 (require 'oc)
 (require 'oc-basic)
 (require 'oc-csl)
@@ -67,6 +68,12 @@
   :type '(choice
           (const long)
           (const short)))
+
+(defcustom citar-file-note-org-include nil
+  "The org note type."
+  :group 'citar
+  :type '(repeat (const :tag "Org ID" 'org-id)
+                 (const :tag "Org-Roam :ROAM_REF:" 'org-roam-ref)))
 
 (defcustom citar-org-style-targets nil
   "Export processor targets to include in styles list.
@@ -231,18 +238,72 @@ strings by style."
 
 (defun citar-org--style-preview-annote (style &optional _citation)
   "Annotate STYLE with CITATION preview."
-  ;; TODO rather than use the alist, run the export processors on the citation..
+  ;; TODO rather than use the alist, run the export processors on the citation.
   (let* ((preview (or (cdr (assoc style citar-org-style-preview-alist)) ""))
          ;; TODO look at how define-face does this.
          (formatted-preview (truncate-string-to-width preview 50 nil 32)))
     (propertize formatted-preview 'face 'citar-org-style-preview)))
 
+;;;###autoload
+(defun citar-org-local-bibs ()
+  "Return local bib file paths for org buffer."
+  (seq-difference
+   (org-cite-list-bibliography-files)
+   org-cite-global-bibliography))
+
+;;; Org note function
+
+(defun citar-org-open-notes-default (key entry)
+  "Open a note file from KEY and ENTRY."
+  (if-let* ((file
+             (caar (citar-file--get-note-filename
+                    key
+                    citar-notes-paths '("org"))))
+            (file-exists (file-exists-p file)))
+      (funcall citar-file-open-function file)
+    (let* ((uuid (org-id-new))
+           (template (citar-get-template 'note))
+           (note-meta
+            (when template
+              (citar--format-entry-no-widths
+               entry
+               template)))
+           (org-id (when (member 'org-id citar-file-note-org-include)
+                     (concat "\n:ID:   " uuid)))
+           (org-roam-key (when (member 'org-roam-ref citar-file-note-org-include)
+                           (concat "\n:ROAM_REFS: @" key)))
+           (prop-drawer (or org-id org-roam-key))
+           (content
+            (concat (when prop-drawer ":PROPERTIES:")
+                    org-roam-key org-id
+                    (when prop-drawer "\n:END:\n")
+                    note-meta "\n")))
+      (funcall citar-file-open-function file)
+      ;; This just overrides other template insertion.
+      (erase-buffer)
+      (when template (insert content)))))
+
 ;;; Embark target finder
 
 (defun citar-org-citation-finder ()
   "Return org-cite citation keys at point as a list for `embark'."
-  (when-let ((keys (citar-get-key-org-cite)))
+  (when-let ((keys (citar-org-keys-at-point)))
     (cons 'oc-citation (citar--stringify-keys keys))))
+
+(defun citar-org-keys-at-point ()
+  "Return key at point for org-cite citation-reference."
+  (when-let (((eq major-mode 'org-mode))
+             (elt (org-element-context)))
+    (pcase (org-element-type elt)
+      ('citation-reference
+       (org-element-property :key elt))
+      ('citation
+       (org-cite-get-references elt t)))))
+
+(defun citar-org--insert-keys (keys)
+  "Insert KEYS in org-cite format."
+  (string-join (seq-map (lambda (key) (concat "@" key)) keys) ":"))
+
 
 ;;; Functions for editing/modifying citations
 
