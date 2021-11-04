@@ -65,7 +65,7 @@
 (defvar embark-target-finders)
 (defvar embark-general-map)
 (defvar embark-meta-map)
-(defvar citar-file-open-note-function)
+(defvar citar-org-open-note-function)
 (defvar citar-file-extensions)
 (defvar citar-file-open-prompt)
 (defvar citar-file-variable)
@@ -181,7 +181,6 @@ If you use 'org-roam' and 'org-roam-bibtex', you can use
 'orb-bibtex-actions-edit-note' for this value."
   :group 'citar
   :type 'function)
-
 
 (defcustom citar-at-point-function 'citar-dwim
   "The function to run for 'citar-at-point'."
@@ -757,11 +756,11 @@ With prefix, rebuild the cache before offering candidates."
   (interactive (list (citar-select-refs
                       :rebuild-cache current-prefix-arg)))
   (when (and (null citar-notes-paths)
-             (equal citar-file-open-note-function
-                    'citar-file-open-notes-default-org))
+             (equal citar-open-note-function
+                    'citar-org-open-notes-default))
     (message "You must set 'citar-notes-paths' to open notes with default notes function"))
   (dolist (key-entry keys-entries)
-    (funcall citar-file-open-note-function
+    (funcall citar-open-note-function
              (car key-entry) (cdr key-entry))))
 
 ;;;###autoload
