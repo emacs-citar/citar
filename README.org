@@ -116,10 +116,29 @@ If you prefer to have the Embark menu open with =org-open-at-point=, you should 
 
 You can invoke both =embark-act= and =embark-dwim=, however, independently of =org-at-point=, and in other modes such as =latex-mode=.
 
+*** Major-mode adapters
+:PROPERTIES:
+:CUSTOM_ID: major-mode-adapters
+:END:
+
+Citar includes an adapter framework to enable major-mode specific editing integration.
+Such adapters can provide the following capabilities, which one can configure with the ~citar-major-mode-functions~ alist:
+
+1. ~insert-keys~: to insert citation keys (this may go away though)
+2. ~insert-citation~: to insert citations
+3. ~local-bib-files~: to find bibliographic files associated with a buffer
+4. ~keys-at-point~: returns a list of citekeys at point
+
+Citar currently includes the following such adapters:
+
+1. ~citar-org~: by default, only supports ~org-cite~, but can one can configure for other formats
+2. ~citar-latex~: configurable bibtex, natbib and biblatex support
+3. ~citar-markdown~: by default, only supports the ~pandoc~ citation syntax
+
 ** Rich UI
-    :PROPERTIES:
-    :CUSTOM_ID: rich-ui
-    :END:
+:PROPERTIES:
+:CUSTOM_ID: rich-ui
+:END:
 
 There are three sections of the browsing UI.
 
