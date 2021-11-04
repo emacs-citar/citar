@@ -192,7 +192,8 @@ If you use 'org-roam' and 'org-roam-bibtex', you can use
 
 (defcustom citar-major-mode-functions
   '(((org-mode) .
-     ((local-bib-files . citar-org-local-bibs)))
+     ((local-bib-files . citar-org-local-bibs)
+      (keys-at-point . citar-org-keys-at-point)))
     ((latex-mode) .
      ((local-bib-files . citar-latex-local-bib-files)
       (insert-keys . citar-latex-insert-keys)
@@ -669,10 +670,10 @@ FORMAT-STRING."
 ;;; Embark
 
 ;;;###autoload
-(defun citar-citation-key-at-point ()
-  "Return citation keys at point as a list for `embark'."
-  (when-let ((keys (or (citar-get-key-org-cite)
-                      (bibtex-completion-key-at-point))))
+(defun citar-keys-at-point ()
+  "Return the keys of the entry at point."
+  (when-let ((keys
+              (citar--major-mode-function 'keys-at-point)))
     (cons 'citation-key (citar--stringify-keys keys))))
 
 (defun citar--stringify-keys (keys)
@@ -681,7 +682,7 @@ FORMAT-STRING."
 
 ;;;###autoload
 (with-eval-after-load 'embark
-  (add-to-list 'embark-target-finders 'citar-citation-key-at-point)
+  (add-to-list 'embark-target-finders 'citar-keys-at-point)
   (add-to-list 'embark-keymap-alist '(bib-reference . citar-map))
   (add-to-list 'embark-keymap-alist '(citation-key . citar-buffer-map)))
 
@@ -843,7 +844,7 @@ With prefix, rebuild the cache before offering candidates."
 (defun citar-dwim ()
   "Run the default action on citation keys found at point."
   (interactive)
-  (if-let ((keys (cdr (citar-citation-key-at-point))))
+  (if-let ((keys (cdr (citar-keys-at-point))))
       ;; FIX how?
       (citar-run-default-action keys)))
 
