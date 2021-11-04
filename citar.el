@@ -102,6 +102,7 @@
 (defcustom citar-templates
   '((main . "${author editor:30}     ${date year issued:4}     ${title:48}")
     (suffix . "          ${=key= id:15}    ${=type=:12}    ${tags keywords keywords:*}")
+    (preview . "${author editor} (${year issued date}) ${title}, ${journal publisher container-title collection-title}.\n")
     (note . "#+title: Notes on ${author editor}, ${title}"))
   "Configures formatting for the bibliographic entry.
 
@@ -109,6 +110,12 @@ The main and suffix templates are for candidate display, and note
 for the title field for new notes."
     :group 'citar
     :type  '(alist :key-type string))
+
+(defcustom citar-insert-reference-function
+  'citar--insert-reference
+  "A function that takes a list of (KEY . ENTRY), and returns formatted references."
+  :group 'citar
+  :type 'function)
 
 (defcustom citar-display-transform-functions
   ;; TODO change this name, as it might be confusing?
@@ -175,7 +182,7 @@ ENTRY: an alist with the structured data (title, author, etc.)
 If you use 'org-roam' and 'org-roam-bibtex', you can use
 'orb-bibtex-actions-edit-note' for this value."
   :group 'citar
-  :type '(function))
+  :type 'function)
 
 
 (defcustom citar-at-point-function 'citar-dwim
@@ -786,8 +793,14 @@ With prefix, rebuild the cache before offering candidates."
 With prefix, rebuild the cache before offering candidates."
   (interactive (list (citar-select-refs
                       :rebuild-cache current-prefix-arg)))
-  (bibtex-completion-insert-reference
-   (citar--extract-keys keys-entries)))
+  (apply citar-insert-reference-function (list keys-entries)))
+
+(defun citar--insert-reference (keys-entries)
+  "Insert formatted reference(s) associated with the KEYS-ENTRIES."
+  (let ((template (citar-get-template 'preview)))
+    (dolist (key-entry keys-entries)
+      (when template
+        (insert (citar--format-entry-no-widths (cdr key-entry) template))))))
 
 ;;;###autoload
 (defun citar-insert-keys (keys-entries)
