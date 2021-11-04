@@ -20,7 +20,6 @@
 (eval-when-compile
   (require 'cl-lib))
 (require 'seq)
-(require 'org-id)
 
 (declare-function citar-get-entry "citar")
 (declare-function citar-get-value "citar")
@@ -57,12 +56,6 @@ If you use 'org-roam' and 'org-roam-bibtex', you can use
 'orb-citar-edit-note' for this value."
   :group 'citar
   :type '(function))
-
-(defcustom citar-file-note-org-include nil
-  "The org note type."
-  :group 'citar
-  :type '(repeat (const :tag "Org ID" 'org-id)
-                 (const :tag "Org-Roam :ROAM_REF:" 'org-roam-ref)))
 
 (defcustom citar-file-parser-functions
   '(citar-file-parser-default)
@@ -177,36 +170,6 @@ Example: ':/path/to/test.pdf:PDF'."
                     (_ "xdg-open"))
                   nil 0 nil
                   file)))
-
-(defun citar-file-open-notes-default-org (key entry)
-  "Open a note file from KEY and ENTRY."
-  (if-let* ((file
-             (caar (citar-file--get-note-filename
-                    key
-                    citar-notes-paths '("org"))))
-            (file-exists (file-exists-p file)))
-      (funcall citar-file-open-function file)
-    (let* ((uuid (org-id-new))
-           (template (citar-get-template 'note))
-           (note-meta
-            (when template
-              (citar--format-entry-no-widths
-               entry
-               template)))
-           (org-id (when (member 'org-id citar-file-note-org-include)
-                     (concat "\n:ID:   " uuid)))
-           (org-roam-key (when (member 'org-roam-ref citar-file-note-org-include)
-                           (concat "\n:ROAM_REFS: @" key)))
-           (prop-drawer (or org-id org-roam-key))
-           (content
-            (concat (when prop-drawer ":PROPERTIES:")
-                    org-roam-key org-id
-                    (when prop-drawer "\n:END:\n")
-                    note-meta "\n")))
-      (funcall citar-file-open-function file)
-      ;; This just overrides other template insertion.
-      (erase-buffer)
-      (when template (insert content)))))
 
 (defun citar-file--get-note-filename (key dirs extensions)
   "Return existing or new filename for KEY in DIRS with extension in EXTENSIONS.

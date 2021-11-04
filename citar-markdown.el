@@ -45,11 +45,6 @@
   :group 'citar-markdown
   :type 'boolean)
 
-(add-to-list 'citar-major-mode-functions
-             '((markdown-mode) .
-               ((insert-keys . citar-markdown-insert-keys)
-                (insert-citation . citar-markdown-insert-citation))))
-
 ;;;###autoload
 (defun citar-markdown-insert-keys (keys)
   "Insert comma sperated KEYS in a markdown buffer."

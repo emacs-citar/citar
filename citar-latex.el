@@ -66,13 +66,6 @@ the point."
   :group 'citar-latex
   :type 'boolean)
 
-(add-to-list 'citar-major-mode-functions
-             '((latex-mode) .
-               ((local-bib-files . citar-latex-local-bib-files)
-                (insert-keys . citar-latex-insert-keys)
-                (insert-citation . citar-latex-insert-citation)
-                (keys-at-point . citar-latex-keys-at-point))))
-
 ;;;###autoload
 (defun citar-latex-local-bib-files ()
   "Local bibliographic for latex retrieved using reftex."
@@ -120,7 +113,7 @@ inserted."
         (TeX-parse-macro macro
                          (when citar-latex-prompt-for-extra-arguments
                            (cdr (citar-latex-is-a-cite-command macro))))))
-    (citar-latex--insert-keys keys)
+    (citar-latex-insert-keys keys)
     (skip-chars-forward "^}") (forward-char 1)))
 
 (defun citar-latex-is-a-cite-command (command)

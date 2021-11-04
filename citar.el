@@ -191,12 +191,16 @@ If you use 'org-roam' and 'org-roam-bibtex', you can use
   :type 'function)
 
 (defcustom citar-major-mode-functions
-  '(((latex-mode) .
-     ((local-bib-files . citar-latex--local-bib-files)
-      (keys-at-point . citar-latex--keys-at-point)))
+  '(((org-mode) .
+     ((local-bib-files . citar-org-local-bibs)))
+    ((latex-mode) .
+     ((local-bib-files . citar-latex-local-bib-files)
+      (insert-keys . citar-latex-insert-keys)
+      (insert-citation . citar-latex-insert-citation)
+      (keys-at-point . citar-latex-keys-at-point)))
     ((markdown-mode) .
-     ((local-bib-files . citar-markdown--local-bib-files)
-      (insert-keys . citar-markdown--insert-keys))))
+     ((local-bib-files . citar-markdown-local-bib-files)
+      (insert-keys . citar-markdown-insert-keys))))
   "The variable determining the major mode specifc functionality.
 
 It is alist with keys being a list of major modes.
@@ -620,6 +624,7 @@ If FORCE-REBUILD-CACHE is t, force reload the cache."
   "Formats a BibTeX ENTRY for display in results list.
 WIDTH is the width for the * field, and the display format is governed by
 FORMAT-STRING."
+  ;; TODO remove s-format dependency, generalize to allow 'truncate' option
   (s-format
    format-string
    (lambda (raw-field)

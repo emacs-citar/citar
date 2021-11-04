@@ -41,6 +41,7 @@
 
 (require 'citar)
 (require 'org)
+(require 'org-id)
 (require 'oc)
 (require 'oc-basic)
 (require 'oc-csl)
@@ -67,6 +68,12 @@
   :type '(choice
           (const long)
           (const short)))
+
+(defcustom citar-file-note-org-include nil
+  "The org note type."
+  :group 'citar
+  :type '(repeat (const :tag "Org ID" 'org-id)
+                 (const :tag "Org-Roam :ROAM_REF:" 'org-roam-ref)))
 
 (defcustom citar-org-style-targets nil
   "Export processor targets to include in styles list.
@@ -231,11 +238,18 @@ strings by style."
 
 (defun citar-org--style-preview-annote (style &optional _citation)
   "Annotate STYLE with CITATION preview."
-  ;; TODO rather than use the alist, run the export processors on the citation..
+  ;; TODO rather than use the alist, run the export processors on the citation.
   (let* ((preview (or (cdr (assoc style citar-org-style-preview-alist)) ""))
          ;; TODO look at how define-face does this.
          (formatted-preview (truncate-string-to-width preview 50 nil 32)))
     (propertize formatted-preview 'face 'citar-org-style-preview)))
+
+;;;###autoload
+(defun citar-org-local-bibs ()
+  "Return local bib file paths for org buffer."
+  (seq-difference
+   (org-cite-list-bibliography-files)
+   org-cite-global-bibliography))
 
 ;;; Org note function
 
