@@ -283,8 +283,8 @@ point."
 (cl-defun citar-select-refs (&optional &key rebuild-cache)
   "Select bibliographic references.
 
-Provides a wrapper around 'completing-read-multiple, and returns
-an alist of key-entry, where the entry is a field-value alist.
+A wrapper around 'completing-read-multiple' that returns an alist
+of (KEY . ENTRY), where the entry is a field-value alist.
 
 Therefore, for each returned candidate, 'car' is the citekey, and
 'cdr' is an alist of structured data.
@@ -315,6 +315,37 @@ offering the selection candidates."
            ;; See https://github.com/bdarcus/citar/issues/233#issuecomment-901536901
            (cdr (seq-find (lambda (cand) (equal choice (cadr cand))) candidates))))
      chosen)))
+
+(cl-defun citar-select-ref (&optional &key rebuild-cache)
+  "Select a bibliographic reference.
+
+A wrapper around 'completing-read' that returns a (KEY . ENTRY)
+cons.
+
+Includes the following optional argument:
+
+'REBUILD-CACHE' if t, forces rebuilding the cache before
+offering the selection candidates."
+  (let* ((crm-separator "\\s-*&\\s-*")
+         (candidates (citar--get-candidates rebuild-cache))
+         (choice
+          (completing-read
+           "References: "
+           (lambda (string predicate action)
+             (if (eq action 'metadata)
+                 `(metadata
+                   (affixation-function . citar--affixation)
+                   (category . bib-reference))
+               (complete-with-action action candidates string predicate)))
+           nil nil nil
+           'citar-history citar-presets nil)))
+    ;; Return result.
+    (or (cdr (assoc choice candidates))
+        ;; When calling embark at-point, use key to look up and return the
+        ;; selected candidates.
+        ;; See https://github.com/bdarcus/citar/issues/233#issuecomment-901536901
+        ;; TODO
+        (cdr (seq-find (lambda (cand) (equal choice (cadr cand))) candidates)))))
 
 (defun citar-select-files (files)
   "Select file(s) from a list of FILES."
