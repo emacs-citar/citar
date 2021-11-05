@@ -228,33 +228,33 @@ point."
 
 (defvar citar-map
   (let ((map (make-sparse-keymap)))
-    (define-key map (kbd "b") '("insert bibtex" . citar-insert-bibtex))
-    (define-key map (kbd "c") '("insert citation" . citar-insert-citation))
-    (define-key map (kbd "k") '("insert key" . citar-insert-key))
-    (define-key map (kbd "fr") '("insert formatted reference" . citar-insert-reference))
-    (define-key map (kbd "o") '("open source document" . citar-open))
-    (define-key map (kbd "e") '("open bibtex entry" . citar-open-entry))
-    (define-key map (kbd "l") '("open source URL or DOI" . citar-open-link))
-    (define-key map (kbd "n") '("open notes" . citar-open-notes))
-    (define-key map (kbd "f") '("open library files" . citar-open-library-files))
-    (define-key map (kbd "r") '("refresh" . citar-refresh))
+    (define-key map (kbd "b") (cons "insert bibtex" #'citar-insert-bibtex))
+    (define-key map (kbd "c") (cons "insert citation" #'citar-insert-citation))
+    (define-key map (kbd "k") (cons "insert key" #'citar-insert-key))
+    (define-key map (kbd "fr") (cons "insert formatted reference" #'citar-insert-reference))
+    (define-key map (kbd "o") (cons "open source document" #'citar-open))
+    (define-key map (kbd "e") (cons "open bibtex entry" #'citar-open-entry))
+    (define-key map (kbd "l") (cons "open source URL or DOI" #'citar-open-link))
+    (define-key map (kbd "n") (cons "open notes" #'citar-open-notes))
+    (define-key map (kbd "f") (cons "open library files" #'citar-open-library-files))
+    (define-key map (kbd "r") (cons "refresh" #'citar-refresh))
     ;; Embark doesn't currently use the menu description.
     ;; https://github.com/oantolin/embark/issues/251
-    (define-key map (kbd "RET") '("default action" . citar-run-default-action))
+    (define-key map (kbd "RET") (cons "default action" #'citar-run-default-action))
     map)
   "Keymap for Embark minibuffer actions.")
 
 (defvar citar-buffer-map
   (let ((map (make-sparse-keymap)))
-    (define-key map (kbd "o") '("open source document" . citar-open))
-    (define-key map (kbd "e") '("open bibtex entry" . citar-open-entry))
-    (define-key map (kbd "l") '("open source URL or DOI" . citar-open-link))
-    (define-key map (kbd "n") '("open notes" . citar-open-notes))
-    (define-key map (kbd "f") '("open library files" . citar-open-library-files))
-    (define-key map (kbd "r") '("refresh library" . citar-refresh))
+    (define-key map (kbd "o") (cons "open source document" #'citar-open))
+    (define-key map (kbd "e") (cons "open bibtex entry" #'citar-open-entry))
+    (define-key map (kbd "l") (cons "open source URL or DOI" #'citar-open-link))
+    (define-key map (kbd "n") (cons "open notes" #'citar-open-notes))
+    (define-key map (kbd "f") (cons "open library files" #'citar-open-library-files))
+    (define-key map (kbd "r") (cons "refresh library" #'citar-refresh))
     ;; Embark doesn't currently use the menu description.
     ;; https://github.com/oantolin/embark/issues/251
-    (define-key map (kbd "RET") '("default action" . citar-run-default-action))
+    (define-key map (kbd "RET") (cons "default action" #'citar-run-default-action))
     map)
   "Keymap for Embark citation-key actions.")
 
