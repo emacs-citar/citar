@@ -342,15 +342,15 @@ For example, if point:
 The "activate processor" runs the list of functions in ~oc-bibtex-activation-functions~, which by default is the ~basic~ processor from ~oc-basic~ to provide fontification, and also a little function that adds a keymap for editing citations at point.
 That keymap includes the following bindings that provide additional citation and citation-reference editing options.
 
-| key       | binding                                 |
-|-----------+-----------------------------------------|
+| key       | binding                        |
+|-----------+--------------------------------|
 | C-d       | oc-citar-delete-citation       |
 | C-k       | oc-citar-kill-citation         |
 | S-<left>  | oc-citar-shift-reference-left  |
 | S-<right> | oc-citar-shift-reference-right |
-| C-p       | oc-citar-update-pre-suffix     |
+| M-p       | oc-citar-update-pre-suffix     |
 | <mouse-1> | citar-dwim                     |
-| <mouse-3> | embark-act                              |
+| <mouse-3> | embark-act                     |
 
 
 The "follow processor" provides at-point functionality accessible via the =org-open-at-point= command.

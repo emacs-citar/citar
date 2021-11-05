@@ -127,7 +127,7 @@ Each function takes one argument, a citation."
     (define-key map (kbd "C-k") '("kill citation" . citar-org-kill-citation))
     (define-key map (kbd "S-<left>") '("shift left" . citar-org-shift-reference-left))
     (define-key map (kbd "S-<right>") '("shift right" . citar-org-shift-reference-right))
-    (define-key map (kbd "C-p") '("update prefix/suffix" . citar-org-update-pre-suffix))
+    (define-key map (kbd "M-p") '("update prefix/suffix" . citar-org-update-pre-suffix))
     map)
   "Keymap for interacting with org citations at point."
   :group 'citar-org
