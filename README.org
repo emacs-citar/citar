@@ -86,20 +86,23 @@ When using Embark, the Citar actions are generic, and work the same across org, 
 #+CAPTION: org-cite at-point integration with =embark-act=
 [[file:images/org-cite-embark-point.png]]
 
-If you use Org-Mode, this is the best option.  Use the basic configuration above, and /in addition/, configure Org-Cite
-to use Citar:
+If you use Org-Mode, this is the best option.  Use the =:ensure citar= argument
+to install Citar (which includes ~citar-org~) using the Emacs package manager.
+Otherwise, if you have already installed Citar or set
+=use-package-always-ensure= to ~t~, use =:ensure nil= to prevent ~use-package~
+from trying to install ~citar-org~.
 
 #+BEGIN_SRC emacs-lisp
-;; Set bibliography paths so they are the same.
-(defvar my/bibs '("~/bib/references.bib"))
-
 (use-package citar-org
   :no-require
-  :bind ; optional
+  ;; :ensure citar                        ; to install with package.el
+  ;; :ensure nil                          ; if use-package-always-ensure is t    
+  :after org                         ; so that org-mode-map is defined
+  :bind                              ; optional
   (:map org-mode-map
-        ("C-c b" . #'org-cite-insert)) ; Also bound to C-c C-x C-@
+        ("C-c b" . #'org-cite-insert))  ; also bound to C-c C-x C-@
   :custom
-  (org-cite-global-bibliography my/bibs)
+  (org-cite-global-bibliography '("~/bib/references.bib"))
   (org-cite-insert-processor 'citar)
   (org-cite-follow-processor 'citar)
   (org-cite-activate-processor 'citar))
@@ -451,3 +454,7 @@ This code takes those ideas and re-implements them to fill out the feature set, 
 Along the way, [[https://github.com/clemera][Clemens Radermacher]] and [[https://github.com/oantolin][Omar Antolín]] helped with some of the intricacies of completing-read and elisp.
 
 And, of course, thanks to [[https://github.com/tmalsburg][Titus von der Malsburg]] for creating and maintaining =bibtex-completion= and =helm-bibtex= and =ivy-bibtex=.
+
+# Local Variables:
+# org-edit-src-content-indentation: 0
+# End:
