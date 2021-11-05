@@ -240,8 +240,7 @@ point."
 
 ;;; Keymaps
 
-;;;###autoload
-(defcustom citar-map
+(defvar citar-map
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "b") '("insert bibtex" . citar-insert-bibtex))
     (define-key map (kbd "c") '("insert citation" . citar-insert-citation))
@@ -257,12 +256,9 @@ point."
     ;; https://github.com/oantolin/embark/issues/251
     (define-key map (kbd "RET") '("default action" . citar-run-default-action))
     map)
-  "Keymap for Embark minibuffer actions."
-  :group 'oc-citar
-  :type '(restricted-sexp :match-alternatives (keymapp)))
+  "Keymap for Embark minibuffer actions.")
 
-;;;###autoload
-(defcustom citar-buffer-map
+(defvar citar-buffer-map
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "o") '("open source document" . citar-open))
     (define-key map (kbd "e") '("open bibtex entry" . citar-open-entry))
@@ -274,9 +270,7 @@ point."
     ;; https://github.com/oantolin/embark/issues/251
     (define-key map (kbd "RET") '("default action" . citar-run-default-action))
     map)
-  "Keymap for Embark citation-key actions."
-  :group 'citar
-  :type '(restricted-sexp :match-alternatives (keymapp)))
+  "Keymap for Embark citation-key actions.")
 
 ;;; Completion functions
 
