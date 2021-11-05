@@ -44,26 +44,13 @@
 (require 'citar-file)
 (require 'parsebib)
 (require 's)
-
-(declare-function org-element-context "org-element")
-(declare-function org-element-property "org-element")
-(declare-function org-element-type "org-element")
-(declare-function org-cite-get-references "org-cite")
-(declare-function org-cite-register-processor "org-cite")
-(declare-function org-cite-make-insert-processor "org-cite")
-(declare-function org-cite-basic--complete-style "org-cite")
-(declare-function embark-act "ext:embark")
-
-(declare-function reftex-access-scan-info "reftex")
-(declare-function reftex-get-bibfile-list "reftex")
-(declare-function TeX-current-macro "tex")
+(require 'crm)
 
 (declare-function bibtex-completion-add-PDF-attachment "ext:bibtex-completion")
 (declare-function bibtex-completion-add-pdf-to-library "ext:bibtex-completion")
 
 ;;; Declare variables for byte compiler
 
-(defvar crm-separator)
 (defvar embark-keymap-alist)
 (defvar embark-target-finders)
 (defvar embark-general-map)
@@ -72,7 +59,6 @@
 (defvar citar-file-extensions)
 (defvar citar-file-open-prompt)
 (defvar citar-file-variable)
-(defvar org-cite-bibliography)
 
 ;;; Variables
 
@@ -114,7 +100,7 @@ for the title field for new notes."
     :type  '(alist :key-type string))
 
 (defcustom citar-insert-reference-function
-  'citar--insert-reference
+  #'citar--insert-reference
   "A function that takes a list of (KEY . ENTRY), and returns formatted references."
   :group 'citar
   :type 'function)
@@ -158,7 +144,7 @@ manager like Zotero or JabRef."
   :group 'citar
   :type '(repeat function))
 
-(defcustom citar-default-action 'citar-open
+(defcustom citar-default-action #'citar-open
   "The default action for the `citar-at-point' command."
   :group 'citar
   :type 'function)
@@ -186,7 +172,7 @@ If you use 'org-roam' and 'org-roam-bibtex', you can use
   :group 'citar
   :type 'function)
 
-(defcustom citar-at-point-function 'citar-dwim
+(defcustom citar-at-point-function #'citar-dwim
   "The function to run for 'citar-at-point'."
   :group 'citar
   :type 'function)
@@ -295,7 +281,7 @@ offering the selection candidates."
            (lambda (string predicate action)
              (if (eq action 'metadata)
                  `(metadata
-                   (affixation-function . citar--affixation)
+                   (affixation-function . ,#'citar--affixation)
                    (category . bib-reference))
                (complete-with-action action candidates string predicate)))
            nil nil nil
@@ -320,15 +306,14 @@ Includes the following optional argument:
 
 'REBUILD-CACHE' if t, forces rebuilding the cache before
 offering the selection candidates."
-  (let* ((crm-separator "\\s-*&\\s-*")
-         (candidates (citar--get-candidates rebuild-cache))
+  (let* ((candidates (citar--get-candidates rebuild-cache))
          (choice
           (completing-read
            "References: "
            (lambda (string predicate action)
              (if (eq action 'metadata)
                  `(metadata
-                   (affixation-function . citar--affixation)
+                   (affixation-function . ,#'citar--affixation)
                    (category . bib-reference))
                (complete-with-action action candidates string predicate)))
            nil nil nil
