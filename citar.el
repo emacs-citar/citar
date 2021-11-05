@@ -72,6 +72,7 @@
 (defvar citar-file-extensions)
 (defvar citar-file-open-prompt)
 (defvar citar-file-variable)
+(defvar org-cite-bibliography)
 
 ;;; Variables
 
@@ -85,7 +86,7 @@
   "Face used to highlight content in `citar' candidates."
   :group 'citar)
 
-(defcustom citar-bibliography nil
+(defcustom citar-bibliography org-cite-bibliography
   "A list of bibliography files."
   :group 'citar
   :type '(repeat file))
