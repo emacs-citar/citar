@@ -36,7 +36,7 @@
 ;;; Code:
 
 (require 'citar)
-(require 'tex)
+(require 'tex nil t)
 (require 'reftex-parse)
 
 (defvar citar-major-mode-functions)
@@ -75,8 +75,10 @@ the point."
 ;;;###autoload
 (defun citar-latex-keys-at-point ()
   "Return a list of keys at point in a latex buffer."
-    (when (citar-latex-is-a-cite-command (TeX-current-macro))
-      (split-string (thing-at-point 'list t) "," t "[{} ]+")))
+  (unless (fboundp 'TeX-current-macro)
+    (error "Please install AUCTeX"))
+  (when (citar-latex-is-a-cite-command (TeX-current-macro))
+    (split-string (thing-at-point 'list t) "," t "[{} ]+")))
 
 ;;;###autoload
 (defun citar-latex-insert-keys (keys)
@@ -101,6 +103,8 @@ by `citar-latex-cite-commands'.
 If `citar-latex-prompt-for-extra-arguments' is `nil`, every
 command is assumed to have a single argument into which keys are
 inserted."
+  (unless (fboundp 'TeX-current-macro)
+    (error "Please install AUCTeX"))
   (when keys
     (if (citar-latex-is-a-cite-command (TeX-current-macro))
         (progn (skip-chars-forward "^,}")
