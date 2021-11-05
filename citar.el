@@ -1,17 +1,17 @@
 ;;; citar.el --- Bibliographic commands based on completing-read -*- lexical-binding: t; -*-
-;;
+
 ;; Copyright (C) 2021 Bruce D'Arcus
-;;
+
 ;; Author: Bruce D'Arcus <https://github.com/bdarcus>
 ;; Maintainer: Bruce D'Arcus <https://github.com/bdarcus>
 ;; Created: February 27, 2021
 ;; License: GPL-3.0-or-later
 ;; Version: 0.8
 ;; Homepage: https://github.com/bdarcus/citar
-;; Package-Requires: ((emacs "27.1") (s "1.12") (parsebib "3.0"))
-;;
+;; Package-Requires: ((emacs "27.1") (s "1.12") (parsebib "3.0") (org "9.5"))
+
 ;; This file is not part of GNU Emacs.
-;;
+
 ;; This program is free software: you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
 ;; the Free Software Foundation, either version 3 of the License, or
@@ -24,16 +24,16 @@
 
 ;; You should have received a copy of the GNU General Public License
 ;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
-;;
+
 ;;; Commentary:
-;;
+
 ;;  A completing-read front-end for browsing and acting on bibliographic data.
-;;
+
 ;;  When used with vertico/selectrum/icomplete-vertical, embark, and marginalia,
 ;;  it provides similar functionality to helm-bibtex and ivy-bibtex: quick
 ;;  filtering and selecting of bibliographic entries from the minibuffer, and
 ;;  the option to run different commands against them.
-;;
+
 ;;; Code:
 
 (eval-when-compile
@@ -86,7 +86,7 @@
   "Face used to highlight content in `citar' candidates."
   :group 'citar)
 
-(defcustom citar-bibliography org-cite-bibliography
+(defcustom citar-bibliography nil
   "A list of bibliography files."
   :group 'citar
   :type '(repeat file))

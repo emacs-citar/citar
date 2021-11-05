@@ -1,17 +1,9 @@
 ;;; citar-markdown.el --- Markdown adapter for citar -*- lexical-binding: t; -*-
-;;
+
 ;; Copyright (C) 2021 Bruce D'Arcus
-;;
-;; Author: Bruce D'Arcus <https://github.com/bdarcus>
-;; Maintainer: Bruce D'Arcus <https://github.com/bdarcus>
-;; Created: October 31, 2021
-;; License: GPL-3.0-or-later
-;; Version: 0.8
-;; Homepage: https://github.com/bdarcus/citar
-;; Package-Requires: ((emacs "26.3"))
-;;
+
 ;; This file is not part of GNU Emacs.
-;;
+
 ;; This program is free software: you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
 ;; the Free Software Foundation, either version 3 of the License, or
@@ -24,15 +16,15 @@
 
 ;; You should have received a copy of the GNU General Public License
 ;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
-;;
+
 ;;; Commentary:
-;;
+
 ;; A small package that provides the functions required to use citar
 ;; with markdown.
-;;
+
 ;; Simply loading this file will enable manipulating the citations with
 ;; commands provided by citar.
-;;
+
 ;;; Code:
 
 (require 'citar)
