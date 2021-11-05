@@ -200,8 +200,7 @@ If you use 'org-roam' and 'org-roam-bibtex', you can use
       (insert-citation . citar-latex-insert-citation)
       (keys-at-point . citar-latex-keys-at-point)))
     ((markdown-mode) .
-     ((local-bib-files . citar-markdown-local-bib-files)
-      (insert-keys . citar-markdown-insert-keys))))
+     ((insert-keys . citar-markdown-insert-keys))))
   "The variable determining the major mode specifc functionality.
 
 It is alist with keys being a list of major modes.
