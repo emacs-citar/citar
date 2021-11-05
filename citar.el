@@ -347,22 +347,24 @@ offering the selection candidates."
          ((string= extension (or "org" "md")) "Notes")
           (t "Library Files")))))
 
-(defun citar--major-mode-function (key &rest args)
-  "Function for the major mode corresponding to KEY applied to ARGS."
-  (let ((function
-         (alist-get
-          key
-          (cdr
-           (seq-find
-            (lambda (x) (memq major-mode (car x)))
-            citar-major-mode-functions)))))
-    (when function (apply function args))))
+(defun citar--major-mode-function (key default &rest args)
+  "Function for the major mode corresponding to KEY applied to ARGS.
+If no function is found, the DEFAULT function is called."
+  (apply
+   (alist-get
+    key
+    (cdr
+     (seq-find
+      (lambda (x) (memq major-mode (car x)))
+      citar-major-mode-functions))
+    default)
+   args))
 
 (defun citar--local-files-to-cache ()
   "The local bibliographic files not included in the global bibliography."
   ;; We cache these locally to the buffer.
   (seq-difference (citar-file--normalize-paths
-                   (citar--major-mode-function 'local-bib-files))
+                   (citar--major-mode-function 'local-bib-files #'ignore))
                   (citar-file--normalize-paths
                    citar-bibliography)))
 
@@ -664,8 +666,8 @@ FORMAT-STRING."
 ;;;###autoload
 (defun citar-keys-at-point ()
   "Return the keys of the entry at point."
-  (when-let ((keys
-              (citar--major-mode-function 'keys-at-point)))
+  (when-let (keys (and (not (minibufferp))
+                       (citar--major-mode-function 'keys-at-point #'ignore)))
     (cons 'citation-key (citar--stringify-keys keys))))
 
 (defun citar--stringify-keys (keys)
@@ -802,7 +804,10 @@ With prefix, rebuild the cache before offering candidates."
   (interactive (list (citar-select-refs
                       :rebuild-cache current-prefix-arg)))
   ;; TODO
-  (citar--major-mode-function 'insert-citation
+  (citar--major-mode-function
+   'insert-citation
+   (lambda (&rest _)
+     (message "Citation insertion is not supported for %s" major-mode))
    (citar--extract-keys keys-entries)))
 
 ;;;###autoload
@@ -826,8 +831,11 @@ With prefix, rebuild the cache before offering candidates."
 With prefix, rebuild the cache before offering candidates."
   (interactive (list (citar-select-refs
                       :rebuild-cache current-prefix-arg)))
- (citar--major-mode-function 'insert-keys
-  (citar--extract-keys keys-entries)))
+  (citar--major-mode-function
+   'insert-keys
+   (lambda (&rest _)
+     (message "Key insertion is not supported for %s" major-mode))
+   (citar--extract-keys keys-entries)))
 
 ;;;###autoload
 (defun citar-add-pdf-attachment (keys-entries)
