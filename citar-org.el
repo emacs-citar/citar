@@ -1,17 +1,9 @@
 ;;; citar-org.el --- Org-cite support for citar -*- lexical-binding: t; -*-
-;;
+
 ;; Copyright (C) 2021 Bruce D'Arcus
-;;
-;; Author: Bruce D'Arcus <https://github.com/bdarcus>
-;; Maintainer: Bruce D'Arcus <https://github.com/bdarcus>
-;; Created: July 11, 2021
-;; License: GPL-3.0-or-later
-;; Version: 0.8
-;; Homepage: https://github.com/bdarcus/citar
-;; Package-Requires: ((emacs "26.3")(org "9.5"))
-;;
+
 ;; This file is not part of GNU Emacs.
-;;
+
 ;; This program is free software: you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
 ;; the Free Software Foundation, either version 3 of the License, or
@@ -24,19 +16,19 @@
 
 ;; You should have received a copy of the GNU General Public License
 ;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
-;;
+
 ;;; Commentary:
-;;
+
 ;;  This is a small package that integrates citar and org-cite.  It
 ;;  provides a simple org-cite processor with "follow", "insert", and
 ;;  "activate" capabilities.
-;;
+
 ;;  Simply load this file (or its generated autoloads) and it will
 ;;  make the processor available to 'org-cite'.  To instruct org-cite
 ;;  to use citar, set one or more of the customization variables
 ;;  'org-cite-activate-processor', 'org-cite-follow-processor', and
 ;;  'org-cite-insert-processor' to the symbol 'citar.
-;;
+
 ;;; Code:
 
 (require 'citar)
