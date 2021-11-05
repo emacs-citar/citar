@@ -240,8 +240,6 @@ point."
 ;;;###autoload
 (defcustom citar-map
   (let ((map (make-sparse-keymap)))
-    (define-key map (kbd "t") '("add pdf attachment" . citar-add-pdf-attachment))
-    (define-key map (kbd "a") '("add pdf to library" . citar-add-pdf-to-library))
     (define-key map (kbd "b") '("insert bibtex" . citar-insert-bibtex))
     (define-key map (kbd "c") '("insert citation" . citar-insert-citation))
     (define-key map (kbd "k") '("insert key" . citar-insert-key))
