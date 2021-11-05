@@ -570,7 +570,7 @@ are refreshed."
 If the cache is unintialized, this will load the cache.
 
 If FORCE-REBUILD-CACHE is t, force reload the cache."
-  (unless citar-bibliography
+  (unless (or citar-bibliography (citar--local-files-to-cache))
     (error "Make sure to set citar-bibliography and related paths"))
   (when force-rebuild-cache
     (citar-refresh force-rebuild-cache))
