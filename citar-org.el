@@ -233,9 +233,7 @@ strings by style."
 ;;;###autoload
 (defun citar-org-local-bibs ()
   "Return local bib file paths for org buffer."
-  (seq-difference
-   (org-cite-list-bibliography-files)
-   org-cite-global-bibliography))
+  (org-cite-list-bibliography-files))
 
 ;;; Org note function
 
