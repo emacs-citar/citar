@@ -79,8 +79,8 @@ If it is other than 'global or 'local invalidate both"
 
 CHANGE refers to the notify argument."
   (pcase (cadr change)
-    ('(nil changed) (funcall func scope))
-    ('(created deleted renamed)
+    ((or 'nil 'changed) (funcall func scope))
+    ((or 'created 'deleted 'renamed)
      (if (member
           (nth 2 change)
           (seq-concatenate 'list
