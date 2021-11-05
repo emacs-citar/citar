@@ -8,7 +8,7 @@
 ;; License: GPL-3.0-or-later
 ;; Version: 0.8
 ;; Homepage: https://github.com/bdarcus/citar
-;; Package-Requires: ((emacs "26.3") (bibtex-completion "1.0") (parsebib "3.0"))
+;; Package-Requires: ((emacs "27.1") (s "1.12") (parsebib "3.0"))
 ;;
 ;; This file is not part of GNU Emacs.
 ;;
@@ -40,8 +40,8 @@
   (require 'cl-lib)
   (require 'subr-x))
 (require 'seq)
+(require 'browse-url)
 (require 'citar-file)
-(require 'bibtex-completion)
 (require 'parsebib)
 (require 's)
 
@@ -57,6 +57,9 @@
 (declare-function reftex-access-scan-info "reftex")
 (declare-function reftex-get-bibfile-list "reftex")
 (declare-function TeX-current-macro "tex")
+
+(declare-function bibtex-completion-add-PDF-attachment "ext:bibtex-completion")
+(declare-function bibtex-completion-add-pdf-to-library "ext:bibtex-completion")
 
 ;;; Declare variables for byte compiler
 
@@ -777,6 +780,29 @@ With prefix, rebuild the cache before offering candidates."
     (bibtex-find-entry key t nil t)))
 
 ;;;###autoload
+(defun citar-insert-bibtex (keys-entries)
+  "Insert bibliographic entry associated with the KEYS-ENTRIES.
+With prefix, rebuild the cache before offering candidates."
+  (interactive (list (citar-select-refs
+                      :rebuild-cache current-prefix-arg)))
+  (let ((keys (citar--extract-keys keys-entries)))
+    (dolist (key keys)
+      (citar--insert-bibtex key))))
+
+(defun citar--insert-bibtex (key)
+  "Insert the bibtex entry for KEY at point."
+  (let ((bibtex-files
+         (seq-concatenate 'list citar-bibliography (citar--local-files-to-cache))))
+    (insert
+     (with-temp-buffer
+       (dolist (bib-file bibtex-files)
+         (insert-file-contents bib-file))
+       (bibtex-find-entry key)
+       (let ((beg (bibtex-beginning-of-entry))
+             (end (bibtex-end-of-entry)))
+         (buffer-substring-no-properties beg end))) "\n")))
+
+;;;###autoload
 (defun citar-open-link (keys-entries)
   "Open URL or DOI link associated with the KEYS-ENTRIES in a browser.
 
@@ -825,24 +851,15 @@ With prefix, rebuild the cache before offering candidates."
   (citar--extract-keys keys-entries)))
 
 ;;;###autoload
-(defun citar-insert-bibtex (keys-entries)
-  "Insert bibliographic entry associated with the KEYS-ENTRIES.
-With prefix, rebuild the cache before offering candidates."
-  (interactive (list (citar-select-refs
-                      :rebuild-cache current-prefix-arg)))
-  ;; TODO use with-temp-buffer + citar--open-entry to replace?
-  (bibtex-completion-insert-bibtex
-   (citar--extract-keys keys-entries)))
-
-;;;###autoload
 (defun citar-add-pdf-attachment (keys-entries)
   "Attach PDF(s) associated with the KEYS-ENTRIES to email.
 With prefix, rebuild the cache before offering candidates."
   (interactive (list (citar-select-refs
                       :rebuild-cache current-prefix-arg)))
- (bibtex-completion-add-PDF-attachment
-  (citar--extract-keys
-   keys-entries)))
+  (unless (require 'bibtex-completion nil 'noerror)
+    (error "This is a deprecated command that relies on 'bibtex-completion'"))
+  (bibtex-completion-add-PDF-attachment
+   (citar--extract-keys keys-entries)))
 
 ;;;###autoload
 (defun citar-add-pdf-to-library (keys-entries)
@@ -852,9 +869,10 @@ URL.
 With prefix, rebuild the cache before offering candidates."
   (interactive (list (citar-select-refs
                       :rebuild-cache current-prefix-arg)))
+  (unless (require 'bibtex-completion nil 'noerror)
+    (error "This is a deprecated command that relies on 'bibtex-completion'"))
   (bibtex-completion-add-pdf-to-library
-   (citar--extract-keys
-    keys-entries)))
+   (citar--extract-keys keys-entries)))
 
 (make-obsolete 'citar-add-pdf-to-library nil "0.9")
 (make-obsolete 'citar-add-pdf-attachment nil "0.9")
