@@ -135,8 +135,10 @@ Such adapters can provide the following capabilities, which one can configure wi
 Citar currently includes the following such adapters:
 
 1. ~citar-org~: by default, only supports ~org-cite~, but can one can configure for other formats
-2. ~citar-latex~: configurable bibtex, natbib and biblatex support
+2. ~citar-latex~: configurable bibtex, natbib and biblatex support (requires AUCTeX)
 3. ~citar-markdown~: by default, only supports the ~pandoc~ citation syntax
+
+None of these should require any configuration, and should load as needed.
 
 ** Rich UI
 :PROPERTIES:
