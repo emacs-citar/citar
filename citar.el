@@ -62,6 +62,10 @@
 
 ;;; Variables
 
+(defgroup citar nil
+  "Citations and bibliography management."
+  :group 'editing)
+
 (defface citar
   '((t :inherit font-lock-doc-face))
   "Default Face for `citar' candidates."
@@ -97,7 +101,9 @@
 The main and suffix templates are for candidate display, and note
 for the title field for new notes."
     :group 'citar
-    :type  '(alist :key-type string))
+    :type  '(alist :key-type symbol
+                   :value-type string
+                   :options (main suffix preview note)))
 
 (defcustom citar-insert-reference-function
   #'citar--insert-reference
@@ -127,8 +133,10 @@ may be indicated with the same icon but a different face.
 To avoid alignment issues make sure that both the car and cdr of a symbol have
 the same width."
   :group 'citar
-  :type '(alist :key-type string
-                :value-type (choice (string :tag "Symbol"))))
+  :type '(alist :key-type symbol
+                :value-type (cons (string :tag "Present")
+                                  (string :tag "Absent"))
+                :options (file note link)))
 
 (defcustom citar-symbol-separator " "
   "The padding between prefix symbols."
@@ -142,7 +150,7 @@ cache to be rebuilt.  It is intended for 'heavy' operations which
 recreate entire bibliography files using an external reference
 manager like Zotero or JabRef."
   :group 'citar
-  :type '(repeat function))
+  :type 'hook)
 
 (defcustom citar-default-action #'citar-open
   "The default action for the `citar-at-point' command."
@@ -155,8 +163,8 @@ The action is used when no citation key is found at point.
 `prompt' means choosing entries via `citar-select-keys'
 and nil means no action."
   :group 'citar
-  :type '(choice (const :tag "Prompt" 'prompt)
-                 (const :tag "Ignore" nil)))
+  :type '(radio (const :tag "Prompt" prompt)
+                (const :tag "Ignore" nil)))
 
 (defcustom citar-open-note-function
   'citar-org-open-notes-default
@@ -208,11 +216,7 @@ complete citation from a list of keys at point.
 keys-at-point: the corresponding function should return the list of keys at
 point."
   :group 'citar
-  :type '(alist :key-type (repeat string :tag "Major modes")
-                :value-type (set (cons (const local-bib-files) function)
-                                 (cons (const insert-keys) function)
-                                 (cons (const insert-citation) function)
-                                 (cons (const keys-at-pont) function))))
+  :type 'alist)
 
 ;;; History, including future history list.
 
@@ -230,7 +234,7 @@ point."
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "b") (cons "insert bibtex" #'citar-insert-bibtex))
     (define-key map (kbd "c") (cons "insert citation" #'citar-insert-citation))
-    (define-key map (kbd "k") (cons "insert key" #'citar-insert-key))
+    (define-key map (kbd "k") (cons "insert key" #'citar-insert-keys))
     (define-key map (kbd "fr") (cons "insert formatted reference" #'citar-insert-reference))
     (define-key map (kbd "o") (cons "open source document" #'citar-open))
     (define-key map (kbd "e") (cons "open bibtex entry" #'citar-open-entry))
@@ -355,7 +359,7 @@ If no function is found, the DEFAULT function is called."
     key
     (cdr
      (seq-find
-      (lambda (x) (memq major-mode (car x)))
+      (lambda (x) (or (eq x t) (apply #'derived-mode-p (car x))))
       citar-major-mode-functions))
     default)
    args))
