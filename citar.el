@@ -27,12 +27,16 @@
 
 ;;; Commentary:
 
-;;  A completing-read front-end for browsing and acting on bibliographic data.
-
-;;  When used with vertico/selectrum/icomplete-vertical, embark, and marginalia,
-;;  it provides similar functionality to helm-bibtex and ivy-bibtex: quick
-;;  filtering and selecting of bibliographic entries from the minibuffer, and
-;;  the option to run different commands against them.
+;;  This package provides a completing-read front-end to browse and act on
+;;  BibTeX, BibLaTeX, and CSL JSON bibliographic data, and LaTeX, markdown, and
+;;  org-cite citation editing support.
+;;
+;;  When used with vertico (or selectrum), embark, and marginalia, it provides
+;;  similar functionality to helm-bibtex and ivy-bibtex: quick filtering and
+;;  selecting of bibliographic entries from the minibuffer, and the option to
+;;  run different commands against them.
+;;
+;;  With embark, it also makes available at-point actions.
 
 ;;; Code:
 
