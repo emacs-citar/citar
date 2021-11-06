@@ -1,4 +1,4 @@
-;;; citar.el --- Bibliographic commands based on completing-read -*- lexical-binding: t; -*-
+;;; citar.el --- Citation-related commands for org, latex, markdown. -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2021 Bruce D'Arcus
 
