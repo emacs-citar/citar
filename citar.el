@@ -676,9 +676,11 @@ FORMAT-STRING."
 
 ;;;###autoload
 (with-eval-after-load 'embark
+  (add-to-list 'embark-target-finders 'citar-keys-at-point))
+
+(with-eval-after-load 'embark
   (set-keymap-parent citar-map embark-general-map)
   (set-keymap-parent citar-buffer-map embark-general-map)
-  (add-to-list 'embark-target-finders 'citar-keys-at-point)
   (add-to-list 'embark-keymap-alist '(bib-reference . citar-map))
   (add-to-list 'embark-keymap-alist '(citation-key . citar-buffer-map)))
 
