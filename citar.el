@@ -27,16 +27,12 @@
 
 ;;; Commentary:
 
-;;  This package provides a completing-read front-end to browse and act on
-;;  BibTeX, BibLaTeX, and CSL JSON bibliographic data, and LaTeX, markdown, and
-;;  org-cite citation editing support.
+;;  A completing-read front-end to browse, filter and act on BibTeX, BibLaTeX,
+;;  and CSL JSON bibliographic data, including LaTeX, markdown, and org-cite
+;;  citation editing support.
 ;;
-;;  When used with vertico (or selectrum), embark, and marginalia, it provides
-;;  similar functionality to helm-bibtex and ivy-bibtex: quick filtering and
-;;  selecting of bibliographic entries from the minibuffer, and the option to
-;;  run different commands against them.
-;;
-;;  With embark, it also makes available at-point actions.
+;;  With embark, it also provides access to contextual actions, both in the 
+;;  minibuffer, and in the buffer at-point.
 
 ;;; Code:
 
