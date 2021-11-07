@@ -31,7 +31,7 @@
 ;;  and CSL JSON bibliographic data, including LaTeX, markdown, and org-cite
 ;;  citation editing support.
 ;;
-;;  With embark, it also provides access to contextual actions, both in the 
+;;  With embark, it also provides access to contextual actions, both in the
 ;;  minibuffer, and in the buffer at-point.
 
 ;;; Code:
@@ -196,6 +196,7 @@ If you use 'org-roam' and 'org-roam-bibtex', you can use
       (keys-at-point . citar-latex-keys-at-point)))
     ((markdown-mode) .
      ((insert-keys . citar-markdown-insert-keys)
+      (keys-at-point . citar-markdown-key-at-point)
       (insert-citation . citar-markdown-insert-citation))))
   "The variable determining the major mode specifc functionality.
 

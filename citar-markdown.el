@@ -56,5 +56,25 @@
                     (mapconcat (lambda (k) (concat "@" k)) keys "; ")
                     postnote))))
 
+(defconst citar-markdown-regex-citation-key
+  "\\(-?@\\([[:alnum:]_][[:alnum:]_:.#$%&+?<>~/-]*\\)\\)"
+  ;; borrowed from pandoc-mode
+  "Regular expression for a citation key.")
+
+;;;###autoload
+(defun citar-markdown-key-at-point ()
+  "Return a citation key at point for pandoc markdown citations."
+  (save-excursion
+    (let* ((beg (progn
+                  (skip-chars-backward
+                   citar-markdown-regex-citation-key)
+                  (point)))
+           (end (progn
+                  (skip-chars-forward
+                   citar-markdown-regex-citation-key)
+                  (point)))
+           (str (buffer-substring-no-properties beg end)))
+      (cadr (split-string str "[@;]")))))
+
 (provide 'citar-markdown)
 ;;; citar-markdown.el ends here
