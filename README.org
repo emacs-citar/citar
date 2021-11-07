@@ -86,26 +86,19 @@ When using Embark, the Citar actions are generic, and work the same across org, 
 #+CAPTION: org-cite at-point integration with =embark-act=
 [[file:images/org-cite-embark-point.png]]
 
-If you use Org-Mode, this is the best option.  Use the =:ensure citar= argument
-to install Citar (which includes ~citar-org~) using the Emacs package manager.
-Otherwise, if you have already installed Citar or set
-=use-package-always-ensure= to ~t~, use =:ensure nil= to prevent ~use-package~
-from trying to install ~citar-org~.
+If you want to use Citar only in Org-Mode, this is the best option.
 
 #+BEGIN_SRC emacs-lisp
-(use-package citar-org
+(use-package citar
   :no-require
-  ;; :ensure citar                        ; to install with package.el
-  ;; :ensure nil                          ; if use-package-always-ensure is t    
-  :after org                         ; so that org-mode-map is defined
-  :bind                              ; optional
-  (:map org-mode-map
-        ("C-c b" . #'org-cite-insert))  ; also bound to C-c C-x C-@
   :custom
   (org-cite-global-bibliography '("~/bib/references.bib"))
   (org-cite-insert-processor 'citar)
   (org-cite-follow-processor 'citar)
-  (org-cite-activate-processor 'citar))
+  (org-cite-activate-processor 'citar)
+  ;; optional: org-cite-insert is also bound to C-c C-x C-@
+  :bind
+  (:map org-mode-map :package org ("C-c b" . #'org-cite-insert)))
 #+END_SRC
 
 You can insert citations with the =org-cite-insert= command, which is bound to =C-c C-x C-@= in Org-Mode buffers.  The
