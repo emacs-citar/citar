@@ -31,7 +31,7 @@
 ;;  and CSL JSON bibliographic data, including LaTeX, markdown, and org-cite
 ;;  citation editing support.
 ;;
-;;  With embark, it also provides access to contextual actions, both in the 
+;;  With embark, it also provides access to contextual actions, both in the
 ;;  minibuffer, and in the buffer at-point.
 
 ;;; Code:
@@ -55,6 +55,7 @@
 (defvar embark-target-finders)
 (defvar embark-general-map)
 (defvar embark-meta-map)
+(defvar embark-become-keymaps)
 (defvar citar-org-open-note-function)
 (defvar citar-file-extensions)
 (defvar citar-file-open-prompt)
@@ -262,6 +263,19 @@ point."
     (define-key map (kbd "RET") (cons "default action" #'citar-run-default-action))
     map)
   "Keymap for Embark citation-key actions.")
+
+(defvar citar-embark-become-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map (kbd "f") 'citar-open-library-files)
+    (define-key map (kbd "a") 'biblio-arxiv-lookup)
+    (define-key map (kbd "c") 'biblio-crossref-lookup)
+    (define-key map (kbd "i") 'biblio-ieee-lookup)
+    (define-key map (kbd "h") 'biblio-hal-lookup)
+    (define-key map (kbd "s") 'biblio-dissemin-lookup)
+    (define-key map (kbd "b") 'biblio-dblp-lookup)
+    (define-key map (kbd "o") 'biblio-doi-insert-bibtex)
+  map)
+  "Citar Embark become keymap for biblio lookup.")
 
 ;;; Completion functions
 
@@ -686,6 +700,7 @@ FORMAT-STRING."
 (with-eval-after-load 'embark
   (set-keymap-parent citar-map embark-general-map)
   (set-keymap-parent citar-buffer-map embark-general-map)
+  (add-to-list 'embark-become-keymaps 'citar-embark-become-map)
   (add-to-list 'embark-keymap-alist '(bib-reference . citar-map))
   (add-to-list 'embark-keymap-alist '(citation-key . citar-buffer-map)))
 
