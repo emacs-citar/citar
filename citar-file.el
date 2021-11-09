@@ -50,7 +50,8 @@
   :type '(boolean))
 
 (defcustom citar-file-parser-functions
-  '(citar-file-parser-default)
+  '(citar-file-parser-default
+    citar-file-parser-triplet)
   "List of functions to parse file field."
   :group 'citar
   :type '(repeat function))

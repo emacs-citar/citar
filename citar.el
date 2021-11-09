@@ -463,7 +463,7 @@ key associated with each one."
               (notes
                (when (citar-file--files-for-entry
                       citekey
-                      nil ; don't want to check file file
+                      nil ; don't want to check file field
                       citar-notes-paths
                       citar-file-extensions)
                  " has:notes"))
