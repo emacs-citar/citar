@@ -1,4 +1,4 @@
-[[https://melpa.org/#/bibtex-actions][file:https://melpa.org/packages/citar-badge.svg]]
+[[https://melpa.org/#/citar][file:https://melpa.org/packages/citar-badge.svg]]
 
 * Citar
   :PROPERTIES:
