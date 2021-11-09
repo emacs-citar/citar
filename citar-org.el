@@ -44,6 +44,7 @@
 (declare-function org-element-type "org")
 (declare-function org-cite-make-insert-processor "oc")
 (declare-function org-cite-get-references "oc")
+(declare-function embark-act "ext:embark")
 (defvar embark-target-finders)
 (defvar embark-keymap-alist)
 (defvar embark-pre-action-hooks)
@@ -95,20 +96,9 @@ Each function takes one argument, a citation."
     map)
   "Keymap for org-cite Embark minibuffer functionality.")
 
-(defvar citar-org-buffer-map
-  (let ((map (make-sparse-keymap)))
-    (define-key map (kbd "o") (cons "open source (file or link)" #'citar-open))
-    (define-key map (kbd "e") (cons "open bibtex entry" #'citar-open-entry))
-    (define-key map (kbd "f") (cons "open source file" #'citar-open-library-files))
-    (define-key map (kbd "l") (cons "open source link" #'citar-open-link))
-    (define-key map (kbd "n") (cons "open notes" #'citar-open-notes))
-    (define-key map (kbd "r") (cons "refresh" #'citar-refresh))
-    map)
-  "Keymap for org-cite Embark at-point functionality.")
-
 (defvar citar-org-citation-map
   (let ((map (make-sparse-keymap)))
-    (define-key map (kbd "<mouse-1>") (cons "default action" #'citar-dwim))
+    (define-key map (kbd "<mouse-1>") (cons "default action" #'org-open-at-point))
     (with-eval-after-load 'embark
       (define-key map (kbd "<mouse-3>") (cons "embark act" #'embark-act)))
     (define-key map (kbd "C-d") (cons "delete citation" #'citar-org-delete-citation))
@@ -178,6 +168,10 @@ With PROC list, limit to specific processor(s)."
         references
       (car references))))
 
+(defun citar-org-cite-insert (&rest _args)
+  "Wrapper for 'org-cite-insert'."
+  (org-cite-insert current-prefix-arg))
+
 ;;;###autoload
 (defun citar-org-follow (_datum _arg)
   "Follow processor for org-cite."
@@ -231,9 +225,10 @@ strings by style."
     (propertize formatted-preview 'face 'citar-org-style-preview)))
 
 ;;;###autoload
-(defun citar-org-local-bibs ()
+(defun citar-org-local-bib-files (&rest _args)
   "Return local bib file paths for org buffer."
-  (org-cite-list-bibliography-files))
+  (seq-difference (org-cite-list-bibliography-files)
+                  org-cite-global-bibliography))
 
 ;;; Org note function
 
@@ -386,11 +381,9 @@ strings by style."
 ;; Embark configuration for org-cite
 
 (with-eval-after-load 'embark
-;  (set-keymap-parent citar-org-map embark-general-map)
-;  (set-keymap-parent citar-org-buffer-map embark-general-map)
   (add-to-list 'embark-target-finders 'citar-org-citation-finder)
-  (add-to-list 'embark-keymap-alist '(bib-reference . citar-org-map))
-  (add-to-list 'embark-keymap-alist '(oc-citation . citar-org-buffer-map))
+  (add-to-list 'embark-keymap-alist '(citar-reference . citar-org-map))
+  (add-to-list 'embark-keymap-alist '(oc-citation . citar-buffer-map))
   (add-to-list 'embark-pre-action-hooks '(org-cite-insert embark--ignore-target)))
 
 ;; Load this last.

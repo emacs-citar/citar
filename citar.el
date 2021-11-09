@@ -189,7 +189,8 @@ If you use 'org-roam' and 'org-roam-bibtex', you can use
 
 (defcustom citar-major-mode-functions
   '(((org-mode) .
-     ((local-bib-files . citar-org-local-bibs)
+     ((local-bib-files . citar-org-local-bib-files)
+      (insert-citation . citar-org-cite-insert)
       (keys-at-point . citar-org-keys-at-point)))
     ((latex-mode) .
      ((local-bib-files . citar-latex-local-bib-files)
@@ -290,7 +291,7 @@ offering the selection candidates."
              (if (eq action 'metadata)
                  `(metadata
                    (affixation-function . ,#'citar--affixation)
-                   (category . bib-reference))
+                   (category . citar-reference))
                (complete-with-action action candidates string predicate)))
            nil nil nil
            'citar-history citar-presets nil)))
@@ -322,7 +323,7 @@ offering the selection candidates."
              (if (eq action 'metadata)
                  `(metadata
                    (affixation-function . ,#'citar--affixation)
-                   (category . bib-reference))
+                   (category . citar-reference))
                (complete-with-action action candidates string predicate)))
            nil nil nil
            'citar-history citar-presets nil)))
@@ -355,18 +356,22 @@ offering the selection candidates."
          ((string= extension (or "org" "md")) "Notes")
           (t "Library Files")))))
 
+(defun citar--get-major-mode-function (key &optional default)
+  "Return KEY from 'major-mode-functions'."
+  (alist-get
+   key
+   (cdr (seq-find
+         (lambda (modefns)
+           (let ((modes (car modefns)))
+             (or (eq t modes)
+                 (apply #'derived-mode-p (if (listp modes) modes (list modes))))))
+         citar-major-mode-functions))
+   default))
+
 (defun citar--major-mode-function (key default &rest args)
   "Function for the major mode corresponding to KEY applied to ARGS.
 If no function is found, the DEFAULT function is called."
-  (apply
-   (alist-get
-    key
-    (cdr
-     (seq-find
-      (lambda (x) (or (eq x t) (apply #'derived-mode-p (car x))))
-      citar-major-mode-functions))
-    default)
-   args))
+  (apply (citar--get-major-mode-function key default) args))
 
 (defun citar--local-files-to-cache ()
   "The local bibliographic files not included in the global bibliography."
@@ -688,10 +693,8 @@ FORMAT-STRING."
   (add-to-list 'embark-target-finders 'citar-keys-at-point))
 
 (with-eval-after-load 'embark
-  (set-keymap-parent citar-map embark-general-map)
-  (set-keymap-parent citar-buffer-map embark-general-map)
-  (add-to-list 'embark-keymap-alist '(bib-reference . citar-map))
-  (add-to-list 'embark-keymap-alist '(citation-key . citar-buffer-map)))
+  (add-to-list 'embark-keymap-alist '(citar-reference . citar-map))
+  (add-to-list 'embark-keymap-alist '(citar-key . citar-buffer-map)))
 
 ;;; Commands
 
@@ -830,12 +833,15 @@ With prefix, rebuild the cache before offering candidates."
 With prefix, rebuild the cache before offering candidates."
   (interactive (list (citar-select-refs
                       :rebuild-cache current-prefix-arg)))
-  ;; TODO
-  (citar--major-mode-function
-   'insert-citation
-   (lambda (&rest _)
-     (message "Citation insertion is not supported for %s" major-mode))
-   (citar--extract-keys keys-entries)))
+  (let* ((function (citar--get-major-mode-function 'insert-candidate))
+         (keys (citar--extract-keys keys-entries)))
+    (if (eq function 'citar-org-cite-insert)
+        (call-interactively 'org-cite-insert)
+      (citar--major-mode-function
+       'insert-citation
+       (lambda (&rest _)
+         (message "Citation insertion is not supported for %s" major-mode))
+       keys))))
 
 ;;;###autoload
 (defun citar-insert-reference (keys-entries)
