@@ -39,7 +39,7 @@
 
 ;;;###autoload
 (defun citar-markdown-insert-keys (keys)
-  "Insert comma sperated KEYS in a markdown buffer."
+  "Insert semicolon-separated and @-prefixed KEYS in a markdown buffer."
   (insert (mapconcat (lambda (k) (concat "@" k)) keys "; ")))
 
 ;;;###autoload

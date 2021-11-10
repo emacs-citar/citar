@@ -194,14 +194,15 @@ If you use 'org-roam' and 'org-roam-bibtex', you can use
       (keys-at-point . citar-org-keys-at-point)))
     ((latex-mode) .
      ((local-bib-files . citar-latex-local-bib-files)
-      (insert-keys . citar-latex-insert-keys)
       (insert-citation . citar-latex-insert-citation)
       (keys-at-point . citar-latex-keys-at-point)))
     ((markdown-mode) .
      ((insert-keys . citar-markdown-insert-keys)
       (keys-at-point . citar-markdown-key-at-point)
-      (insert-citation . citar-markdown-insert-citation))))
-  "The variable determining the major mode specifc functionality.
+      (insert-citation . citar-markdown-insert-citation)))
+    (t .
+       ((insert-keys . citar--insert-keys-comma-separated))))
+  "The variable determining the major mode specific functionality.
 
 It is alist with keys being a list of major modes.
 
@@ -866,9 +867,12 @@ With prefix, rebuild the cache before offering candidates."
                       :rebuild-cache current-prefix-arg)))
   (citar--major-mode-function
    'insert-keys
-   (lambda (&rest _)
-     (message "Key insertion is not supported for %s" major-mode))
+   #'citar--insert-keys-comma-separated
    (citar--extract-keys keys-entries)))
+
+(defun citar--insert-keys-comma-separated (keys)
+  "Insert comma separated KEYS."
+  (insert (string-join keys ", ")))
 
 ;;;###autoload
 (defun citar-add-pdf-to-library (keys-entries)
