@@ -64,17 +64,12 @@
 ;;;###autoload
 (defun citar-markdown-key-at-point ()
   "Return a citation key at point for pandoc markdown citations."
-  (save-excursion
-    (let* ((beg (progn
-                  (skip-chars-backward
-                   citar-markdown-regex-citation-key)
-                  (point)))
-           (end (progn
-                  (skip-chars-forward
-                   citar-markdown-regex-citation-key)
-                  (point)))
-           (str (buffer-substring-no-properties beg end)))
-      (cadr (split-string str "[@;]")))))
+  (interactive)
+  (when (thing-at-point-looking-at citar-markdown-regex-citation-key)
+    (let ((stab (copy-syntax-table)))
+      (with-syntax-table stab
+        (modify-syntax-entry ?@ "_")
+        (cadr (split-string (thing-at-point 'symbol) "[]@;]"))))))
 
 (provide 'citar-markdown)
 ;;; citar-markdown.el ends here
