@@ -85,17 +85,6 @@ Each function takes one argument, a citation."
 
 ;;; Keymaps
 
-(defvar citar-org-map
-  (let ((map (make-sparse-keymap)))
-    (define-key map (kbd "o") (cons "open source (file or link)" #'citar-open))
-    (define-key map (kbd "e") (cons "open bibtex entry" #'citar-open-entry))
-    (define-key map (kbd "f") (cons "open source file" #'citar-open-library-files))
-    (define-key map (kbd "l") (cons "open source link" #'citar-open-link))
-    (define-key map (kbd "n") (cons "open notes" #'citar-open-notes))
-    (define-key map (kbd "r") (cons "refresh" #'citar-refresh))
-    map)
-  "Keymap for org-cite Embark minibuffer functionality.")
-
 (defvar citar-org-citation-map
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "<mouse-1>") (cons "default action" #'org-open-at-point))
@@ -263,28 +252,38 @@ strings by style."
 
 ;;; Embark target finder
 
-(defun citar-org-citation-finder ()
-  "Return org-cite citation keys at point as a list for `embark'."
-  (when-let ((keys (citar-org-keys-at-point)))
-    (cons 'oc-citation (citar--stringify-keys keys))))
+;;;###autoload
+(defun citar-org-key-at-point ()
+  "Return key at point for org-cite citation-reference."
+  (when-let ((reference (citar-org--reference-at-point)))
+    (cons (org-element-property :key reference)
+          (cons (org-element-property :begin reference)
+                (org-element-property :end reference)))))
 
 ;;;###autoload
-(defun citar-org-keys-at-point ()
-  "Return key at point for org-cite citation-reference."
-  (when-let (((eq major-mode 'org-mode))
-             (elt (org-element-context)))
-    (pcase (org-element-type elt)
-      ('citation-reference
-       (org-element-property :key elt))
-      ('citation
-       (org-cite-get-references elt t)))))
-
-(defun citar-org--insert-keys (keys)
-  "Insert KEYS in org-cite format."
-  (string-join (seq-map (lambda (key) (concat "@" key)) keys) ":"))
-
+(defun citar-org-citation-at-point ()
+  "Return org-cite citation keys at point as a list for `embark'."
+  (when-let ((citation (citar-org--citation-at-point)))
+    (cons (org-cite-get-references citation t)
+          (org-cite-boundaries citation))))
 
 ;;; Functions for editing/modifying citations
+
+(defun citar-org--reference-at-point (&optional context)
+  "Return citation-reference org-element at point, if any."
+  (when-let ((context (or context (org-element-context))))
+    (when (eq 'citation-reference (org-element-type context))
+      context)))
+
+(defun citar-org--citation-at-point (&optional context)
+  "Return citation element containing point, if any."
+  (let ((element (or context (org-element-context))))
+    (while (and element (not (eq 'citation (org-element-type element))))
+      (setq element (org-element-property :parent element)))
+    (when-let ((bounds (and element (org-cite-boundaries element))))
+      (when (and (>= (point) (car bounds))
+                 (<= (point) (cdr bounds)))
+        element))))
 
 ;; most of this section is adapted from org-ref-cite
 
@@ -375,14 +374,6 @@ strings by style."
           (org-element-interpret-data
            `(citation-reference
              (:key ,key :prefix ,pre :suffix ,post))))))
-
-;; Embark configuration for org-cite
-
-(with-eval-after-load 'embark
-  (add-to-list 'embark-target-finders 'citar-org-citation-finder)
-  (add-to-list 'embark-keymap-alist '(citar-reference . citar-org-map))
-  (add-to-list 'embark-keymap-alist '(oc-citation . citar-buffer-map))
-  (add-to-list 'embark-pre-action-hooks '(org-cite-insert embark--ignore-target)))
 
 ;; Load this last.
 

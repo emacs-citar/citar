@@ -28,6 +28,7 @@
 ;;; Code:
 
 (require 'citar)
+(require 'thingatpt)
 
 (defvar citar-major-mode-functions)
 
@@ -56,20 +57,51 @@
                     (mapconcat (lambda (k) (concat "@" k)) keys "; ")
                     postnote))))
 
-(defconst citar-markdown-regex-citation-key
-  "\\(-?@\\([[:alnum:]_][[:alnum:]_:.#$%&+?<>~/-]*\\)\\)"
-  ;; borrowed from pandoc-mode
+(defconst citar-markdown-citation-key-regexp
+  (concat "-?@"                         ; @ preceded by optional -
+          "\\(?:"
+          "{\\(?1:.*?\\)}"              ; brace-delimited key
+          "\\|"
+          "\\(?1:[[:alnum:]_][[:alnum:]]*\\(?:[:.#$%&+?<>~/-][[:alnum:]]+\\)*\\)"
+          "\\)")
   "Regular expression for a citation key.")
 
 ;;;###autoload
 (defun citar-markdown-key-at-point ()
-  "Return a citation key at point for pandoc markdown citations."
+  "Return citation key at point (with its bounds) for pandoc markdown citations.
+Returns (KEY . BOUNDS), where KEY is the citation key at point
+and BOUNDS is a pair of buffer positions.  Citation keys are
+found using `citar-markdown-citation-key-regexp`.  Returns nil if
+there is no key at point."
   (interactive)
-  (when (thing-at-point-looking-at citar-markdown-regex-citation-key)
-    (let ((stab (copy-syntax-table)))
-      (with-syntax-table stab
-        (modify-syntax-entry ?@ "_")
-        (cadr (split-string (thing-at-point 'symbol) "[]@;]"))))))
+  (when (thing-at-point-looking-at citar-markdown-citation-key-regexp)
+    (cons (match-string-no-properties 1)
+          (cons (match-beginning 0) (match-end 0)))))
+
+;;;###autoload
+(defun citar-markdown-citation-at-point ()
+  "Return keys of citation at point.
+Find balanced expressions starting and ending with square
+brackets and containing at least one citation key (matching
+`citar-markdown-citation-key-regexp`).  Return (KEYS . BOUNDS),
+where KEYS is a list of the found citation keys and BOUNDS is a
+pair of buffer positions indicating the start and end of the
+citation."
+  (save-excursion
+    (cond
+     ((eq ?\[ (char-after)) (forward-char))
+     ((eq ?\] (char-before)) (backward-char)))
+    (seq-some                           ; for each opening paren
+     (lambda (startpos)                 ; return keys in balanced [ ] expr
+       (when-let ((endpos (and (eq ?\[ (char-after startpos))
+                               (scan-lists startpos 1 0))))
+         (let (keys)
+           (goto-char startpos)
+           (while (re-search-forward citar-markdown-citation-key-regexp endpos t)
+             (push (match-string-no-properties 1) keys))
+           (when keys
+             (cons (nreverse keys) (cons startpos endpos))))))
+     (reverse (nth 9 (syntax-ppss))))))
 
 (provide 'citar-markdown)
 ;;; citar-markdown.el ends here

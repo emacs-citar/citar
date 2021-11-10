@@ -191,14 +191,17 @@ If you use 'org-roam' and 'org-roam-bibtex', you can use
   '(((org-mode) .
      ((local-bib-files . citar-org-local-bib-files)
       (insert-citation . citar-org-cite-insert)
-      (keys-at-point . citar-org-keys-at-point)))
+      (key-at-point . citar-org-key-at-point)
+      (citation-at-point . citar-org-citation-at-point)))
     ((latex-mode) .
      ((local-bib-files . citar-latex-local-bib-files)
       (insert-citation . citar-latex-insert-citation)
-      (keys-at-point . citar-latex-keys-at-point)))
+      (key-at-point . citar-latex-key-at-point)
+      (citation-at-point . citar-latex-citation-at-point)))
     ((markdown-mode) .
      ((insert-keys . citar-markdown-insert-keys)
-      (keys-at-point . citar-markdown-key-at-point)
+      (key-at-point . citar-markdown-key-at-point)
+      (citation-at-point . citar-markdown-citation-at-point)
       (insert-citation . citar-markdown-insert-citation)))
     (t .
        ((insert-keys . citar--insert-keys-comma-separated))))
@@ -219,8 +222,16 @@ to as the argument at point in the buffer.
 insert-citation: the corresponding function should insert a
 complete citation from a list of keys at point.
 
-keys-at-point: the corresponding function should return the list of keys at
-point."
+key-at-point: the corresponding function should return the
+citation key at point or nil if there is none.  The return value
+should be (KEY . BOUNDS), where KEY is a string and BOUNDS is a
+pair of buffer positions indicating the start and end of the key.
+
+citation-at-point: the corresponding function should return the
+keys of the citation at point, or nil if there is none.  The
+return value should be (KEYS . BOUNDS), where KEYS is a list of
+strings and BOUNDS is pair of buffer positions indicating the
+start and end of the citation."
   :group 'citar
   :type 'alist)
 
@@ -679,11 +690,18 @@ FORMAT-STRING."
 ;;; At-point functions for Embark
 
 ;;;###autoload
-(defun citar-keys-at-point ()
-  "Return the keys of the entry at point."
-  (when-let (keys (and (not (minibufferp))
-                       (citar--major-mode-function 'keys-at-point #'ignore)))
-    (cons 'citation-key (citar--stringify-keys keys))))
+(defun citar-key-finder ()
+  "Return the citation key at point."
+  (when-let (key (and (not (minibufferp))
+                      (citar--major-mode-function 'key-at-point #'ignore)))
+    (cons 'citar-key key)))
+
+;;;###autoload
+(defun citar-citation-finder ()
+  "Return the keys of the citation at point."
+  (when-let (citation (and (not (minibufferp))
+                           (citar--major-mode-function 'citation-at-point #'ignore)))
+    `(citar-citation ,(citar--stringify-keys (car citation)) . ,(cdr citation))))
 
 (defun citar--stringify-keys (keys)
   "Return a list of KEYS as a crm-string for `embark'."
@@ -691,7 +709,9 @@ FORMAT-STRING."
 
 ;;;###autoload
 (with-eval-after-load 'embark
-  (add-to-list 'embark-target-finders 'citar-keys-at-point))
+  (add-to-list 'embark-target-finders 'citar-citation-finder)
+  (add-to-list 'embark-target-finders 'citar-key-finder))
+
 
 (with-eval-after-load 'embark
   (add-to-list 'embark-keymap-alist '(citar-reference . citar-map))
@@ -919,9 +939,10 @@ With prefix, rebuild the cache before offering candidates."
 (defun citar-dwim ()
   "Run the default action on citation keys found at point."
   (interactive)
-  (if-let ((keys (cdr (citar-keys-at-point))))
+  (if-let ((keys (or (car (citar--major-mode-function 'citation-at-point #'ignore))
+                     (list (car (citar--major-mode-function 'key-at-point #'ignore))))))
       ;; FIX how?
-      (citar-run-default-action keys)))
+      (citar-run-default-action (citar--stringify-keys keys))))
 
 (provide 'citar)
 ;;; citar.el ends here

@@ -34,7 +34,7 @@
 (defvar citar-major-mode-functions)
 
 (defcustom citar-latex-cite-commands
-  '((("cite" "Cite" "citet" "Citet" "parencite"
+  '((("cite" "Cite" "citet" "Citet" "citep" "Citep" "parencite"
       "Parencite" "footcite" "footcitetext" "textcite" "Textcite"
       "smartcite" "Smartcite" "cite*" "parencite*" "autocite"
       "Autocite" "autocite*" "Autocite*" "citeauthor" "Citeauthor"
@@ -65,12 +65,58 @@ the point."
   (ignore-errors (reftex-get-bibfile-list)))
 
 ;;;###autoload
-(defun citar-latex-keys-at-point ()
-  "Return a list of keys at point in a latex buffer."
-  (unless (fboundp 'TeX-current-macro)
+(defun citar-latex-key-at-point ()
+  "Return citation key at point with its bounds.
+The return value is (KEY . BOUNDS), where KEY is the citation key
+at point and BOUNDS is a pair of buffer positions.  Returns nil
+if there is no key at point."
+  (save-excursion
+    (when-let* ((bounds (citar-latex--macro-bounds))
+                (keych "^,{}")
+                (beg (progn (skip-chars-backward keych (car bounds)) (point)))
+                (end (progn (skip-chars-forward keych (cdr bounds)) (point)))
+                (pre (buffer-substring-no-properties (car bounds) beg))
+                (post (buffer-substring-no-properties end (cdr bounds))))
+      (and (string-match-p "{\\([^{}]*,\\)?\\'" pre)  ; preceded by { ... ,
+           (string-match-p "\\`\\(,[^{}]*\\)?}" post) ; followed by , ... }
+           (goto-char beg)
+           (looking-at (concat "[[:space:]]*\\([" keych "]+?\\)[[:space:]]*[,}]"))
+           (cons (match-string-no-properties 1)
+                 (cons (match-beginning 1) (match-end 1)))))))
+
+;;;###autoload
+(defun citar-latex-citation-at-point ()
+  "Find citation macro at point and extract keys.
+Finds brace-delimited strings inside the bounds of the macro,
+splits them at comma characters, and trims whitespace.
+Returns (KEYS . BOUNDS), where KEYS is a list of the found
+citation keys and BOUNDS is a pair of buffer positions indicating
+the start and end of the citation macro."
+  (save-excursion
+    (when-let ((bounds (citar-latex--macro-bounds)))
+      (let ((keylists nil))
+        (goto-char (car bounds))
+        (while (re-search-forward "{\\([^{}]*\\)}" (cdr bounds) 'noerror)
+          (push (split-string (match-string-no-properties 1) "," t "[[:space:]]*")
+                keylists))
+        (cons (apply #'append (nreverse keylists))
+              bounds)))))
+
+(defun citar-latex--macro-bounds ()
+  "Return the bounds of the citation macro at point.
+Returns a pair of buffer positions indicating the beginning and
+end of the enclosing citation macro, or nil if point is not
+inside a citation macro."
+  (unless (fboundp 'TeX-find-macro-boundaries)
     (error "Please install AUCTeX"))
-  (when (citar-latex-is-a-cite-command (TeX-current-macro))
-    (split-string (thing-at-point 'list t) "," t "[{} ]+")))
+  (save-excursion
+    (when-let* ((bounds (TeX-find-macro-boundaries))
+                (macro (progn (goto-char (car bounds))
+                              (looking-at (concat (regexp-quote TeX-esc)
+                                                  "\\([@A-Za-z]+\\)"))
+                              (match-string-no-properties 1))))
+      (when (citar-latex-is-a-cite-command macro)
+        bounds))))
 
 (defvar citar-latex-cite-command-history nil
   "Variable for history of cite commands.")
@@ -110,7 +156,7 @@ inserted."
 (defun citar-latex-is-a-cite-command (command)
   "Return element of `citar-latex-cite-commands` containing COMMAND."
   (seq-find (lambda (x) (member command (car x)))
-                 citar-latex-cite-commands))
+            citar-latex-cite-commands))
 
 (provide 'citar-latex)
 ;;; citar-latex.el ends here
