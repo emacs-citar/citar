@@ -72,11 +72,6 @@ the point."
   (when (citar-latex-is-a-cite-command (TeX-current-macro))
     (split-string (thing-at-point 'list t) "," t "[{} ]+")))
 
-;;;###autoload
-(defun citar-latex-insert-keys (keys)
-  "Insert comma sperated KEYS in a latex buffer."
-  (insert (string-join keys ", ")))
-
 (defvar citar-latex-cite-command-history nil
   "Variable for history of cite commands.")
 
