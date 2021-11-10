@@ -188,7 +188,7 @@ If you use 'org-roam' and 'org-roam-bibtex', you can use
 (defcustom citar-major-mode-functions
   '(((org-mode) .
      ((local-bib-files . citar-org-local-bib-files)
-      (insert-citation . citar-org-cite-insert)
+      (insert-citation . citar-org-insert-citation)
       (keys-at-point . citar-org-keys-at-point)))
     ((latex-mode) .
      ((local-bib-files . citar-latex-local-bib-files)

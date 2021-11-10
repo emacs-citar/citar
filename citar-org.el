@@ -165,9 +165,24 @@ With PROC list, limit to specific processor(s)."
       (citar--extract-keys (citar-select-refs))
     (car (citar-select-ref))))
 
-(defun citar-org-cite-insert (&rest _args)
-  "Wrapper for 'org-cite-insert'."
-  (org-cite-insert current-prefix-arg))
+;;;###autoload
+(defun citar-org-insert-citation (keys &optional style)
+  "Insert KEYS in org-cite format, with STYLE."
+  (if-let ((citation (citar-org--citation-at-point)))
+      (when-let ((keys (seq-difference keys (org-cite-get-references citation t)))
+                 (keystring (mapconcat (lambda (key) (concat "@" key)) keys "; "))
+                 (begin (org-element-property :contents-begin citation)))
+        (if (<= (point) begin)
+            (org-with-point-at begin
+              (insert keystring ";"))
+          (let ((refatpt (citar-org--reference-at-point)))
+            (org-with-point-at (or (and refatpt (org-element-property :end refatpt))
+                                   (org-element-property :contents-end citation))
+              (if (char-equal ?\; (char-before))
+                  (insert-before-markers keystring ";")
+                (insert-before-markers ";" keystring))))))
+    (insert (format "[cite%s:%s]" (or style "")
+                    (mapconcat (lambda (key) (concat "@" key)) keys "; ")))))
 
 ;;;###autoload
 (defun citar-org-follow (_datum _arg)
@@ -263,25 +278,38 @@ strings by style."
 
 (defun citar-org-citation-finder ()
   "Return org-cite citation keys at point as a list for `embark'."
-  (when-let ((keys (citar-org-keys-at-point)))
-    (cons 'oc-citation (citar--stringify-keys keys))))
+  (when-let ((citation (and (derived-mode-p 'org-mode)
+                            (citar-org--citation-at-point))))
+    `(oc-citation ,(citar--stringify-keys (org-cite-get-references citation t))
+                  . ,(org-cite-boundaries citation))))
 
 (defun citar-org-keys-at-point ()
   "Return key at point for org-cite citation-reference."
-  (when-let (((eq major-mode 'org-mode))
-             (elt (org-element-context)))
+  (when-let ((elt (org-element-context)))
     (pcase (org-element-type elt)
       ('citation-reference
        (org-element-property :key elt))
       ('citation
        (org-cite-get-references elt t)))))
 
-(defun citar-org--insert-keys (keys)
-  "Insert KEYS in org-cite format."
-  (string-join (seq-map (lambda (key) (concat "@" key)) keys) ":"))
-
 
 ;;; Functions for editing/modifying citations
+
+(defun citar-org--reference-at-point ()
+  "Return citation-reference org-element at point, if any."
+  (when-let ((context (org-element-context)))
+    (when (eq 'citation-reference (org-element-type context))
+      context)))
+
+(defun citar-org--citation-at-point ()
+  "Return citation element containing point, if any."
+  (let ((element (org-element-context)))
+    (while (and element (not (eq 'citation (org-element-type element))))
+      (setq element (org-element-property :parent element)))
+    (when-let ((bounds (and element (org-cite-boundaries element))))
+      (when (and (>= (point) (car bounds))
+                 (<= (point) (cdr bounds)))
+        element))))
 
 ;; most of this section is adapted from org-ref-cite
 
@@ -376,7 +404,7 @@ strings by style."
 ;; Embark configuration for org-cite
 
 (with-eval-after-load 'embark
-  (set-keymap-parent citar-org-map 'embark-general-map)
+  ;; (set-keymap-parent citar-org-map embark-general-map)
   (add-to-list 'embark-target-finders 'citar-org-citation-finder)
   (add-to-list 'embark-keymap-alist '(citar-reference . citar-org-map))
   (add-to-list 'embark-keymap-alist '(oc-citation . citar-buffer-map))
