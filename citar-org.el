@@ -160,13 +160,11 @@ With PROC list, limit to specific processor(s)."
 ;; NOTE I may move some or all of these to a separate project
 
 ;;;###autoload
-(defun citar-org-insert (&optional multiple)
+(defun citar-org-select-key (&optional multiple)
   "Return a list of keys when MULTIPLE, or else a key string."
-  (let ((references (citar--extract-keys
-                     (citar-select-refs))))
-    (if multiple
-        references
-      (car references))))
+  (if multiple
+      (citar--extract-keys (citar-select-refs))
+    (car (citar-select-ref))))
 
 (defun citar-org-cite-insert (&rest _args)
   "Wrapper for 'org-cite-insert'."
@@ -399,7 +397,7 @@ Argument CITATION is an org-element holding the references."
 (with-eval-after-load 'oc
   (org-cite-register-processor 'citar
     :insert (org-cite-make-insert-processor
-             #'citar-org-insert
+             #'citar-org-select-key
              #'citar-org-select-style)
     :follow #'citar-org-follow
     :activate #'citar-org-activate))
