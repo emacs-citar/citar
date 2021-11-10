@@ -354,19 +354,22 @@ offering the selection candidates."
          ((string= extension (or "org" "md")) "Notes")
           (t "Library Files")))))
 
-(defun citar--get-major-mode-function (key)
+(defun citar--get-major-mode-function (key &optional default)
   "Return KEY from 'major-mode-functions'."
   (alist-get
    key
-   (cdr
-    (seq-find
-     (lambda (x) (or (eq x t) (apply #'derived-mode-p (car x))))
-     citar-major-mode-functions))))
+   (cdr (seq-find
+         (lambda (modefns)
+           (let ((modes (car modefns)))
+             (or (eq t modes)
+                 (apply #'derived-mode-p (if (listp modes) modes (list modes))))))
+         citar-major-mode-functions))
+   default))
 
 (defun citar--major-mode-function (key default &rest args)
   "Function for the major mode corresponding to KEY applied to ARGS.
 If no function is found, the DEFAULT function is called."
-  (apply (citar--get-major-mode-function key) default args))
+  (apply (citar--get-major-mode-function key default) args))
 
 (defun citar--local-files-to-cache ()
   "The local bibliographic files not included in the global bibliography."
