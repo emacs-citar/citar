@@ -153,6 +153,13 @@ inserted."
     (citar--insert-keys-comma-separated keys)
     (skip-chars-forward "^}") (forward-char 1)))
 
+;;;###autoload
+(defun citar-latex-insert-edit (&optional arg)
+  "Prompt for keys and call `citar-latex-insert-citation.
+With ARG non-nil, rebuild the cache before offering candidates."
+  (citar-latex-insert-citation
+   (citar--extract-keys (citar-select-refs :rebuild-cache arg))))
+
 (defun citar-latex-is-a-cite-command (command)
   "Return element of `citar-latex-cite-commands` containing COMMAND."
   (seq-find (lambda (x) (member command (car x)))

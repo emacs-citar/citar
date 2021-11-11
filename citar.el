@@ -53,6 +53,7 @@
 
 (defvar embark-keymap-alist)
 (defvar embark-target-finders)
+(defvar embark-pre-action-hooks)
 (defvar embark-general-map)
 (defvar embark-meta-map)
 (defvar citar-org-open-note-function)
@@ -191,16 +192,19 @@ If you use 'org-roam' and 'org-roam-bibtex', you can use
   '(((org-mode) .
      ((local-bib-files . citar-org-local-bib-files)
       (insert-citation . citar-org-insert-citation)
+      (insert-edit . citar-org-insert-edit)
       (key-at-point . citar-org-key-at-point)
       (citation-at-point . citar-org-citation-at-point)))
     ((latex-mode) .
      ((local-bib-files . citar-latex-local-bib-files)
       (insert-citation . citar-latex-insert-citation)
+      (insert-edit . citar-latex-insert-edit)
       (key-at-point . citar-latex-key-at-point)
       (citation-at-point . citar-latex-citation-at-point)))
     ((markdown-mode) .
      ((insert-keys . citar-markdown-insert-keys)
       (insert-citation . citar-markdown-insert-citation)
+      (insert-edit . citar-markdown-insert-edit)
       (key-at-point . citar-markdown-key-at-point)
       (citation-at-point . citar-markdown-citation-at-point)))
     (t .
@@ -222,6 +226,10 @@ to as the argument at point in the buffer.
 insert-citation: the corresponding function should insert a
 complete citation from a list of keys at point.  If the point is
 in a citation, new keys should be added to the citation.
+
+insert-edit: the corresponding function should accept an optional
+prefix argument and interactively edit the citation or key at
+point.
 
 key-at-point: the corresponding function should return the
 citation key at point or nil if there is none.  The return value
@@ -266,8 +274,9 @@ start and end of the citation."
     map)
   "Keymap for Embark minibuffer actions.")
 
-(defvar citar-buffer-map
+(defvar citar-citation-map
   (let ((map (make-sparse-keymap)))
+    (define-key map (kbd "i") (cons "insert or edit" #'citar-insert-edit))
     (define-key map (kbd "o") (cons "open source document" #'citar-open))
     (define-key map (kbd "e") (cons "open bibtex entry" #'citar-open-entry))
     (define-key map (kbd "l") (cons "open source URL or DOI" #'citar-open-link))
@@ -716,7 +725,9 @@ FORMAT-STRING."
 
 (with-eval-after-load 'embark
   (add-to-list 'embark-keymap-alist '(citar-reference . citar-map))
-  (add-to-list 'embark-keymap-alist '(citar-key . citar-buffer-map)))
+  (add-to-list 'embark-keymap-alist '(citar-key . citar-citation-map))
+  (add-to-list 'embark-keymap-alist '(citar-citation . citar-citation-map))
+  (add-to-list 'embark-pre-action-hooks '(citar-insert-edit embark--ignore-target)))
 
 ;;; Commands
 
@@ -860,6 +871,15 @@ With prefix, rebuild the cache before offering candidates."
    (lambda (&rest _)
      (message "Citation insertion is not supported for %s" major-mode))
    (citar--extract-keys keys-entries)))
+
+(defun citar-insert-edit (&optional arg)
+  "Edit the citation at point."
+  (interactive "P")
+  (citar--major-mode-function
+   'insert-edit
+   (lambda (&rest _)
+     (message "Citation editing is not supported for %s" major-mode))
+   arg))
 
 ;;;###autoload
 (defun citar-insert-reference (keys-entries)

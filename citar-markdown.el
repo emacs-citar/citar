@@ -68,6 +68,13 @@ to the beginning of the citation."
           (skip-chars-forward "^;]" (cddr citation))
           (insert "; " keyconcat))))))
 
+;;;###autoload
+(defun citar-markdown-insert-edit (&optional arg)
+  "Prompt for keys and call `citar-markdown-insert-citation.
+With ARG non-nil, rebuild the cache before offering candidates."
+  (citar-markdown-insert-citation
+   (citar--extract-keys (citar-select-refs :rebuild-cache arg))))
+
 (defconst citar-markdown-citation-key-regexp
   (concat "-?@"                         ; @ preceded by optional -
           "\\(?:"

@@ -178,9 +178,12 @@ With PROC list, limit to specific processor(s)."
                    (mapconcat (lambda (key) (concat "@" key)) keys "; ")))
         (user-error "Cannot insert a citation here")))))
 
-(defun citar-org-cite-insert (&rest _args)
-  "Wrapper for 'org-cite-insert'."
-  (org-cite-insert current-prefix-arg))
+;;;###autoload
+(defun citar-org-insert-edit (&optional arg)
+  "Run `org-cite-insert` with citar insert processor.
+ARG is used as the prefix argument."
+  (let ((org-cite-insert-processor 'citar))
+    (org-cite-insert arg)))
 
 ;;;###autoload
 (defun citar-org-follow (_datum _arg)
