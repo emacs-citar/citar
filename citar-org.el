@@ -185,6 +185,12 @@ With PROC list, limit to specific processor(s)."
                     (mapconcat (lambda (key) (concat "@" key)) keys "; ")))))
 
 ;;;###autoload
+(defun citar-org-edit-citation (&optional arg)
+  (interactive "P")
+  (let ((org-cite-insert-processor 'citar))
+    (org-cite-insert arg)))
+
+;;;###autoload
 (defun citar-org-follow (_datum _arg)
   "Follow processor for org-cite."
   (call-interactively citar-at-point-function))

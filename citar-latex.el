@@ -150,7 +150,7 @@ inserted."
         (TeX-parse-macro macro
                          (when citar-latex-prompt-for-extra-arguments
                            (cdr (citar-latex-is-a-cite-command macro))))))
-    (citar-latex-insert-keys keys)
+    (citar--insert-keys-comma-separated keys)
     (skip-chars-forward "^}") (forward-char 1)))
 
 (defun citar-latex-is-a-cite-command (command)

@@ -189,6 +189,7 @@ If you use 'org-roam' and 'org-roam-bibtex', you can use
   '(((org-mode) .
      ((local-bib-files . citar-org-local-bib-files)
       (insert-citation . citar-org-insert-citation)
+      (edit-citation . citar-org-edit-citation)
       (key-at-point . citar-org-key-at-point)
       (citation-at-point . citar-org-citation-at-point)))
     ((latex-mode) .
@@ -254,8 +255,10 @@ point."
     map)
   "Keymap for Embark minibuffer actions.")
 
-(defvar citar-buffer-map
+(defvar citar-citation-map
   (let ((map (make-sparse-keymap)))
+    (define-key map (kbd "i") (cons "insert citation" #'citar-insert-citation))
+    (define-key map (kbd "E") (cons "edit citation" #'citar-edit-citation))
     (define-key map (kbd "o") (cons "open source document" #'citar-open))
     (define-key map (kbd "e") (cons "open bibtex entry" #'citar-open-entry))
     (define-key map (kbd "l") (cons "open source URL or DOI" #'citar-open-link))
@@ -682,7 +685,7 @@ FORMAT-STRING."
   "Return the citation key at point."
   (when-let (key (and (not (minibufferp))
                       (citar--major-mode-function 'key-at-point #'ignore)))
-    (cons 'citar-key key)))
+    (cons 'citar-reference key)))
 
 ;;;###autoload
 (defun citar-citation-finder ()
@@ -703,7 +706,8 @@ FORMAT-STRING."
 
 (with-eval-after-load 'embark
   (add-to-list 'embark-keymap-alist '(citar-reference . citar-map))
-  (add-to-list 'embark-keymap-alist '(citar-key . citar-buffer-map)))
+  (add-to-list 'embark-keymap-alist '(citar-citation . citar-citation-map))
+  (add-to-list 'embark-pre-action-hooks '(citar-edit-citation embark--ignore-target)))
 
 ;;; Commands
 
@@ -828,15 +832,21 @@ With prefix, rebuild the cache before offering candidates."
 With prefix, rebuild the cache before offering candidates."
   (interactive (list (citar-select-refs
                       :rebuild-cache current-prefix-arg)))
-  (let* ((function (citar--get-major-mode-function 'insert-candidate))
-         (keys (citar--extract-keys keys-entries)))
-    (if (eq function 'citar-org-cite-insert)
-        (call-interactively 'org-cite-insert)
-      (citar--major-mode-function
-       'insert-citation
-       (lambda (&rest _)
-         (message "Citation insertion is not supported for %s" major-mode))
-       keys))))
+  (let* ((keys (citar--extract-keys keys-entries)))
+    (citar--major-mode-function
+     'insert-citation
+     (lambda (&rest _)
+       (message "Citation insertion is not supported for %s" major-mode))
+     keys)))
+
+(defun citar-edit-citation (&optional arg)
+  "Edit the citation at point."
+  (interactive "P")
+  (citar--major-mode-function
+   'edit-citation
+   (lambda (&rest _)
+     (message "Citation editing is not supported for %s" major-mode))
+   arg))
 
 ;;;###autoload
 (defun citar-insert-reference (keys-entries)
