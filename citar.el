@@ -189,14 +189,16 @@ If you use 'org-roam' and 'org-roam-bibtex', you can use
   '(((org-mode) .
      ((local-bib-files . citar-org-local-bib-files)
       (insert-citation . citar-org-insert-citation)
-      (keys-at-point . citar-org-keys-at-point)))
+      (key-at-point . citar-org-key-at-point)
+      (citation-at-point . citar-org-citation-at-point)))
     ((latex-mode) .
      ((local-bib-files . citar-latex-local-bib-files)
       (insert-citation . citar-latex-insert-citation)
-      (keys-at-point . citar-latex-keys-at-point)))
+      (key-at-point . citar-latex-key-at-point)
+      (citation-at-point . citar-latex-citation-at-point)))
     ((markdown-mode) .
      ((insert-keys . citar-markdown-insert-keys)
-      (keys-at-point . citar-markdown-key-at-point)
+      (key-at-point . citar-markdown-key-at-point)
       (insert-citation . citar-markdown-insert-citation)))
     (t .
      ((insert-keys . citar--insert-keys-comma-separated))))
@@ -676,11 +678,18 @@ FORMAT-STRING."
 ;;; At-point functions for Embark
 
 ;;;###autoload
-(defun citar-keys-at-point ()
-  "Return the keys of the entry at point."
-  (when-let (keys (and (not (minibufferp))
-                       (citar--major-mode-function 'keys-at-point #'ignore)))
-    (cons 'citation-key (citar--stringify-keys keys))))
+(defun citar-key-finder ()
+  "Return the citation key at point."
+  (when-let (key (and (not (minibufferp))
+                      (citar--major-mode-function 'key-at-point #'ignore)))
+    (cons 'citar-key key)))
+
+;;;###autoload
+(defun citar-citation-finder ()
+  "Return the keys of the citation at point."
+  (when-let (citation (and (not (minibufferp))
+                           (citar--major-mode-function 'citation-at-point #'ignore)))
+    `(citar-citation ,(citar--stringify-keys (car citation)) . ,(cdr citation))))
 
 (defun citar--stringify-keys (keys)
   "Return a list of KEYS as a crm-string for `embark'."
@@ -688,7 +697,9 @@ FORMAT-STRING."
 
 ;;;###autoload
 (with-eval-after-load 'embark
-  (add-to-list 'embark-target-finders 'citar-keys-at-point))
+  (add-to-list 'embark-target-finders 'citar-citation-finder)
+  (add-to-list 'embark-target-finders 'citar-key-finder))
+
 
 (with-eval-after-load 'embark
   (add-to-list 'embark-keymap-alist '(citar-reference . citar-map))

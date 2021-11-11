@@ -276,22 +276,20 @@ strings by style."
 
 ;;; Embark target finder
 
-(defun citar-org-citation-finder ()
-  "Return org-cite citation keys at point as a list for `embark'."
-  (when-let ((citation (and (derived-mode-p 'org-mode)
-                            (citar-org--citation-at-point))))
-    `(oc-citation ,(citar--stringify-keys (org-cite-get-references citation t))
-                  . ,(org-cite-boundaries citation))))
-
-(defun citar-org-keys-at-point ()
+;;;###autoload
+(defun citar-org-key-at-point ()
   "Return key at point for org-cite citation-reference."
-  (when-let ((elt (org-element-context)))
-    (pcase (org-element-type elt)
-      ('citation-reference
-       (org-element-property :key elt))
-      ('citation
-       (org-cite-get-references elt t)))))
+  (when-let ((reference (citar-org--reference-at-point)))
+    (cons (org-element-property :key reference)
+          (cons (org-element-property :begin reference)
+                (org-element-property :end reference)))))
 
+;;;###autoload
+(defun citar-org-citation-at-point ()
+  "Return org-cite citation keys at point as a list for `embark'."
+  (when-let ((citation (citar-org--citation-at-point)))
+    (cons (org-cite-get-references citation t)
+          (org-cite-boundaries citation))))
 
 ;;; Functions for editing/modifying citations
 
@@ -400,15 +398,6 @@ strings by style."
           (org-element-interpret-data
            `(citation-reference
              (:key ,key :prefix ,pre :suffix ,post))))))
-
-;; Embark configuration for org-cite
-
-(with-eval-after-load 'embark
-  ;; (set-keymap-parent citar-org-map embark-general-map)
-  (add-to-list 'embark-target-finders 'citar-org-citation-finder)
-  (add-to-list 'embark-keymap-alist '(citar-reference . citar-org-map))
-  (add-to-list 'embark-keymap-alist '(oc-citation . citar-buffer-map))
-  (add-to-list 'embark-pre-action-hooks '(org-cite-insert embark--ignore-target)))
 
 ;; Load this last.
 
