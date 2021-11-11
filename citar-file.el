@@ -101,9 +101,7 @@ Example: ':/path/to/test.pdf:PDF'."
   (let ((parts (split-string file-field "[,;]" 'omit-nulls)))
     (seq-mapcat
      (lambda (part)
-       (let ((fn (if (string-match ":\\(.*\\):.*" part)
-                     (replace-regexp-in-string "\\\\:" ":" (match-string 1 part))
-                   part)))
+       (let ((fn (car (split-string part ":" 'omit-nulls))))
          (mapcar (apply-partially #'expand-file-name fn) dirs)))
      parts)))
 
