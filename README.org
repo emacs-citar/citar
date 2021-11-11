@@ -25,7 +25,7 @@ When used with vertico (or selectrum), embark, and marginalia, it provides simil
 
 With embark, it also makes available at-point actions in org-mode citations.
 
-Here's a screenshot with [[https://github.com/raxod502/selectrum][vertico]], [[https://github.com/oantolin/embark/][embark]]. and =consult-completing-read-multiple=.
+Here's a screenshot with [[https://github.com/minad/vertico][vertico]], [[https://github.com/oantolin/embark/][embark]]. and =consult-completing-read-multiple=.
 
 #+CAPTION: vertico with citar
 [[file:images/vertico.png]]
