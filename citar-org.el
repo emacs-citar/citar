@@ -168,25 +168,30 @@ With PROC list, limit to specific processor(s)."
 ;;;###autoload
 (defun citar-org-insert-citation (keys &optional style)
   "Insert KEYS in org-cite format, with STYLE."
-  (if-let ((citation (citar-org--citation-at-point)))
-      (when-let ((keys (seq-difference keys (org-cite-get-references citation t)))
-                 (keystring (mapconcat (lambda (key) (concat "@" key)) keys "; "))
-                 (begin (org-element-property :contents-begin citation)))
-        (if (<= (point) begin)
-            (org-with-point-at begin
-              (insert keystring ";"))
-          (let ((refatpt (citar-org--reference-at-point)))
-            (org-with-point-at (or (and refatpt (org-element-property :end refatpt))
-                                   (org-element-property :contents-end citation))
-              (if (char-equal ?\; (char-before))
-                  (insert-before-markers keystring ";")
-                (insert-before-markers ";" keystring))))))
-    (insert (format "[cite%s:%s]" (or style "")
-                    (mapconcat (lambda (key) (concat "@" key)) keys "; ")))))
+  (let ((context (org-element-context)))
+    (if-let ((citation (citar-org--citation-at-point context)))
+        (when-let ((keys (seq-difference keys (org-cite-get-references citation t)))
+                   (keystring (mapconcat (lambda (key) (concat "@" key)) keys "; "))
+                   (begin (org-element-property :contents-begin citation)))
+          (if (<= (point) begin)
+              (org-with-point-at begin
+                (insert keystring ";"))
+            (let ((refatpt (citar-org--reference-at-point)))
+              (org-with-point-at (or (and refatpt (org-element-property :end refatpt))
+                                     (org-element-property :contents-end citation))
+                (if (char-equal ?\; (char-before))
+                    (insert-before-markers keystring ";")
+                  (insert-before-markers ";" keystring))))))
+      (if (org-cite--allowed-p context)
+          (insert
+           (format "[cite%s:%s]" (or style "")
+                   (mapconcat (lambda (key) (concat "@" key)) keys "; ")))
+        (user-error "Cannot insert a citation here")))))
 
 ;;;###autoload
-(defun citar-org-edit-citation (&optional arg)
-  (interactive "P")
+(defun citar-org-insert-edit (&optional arg)
+  "Run `org-cite-insert` with citar insert processor.
+ARG is used as the prefix argument."
   (let ((org-cite-insert-processor 'citar))
     (org-cite-insert arg)))
 
@@ -299,15 +304,15 @@ strings by style."
 
 ;;; Functions for editing/modifying citations
 
-(defun citar-org--reference-at-point ()
+(defun citar-org--reference-at-point (&optional context)
   "Return citation-reference org-element at point, if any."
-  (when-let ((context (org-element-context)))
+  (when-let ((context (or context (org-element-context))))
     (when (eq 'citation-reference (org-element-type context))
       context)))
 
-(defun citar-org--citation-at-point ()
+(defun citar-org--citation-at-point (&optional context)
   "Return citation element containing point, if any."
-  (let ((element (org-element-context)))
+  (let ((element (or context (org-element-context))))
     (while (and element (not (eq 'citation (org-element-type element))))
       (setq element (org-element-property :parent element)))
     (when-let ((bounds (and element (org-cite-boundaries element))))

@@ -34,7 +34,7 @@
 (defvar citar-major-mode-functions)
 
 (defcustom citar-latex-cite-commands
-  '((("cite" "Cite" "citet" "Citet" "parencite"
+  '((("cite" "Cite" "citet" "Citet" "citep" "Citep" "parencite"
       "Parencite" "footcite" "footcitetext" "textcite" "Textcite"
       "smartcite" "Smartcite" "cite*" "parencite*" "autocite"
       "Autocite" "autocite*" "Autocite*" "citeauthor" "Citeauthor"
@@ -65,13 +65,13 @@ the point."
   (ignore-errors (reftex-get-bibfile-list)))
 
 (defun citar-latex--macro-bounds ()
-  "Returns the bounds of the citation macro at point.
+  "Return the bounds of the citation macro at point.
 Returns a pair of buffer positions indicating the beginning and
 end of the enclosing citation macro, or nil if point is not
 inside a citation macro.  Moves point to the beginning of the
 macro."
   (unless (fboundp 'TeX-find-macro-boundaries)
-    (error "Please install AUCTeX."))
+    (error "Please install AUCTeX"))
   (save-excursion
     (when-let* ((bounds (TeX-find-macro-boundaries))
                 (macro (progn (goto-char (car bounds))
@@ -83,9 +83,10 @@ macro."
 
 ;;;###autoload
 (defun citar-latex-key-at-point ()
-  "Returns (KEY . BOUNDS), where KEY is the citation key at point
-and BOUNDS is a pair of buffer positions.  Returns nil if there
-is no key at point."
+  "Return citation key at point with its bounds.
+The return value is (KEY . BOUNDS), where KEY is the citation key
+at point and BOUNDS is a pair of buffer positions.  Returns nil
+if there is no key at point."
   (save-excursion
     (when-let* ((bounds (citar-latex--macro-bounds))
                 (keych "^,{}")
@@ -153,10 +154,17 @@ inserted."
     (citar--insert-keys-comma-separated keys)
     (skip-chars-forward "^}") (forward-char 1)))
 
+;;;###autoload
+(defun citar-latex-insert-edit (&optional arg)
+  "Prompt for keys and call `citar-latex-insert-citation.
+With ARG non-nil, rebuild the cache before offering candidates."
+  (citar-latex-insert-citation
+   (citar--extract-keys (citar-select-refs :rebuild-cache arg))))
+
 (defun citar-latex-is-a-cite-command (command)
   "Return element of `citar-latex-cite-commands` containing COMMAND."
   (seq-find (lambda (x) (member command (car x)))
-                 citar-latex-cite-commands))
+            citar-latex-cite-commands))
 
 (provide 'citar-latex)
 ;;; citar-latex.el ends here
