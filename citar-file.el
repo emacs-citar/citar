@@ -120,15 +120,15 @@ Example: ':/path/to/test.pdf:PDF'."
            (file-field (citar-get-value
                         citar-file-variable entry))
            (results-file
-            (when file-field
-              (seq-mapcat
-               (lambda (func)
-                 (funcall
-                  func
-                  ;; Make sure this arg is non-nil.
-                  (or dirs "/")
-                  file-field))
-               citar-file-parser-functions))))
+            (delete-dups (when file-field
+                           (seq-mapcat
+                            (lambda (func)
+                              (funcall
+                               func
+                               ;; Make sure this arg is non-nil.
+                               (or dirs "/")
+                               file-field))
+                            citar-file-parser-functions)))))
       (append results-key results-file))))
 
 (defun citar-file--files-for-entry (key entry dirs extensions)
