@@ -274,6 +274,7 @@ strings by style."
   (when-let ((keys (citar-org-keys-at-point)))
     (cons 'oc-citation (citar--stringify-keys keys))))
 
+;;;###autoload
 (defun citar-org-keys-at-point ()
   "Return key at point for org-cite citation-reference."
   (when-let (((eq major-mode 'org-mode))
