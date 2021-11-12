@@ -112,12 +112,15 @@ Example: ':/path/to/test.pdf:PDF'."
              (extension)
              (seq-map
               (lambda (directory)
-                (expand-file-name
-                 (concat key "." extension) directory))
+                (directory-files directory t
+                                         (s-concat "^" (regexp-quote key)
+                                                   ".*\\("
+                                                   extension
+                                                   "\\)$")))
               dirs)))
-    (let* ((results-key (seq-mapcat
-                         #'possible-file-names-with-extension
-                         extensions))
+    (let* ((results-key (apply #'append (seq-mapcat
+                                         #'possible-file-names-with-extension
+                                         extensions)))
            (file-field (citar-get-value
                         citar-file-variable entry))
            (results-file
