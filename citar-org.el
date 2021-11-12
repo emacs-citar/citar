@@ -84,17 +84,6 @@ Each function takes one argument, a citation."
 
 ;;; Keymaps
 
-(defvar citar-org-map
-  (let ((map (make-sparse-keymap)))
-    (define-key map (kbd "o") (cons "open source (file or link)" #'citar-open))
-    (define-key map (kbd "e") (cons "open bibtex entry" #'citar-open-entry))
-    (define-key map (kbd "f") (cons "open source file" #'citar-open-library-files))
-    (define-key map (kbd "l") (cons "open source link" #'citar-open-link))
-    (define-key map (kbd "n") (cons "open notes" #'citar-open-notes))
-    (define-key map (kbd "r") (cons "refresh" #'citar-refresh))
-    map)
-  "Keymap for org-cite Embark minibuffer functionality.")
-
 (defvar citar-org-citation-map
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "<mouse-1>") (cons "default action" #'org-open-at-point))
