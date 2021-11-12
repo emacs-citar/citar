@@ -85,12 +85,13 @@ will open, via `citar-file-open'."
 (defun citar-file-parser-default (dirs file-field)
   "Return a list of files from DIRS and FILE-FIELD."
   (let ((files (split-string file-field ";")))
-    (seq-mapcat
-     (lambda (dir)
-       (mapcar
-        (lambda (file)
-          (expand-file-name file dir)) files))
-     dirs)))
+    (delete-dups
+     (seq-mapcat
+      (lambda (dir)
+        (mapcar
+         (lambda (file)
+           (expand-file-name file dir)) files))
+      dirs))))
 
 (defun citar-file-parser-triplet (dirs file-field)
   "Return a list of files from DIRS and a FILE-FIELD formatted as a triplet.
