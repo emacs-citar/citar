@@ -70,7 +70,7 @@ will open, via `citar-file-open'."
   :type '(repeat string))
 
 (defcustom citar-file-find-additional-files nil
-  "If non-nil, all files whose base name starts with the BibTeX key
+  "If non-nil, all files whose base name starts with the reference key
 and whose extension is listed in `citar-file-extensions' are
 located by the functions `citar-open-library-files' and
 `citar-open-notes', not only files with the naming scheme
@@ -117,22 +117,20 @@ Example: ':/path/to/test.pdf:PDF'."
 
 (defun citar-file--possible-names (key dirs extensions &optional entry find-additional)
   "Possible names for files correponding to KEY, ENTRY with EXTENSIONS in DIRS."
-  (cl-flet ((possible-file-names-with-extension
-             (extension)
-             (seq-map
-              (lambda (directory)
-                (if find-additional                    
-                    (directory-files directory t
-                                     (concat "^" (regexp-quote key)
-                                             ".*\\("
-                                             extension
-                                             "\\)$"))
-                  (list (expand-file-name
-                         (concat key "." extension) directory))))
-              dirs)))
-    (let* ((results-key (apply #'append (seq-mapcat
-                                         #'possible-file-names-with-extension
-                                         extensions)))
+    (let* ((filematch (when find-additional
+                        (format "\\`%s.*\\.\\(?:%s\\)\\'"
+                                (regexp-quote key)
+                                (mapconcat #'regexp-quote extensions "\\|"))))
+           (results-key (seq-mapcat
+                         (lambda (dir)
+                           (if filematch
+                               (directory-files dir t filematch)
+                             (seq-filter
+                              #'file-exists-p
+                              (seq-map (lambda (ext)
+                                         (expand-file-name (concat key "." ext) dir))
+                                       extensions))))
+                         dirs))
            (file-field (citar-get-value
                         citar-file-variable entry))
            (results-file
@@ -145,7 +143,7 @@ Example: ':/path/to/test.pdf:PDF'."
                   (or dirs "/")
                   file-field))
                citar-file-parser-functions))))
-      (delete-dups (append results-key results-file)))))
+      (delete-dups (append results-key results-file))))
 
 (defun citar-file--files-for-entry (key entry dirs extensions)
     "Find files related to KEY, ENTRY in DIRS with extension in EXTENSIONS."
