@@ -276,7 +276,7 @@ This package provides a ~citar-file-open-note-function~ variable, and a simple d
 To replace the default with one from org-roam-bibtex, you can do:
 
 #+BEGIN_SRC emacs-lisp
-(setq citar-file-open-note-function 'orb-citar-edit-note)
+(setq citar-open-note-function 'orb-citar-edit-note)
 #+END_SRC
 
 Note, however: if you use that function you need to ensure that the ~bibtex-completion-bibliography~ variable is correctly set to the same paths as ~citar-bibliography~.
