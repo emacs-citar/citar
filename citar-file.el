@@ -69,6 +69,15 @@ will open, via `citar-file-open'."
   :group 'citar
   :type '(repeat string))
 
+(defcustom citar-file-find-additional-files nil
+  "If non-nil, all files whose base name starts with the BibTeX key
+and whose extension is listed in `citar-file-extensions' are
+located by the functions `citar-open-library-files' and
+`citar-open-notes', not only files with the naming scheme
+\"<key>.<extension>\"."
+  :group 'citar
+  :type '(boolean))
+
 (defvar citar-notes-paths)
 
 ;;;; Convenience functions for files and paths
@@ -106,17 +115,20 @@ Example: ':/path/to/test.pdf:PDF'."
          (mapcar (apply-partially #'expand-file-name fn) dirs)))
      parts)))
 
-(defun citar-file--possible-names (key dirs extensions &optional entry)
+(defun citar-file--possible-names (key dirs extensions &optional entry find-additional)
   "Possible names for files correponding to KEY, ENTRY with EXTENSIONS in DIRS."
   (cl-flet ((possible-file-names-with-extension
              (extension)
              (seq-map
               (lambda (directory)
-                (directory-files directory t
-                                         (s-concat "^" (regexp-quote key)
-                                                   ".*\\("
-                                                   extension
-                                                   "\\)$")))
+                (if find-additional                    
+                    (directory-files directory t
+                                     (concat "^" (regexp-quote key)
+                                             ".*\\("
+                                             extension
+                                             "\\)$"))
+                  (list (expand-file-name
+                         (concat key "." extension) directory))))
               dirs)))
     (let* ((results-key (apply #'append (seq-mapcat
                                          #'possible-file-names-with-extension
@@ -124,21 +136,21 @@ Example: ':/path/to/test.pdf:PDF'."
            (file-field (citar-get-value
                         citar-file-variable entry))
            (results-file
-           (when file-field
-             (seq-mapcat
-              (lambda (func)
-                (funcall
-                 func
-                 ;; Make sure this arg is non-nil.
-                 (or dirs "/")
-                 file-field))
-              citar-file-parser-functions))))
+            (when file-field
+              (seq-mapcat
+               (lambda (func)
+                 (funcall
+                  func
+                  ;; Make sure this arg is non-nil.
+                  (or dirs "/")
+                  file-field))
+               citar-file-parser-functions))))
       (delete-dups (append results-key results-file)))))
 
 (defun citar-file--files-for-entry (key entry dirs extensions)
     "Find files related to KEY, ENTRY in DIRS with extension in EXTENSIONS."
     (seq-filter #'file-exists-p
-                (citar-file--possible-names key dirs extensions entry)))
+                (citar-file--possible-names key dirs extensions entry citar-file-find-additional-files)))
 
 (defun citar-file--files-for-multiple-entries (keys-entries dirs extensions)
   "Find files related to a list of KEYS-ENTRIES in DIRS with extension in EXTENSIONS."
@@ -175,7 +187,7 @@ with citekey as filename.
 Returns the filename whether or not the file exists, to support a
 function that will open a new file if the note is not present."
   (let* ((possible-files
-          (citar-file--possible-names key dirs extensions))
+          (citar-file--possible-names key dirs extensions nil citar-file-find-additional-files))
          (existing-files
           (seq-filter #'file-exists-p possible-files)))
     (if existing-files
