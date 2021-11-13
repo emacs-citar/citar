@@ -44,7 +44,7 @@
   :group 'citar
   :type '(function))
 
-(defcustom citar-file-open-prompt nil
+(defcustom citar-file-open-prompt t
   "Prompt for selection of related files to open."
   :group 'citar
   :type '(boolean))
