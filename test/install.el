@@ -24,15 +24,15 @@
 (package-install 'embark)
 (package-install 'marginalia)
 
-;; bibtex-actions
-(package-install 'bibtex-completion)
+;; citar
 ;; we load this locally, to facilitate development testing on branches
-(load-relative "../bibtex-actions.el")
-(load-relative "../oc-bibtex-actions.el")
+(load-relative "../citar.el")
+(load-relative "../citar-org.el")
+
 ;; theme that supports selectrum and vertico
 (package-install 'modus-themes)
 
 ;; load full-screen, since this package exploits horizontal real estate
 (add-to-list 'initial-frame-alist '(fullscreen . maximized))
 
-(message "Installed packages to /tmp/ba-test-emacs.d/")
+(message "Installed packages to /tmp/citar-test-emacs.d/")

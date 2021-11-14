@@ -9,9 +9,9 @@
 
 ;; activate additional packages we need, including bibtex-actions
 (require 'embark)
-(require 'bibtex-actions)
-(require 'oc-bibtex-actions)
+(require 'citar)
 (require 'consult)
+
 ;; set binding for Embark context menu
 (global-set-key (kbd "M-;") #'embark-act)
 (global-set-key (kbd "M-.") #'embark-dwim)
@@ -19,19 +19,13 @@
 ;; replace CRM with consult alernative
 ;(advice-add #'completing-read-multiple :override #'consult-completing-read-multiple)
 
-;; ensure that embark knows which map to use with bibtex entries
-(add-to-list 'embark-target-finders 'bibtex-actions-citation-key-at-point)
-(add-to-list 'embark-keymap-alist '(bibtex . bibtex-actions-map))
-(add-to-list 'embark-keymap-alist '(citation-key . bibtex-actions-buffer-map))
-
 (with-eval-after-load "oc"
-  (setq org-cite-follow-processor 'oc-bibtex-actions)
-  (setq org-cite-insert-processor 'oc-bibtex-actions))
+  (setq org-cite-follow-processor 'citar
+        org-cite-insert-processor 'citar
+        org-cite-activate-processor 'citar))
 
 ;; load the test bib file
-(setq bibtex-completion-bibliography "test.bib")
-;; set this so basic search functionality works correctly here
-(setq bibtex-completion-additional-search-fields '(keywords url doi))
+(setq citar-bibliography '("test.bib"))
 
 (setq vertico-count 20)
 
