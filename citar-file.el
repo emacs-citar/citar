@@ -70,13 +70,19 @@ will open, via `citar-file-open'."
   :type '(repeat string))
 
 (defcustom citar-file-find-additional-files nil
-  "If non-nil, all files whose base name starts with the reference key
-and whose extension is listed in `citar-file-extensions' are
-located by the functions `citar-open-library-files' and
-`citar-open-notes', not only files with the naming scheme
-\"<key>.<extension>\"."
+  "Find additional library files starting with reference key.
+If t, all files whose base name starts with the reference key and
+whose extension is listed in `citar-file-extensions' are located
+by the functions `citar-open-library-files' and
+`citar-open-notes'.  If nil, only files with the naming scheme
+\"<key>.<extension>\" are located.  Otherwise, its value is a
+regular expression specifying how the key is separated from the
+rest of the filename."
   :group 'citar
-  :type '(boolean))
+  :type '(choice (const :tag "Ignore additional files" nil)
+                 (const :tag "Find all files starting with key" t)
+                 (const :tag "Find files with space after key" "[[:space:]]")
+                 (regexp :tag "Filename separator")))
 
 (defvar citar-notes-paths)
 
@@ -118,8 +124,9 @@ Example: ':/path/to/test.pdf:PDF'."
 (defun citar-file--possible-names (key dirs extensions &optional entry find-additional)
   "Possible names for files correponding to KEY, ENTRY with EXTENSIONS in DIRS."
     (let* ((filematch (when find-additional
-                        (format "\\`%s.*\\.\\(?:%s\\)\\'"
+                        (format "\\`%s\\(?:%s.*\\)?\\.\\(?:%s\\)\\'"
                                 (regexp-quote key)
+                                (if (eq t find-additional) "" find-additional)
                                 (mapconcat #'regexp-quote extensions "\\|"))))
            (results-key (seq-mapcat
                          (lambda (dir)
@@ -185,7 +192,7 @@ with citekey as filename.
 Returns the filename whether or not the file exists, to support a
 function that will open a new file if the note is not present."
   (let* ((possible-files
-          (citar-file--possible-names key dirs extensions nil citar-file-find-additional-files))
+          (citar-file--possible-names key dirs extensions))
          (existing-files
           (seq-filter #'file-exists-p possible-files)))
     (if existing-files
