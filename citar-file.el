@@ -69,6 +69,21 @@ will open, via `citar-file-open'."
   :group 'citar
   :type '(repeat string))
 
+(defcustom citar-file-find-additional-files nil
+  "Find additional library files starting with reference key.
+If t, all files whose base name starts with the reference key and
+whose extension is listed in `citar-file-extensions' are located
+by the functions `citar-open-library-files' and
+`citar-open-notes'.  If nil, only files with the naming scheme
+\"<key>.<extension>\" are located.  Otherwise, its value is a
+regular expression specifying how the key is separated from the
+rest of the filename."
+  :group 'citar
+  :type '(choice (const :tag "Ignore additional files" nil)
+                 (const :tag "Find all files starting with key" t)
+                 (const :tag "Find files with space after key" "[[:space:]]")
+                 (regexp :tag "Filename separator")))
+
 (defvar citar-notes-paths)
 
 ;;;; Convenience functions for files and paths
@@ -106,36 +121,41 @@ Example: ':/path/to/test.pdf:PDF'."
          (mapcar (apply-partially #'expand-file-name fn) dirs)))
      parts)))
 
-(defun citar-file--possible-names (key dirs extensions &optional entry)
+(defun citar-file--possible-names (key dirs extensions &optional entry find-additional)
   "Possible names for files correponding to KEY, ENTRY with EXTENSIONS in DIRS."
-  (cl-flet ((possible-file-names-with-extension
-             (extension)
-             (seq-map
-              (lambda (directory)
-                (expand-file-name
-                 (concat key "." extension) directory))
-              dirs)))
-    (let* ((results-key (seq-mapcat
-                         #'possible-file-names-with-extension
-                         extensions))
+    (let* ((filematch (when find-additional
+                        (format "\\`%s\\(?:%s.*\\)?\\.\\(?:%s\\)\\'"
+                                (regexp-quote key)
+                                (if (eq t find-additional) "" find-additional)
+                                (mapconcat #'regexp-quote extensions "\\|"))))
+           (results-key (seq-mapcat
+                         (lambda (dir)
+                           (if filematch
+                               (directory-files dir t filematch)
+                             (seq-filter
+                              #'file-exists-p
+                              (seq-map (lambda (ext)
+                                         (expand-file-name (concat key "." ext) dir))
+                                       extensions))))
+                         dirs))
            (file-field (citar-get-value
                         citar-file-variable entry))
            (results-file
-           (when file-field
-             (seq-mapcat
-              (lambda (func)
-                (funcall
-                 func
-                 ;; Make sure this arg is non-nil.
-                 (or dirs "/")
-                 file-field))
-              citar-file-parser-functions))))
-      (delete-dups (append results-key results-file)))))
+            (when file-field
+              (seq-mapcat
+               (lambda (func)
+                 (funcall
+                  func
+                  ;; Make sure this arg is non-nil.
+                  (or dirs "/")
+                  file-field))
+               citar-file-parser-functions))))
+      (delete-dups (append results-key results-file))))
 
 (defun citar-file--files-for-entry (key entry dirs extensions)
     "Find files related to KEY, ENTRY in DIRS with extension in EXTENSIONS."
     (seq-filter #'file-exists-p
-                (citar-file--possible-names key dirs extensions entry)))
+                (citar-file--possible-names key dirs extensions entry citar-file-find-additional-files)))
 
 (defun citar-file--files-for-multiple-entries (keys-entries dirs extensions)
   "Find files related to a list of KEYS-ENTRIES in DIRS with extension in EXTENSIONS."

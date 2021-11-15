@@ -453,7 +453,8 @@ key associated with each one."
          (star-width (- (frame-width) (+ 2 symbols-width main-width suffix-width))))
     (maphash
      (lambda (citekey entry)
-       (let* ((files
+       (let* ((citar-file-find-additional-files nil)
+              (files
                (when (citar-file--files-for-entry
                       citekey
                       entry
