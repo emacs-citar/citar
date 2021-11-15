@@ -695,9 +695,12 @@ FORMAT-STRING."
 
 ;;;###autoload
 (defun citar-open (keys-entries)
-  "Open related resource (link or file) for KEYS-ENTRIES."
+  "Open related resources (links or files) for KEYS-ENTRIES."
   (interactive (list (citar-select-refs
                       :rebuild-cache current-prefix-arg)))
+  (when (and citar-library-paths
+             (stringp citar-library-paths))
+    (message "Make sure 'citar-library-paths' is a list of paths"))
   (let* ((files
          (citar-file--files-for-multiple-entries
           keys-entries
@@ -726,6 +729,9 @@ FORMAT-STRING."
 With prefix, rebuild the cache before offering candidates."
   (interactive (list (citar-select-refs
                       :rebuild-cache current-prefix-arg)))
+    (when (and citar-library-paths
+               (stringp citar-library-paths))
+      (message "Make sure 'citar-library-paths' is a list of paths"))
   (let ((files
          (citar-file--files-for-multiple-entries
           keys-entries
