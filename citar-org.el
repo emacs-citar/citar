@@ -237,6 +237,7 @@ strings by style."
 
 ;;; Org note function
 
+;;;###autoload
 (defun citar-org-open-notes-default (key entry)
   "Open a note file from KEY and ENTRY."
   (if-let* ((file
@@ -385,8 +386,8 @@ strings by style."
 ;; Embark configuration for org-cite
 
 (with-eval-after-load 'embark
-  (set-keymap-parent citar-org-map embark-general-map)
-  (set-keymap-parent citar-org-buffer-map embark-general-map)
+;  (set-keymap-parent citar-org-map embark-general-map)
+;  (set-keymap-parent citar-org-buffer-map embark-general-map)
   (add-to-list 'embark-target-finders 'citar-org-citation-finder)
   (add-to-list 'embark-keymap-alist '(bib-reference . citar-org-map))
   (add-to-list 'embark-keymap-alist '(oc-citation . citar-org-buffer-map))

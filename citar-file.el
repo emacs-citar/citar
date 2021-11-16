@@ -132,11 +132,9 @@ Example: ':/path/to/test.pdf:PDF'."
                          (lambda (dir)
                            (if filematch
                                (directory-files dir t filematch)
-                             (seq-filter
-                              #'file-exists-p
-                              (seq-map (lambda (ext)
-                                         (expand-file-name (concat key "." ext) dir))
-                                       extensions))))
+                             (seq-map (lambda (ext)
+                                        (expand-file-name (concat key "." ext) dir))
+                                      extensions)))
                          dirs))
            (file-field (citar-get-value
                         citar-file-variable entry))
