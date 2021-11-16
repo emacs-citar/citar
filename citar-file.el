@@ -61,11 +61,19 @@
   :group 'citar
   :type '(function))
 
-(defcustom citar-file-extensions '("pdf" "org" "md")
+(defcustom citar-file-extensions '("pdf")
   "List of file extensions to recognize for related files.
 
 These are the extensions the 'citar-file-open-function'
 will open, via `citar-file-open'."
+  :group 'citar
+  :type '(repeat string))
+
+(defcustom citar-note-extensions '("org" "md")
+  "List of file extensions to recognize for notes.
+
+These are the extensions the 'citar-open-note-function'
+will open, via `citar-open-notes'."
   :group 'citar
   :type '(repeat string))
 

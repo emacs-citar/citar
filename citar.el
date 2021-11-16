@@ -466,7 +466,7 @@ key associated with each one."
                       citekey
                       nil ; don't want to check file field
                       citar-notes-paths
-                      citar-file-extensions)
+                      citar-note-extensions)
                  " has:notes"))
               (link
                (when (citar-has-a-value '("doi" "url") entry)
