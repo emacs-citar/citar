@@ -737,7 +737,8 @@ With prefix, rebuild the cache before offering candidates."
           keys-entries
           citar-library-paths
           citar-file-extensions)))
-    (if citar-file-open-prompt
+    (if (and citar-file-open-prompt
+             (< (length files) 1))
         (let ((selected-files
                (citar-select-files files)))
           (dolist (file selected-files)
