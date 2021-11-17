@@ -738,13 +738,13 @@ With prefix, rebuild the cache before offering candidates."
           citar-library-paths
           citar-file-extensions)))
     (if (and citar-file-open-prompt
-             (< (length files) 1))
+             (> (length files) 1))
         (let ((selected-files
                (citar-select-files files)))
           (dolist (file selected-files)
-            (citar-file-open file))))
+            (citar-file-open file)))
       (dolist (file files)
-        (citar-file-open file))))
+        (citar-file-open file)))))
 
 (make-obsolete 'citar-open-pdf
                'citar-open-library-files "1.0")
