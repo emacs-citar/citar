@@ -27,6 +27,9 @@
 (package-install 'embark)
 (package-install 'marginalia)
 
+;; Add binding for embark-act
+(global-set-key (kbd "C-.") 'embark-act)
+
 ;; citar
 ;; Modify load path so that requires in citar.el are handled
 (add-to-list 'load-path "../")
