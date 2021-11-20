@@ -13,6 +13,8 @@
 ;; Install packages
 
 (package-install 'load-relative)
+(package-install 'parsebib)
+(package-install 's)
 
 ;; completion system options
 (package-install 'selectrum)
