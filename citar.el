@@ -258,10 +258,10 @@ start and end of the citation."
 
 (defvar citar-map
   (let ((map (make-sparse-keymap)))
-    (define-key map (kbd "b") (cons "insert bibtex" #'citar-insert-bibtex))
     (define-key map (kbd "c") (cons "insert citation" #'citar-insert-citation))
-    (define-key map (kbd "k") (cons "insert key" #'citar-insert-keys))
+    (define-key map (kbd "k") (cons "insert keys" #'citar-insert-keys))
     (define-key map (kbd "fr") (cons "insert formatted reference" #'citar-insert-reference))
+    (define-key map (kbd "b") (cons "insert bibtex" #'citar-insert-bibtex))
     (define-key map (kbd "o") (cons "open source document" #'citar-open))
     (define-key map (kbd "e") (cons "open bibtex entry" #'citar-open-entry))
     (define-key map (kbd "l") (cons "open source URL or DOI" #'citar-open-link))
@@ -277,6 +277,7 @@ start and end of the citation."
 (defvar citar-citation-map
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "i") (cons "insert or edit" #'citar-insert-edit))
+    (define-key map (kbd "c") (cons "insert citation" #'citar-insert-citation))
     (define-key map (kbd "o") (cons "open source document" #'citar-open))
     (define-key map (kbd "e") (cons "open bibtex entry" #'citar-open-entry))
     (define-key map (kbd "l") (cons "open source URL or DOI" #'citar-open-link))
