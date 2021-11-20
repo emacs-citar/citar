@@ -1,7 +1,8 @@
 ;; -*- lexical-binding: t -*-
 ;; adapted from https://github.com/raxod502/selectrum/tree/master/test
 ;; Use a temporary emacs.d directory for testing
-(setq user-emacs-directory "/tmp/ba-test-emacs.d/")
+(setq citar--tmp-install-dir "/tmp/ba-test-emacs.d/")
+(setq user-emacs-directory citar--tmp-install-dir)
 
 ;; Setup package archive
 (package-initialize)
@@ -35,4 +36,4 @@
 ;; load full-screen, since this package exploits horizontal real estate
 (add-to-list 'initial-frame-alist '(fullscreen . maximized))
 
-(message "Installed packages to /tmp/citar-test-emacs.d/")
+(message "Installed packages to %s" citar--tmp-install-dir)
