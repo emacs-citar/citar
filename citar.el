@@ -1,4 +1,4 @@
-;;; citar.el --- Citation-related commands for org, latex, markdown. -*- lexical-binding: t; -*-
+;;; citar.el --- Citation-related commands for org, latex, markdown -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2021 Bruce D'Arcus
 
@@ -722,6 +722,25 @@ FORMAT-STRING."
                 (t (citar-file-open resource))))
       (message "No associated resources"))))
 
+(defun citar--library-files-action (keys-entries action)
+  "Run ACTION on files associated with KEYS-ENTRIES."
+  (let ((fn (pcase action
+              ('open 'citar-file-open)
+              ('attach 'mml-attach-file)))
+        (files
+         (citar-file--files-for-multiple-entries
+          keys-entries
+          citar-library-paths
+          citar-file-extensions)))
+    (if (and citar-file-open-prompt
+             (> (length files) 1))
+        (let ((selected-files
+               (citar-select-files files)))
+          (dolist (file selected-files)
+            (funcall fn file)))
+      (dolist (file files)
+        (funcall fn file)))))
+
 ;;;###autoload
 (defun citar-open-library-files (keys-entries)
  "Open library files associated with the KEYS-ENTRIES.
@@ -732,19 +751,7 @@ With prefix, rebuild the cache before offering candidates."
     (when (and citar-library-paths
                (stringp citar-library-paths))
       (message "Make sure 'citar-library-paths' is a list of paths"))
-  (let ((files
-         (citar-file--files-for-multiple-entries
-          keys-entries
-          citar-library-paths
-          citar-file-extensions)))
-    (if (and citar-file-open-prompt
-             (> (length files) 1))
-        (let ((selected-files
-               (citar-select-files files)))
-          (dolist (file selected-files)
-            (citar-file-open file)))
-      (dolist (file files)
-        (citar-file-open file)))))
+    (citar--library-files-action keys-entries 'open))
 
 (make-obsolete 'citar-open-pdf
                'citar-open-library-files "1.0")
@@ -856,17 +863,6 @@ With prefix, rebuild the cache before offering candidates."
    (citar--extract-keys keys-entries)))
 
 ;;;###autoload
-(defun citar-add-pdf-attachment (keys-entries)
-  "Attach PDF(s) associated with the KEYS-ENTRIES to email.
-With prefix, rebuild the cache before offering candidates."
-  (interactive (list (citar-select-refs
-                      :rebuild-cache current-prefix-arg)))
-  (unless (require 'bibtex-completion nil 'noerror)
-    (error "This is a deprecated command that relies on 'bibtex-completion'"))
-  (bibtex-completion-add-PDF-attachment
-   (citar--extract-keys keys-entries)))
-
-;;;###autoload
 (defun citar-add-pdf-to-library (keys-entries)
  "Add PDF associated with the KEYS-ENTRIES to library.
 The PDF can be added either from an open buffer, a file, or a
@@ -879,8 +875,20 @@ With prefix, rebuild the cache before offering candidates."
   (bibtex-completion-add-pdf-to-library
    (citar--extract-keys keys-entries)))
 
+;;;###autoload
+(defun citar-attach-library-files (keys-entries)
+  "Attach library files associated with KEYS-ENTRIES to outgoing MIME message.
+
+With prefix, rebuild the cache before offering candidates."
+  (interactive (list (citar-select-refs
+                      :rebuild-cache current-prefix-arg)))
+  (when (and citar-library-paths
+             (stringp citar-library-paths))
+    (message "Make sure 'citar-library-paths' is a list of paths"))
+  (citar--library-files-action keys-entries 'attach))
+
 (make-obsolete 'citar-add-pdf-to-library nil "0.9")
-(make-obsolete 'citar-add-pdf-attachment nil "0.9")
+(make-obsolete 'citar-add-pdf-attachment 'citar-attach-library-files "0.9")
 
 ;;;###autoload
 (defun citar-run-default-action (keys)
