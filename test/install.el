@@ -1,7 +1,8 @@
 ;; -*- lexical-binding: t -*-
 ;; adapted from https://github.com/raxod502/selectrum/tree/master/test
 ;; Use a temporary emacs.d directory for testing
-(setq user-emacs-directory "/tmp/ba-test-emacs.d/")
+(setq citar--tmp-install-dir "/tmp/ba-test-emacs.d/")
+(setq user-emacs-directory citar--tmp-install-dir)
 
 ;; Setup package archive
 (package-initialize)
@@ -12,6 +13,8 @@
 ;; Install packages
 
 (package-install 'load-relative)
+(package-install 'parsebib)
+(package-install 's)
 
 ;; completion system options
 (package-install 'selectrum)
@@ -24,7 +27,12 @@
 (package-install 'embark)
 (package-install 'marginalia)
 
+;; Add binding for embark-act
+(global-set-key (kbd "C-.") 'embark-act)
+
 ;; citar
+;; Modify load path so that requires in citar.el are handled
+(add-to-list 'load-path "../")
 ;; we load this locally, to facilitate development testing on branches
 (load-relative "../citar.el")
 (load-relative "../citar-org.el")
@@ -35,4 +43,4 @@
 ;; load full-screen, since this package exploits horizontal real estate
 (add-to-list 'initial-frame-alist '(fullscreen . maximized))
 
-(message "Installed packages to /tmp/citar-test-emacs.d/")
+(message "Installed packages to %s" citar--tmp-install-dir)
