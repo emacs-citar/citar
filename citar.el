@@ -57,8 +57,10 @@
 (defvar embark-meta-map)
 (defvar citar-org-open-note-function)
 (defvar citar-file-extensions)
+(defvar citar-file-note-extensions)
 (defvar citar-file-open-prompt)
 (defvar citar-file-variable)
+(defvar citar-file-find-additional-files)
 
 ;;; Variables
 
@@ -449,12 +451,12 @@ key associated with each one."
           (parsebib-parse bib-files :fields (citar--fields-to-parse)))
          (main-width (citar--format-width (citar-get-template 'main)))
          (suffix-width (citar--format-width (citar-get-template 'suffix)))
+         (citar-file-find-additional-files nil)
          (symbols-width (string-width (citar--symbols-string t t t)))
          (star-width (- (frame-width) (+ 2 symbols-width main-width suffix-width))))
     (maphash
      (lambda (citekey entry)
-       (let* ((citar-file-find-additional-files nil)
-              (files
+       (let* (              (files
                (when (citar-file--files-for-entry
                       citekey
                       entry
@@ -466,7 +468,7 @@ key associated with each one."
                       citekey
                       nil ; don't want to check file field
                       citar-notes-paths
-                      citar-note-extensions)
+                      citar-file-note-extensions)
                  " has:notes"))
               (link
                (when (citar-has-a-value '("doi" "url") entry)

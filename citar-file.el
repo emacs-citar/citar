@@ -69,7 +69,7 @@ will open, via `citar-file-open'."
   :group 'citar
   :type '(repeat string))
 
-(defcustom citar-note-extensions '("org" "md")
+(defcustom citar-file-note-extensions '("org" "md")
   "List of file extensions to recognize for notes.
 
 These are the extensions the 'citar-open-note-function'
