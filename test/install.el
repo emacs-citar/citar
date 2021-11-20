@@ -28,6 +28,8 @@
 (package-install 'marginalia)
 
 ;; citar
+;; Modify load path so that requires in citar.el are handled
+(add-to-list 'load-path "../")
 ;; we load this locally, to facilitate development testing on branches
 (load-relative "../citar.el")
 (load-relative "../citar-org.el")
