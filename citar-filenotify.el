@@ -76,7 +76,7 @@ The callback is called without it when
 If it is other than 'global or 'local invalidate both"
   (unless (eq 'local scope)
     (setq citar--candidates-cache 'uninitialized))
-  (unless (eq 'glocal scope)
+  (unless (eq 'global scope)
     (setq citar--local-candidates-cache 'uninitialized)))
 
 (defun citar-filenotify--make-default-callback (func scope &optional change)
