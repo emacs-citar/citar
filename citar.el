@@ -53,6 +53,7 @@
 
 (defvar embark-keymap-alist)
 (defvar embark-target-finders)
+(defvar embark-pre-action-hooks)
 (defvar embark-general-map)
 (defvar embark-meta-map)
 (defvar citar-org-open-note-function)
@@ -189,18 +190,26 @@ If you use 'org-roam' and 'org-roam-bibtex', you can use
 
 (defcustom citar-major-mode-functions
   '(((org-mode) .
-     ((local-bib-files . citar-org-local-bibs)
-      (keys-at-point . citar-org-keys-at-point)))
+     ((local-bib-files . citar-org-local-bib-files)
+      (insert-citation . citar-org-insert-citation)
+      (insert-edit . citar-org-insert-edit)
+      (key-at-point . citar-org-key-at-point)
+      (citation-at-point . citar-org-citation-at-point)))
     ((latex-mode) .
      ((local-bib-files . citar-latex-local-bib-files)
-      (insert-keys . citar-latex-insert-keys)
       (insert-citation . citar-latex-insert-citation)
-      (keys-at-point . citar-latex-keys-at-point)))
+      (insert-edit . citar-latex-insert-edit)
+      (key-at-point . citar-latex-key-at-point)
+      (citation-at-point . citar-latex-citation-at-point)))
     ((markdown-mode) .
      ((insert-keys . citar-markdown-insert-keys)
-      (keys-at-point . citar-markdown-key-at-point)
-      (insert-citation . citar-markdown-insert-citation))))
-  "The variable determining the major mode specifc functionality.
+      (insert-citation . citar-markdown-insert-citation)
+      (insert-edit . citar-markdown-insert-edit)
+      (key-at-point . citar-markdown-key-at-point)
+      (citation-at-point . citar-markdown-citation-at-point)))
+    (t .
+       ((insert-keys . citar--insert-keys-comma-separated))))
+  "The variable determining the major mode specific functionality.
 
 It is alist with keys being a list of major modes.
 
@@ -215,10 +224,23 @@ insert-keys: the corresponding function should insert the list of keys given
 to as the argument at point in the buffer.
 
 insert-citation: the corresponding function should insert a
-complete citation from a list of keys at point.
+complete citation from a list of keys at point.  If the point is
+in a citation, new keys should be added to the citation.
 
-keys-at-point: the corresponding function should return the list of keys at
-point."
+insert-edit: the corresponding function should accept an optional
+prefix argument and interactively edit the citation or key at
+point.
+
+key-at-point: the corresponding function should return the
+citation key at point or nil if there is none.  The return value
+should be (KEY . BOUNDS), where KEY is a string and BOUNDS is a
+pair of buffer positions indicating the start and end of the key.
+
+citation-at-point: the corresponding function should return the
+keys of the citation at point, or nil if there is none.  The
+return value should be (KEYS . BOUNDS), where KEYS is a list of
+strings and BOUNDS is pair of buffer positions indicating the
+start and end of the citation."
   :group 'citar
   :type 'alist)
 
@@ -236,10 +258,10 @@ point."
 
 (defvar citar-map
   (let ((map (make-sparse-keymap)))
-    (define-key map (kbd "b") (cons "insert bibtex" #'citar-insert-bibtex))
     (define-key map (kbd "c") (cons "insert citation" #'citar-insert-citation))
-    (define-key map (kbd "k") (cons "insert key" #'citar-insert-keys))
+    (define-key map (kbd "k") (cons "insert keys" #'citar-insert-keys))
     (define-key map (kbd "fr") (cons "insert formatted reference" #'citar-insert-reference))
+    (define-key map (kbd "b") (cons "insert bibtex" #'citar-insert-bibtex))
     (define-key map (kbd "o") (cons "open source document" #'citar-open))
     (define-key map (kbd "e") (cons "open bibtex entry" #'citar-open-entry))
     (define-key map (kbd "l") (cons "open source URL or DOI" #'citar-open-link))
@@ -252,8 +274,10 @@ point."
     map)
   "Keymap for Embark minibuffer actions.")
 
-(defvar citar-buffer-map
+(defvar citar-citation-map
   (let ((map (make-sparse-keymap)))
+    (define-key map (kbd "i") (cons "insert or edit" #'citar-insert-edit))
+    (define-key map (kbd "c") (cons "insert citation" #'citar-insert-citation))
     (define-key map (kbd "o") (cons "open source document" #'citar-open))
     (define-key map (kbd "e") (cons "open bibtex entry" #'citar-open-entry))
     (define-key map (kbd "l") (cons "open source URL or DOI" #'citar-open-link))
@@ -290,7 +314,7 @@ offering the selection candidates."
              (if (eq action 'metadata)
                  `(metadata
                    (affixation-function . ,#'citar--affixation)
-                   (category . bib-reference))
+                   (category . citar-reference))
                (complete-with-action action candidates string predicate)))
            nil nil nil
            'citar-history citar-presets nil)))
@@ -322,7 +346,7 @@ offering the selection candidates."
              (if (eq action 'metadata)
                  `(metadata
                    (affixation-function . ,#'citar--affixation)
-                   (category . bib-reference))
+                   (category . citar-reference))
                (complete-with-action action candidates string predicate)))
            nil nil nil
            'citar-history citar-presets nil)))
@@ -355,18 +379,22 @@ offering the selection candidates."
          ((string= extension (or "org" "md")) "Notes")
           (t "Library Files")))))
 
+(defun citar--get-major-mode-function (key &optional default)
+  "Return KEY from 'major-mode-functions'."
+  (alist-get
+   key
+   (cdr (seq-find
+         (lambda (modefns)
+           (let ((modes (car modefns)))
+             (or (eq t modes)
+                 (apply #'derived-mode-p (if (listp modes) modes (list modes))))))
+         citar-major-mode-functions))
+   default))
+
 (defun citar--major-mode-function (key default &rest args)
   "Function for the major mode corresponding to KEY applied to ARGS.
 If no function is found, the DEFAULT function is called."
-  (apply
-   (alist-get
-    key
-    (cdr
-     (seq-find
-      (lambda (x) (or (eq x t) (apply #'derived-mode-p (car x))))
-      citar-major-mode-functions))
-    default)
-   args))
+  (apply (citar--get-major-mode-function key default) args))
 
 (defun citar--local-files-to-cache ()
   "The local bibliographic files not included in the global bibliography."
@@ -673,11 +701,18 @@ FORMAT-STRING."
 ;;; At-point functions for Embark
 
 ;;;###autoload
-(defun citar-keys-at-point ()
-  "Return the keys of the entry at point."
-  (when-let (keys (and (not (minibufferp))
-                       (citar--major-mode-function 'keys-at-point #'ignore)))
-    (cons 'citation-key (citar--stringify-keys keys))))
+(defun citar-key-finder ()
+  "Return the citation key at point."
+  (when-let (key (and (not (minibufferp))
+                      (citar--major-mode-function 'key-at-point #'ignore)))
+    (cons 'citar-key key)))
+
+;;;###autoload
+(defun citar-citation-finder ()
+  "Return the keys of the citation at point."
+  (when-let (citation (and (not (minibufferp))
+                           (citar--major-mode-function 'citation-at-point #'ignore)))
+    `(citar-citation ,(citar--stringify-keys (car citation)) . ,(cdr citation))))
 
 (defun citar--stringify-keys (keys)
   "Return a list of KEYS as a crm-string for `embark'."
@@ -685,13 +720,15 @@ FORMAT-STRING."
 
 ;;;###autoload
 (with-eval-after-load 'embark
-  (add-to-list 'embark-target-finders 'citar-keys-at-point))
+  (add-to-list 'embark-target-finders 'citar-citation-finder)
+  (add-to-list 'embark-target-finders 'citar-key-finder))
+
 
 (with-eval-after-load 'embark
-  (set-keymap-parent citar-map embark-general-map)
-  (set-keymap-parent citar-buffer-map embark-general-map)
-  (add-to-list 'embark-keymap-alist '(bib-reference . citar-map))
-  (add-to-list 'embark-keymap-alist '(citation-key . citar-buffer-map)))
+  (add-to-list 'embark-keymap-alist '(citar-reference . citar-map))
+  (add-to-list 'embark-keymap-alist '(citar-key . citar-citation-map))
+  (add-to-list 'embark-keymap-alist '(citar-citation . citar-citation-map))
+  (add-to-list 'embark-pre-action-hooks '(citar-insert-edit embark--ignore-target)))
 
 ;;; Commands
 
@@ -830,12 +867,20 @@ With prefix, rebuild the cache before offering candidates."
 With prefix, rebuild the cache before offering candidates."
   (interactive (list (citar-select-refs
                       :rebuild-cache current-prefix-arg)))
-  ;; TODO
   (citar--major-mode-function
    'insert-citation
    (lambda (&rest _)
      (message "Citation insertion is not supported for %s" major-mode))
    (citar--extract-keys keys-entries)))
+
+(defun citar-insert-edit (&optional arg)
+  "Edit the citation at point."
+  (interactive "P")
+  (citar--major-mode-function
+   'insert-edit
+   (lambda (&rest _)
+     (message "Citation editing is not supported for %s" major-mode))
+   arg))
 
 ;;;###autoload
 (defun citar-insert-reference (keys-entries)
@@ -860,9 +905,12 @@ With prefix, rebuild the cache before offering candidates."
                       :rebuild-cache current-prefix-arg)))
   (citar--major-mode-function
    'insert-keys
-   (lambda (&rest _)
-     (message "Key insertion is not supported for %s" major-mode))
+   #'citar--insert-keys-comma-separated
    (citar--extract-keys keys-entries)))
+
+(defun citar--insert-keys-comma-separated (keys)
+  "Insert comma separated KEYS."
+  (insert (string-join keys ", ")))
 
 ;;;###autoload
 (defun citar-add-pdf-to-library (keys-entries)
@@ -909,9 +957,10 @@ With prefix, rebuild the cache before offering candidates."
 (defun citar-dwim ()
   "Run the default action on citation keys found at point."
   (interactive)
-  (if-let ((keys (cdr (citar-keys-at-point))))
+  (if-let ((keys (or (car (citar--major-mode-function 'citation-at-point #'ignore))
+                     (list (car (citar--major-mode-function 'key-at-point #'ignore))))))
       ;; FIX how?
-      (citar-run-default-action keys)))
+      (citar-run-default-action (citar--stringify-keys keys))))
 
 (provide 'citar)
 ;;; citar.el ends here

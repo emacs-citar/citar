@@ -28,6 +28,7 @@
 ;;; Code:
 
 (require 'citar)
+(require 'thingatpt)
 
 (defvar citar-major-mode-functions)
 
@@ -39,37 +40,89 @@
 
 ;;;###autoload
 (defun citar-markdown-insert-keys (keys)
-  "Insert comma sperated KEYS in a markdown buffer."
+  "Insert semicolon-separated and @-prefixed KEYS in a markdown buffer."
   (insert (mapconcat (lambda (k) (concat "@" k)) keys "; ")))
 
 ;;;###autoload
 (defun citar-markdown-insert-citation (keys)
-  "Insert a pandoc-style citation consisting of KEYS."
-  (let* ((prenote  (if citar-markdown-prompt-for-extra-arguments
-                       (read-from-minibuffer "Prenote: ")))
-         (postnote (if citar-markdown-prompt-for-extra-arguments
-                       (read-from-minibuffer "Postnote: ")))
-         (prenote  (if (string= "" prenote)  "" (concat prenote  " ")))
-         (postnote (if (string= "" postnote) "" (concat ", " postnote))))
-    (insert (format "[%s%s%s]"
-                    prenote
-                    (mapconcat (lambda (k) (concat "@" k)) keys "; ")
-                    postnote))))
+  "Insert a pandoc-style citation consisting of KEYS.
+  
+If the point is inside a citation, add new keys after the current
+key.  
 
-(defconst citar-markdown-regex-citation-key
-  "\\(-?@\\([[:alnum:]_][[:alnum:]_:.#$%&+?<>~/-]*\\)\\)"
-  ;; borrowed from pandoc-mode
+If point is immediately after the opening \[, add new keys
+to the beginning of the citation."
+  (let* ((citation (citar-markdown-citation-at-point))
+         (keys (if citation (seq-difference keys (car citation)) keys))
+         (keyconcat (mapconcat (lambda (k) (concat "@" k)) keys "; ")))
+    (when keys
+      (if (or (not citation)
+              (= (point) (cadr citation))
+              (= (point) (cddr citation)))
+          (let* ((prenote  (when citar-markdown-prompt-for-extra-arguments
+                             (read-from-minibuffer "Prenote: ")))
+                 (postnote (when citar-markdown-prompt-for-extra-arguments
+                             (read-from-minibuffer "Postnote: ")))
+                 (prenote  (if (string= "" prenote)  "" (concat prenote " ")))
+                 (postnote (if (string= "" postnote) "" (concat ", " postnote))))
+            (insert (format "[%s%s%s]" prenote keyconcat postnote)))
+        (if (= (point) (1+ (cadr citation)))
+            (save-excursion (insert keyconcat "; "))
+          (skip-chars-forward "^;]" (cddr citation))
+          (insert "; " keyconcat))))))
+
+;;;###autoload
+(defun citar-markdown-insert-edit (&optional arg)
+  "Prompt for keys and call `citar-markdown-insert-citation.
+With ARG non-nil, rebuild the cache before offering candidates."
+  (citar-markdown-insert-citation
+   (citar--extract-keys (citar-select-refs :rebuild-cache arg))))
+
+(defconst citar-markdown-citation-key-regexp
+  (concat "-?@"                         ; @ preceded by optional -
+          "\\(?:"
+          "{\\(?1:.*?\\)}"              ; brace-delimited key
+          "\\|"
+          "\\(?1:[[:alnum:]_][[:alnum:]]*\\(?:[:.#$%&+?<>~/-][[:alnum:]]+\\)*\\)"
+          "\\)")
   "Regular expression for a citation key.")
 
 ;;;###autoload
 (defun citar-markdown-key-at-point ()
-  "Return a citation key at point for pandoc markdown citations."
+  "Return citation key at point (with its bounds) for pandoc markdown citations.
+Returns (KEY . BOUNDS), where KEY is the citation key at point
+and BOUNDS is a pair of buffer positions.  Citation keys are
+found using `citar-markdown-citation-key-regexp`.  Returns nil if
+there is no key at point."
   (interactive)
-  (when (thing-at-point-looking-at citar-markdown-regex-citation-key)
-    (let ((stab (copy-syntax-table)))
-      (with-syntax-table stab
-        (modify-syntax-entry ?@ "_")
-        (cadr (split-string (thing-at-point 'symbol) "[]@;]"))))))
+  (when (thing-at-point-looking-at citar-markdown-citation-key-regexp)
+    (cons (match-string-no-properties 1)
+          (cons (match-beginning 0) (match-end 0)))))
+
+;;;###autoload
+(defun citar-markdown-citation-at-point ()
+  "Return keys of citation at point.
+Find balanced expressions starting and ending with square
+brackets and containing at least one citation key (matching
+`citar-markdown-citation-key-regexp`).  Return (KEYS . BOUNDS),
+where KEYS is a list of the found citation keys and BOUNDS is a
+pair of buffer positions indicating the start and end of the
+citation."
+  (save-excursion
+    (cond
+     ((eq ?\[ (char-after)) (forward-char))
+     ((eq ?\] (char-before)) (backward-char)))
+    (seq-some                           ; for each opening paren
+     (lambda (startpos)                 ; return keys in balanced [ ] expr
+       (when-let ((endpos (and (eq ?\[ (char-after startpos))
+                               (scan-lists startpos 1 0))))
+         (let (keys)
+           (goto-char startpos)
+           (while (re-search-forward citar-markdown-citation-key-regexp endpos t)
+             (push (match-string-no-properties 1) keys))
+           (when keys
+             (cons (nreverse keys) (cons startpos endpos))))))
+     (reverse (nth 9 (syntax-ppss))))))
 
 (provide 'citar-markdown)
 ;;; citar-markdown.el ends here

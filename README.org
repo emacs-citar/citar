@@ -122,8 +122,10 @@ Such adapters can provide the following capabilities, which one can configure wi
 
 1. ~insert-keys~: to insert citation keys (this may go away though)
 2. ~insert-citation~: to insert citations
-3. ~local-bib-files~: to find bibliographic files associated with a buffer
-4. ~keys-at-point~: returns a list of citekeys at point
+3. ~insert-edit~: to insert citations or edit at point
+4. ~local-bib-files~: to find bibliographic files associated with a buffer
+5. ~key-at-point~: returns the citation key at point
+6. ~citation-at-point~: returns the list of keys in the citation at point
 
 Citar currently includes the following such adapters:
 
