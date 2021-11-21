@@ -46,8 +46,11 @@
 ;;;###autoload
 (defun citar-markdown-insert-citation (keys)
   "Insert a pandoc-style citation consisting of KEYS.
+  
 If the point is inside a citation, add new keys after the current
-key.  If point is immediately after the opening \[, add new keys
+key.  
+
+If point is immediately after the opening \[, add new keys
 to the beginning of the citation."
   (let* ((citation (citar-markdown-citation-at-point))
          (keys (if citation (seq-difference keys (car citation)) keys))

@@ -67,9 +67,11 @@ the point."
 ;;;###autoload
 (defun citar-latex-key-at-point ()
   "Return citation key at point with its bounds.
+  
 The return value is (KEY . BOUNDS), where KEY is the citation key
-at point and BOUNDS is a pair of buffer positions.  Returns nil
-if there is no key at point."
+at point and BOUNDS is a pair of buffer positions.  
+
+Return nil if there is no key at point."
   (save-excursion
     (when-let* ((bounds (citar-latex--macro-bounds))
                 (keych "^,{}")
@@ -87,9 +89,11 @@ if there is no key at point."
 ;;;###autoload
 (defun citar-latex-citation-at-point ()
   "Find citation macro at point and extract keys.
-Finds brace-delimited strings inside the bounds of the macro,
+  
+Find brace-delimited strings inside the bounds of the macro,
 splits them at comma characters, and trims whitespace.
-Returns (KEYS . BOUNDS), where KEYS is a list of the found
+
+Return (KEYS . BOUNDS), where KEYS is a list of the found
 citation keys and BOUNDS is a pair of buffer positions indicating
 the start and end of the citation macro."
   (save-excursion
@@ -104,7 +108,8 @@ the start and end of the citation macro."
 
 (defun citar-latex--macro-bounds ()
   "Return the bounds of the citation macro at point.
-Returns a pair of buffer positions indicating the beginning and
+  
+Return a pair of buffer positions indicating the beginning and
 end of the enclosing citation macro, or nil if point is not
 inside a citation macro."
   (unless (fboundp 'TeX-find-macro-boundaries)
