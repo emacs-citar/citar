@@ -155,6 +155,29 @@ With PROC list, limit to specific processor(s)."
       (citar--extract-keys (citar-select-refs))
     (car (citar-select-ref))))
 
+;;;###autoload
+(defun citar-org-insert-citation (keys &optional style)
+  "Insert KEYS in org-cite format, with STYLE."
+  (let ((context (org-element-context)))
+    (if-let ((citation (citar-org--citation-at-point context)))
+        (when-let ((keys (seq-difference keys (org-cite-get-references citation t)))
+                   (keystring (mapconcat (lambda (key) (concat "@" key)) keys "; "))
+                   (begin (org-element-property :contents-begin citation)))
+          (if (<= (point) begin)
+              (org-with-point-at begin
+                (insert keystring ";"))
+            (let ((refatpt (citar-org--reference-at-point)))
+              (org-with-point-at (or (and refatpt (org-element-property :end refatpt))
+                                     (org-element-property :contents-end citation))
+                (if (char-equal ?\; (char-before))
+                    (insert-before-markers keystring ";")
+                  (insert-before-markers ";" keystring))))))
+      (if (org-cite--allowed-p context)
+          (insert
+           (format "[cite%s:%s]" (or style "")
+                   (mapconcat (lambda (key) (concat "@" key)) keys "; ")))
+        (user-error "Cannot insert a citation here")))))
+
 (defun citar-org-cite-insert (&rest _args)
   "Wrapper for 'org-cite-insert'."
   (org-cite-insert current-prefix-arg))

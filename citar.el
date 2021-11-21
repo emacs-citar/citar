@@ -190,7 +190,7 @@ If you use 'org-roam' and 'org-roam-bibtex', you can use
 (defcustom citar-major-mode-functions
   '(((org-mode) .
      ((local-bib-files . citar-org-local-bib-files)
-      (insert-citation . citar-org-cite-insert)
+      (insert-citation . citar-org-insert-citation)
       (key-at-point . citar-org-key-at-point)
       (citation-at-point . citar-org-citation-at-point)))
     ((latex-mode) .
@@ -220,7 +220,8 @@ insert-keys: the corresponding function should insert the list of keys given
 to as the argument at point in the buffer.
 
 insert-citation: the corresponding function should insert a
-complete citation from a list of keys at point.
+complete citation from a list of keys at point.  If the point is
+in a citation, new keys should be added to the citation.
 
 key-at-point: the corresponding function should return the
 citation key at point or nil if there is none.  The return value
@@ -854,15 +855,11 @@ With prefix, rebuild the cache before offering candidates."
 With prefix, rebuild the cache before offering candidates."
   (interactive (list (citar-select-refs
                       :rebuild-cache current-prefix-arg)))
-  (let* ((function (citar--get-major-mode-function 'insert-candidate))
-         (keys (citar--extract-keys keys-entries)))
-    (if (eq function 'citar-org-cite-insert)
-        (call-interactively 'org-cite-insert)
-      (citar--major-mode-function
-       'insert-citation
-       (lambda (&rest _)
-         (message "Citation insertion is not supported for %s" major-mode))
-       keys))))
+  (citar--major-mode-function
+   'insert-citation
+   (lambda (&rest _)
+     (message "Citation insertion is not supported for %s" major-mode))
+   (citar--extract-keys keys-entries)))
 
 ;;;###autoload
 (defun citar-insert-reference (keys-entries)
