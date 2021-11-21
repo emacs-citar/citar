@@ -46,9 +46,6 @@
 (require 's)
 (require 'crm)
 
-(declare-function bibtex-completion-add-PDF-attachment "ext:bibtex-completion")
-(declare-function bibtex-completion-add-pdf-to-library "ext:bibtex-completion")
-
 ;;; Declare variables for byte compiler
 
 (defvar embark-keymap-alist)
@@ -913,19 +910,6 @@ With prefix, rebuild the cache before offering candidates."
   (insert (string-join keys ", ")))
 
 ;;;###autoload
-(defun citar-add-pdf-to-library (keys-entries)
- "Add PDF associated with the KEYS-ENTRIES to library.
-The PDF can be added either from an open buffer, a file, or a
-URL.
-With prefix, rebuild the cache before offering candidates."
-  (interactive (list (citar-select-refs
-                      :rebuild-cache current-prefix-arg)))
-  (unless (require 'bibtex-completion nil 'noerror)
-    (error "This is a deprecated command that relies on 'bibtex-completion'"))
-  (bibtex-completion-add-pdf-to-library
-   (citar--extract-keys keys-entries)))
-
-;;;###autoload
 (defun citar-attach-library-files (keys-entries)
   "Attach library files associated with KEYS-ENTRIES to outgoing MIME message.
 
@@ -937,7 +921,6 @@ With prefix, rebuild the cache before offering candidates."
     (message "Make sure 'citar-library-paths' is a list of paths"))
   (citar--library-files-action keys-entries 'attach))
 
-(make-obsolete 'citar-add-pdf-to-library nil "0.9")
 (make-obsolete 'citar-add-pdf-attachment 'citar-attach-library-files "0.9")
 
 ;;;###autoload
