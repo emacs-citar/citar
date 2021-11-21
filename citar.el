@@ -760,7 +760,7 @@ FORMAT-STRING."
 
 (defun citar--library-files-action (keys-entries action)
   "Run ACTION on files associated with KEYS-ENTRIES."
-  (let ((fn (pcase action
+  (if-let ((fn (pcase action
               ('open 'citar-file-open)
               ('attach 'mml-attach-file)))
         (files
@@ -775,7 +775,8 @@ FORMAT-STRING."
           (dolist (file selected-files)
             (funcall fn file)))
       (dolist (file files)
-        (funcall fn file)))))
+        (funcall fn file)))
+    (message "No associated file")))
 
 ;;;###autoload
 (defun citar-open-library-files (keys-entries)
