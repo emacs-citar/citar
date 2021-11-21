@@ -35,7 +35,10 @@ Here's a screenshot with [[https://github.com/minad/vertico][vertico]] and =cons
    :CUSTOM_ID: installation
    :END:
 
-citar is available for installation from [[https://melpa.org][MELPA]].
+The easiest way to install and configure citar and related packages is to use the [[https://github.com/hlissner/doom-emacs/tree/develop/modules/tools/biblio][Doom Emacs biblio module]] with the ~vertico~ completion module.
+With that, you only need to configure the paths (see below, or the module README).
+
+citar is also available for installation from [[https://melpa.org][MELPA]].
 
 In addition, the following packages are strongly recommended for the best experience.
 
