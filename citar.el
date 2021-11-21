@@ -302,28 +302,29 @@ Includes the following optional argument:
 
 'REBUILD-CACHE' if t, forces rebuilding the cache before
 offering the selection candidates."
-  (let* ((crm-separator "\\s-*&\\s-*")
-         (candidates (citar--get-candidates rebuild-cache))
-         (chosen
-          (completing-read-multiple
-           "References: "
-           (lambda (string predicate action)
-             (if (eq action 'metadata)
-                 `(metadata
-                   (affixation-function . ,#'citar--affixation)
-                   (category . citar-reference))
-               (complete-with-action action candidates string predicate)))
-           nil nil nil
-           'citar-history citar-presets nil)))
-    (seq-map
-     (lambda (choice)
-       ;; Collect citation key-entry of selected candidate(s).
-       (or (cdr (assoc choice candidates))
-           ;; When calling embark at-point, use keys to look up and return the
-           ;; selected candidates.
-           ;; See https://github.com/bdarcus/citar/issues/233#issuecomment-901536901
-           (cdr (seq-find (lambda (cand) (equal choice (cadr cand))) candidates))))
-     chosen)))
+  (if-let* ((crm-separator "\\s-*&\\s-*")
+            (candidates (citar--get-candidates rebuild-cache))
+            (chosen
+             (completing-read-multiple
+              "References: "
+              (lambda (string predicate action)
+                (if (eq action 'metadata)
+                    `(metadata
+                      (affixation-function . ,#'citar--affixation)
+                      (category . citar-reference))
+                  (complete-with-action action candidates string predicate)))
+              nil nil nil
+              'citar-history citar-presets nil)))
+      (seq-map
+       (lambda (choice)
+         ;; Collect citation key-entry of selected candidate(s).
+         (or (cdr (assoc choice candidates))
+             ;; When calling embark at-point, use keys to look up and return the
+             ;; selected candidates.
+             ;; See https://github.com/bdarcus/citar/issues/233#issuecomment-901536901
+             (cdr (seq-find (lambda (cand) (equal choice (cadr cand))) candidates))))
+       chosen)
+    (message "Key not found")))
 
 (cl-defun citar-select-ref (&optional &key rebuild-cache)
   "Select a bibliographic reference.
@@ -335,25 +336,26 @@ Includes the following optional argument:
 
 'REBUILD-CACHE' if t, forces rebuilding the cache before
 offering the selection candidates."
-  (let* ((candidates (citar--get-candidates rebuild-cache))
-         (choice
-          (completing-read
-           "References: "
-           (lambda (string predicate action)
-             (if (eq action 'metadata)
-                 `(metadata
-                   (affixation-function . ,#'citar--affixation)
-                   (category . citar-reference))
-               (complete-with-action action candidates string predicate)))
-           nil nil nil
-           'citar-history citar-presets nil)))
-    ;; Return result.
-    (or (cdr (assoc choice candidates))
-        ;; When calling embark at-point, use key to look up and return the
-        ;; selected candidates.
-        ;; See https://github.com/bdarcus/citar/issues/233#issuecomment-901536901
-        ;; TODO
-        (cdr (seq-find (lambda (cand) (equal choice (cadr cand))) candidates)))))
+  (if-let* ((candidates (citar--get-candidates rebuild-cache))
+            (choice
+             (completing-read
+              "References: "
+              (lambda (string predicate action)
+                (if (eq action 'metadata)
+                    `(metadata
+                      (affixation-function . ,#'citar--affixation)
+                      (category . citar-reference))
+                  (complete-with-action action candidates string predicate)))
+              nil nil nil
+              'citar-history citar-presets nil)))
+      ;; Return result.
+      (or (cdr (assoc choice candidates))
+          ;; When calling embark at-point, use key to look up and return the
+          ;; selected candidates.
+          ;; See https://github.com/bdarcus/citar/issues/233#issuecomment-901536901
+          ;; TODO
+          (cdr (seq-find (lambda (cand) (equal choice (cadr cand))) candidates)))
+    (message "Key not found")))
 
 (defun citar-select-files (files)
   "Select file(s) from a list of FILES."
@@ -761,21 +763,21 @@ FORMAT-STRING."
 (defun citar--library-files-action (keys-entries action)
   "Run ACTION on files associated with KEYS-ENTRIES."
   (if-let ((fn (pcase action
-              ('open 'citar-file-open)
-              ('attach 'mml-attach-file)))
-        (files
-         (citar-file--files-for-multiple-entries
-          keys-entries
-          citar-library-paths
-          citar-file-extensions)))
-    (if (and citar-file-open-prompt
-             (> (length files) 1))
-        (let ((selected-files
-               (citar-select-files files)))
-          (dolist (file selected-files)
-            (funcall fn file)))
-      (dolist (file files)
-        (funcall fn file)))
+                 ('open 'citar-file-open)
+                 ('attach 'mml-attach-file)))
+           (files
+            (citar-file--files-for-multiple-entries
+             keys-entries
+             citar-library-paths
+             citar-file-extensions)))
+      (if (and citar-file-open-prompt
+               (> (length files) 1))
+          (let ((selected-files
+                 (citar-select-files files)))
+            (dolist (file selected-files)
+              (funcall fn file)))
+        (dolist (file files)
+          (funcall fn file)))
     (message "No associated file")))
 
 ;;;###autoload
