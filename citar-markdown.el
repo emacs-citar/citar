@@ -45,17 +45,28 @@
 
 ;;;###autoload
 (defun citar-markdown-insert-citation (keys)
-  "Insert a pandoc-style citation consisting of KEYS."
-  (let* ((prenote  (if citar-markdown-prompt-for-extra-arguments
-                       (read-from-minibuffer "Prenote: ")))
-         (postnote (if citar-markdown-prompt-for-extra-arguments
-                       (read-from-minibuffer "Postnote: ")))
-         (prenote  (if (string= "" prenote)  "" (concat prenote  " ")))
-         (postnote (if (string= "" postnote) "" (concat ", " postnote))))
-    (insert (format "[%s%s%s]"
-                    prenote
-                    (mapconcat (lambda (k) (concat "@" k)) keys "; ")
-                    postnote))))
+  "Insert a pandoc-style citation consisting of KEYS.
+If the point is inside a citation, add new keys after the current
+key.  If point is immediately after the opening \[, add new keys
+to the beginning of the citation."
+  (let* ((citation (citar-markdown-citation-at-point))
+         (keys (if citation (seq-difference keys (car citation)) keys))
+         (keyconcat (mapconcat (lambda (k) (concat "@" k)) keys "; ")))
+    (when keys
+      (if (or (not citation)
+              (= (point) (cadr citation))
+              (= (point) (cddr citation)))
+          (let* ((prenote  (when citar-markdown-prompt-for-extra-arguments
+                             (read-from-minibuffer "Prenote: ")))
+                 (postnote (when citar-markdown-prompt-for-extra-arguments
+                             (read-from-minibuffer "Postnote: ")))
+                 (prenote  (if (string= "" prenote)  "" (concat prenote " ")))
+                 (postnote (if (string= "" postnote) "" (concat ", " postnote))))
+            (insert (format "[%s%s%s]" prenote keyconcat postnote)))
+        (if (= (point) (1+ (cadr citation)))
+            (save-excursion (insert keyconcat "; "))
+          (skip-chars-forward "^;]" (cddr citation))
+          (insert "; " keyconcat))))))
 
 (defconst citar-markdown-citation-key-regexp
   (concat "-?@"                         ; @ preceded by optional -

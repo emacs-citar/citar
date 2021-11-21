@@ -200,9 +200,9 @@ If you use 'org-roam' and 'org-roam-bibtex', you can use
       (citation-at-point . citar-latex-citation-at-point)))
     ((markdown-mode) .
      ((insert-keys . citar-markdown-insert-keys)
+      (insert-citation . citar-markdown-insert-citation)
       (key-at-point . citar-markdown-key-at-point)
-      (citation-at-point . citar-markdown-citation-at-point)
-      (insert-citation . citar-markdown-insert-citation)))
+      (citation-at-point . citar-markdown-citation-at-point)))
     (t .
        ((insert-keys . citar--insert-keys-comma-separated))))
   "The variable determining the major mode specific functionality.
