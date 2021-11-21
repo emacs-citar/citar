@@ -39,11 +39,6 @@
   :group 'citar
   :type '(string))
 
-(defcustom citar-file-open-function 'find-file
-  "Function to open a file."
-  :group 'citar
-  :type '(function))
-
 (defcustom citar-file-open-prompt t
   "Prompt for selection of related files to open."
   :group 'citar
