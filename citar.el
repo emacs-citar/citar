@@ -741,7 +741,7 @@ FORMAT-STRING."
          (citar-file--files-for-multiple-entries
           keys-entries
           (append citar-library-paths citar-notes-paths)
-          citar-file-extensions))
+          (append citar-file-extensions citar-file-note-extensions)))
          (links
           (seq-map
            (lambda (key-entry)
