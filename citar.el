@@ -96,7 +96,7 @@
   '((main . "${author editor:30}     ${date year issued:4}     ${title:48}")
     (suffix . "          ${=key= id:15}    ${=type=:12}    ${tags keywords keywords:*}")
     (preview . "${author editor} (${year issued date}) ${title}, ${journal publisher container-title collection-title}.\n")
-    (note . "#+title: Notes on ${author editor}, ${title}"))
+    (note . "Notes on ${author editor}, ${title}"))
   "Configures formatting for the bibliographic entry.
 
 The main and suffix templates are for candidate display, and note
@@ -168,16 +168,26 @@ and nil means no action."
                 (const :tag "Ignore" nil)))
 
 (defcustom citar-open-note-function
-  'citar-org-open-notes-default
-  "Function to open and existing or create a new note.
+  'citar--open-note
+  "Function to open a new or existing note.
 
 A note function must take two arguments:
 
 KEY: a string to represent the citekey
-ENTRY: an alist with the structured data (title, author, etc.)
+ENTRY: an alist with the structured data (title, author, etc.)"
+  :group 'citar
+  :type 'function)
 
-If you use 'org-roam' and 'org-roam-bibtex', you can use
-'orb-bibtex-actions-edit-note' for this value."
+
+(defcustom citar-format-note-function
+  'citar-org-format-note-default
+  "Function to format a new note.
+
+A note function must take three arguments:
+
+KEY: a string to represent the citekey
+ENTRY: an alist with the structured data (title, author, etc.)
+FILEPATH: the file name."
   :group 'citar
   :type 'function)
 
@@ -807,12 +817,22 @@ With prefix, rebuild the cache before offering candidates."
   (interactive (list (citar-select-refs
                       :rebuild-cache current-prefix-arg)))
   (when (and (null citar-notes-paths)
-             (equal citar-open-note-function
+             (equal citar-format-note-function
                     'citar-org-open-notes-default))
     (message "You must set 'citar-notes-paths' to open notes with default notes function"))
   (dolist (key-entry keys-entries)
-    (funcall citar-open-note-function
-             (car key-entry) (cdr key-entry))))
+    (funcall citar-open-note-function (car key-entry) (cdr key-entry))))
+
+(defun citar--open-note (key entry)
+  "Open a note file from KEY and ENTRY."
+  (if-let* ((file
+             (caar (citar-file--get-note-filename
+                    key
+                    citar-notes-paths
+                    citar-file-note-extensions)))
+            (file-exists (file-exists-p file)))
+      (funcall citar-file-open-function file)
+    (funcall citar-format-note-function key entry file)))
 
 ;;;###autoload
 (defun citar-open-entry (key-entry)
