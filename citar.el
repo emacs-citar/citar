@@ -53,6 +53,7 @@
 (defvar embark-pre-action-hooks)
 (defvar embark-general-map)
 (defvar embark-meta-map)
+(defvar embark-transformer-alist)
 (defvar citar-org-open-note-function)
 (defvar citar-file-extensions)
 (defvar citar-file-note-extensions)
@@ -289,73 +290,64 @@ start and end of the citation."
 
 ;;; Completion functions
 
+(cl-defun citar-select-ref (&optional &key rebuild-cache multiple)
+  "Select bibliographic references.
+
+A wrapper around 'completing-read' that returns (KEY . ENTRY),
+where ENTRY is a field-value alist.  Therefore 'car' of the
+return value is the cite key, and 'cdr' is an alist of structured
+data.
+
+Includes the following optional arguments:
+
+REBUILD-CACHE if t, forces rebuilding the cache before offering
+the selection candidates.
+
+MULTIPLE if t, calls `completing-read-multiple` and returns an
+alist of (KEY . ENTRY) pairs."
+  (let* ((candidates (citar--get-candidates rebuild-cache))
+         (metadata `(metadata (category . citar-reference)
+                              (affixation-function . ,#'citar--affixation)))
+         (completions (lambda (string predicate action)
+                        (if (eq action 'metadata)
+                            metadata
+                          (complete-with-action action candidates string predicate))))
+         (embark-transformer-alist (citar--embark-transformer-alist candidates))
+         (crm-separator "\\s-*&\\s-*")
+         (chosen (if multiple
+                     (completing-read-multiple "References: " completions nil nil nil
+                                               'citar-history citar-presets nil)
+                   (completing-read "Reference: " completions nil nil nil
+                                    'citar-history citar-presets nil)))
+         (notfound nil)
+         (keyentries
+          (seq-mapcat
+           ;; Find citation key-entry of selected candidate.
+           ;; CHOICE is either the formatted candidate string, or the citation
+           ;; key when called through `embark-act`.  To handle both cases, test
+           ;; CHOICE against the first two elements of the entries of
+           ;; CANDIDATES.  See
+           ;; https://github.com/bdarcus/citar/issues/233#issuecomment-901536901
+           (lambda (choice)
+             (if-let ((cand (seq-find
+                             (lambda (cand) (member choice (seq-take cand 2)))
+                             candidates)))
+                 (list (cdr cand))
+               ;; If not found, add CHOICE to NOTFOUND and return nil
+               (push choice notfound)
+               nil))
+           (if (listp chosen) chosen (list chosen)))))
+    (when notfound
+      (message "Keys not found: %s" (mapconcat #'identity notfound "; ")))
+    (if multiple keyentries (car keyentries))))
+
 (cl-defun citar-select-refs (&optional &key rebuild-cache)
   "Select bibliographic references.
 
-A wrapper around 'completing-read-multiple' that returns an alist
-of (KEY . ENTRY), where the entry is a field-value alist.
-
-Therefore, for each returned candidate, 'car' is the citekey, and
-'cdr' is an alist of structured data.
-
-Includes the following optional argument:
-
-'REBUILD-CACHE' if t, forces rebuilding the cache before
+A wrapper around 'citar-select-ref' that returns an alist of (KEY . ENTRY)
+cons pairs.  If REBUILD-CACHE is non-nil, forces rebuilding the cache before
 offering the selection candidates."
-  (if-let* ((crm-separator "\\s-*&\\s-*")
-            (candidates (citar--get-candidates rebuild-cache))
-            (chosen
-             (completing-read-multiple
-              "References: "
-              (lambda (string predicate action)
-                (if (eq action 'metadata)
-                    `(metadata
-                      (affixation-function . ,#'citar--affixation)
-                      (category . citar-reference))
-                  (complete-with-action action candidates string predicate)))
-              nil nil nil
-              'citar-history citar-presets nil)))
-      (seq-map
-       (lambda (choice)
-         ;; Collect citation key-entry of selected candidate(s).
-         (or (cdr (assoc choice candidates))
-             ;; When calling embark at-point, use keys to look up and return the
-             ;; selected candidates.
-             ;; See https://github.com/bdarcus/citar/issues/233#issuecomment-901536901
-             (cdr (seq-find (lambda (cand) (equal choice (cadr cand))) candidates))))
-       chosen)
-    (message "Key not found")))
-
-(cl-defun citar-select-ref (&optional &key rebuild-cache)
-  "Select a bibliographic reference.
-
-A wrapper around 'completing-read' that returns a (KEY . ENTRY)
-cons.
-
-Includes the following optional argument:
-
-'REBUILD-CACHE' if t, forces rebuilding the cache before
-offering the selection candidates."
-  (if-let* ((candidates (citar--get-candidates rebuild-cache))
-            (choice
-             (completing-read
-              "References: "
-              (lambda (string predicate action)
-                (if (eq action 'metadata)
-                    `(metadata
-                      (affixation-function . ,#'citar--affixation)
-                      (category . citar-reference))
-                  (complete-with-action action candidates string predicate)))
-              nil nil nil
-              'citar-history citar-presets nil)))
-      ;; Return result.
-      (or (cdr (assoc choice candidates))
-          ;; When calling embark at-point, use key to look up and return the
-          ;; selected candidates.
-          ;; See https://github.com/bdarcus/citar/issues/233#issuecomment-901536901
-          ;; TODO
-          (cdr (seq-find (lambda (cand) (equal choice (cadr cand))) candidates)))
-    (message "Key not found")))
+  (citar-select-ref :rebuild-cache rebuild-cache :multiple t))
 
 (defun citar-select-files (files)
   "Select file(s) from a list of FILES."
@@ -716,6 +708,19 @@ FORMAT-STRING."
 (defun citar--stringify-keys (keys)
   "Return a list of KEYS as a crm-string for `embark'."
   (if (listp keys) (string-join keys " & ") keys))
+
+(defun citar--embark-transformer-alist (candidates)
+  "Return modified `embark-transformer-alist` with citar-reference transformer.
+Create an Embark target transformer that looks up formatted
+reference candidate strings in CANDIDATES and transforms them
+into the corresponding reference key.  Return
+`embark-transformer-alist` with this transformer added for
+'citar-reference targets."
+  (cons `(citar-reference
+          . ,(lambda (type target)
+               (cons type (or (cadr (assoc target candidates))
+                              target))))
+        (bound-and-true-p embark-transformer-alist)))
 
 ;;;###autoload
 (with-eval-after-load 'embark
