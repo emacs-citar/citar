@@ -62,12 +62,6 @@
           (const long)
           (const short)))
 
-(defcustom citar-file-note-org-include nil
-  "The org note type."
-  :group 'citar
-  :type '(repeat (const :tag "Org ID" 'org-id)
-                 (const :tag "Org-Roam :ROAM_REF:" 'org-roam-ref)))
-
 (defcustom citar-org-style-targets nil
   "Export processor targets to include in styles list.
 
@@ -243,38 +237,22 @@ strings by style."
   (seq-difference (org-cite-list-bibliography-files)
                   org-cite-global-bibliography))
 
-;;; Org note function
+;;; Org note functions
 
 ;;;###autoload
-(defun citar-org-open-notes-default (key entry)
-  "Open a note file from KEY and ENTRY."
-  (if-let* ((file
-             (caar (citar-file--get-note-filename
-                    key
-                    citar-notes-paths '("org"))))
-            (file-exists (file-exists-p file)))
-      (funcall citar-file-open-function file)
-    (let* ((uuid (org-id-new))
-           (template (citar-get-template 'note))
-           (note-meta
-            (when template
-              (citar--format-entry-no-widths
-               entry
-               template)))
-           (org-id (when (member 'org-id citar-file-note-org-include)
-                     (concat "\n:ID:   " uuid)))
-           (org-roam-key (when (member 'org-roam-ref citar-file-note-org-include)
-                           (concat "\n:ROAM_REFS: @" key)))
-           (prop-drawer (or org-id org-roam-key))
-           (content
-            (concat (when prop-drawer ":PROPERTIES:")
-                    org-roam-key org-id
-                    (when prop-drawer "\n:END:\n")
-                    note-meta "\n")))
-      (funcall citar-file-open-function file)
-      ;; This just overrides other template insertion.
-      (erase-buffer)
-      (when template (insert content)))))
+(defun citar-org-id-get-create (&optional force)
+  "Call `org-id-get-create` while maintaining point.
+If point is at the beginning of the buffer and a new properties
+drawer is created, move point after the drawer.  More generally,
+if `org-id-get-create` inserts text at point, move point after
+the insertion.  With optional argument FORCE, force the creation
+of a new ID."
+  (let ((point (point-marker)))
+    (set-marker-insertion-type point t)
+    (unwind-protect
+        (org-id-get-create force)
+      (goto-char point)
+      (set-marker point nil))))
 
 ;;; Embark target finder
 

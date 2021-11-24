@@ -45,6 +45,7 @@
 (require 'parsebib)
 (require 's)
 (require 'crm)
+(require 'skeleton)
 
 ;;; Declare variables for byte compiler
 
@@ -94,16 +95,36 @@
 (defcustom citar-templates
   '((main . "${author editor:30}     ${date year issued:4}     ${title:48}")
     (suffix . "          ${=key= id:15}    ${=type=:12}    ${tags keywords keywords:*}")
-    (preview . "${author editor} (${year issued date}) ${title}, ${journal publisher container-title collection-title}.\n")
-    (note . "#+title: Notes on ${author editor}, ${title}"))
+    (preview . "${author editor} (${year issued date}) ${title}, ${journal publisher container-title collection-title}.\n"))
   "Configures formatting for the bibliographic entry.
 
-The main and suffix templates are for candidate display, and note
-for the title field for new notes."
+The main and suffix templates are for candidate display, and preview
+for inserting formatted references."
     :group 'citar
     :type  '(alist :key-type symbol
                    :value-type string
                    :options (main suffix preview note)))
+
+(defcustom citar-note-skeleton
+  '(nil
+    \n                                  ; new line if not at beginning of line
+    '(and (derived-mode-p 'org-mode)
+          (fboundp 'org-roam-buffer-p)
+          (org-roam-buffer-p)
+          (ignore-errors (citar-org-id-get-create))
+          (ignore-errors (org-roam-ref-add (concat "@" &=key=))))
+    (when (derived-mode-p 'org-mode) "#+TITLE: ") | "# "
+    "Notes on "
+    (when &title (format "\"%s\"" (citar-clean-string &title))) | (concat "@" &=key=)
+    \n \n _                             ; place point here
+    (when (derived-mode-p 'org-mode) "\n\n#+print_bibliography:"))
+  "Skeleton for newly created notes.
+See `skeleton-insert` for valid values.  Fields of the
+bibliography entry are bound with names prefixed by '&'; for
+example the \"=key=\" field can be accessed using &=key=, the
+title using &title, etc.  The entry itself is bound to &=entry=."
+  :group 'citar
+  :type '(repeat sexp))
 
 (defcustom citar-insert-reference-function
   #'citar--insert-reference
@@ -166,8 +187,7 @@ and nil means no action."
   :type '(radio (const :tag "Prompt" prompt)
                 (const :tag "Ignore" nil)))
 
-(defcustom citar-open-note-function
-  'citar-org-open-notes-default
+(defcustom citar-open-note-function #'citar-open-note-default
   "Function to open and existing or create a new note.
 
 A note function must take two arguments:
@@ -178,7 +198,28 @@ ENTRY: an alist with the structured data (title, author, etc.)
 If you use 'org-roam' and 'org-roam-bibtex', you can use
 'orb-bibtex-actions-edit-note' for this value."
   :group 'citar
-  :type 'function)
+  :type '(choice (function-item citar-open-note-default)
+                 (function :tag "Open note function")))
+
+(defcustom citar-display-note-function #'pop-to-buffer
+  "Function to display a note buffer.
+The function should take one argument, the buffer to display."
+  :group 'citar
+  :type '(choice (function-item pop-to-buffer)
+                 (function-item pop-to-buffer-same-window)
+                 (function :tag "Buffer display function")))
+
+(defcustom citar-note-setup-functions '(citar-skeleton-insert)
+  "Functions called when new note is created.
+
+The functions in this list are called in the buffer visiting a
+newly created note.  Each function should take two arguments:
+
+KEY: a string to represent the citekey
+ENTRY: an alist with the structured data (title, author, etc.)"
+  :group 'citar
+  :type 'hook
+  :options '(citar-skeleton-insert))
 
 (defcustom citar-at-point-function #'citar-dwim
   "The function to run for 'citar-at-point'."
@@ -947,6 +988,35 @@ With prefix, rebuild the cache before offering candidates."
                      (list (car (citar--major-mode-function 'key-at-point #'ignore))))))
       ;; FIX how?
       (citar-run-default-action (citar--stringify-keys keys))))
+
+;;; Notes
+
+(defun citar-open-note-default (key entry)
+  "Open a note file from KEY and ENTRY."
+  (when-let* ((file (car (citar-file--get-note-filenames
+                          key
+                          citar-notes-paths citar-file-note-extensions)))
+              (buffer (find-file-noselect (car file))))
+    (when (bufferp buffer)
+      (funcall citar-display-note-function buffer)
+      (when (eq 'new (cdr file))
+        (with-current-buffer buffer
+            (run-hook-with-args 'citar-note-setup-functions key entry))))))
+
+(defun citar-skeleton-insert (key entry &optional skeleton regions str)
+  "Wrapper around `skeleton-insert` that binds KEY and the fields of ENTRY.
+When SKELETON is nil, use the value of `citar-note-skeleton`; see
+its documentation for details on which variables are bound when
+evaluating SKELETON.  See `skeleton-insert` for details on
+SKELETON, REGIONS, and STR."
+  (let* ((required '("title" "author" "editor"))      ; bound to nil if missing
+         (extra `((&=key= ',key) (&=entry= ',entry))) ; if not added by parser
+         (fields (seq-map
+                  (lambda (field)
+                    `(,(intern (concat "&" field)) ',(cdr (assoc field entry))))
+                  (seq-uniq (append required (seq-map #'car entry)))))
+         (skeleton-further-elements (append skeleton-further-elements fields extra)))
+    (skeleton-insert (or skeleton citar-note-skeleton) regions str)))
 
 (provide 'citar)
 ;;; citar.el ends here

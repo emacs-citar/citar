@@ -184,7 +184,7 @@ Example: ':/path/to/test.pdf:PDF'."
                   nil 0 nil
                   file)))
 
-(defun citar-file--get-note-filename (key dirs extensions)
+(defun citar-file--get-note-filenames (key dirs extensions)
   "Return existing or new filename for KEY in DIRS with extension in EXTENSIONS.
 
 This is for use in a note function where notes are one-per-file,
