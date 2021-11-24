@@ -107,16 +107,11 @@ for inserting formatted references."
 
 (defcustom citar-note-skeleton
   '(nil
-    \n                                  ; new line if not at beginning of line
-    '(and (derived-mode-p 'org-mode)
-          (fboundp 'org-roam-buffer-p)
-          (org-roam-buffer-p)
-          (ignore-errors (citar-org-id-get-create))
-          (ignore-errors (org-roam-ref-add (concat "@" &=key=))))
-    (when (derived-mode-p 'org-mode) "#+TITLE: ") | "# "
+    (when (derived-mode-p 'org-mode) (citar-org-note-setup))
+    (if (derived-mode-p 'org-mode) "#+TITLE: " "# ")
     "Notes on "
-    (when &title (format "\"%s\"" (citar-clean-string &title))) | (concat "@" &=key=)
-    \n \n _                             ; place point here
+    (if &title (format "\"%s\"" (citar-clean-string &title)) (concat "@" &=key=))
+    "\n\n" _
     (when (derived-mode-p 'org-mode) "\n\n#+print_bibliography:"))
   "Skeleton for newly created notes.
 See `skeleton-insert` for valid values.  Fields of the
@@ -124,7 +119,17 @@ bibliography entry are bound with names prefixed by '&'; for
 example the \"=key=\" field can be accessed using &=key=, the
 title using &title, etc.  The entry itself is bound to &=entry=."
   :group 'citar
-  :type '(repeat sexp))
+  :type '(list (choice :tag "Interactor"
+                       (const :tag "None" nil)
+                       (string :tag "Prompt")
+                       (sexp :tag "Expression"))
+               (repeat :inline t :tag "Elements"
+                       (choice :value "" :tag ""
+                               (const :tag "New line and indent" \n)
+                               (const :tag "Indent" >)
+                               (string :tag "Text")
+                               (const :tag "Cursor" _)
+                               (sexp :tag "Eval")))))
 
 (defcustom citar-insert-reference-function
   #'citar--insert-reference

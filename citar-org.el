@@ -77,6 +77,19 @@ Each function takes one argument, a citation."
   :group 'citar-org
   :type '(repeat function))
 
+(defcustom citar-org-note-setup-id 'org-roam-only
+  "Whether `citar-org-note-setup` adds an Org ID."
+  :group 'citar-org
+  :type '(choice (const :tag "Always" t)
+                 (const :tag "Only in Org-roam buffers" org-roam-only)
+                 (const :tag "Never" nil)))
+
+(defcustom citar-org-note-setup-roam-ref t
+  "Whether `citar-org-note-setup` adds an Org-roam reference."
+  :group 'citar-org
+  :type '(choice (const :tag "In Org-roam buffers" t)
+                 (const :tag "Never" nil)))
+
 ;;; Keymaps
 
 (defvar citar-org-citation-map
@@ -253,6 +266,21 @@ of a new ID."
         (org-id-get-create force)
       (goto-char point)
       (set-marker point nil))))
+
+;;;###autoload
+(defun citar-org-note-setup (key)
+  "Add Org Id and/or Org-roam reference to element at point.
+See the customization options `citar-org-note-setup-id` and
+`citar-org-note-setup-roam-ref`."
+  (when (derived-mode-p 'org-mode)
+    (let ((roam (and (fboundp 'org-roam-buffer-p) (org-roam-buffer-p))))
+      (when (and citar-org-note-setup-id
+                 (or roam (not (eq 'org-roam-only citar-org-note-setup-id))))
+        (ignore-errors (citar-org-id-get-create)))
+      (when (and roam citar-org-note-setup-roam-ref)
+        (ignore-errors (org-roam-ref-add (concat "@" key))))))
+  ;; Return nil so nothing is inserted if used in skeleton
+  nil)
 
 ;;; Embark target finder
 
