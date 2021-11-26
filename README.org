@@ -2,7 +2,7 @@
 
 * Citar
   :PROPERTIES:
-  :CUSTOM_ID: bibtex-actions
+  :CUSTOM_ID: citar
   :END:
 
 - [[#features][Features]]
@@ -260,30 +260,20 @@ This can be done when emacs has been idle (half a second in the example below) w
 (add-hook 'org-mode-hook #'gen-bib-cache-idle)
 #+END_SRC
 
-For additional configuration options on this, see [[https://github.com/bdarcus/bibtex-actions/wiki/Configuration#automating-path-watches][the wiki]].
+For additional configuration options on this, see [[https://github.com/bdarcus/citar/wiki/Configuration#automating-path-watches][the wiki]].
 
 ** Notes
 
-This package provides a ~citar-file-open-note-function~ variable, and a simple default function.
-To replace the default with one from org-roam-bibtex, you can do:
+Citar provides a ~citar-format-note-function~ variable, and a simple default function.
+You can configure the title display using the "note" template, and the function should work well for simple use cases, including with org-roam.
+
+You can use the ~citar-open-note-function~ variable to replace the default with one from org-roam-bibtex:
 
 #+BEGIN_SRC emacs-lisp
 (setq citar-open-note-function 'orb-citar-edit-note)
 #+END_SRC
 
 Note, however: if you use that function you need to ensure that the ~bibtex-completion-bibliography~ variable is correctly set to the same paths as ~citar-bibliography~.
-
-Beyond the note template, there is ~citar-file-note-org-include~, which defines content to include in the document property drawer, primarily for us with org-roam.
-Current options are:
-
-- ~org-id~ :: required for org-roam v2 to identify the note document
-- ~org-roam-ref~ :: adds the citation key to identify it as a bibliographic note
-
-To set both:
-
-#+begin_src emacs-lisp
-(setq citar-file-note-org-include '(org-id org-roam-ref))
-#+end_src
 
 ** Files, file association and file-field parsing
 

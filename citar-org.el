@@ -45,6 +45,10 @@
 (declare-function org-cite-make-insert-processor "oc")
 (declare-function org-cite-get-references "oc")
 (declare-function embark-act "ext:embark")
+(declare-function evil-insert "ext:evil")
+(declare-function org-roam-ref-add "ext:org-roam-node")
+(defvar citar-open-note-function)
+(defvar citar-file-open-function)
 (defvar embark-target-finders)
 (defvar embark-keymap-alist)
 (defvar embark-pre-action-hooks)
@@ -245,36 +249,51 @@ strings by style."
 
 ;;; Org note function
 
+(defun citar-org-id-get-create (&optional force)
+  "Call `org-id-get-create` while maintaining point.
+
+If point is at the beginning of the buffer and a new properties
+drawer is created, move point after the drawer.
+
+More generally, if `org-id-get-create` inserts text at point,
+move point after the insertion.
+
+With optional argument FORCE, force the creation of a new ID."
+  (let ((point (point-marker)))
+    (set-marker-insertion-type point t)
+    (unwind-protect
+        (org-id-get-create force)
+      (goto-char point)
+      (set-marker point nil))))
+
 ;;;###autoload
-(defun citar-org-open-notes-default (key entry)
-  "Open a note file from KEY and ENTRY."
-  (if-let* ((file
-             (caar (citar-file--get-note-filename
-                    key
-                    citar-notes-paths '("org"))))
-            (file-exists (file-exists-p file)))
-      (funcall citar-file-open-function file)
-    (let* ((uuid (org-id-new))
-           (template (citar-get-template 'note))
+(defun citar-org-roam-make-preamble (key)
+  "Add a preamble to org-roam note, with KEY."
+  (when (and (derived-mode-p 'org-mode)
+             (fboundp 'org-roam-buffer-p)
+             (org-roam-buffer-p))
+    (ignore-errors (citar-org-id-get-create))
+    (ignore-errors (org-roam-ref-add (concat "@" key)))))
+
+(defun citar-org-format-note-default (key entry filepath)
+  "Format a note FILEPATH from KEY and ENTRY."
+    (let* ((template (citar-get-template 'note))
            (note-meta
             (when template
               (citar--format-entry-no-widths
                entry
-               template)))
-           (org-id (when (member 'org-id citar-file-note-org-include)
-                     (concat "\n:ID:   " uuid)))
-           (org-roam-key (when (member 'org-roam-ref citar-file-note-org-include)
-                           (concat "\n:ROAM_REFS: @" key)))
-           (prop-drawer (or org-id org-roam-key))
-           (content
-            (concat (when prop-drawer ":PROPERTIES:")
-                    org-roam-key org-id
-                    (when prop-drawer "\n:END:\n")
-                    note-meta "\n")))
-      (funcall citar-file-open-function file)
+               template))))
+      (funcall citar-file-open-function filepath)
       ;; This just overrides other template insertion.
       (erase-buffer)
-      (when template (insert content)))))
+      (citar-org-roam-make-preamble key)
+      (insert "#+title: ")
+      (when template (insert note-meta))
+      (insert "\n\n|\n\n#+print_bibliography:")
+      (search-backward "|")
+      (delete-char 1)
+      (when (boundp 'evil-state)
+        (evil-insert 1))))
 
 ;;; Embark target finder
 
