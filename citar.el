@@ -92,6 +92,15 @@
   :group 'citar
   :type '(repeat path))
 
+(defcustom citar-additional-fields '("doi" "url")
+  "A list of fields to add to parsed data.
+
+By default, citar filters parsed data based on the fields
+specified in 'citar-templates'. This specifies additional fields
+to include."
+  :group 'citar
+  :type '(repeat string))
+
 (defcustom citar-templates
   '((main . "${author editor:30}     ${date year issued:4}     ${title:48}")
     (suffix . "          ${=key= id:15}    ${=type=:12}    ${tags keywords keywords:*}")
@@ -469,7 +478,8 @@ personal names of the form 'family, given'."
   (seq-concatenate
    'list
    (citar--fields-in-formats)
-   (list "doi" "url" citar-file-variable)))
+   (list citar-file-variable)
+   citar-additional-fields))
 
 (defun citar--format-candidates (bib-files &optional context)
   "Format candidates from BIB-FILES, with optional hidden CONTEXT metadata.
