@@ -25,10 +25,12 @@ When used with vertico (or selectrum), embark, and marginalia, it provides simil
 
 With embark, it also makes available at-point actions in org-mode citations.
 
-Here's a screenshot with [[https://github.com/minad/vertico][vertico]] and =consult-completing-read-multiple=.
+Here's a screenshot with [[https://github.com/minad/vertico][vertico]] and =consult-completing-read-multiple=, and face symbol customization noted below.
 
 #+CAPTION: vertico with citar
 [[file:images/vertico.png]]
+
+To see citar in action with org-cite, you can watch [[https://emacsconf.org/2021/talks/research/][this Emacs Conf 2021 presentation]] by [[Ahmed Khaled][https://github.com/rka97].
 
 ** Installation
    :PROPERTIES:
