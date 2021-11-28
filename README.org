@@ -358,17 +358,13 @@ For example, if you specify =text/f=, and the export processor you use doesn't s
 Simply do =M-x= and select the command that you want, enter the terms to find the item you are looking for, and hit return.
 This runs the default action: the command you invoked.
 
-Here's the view, using marginalia for annotations.
-
-#+CAPTION: commands available from M-x
-[[file:images/m-x.png]]
-
 A note on multiple candidate selection:
 
 These commands do allow you to select multiple items, with two caveats:
 
 1. For this to work correctly, you /must/ use the ampersand (=&=) as ~crm-separator~ to separate the candidates.
 2. We use long candidate strings, so if you use a completion system that requires you to =TAB=-complete, the experience is less-than-ideal.
+3. For these reasons, =consult-completing-read-multiple= is strongly recommended.
 
 *** Access an alternate action via =embark-act=
     :PROPERTIES:
