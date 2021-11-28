@@ -30,7 +30,7 @@ Here's a screenshot with [[https://github.com/minad/vertico][vertico]] and =cons
 #+CAPTION: vertico with citar
 [[file:images/vertico.png]]
 
-To see citar in action with org-cite, you can watch [[https://emacsconf.org/2021/talks/research/][this Emacs Conf 2021 presentation]] by [[Ahmed Khaled][https://github.com/rka97]].
+To see citar in action with org-cite, you can watch [[https://emacsconf.org/2021/talks/research/][this Emacs Conf 2021 presentation]] by [[https://github.com/rka97][Ahmed Khaled]].
 
 ** Installation
    :PROPERTIES:
