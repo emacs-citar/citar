@@ -471,6 +471,7 @@ personal names of the form 'family, given'."
   (seq-mapcat #'citar--fields-for-format
               (list (citar-get-template 'main)
                     (citar-get-template 'suffix)
+                    (citar-get-template 'preview)
                     (citar-get-template 'note))))
 
 (defun citar--fields-to-parse ()
