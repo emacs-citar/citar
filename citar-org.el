@@ -438,5 +438,12 @@ Argument CITATION is an org-element holding the references."
     :follow #'citar-org-follow
     :activate #'citar-org-activate))
 
+(citar-register-adapter 'org
+  :local-bib-files #'citar-org-local-bib-files
+  :insert-citation #'citar-org-insert-citation
+  :insert-edit #'citar-org-insert-edit
+  :key-at-point #'citar-org-key-at-point
+  :citation-at-point #'citar-org-citation-at-point)
+
 (provide 'citar-org)
 ;;; citar-org.el ends here

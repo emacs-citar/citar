@@ -205,6 +205,15 @@ FILEPATH: the file name."
   :group 'citar
   :type 'function)
 
+(cl-defstruct (citar-adapter (:constructor citar--make-adapter)
+				  (:copier nil))
+  (mode nil :read-only t)
+  (local-bib-files nil :read-only t)
+  (insert-citation nil :read-only t)
+  (insert-edit nil :read-only t)
+  (citation-at-point nil :read-only t)
+  (key-at-point nil :read-only t))
+
 (defcustom citar-major-mode-functions
   '(((org-mode) .
      ((local-bib-files . citar-org-local-bib-files)
@@ -234,30 +243,7 @@ The value is an alist with values being functions to be used for
 these modes while the keys are symbols used to lookup them up.
 The keys are:
 
-local-bib-files: the corresponding functions should return the list of
-local bibliography files.
-
-insert-keys: the corresponding function should insert the list of keys given
-to as the argument at point in the buffer.
-
-insert-citation: the corresponding function should insert a
-complete citation from a list of keys at point.  If the point is
-in a citation, new keys should be added to the citation.
-
-insert-edit: the corresponding function should accept an optional
-prefix argument and interactively edit the citation or key at
-point.
-
-key-at-point: the corresponding function should return the
-citation key at point or nil if there is none.  The return value
-should be (KEY . BOUNDS), where KEY is a string and BOUNDS is a
-pair of buffer positions indicating the start and end of the key.
-
-citation-at-point: the corresponding function should return the
-keys of the citation at point, or nil if there is none.  The
-return value should be (KEYS . BOUNDS), where KEYS is a list of
-strings and BOUNDS is pair of buffer positions indicating the
-start and end of the citation."
+"
   :group 'citar
   :type 'alist)
 
@@ -306,6 +292,53 @@ start and end of the citation."
     (define-key map (kbd "RET") (cons "default action" #'citar-run-default-action))
     map)
   "Keymap for Embark citation-key actions.")
+
+;;; Adapters
+
+
+(defvar citar--adapters nil
+  "List of registered major-mode adapters.
+See `citar-register-adapter' for more information about
+adapters.")
+
+(defun citar-register-adapter (mode &rest body)
+  "Mark adapter MODE as available.
+
+MODE is a major-mode symbol.  BODY is a property list, where the following
+optional keys can be set:
+
+  `:local-bib-files' the corresponding functions should return
+   the list of local bibliography files.
+
+  `:insert-keys' the corresponding function should insert the
+   list of keys given to as the argument at point in the buffer.
+
+  `:insert-citation' the corresponding function should insert a
+   complete citation from a list of keys at point. If the point
+   is in a citation, new keys should be added to the citation.
+
+  `:insert-edit' the corresponding function should accept an
+   optional prefix argument and interactively edit the citation
+   or key at point.
+
+  `:key-at-point' the corresponding function should return the
+   citation key at point or nil if there is none. The return
+   value should be (KEY . BOUNDS), where KEY is a string and
+   BOUNDS is a pair of buffer positions indicating the start and
+   end of the key.
+
+  `:citation-at-point' the corresponding function should return
+   the keys of the citation at point, or nil if there is none.
+   The return value should be (KEYS . BOUNDS), where KEYS is a
+   list of strings and BOUNDS is pair of buffer positions
+   indicating the start and end of the citation."
+  (declare (indent 1))
+  (unless (and mode (symbolp mode))
+    (error "Invalid adapter mode: %S" mode))
+  (setq citar--adapters
+        (cons (apply #'citar--make-adapter :mode mode body)
+              (seq-remove (lambda (p) (eq mode (citar-adapter-mode p)))
+                          citar--adapters))))
 
 ;;; Completion functions
 
