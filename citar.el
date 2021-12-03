@@ -750,6 +750,7 @@ into the corresponding reference key.  Return
 
 
 (with-eval-after-load 'embark
+  (set-keymap-parent citar-map embark-general-map)
   (add-to-list 'embark-keymap-alist '(citar-reference . citar-map))
   (add-to-list 'embark-keymap-alist '(citar-key . citar-citation-map))
   (add-to-list 'embark-keymap-alist '(citar-citation . citar-citation-map))
