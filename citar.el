@@ -277,7 +277,7 @@ start and end of the citation."
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "c") #'citar-insert-citation)
     (define-key map (kbd "k") #'citar-insert-keys)
-    (define-key map (kbd "fr") #'citar-insert-reference)
+    (define-key map (kbd "R") #'citar-insert-reference)
     (define-key map (kbd "b") #'citar-insert-bibtex)
     (define-key map (kbd "o") #'citar-open)
     (define-key map (kbd "e") #'citar-open-entry)
