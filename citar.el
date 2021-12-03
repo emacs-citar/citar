@@ -110,9 +110,10 @@ for the title field for new notes."
                    :value-type string
                    :options (main suffix preview note)))
 
-(defcustom citar-insert-reference-function
-  #'citar--insert-reference
-  "A function that takes a list of (KEY . ENTRY), and returns formatted references."
+(defcustom citar-format-reference-function
+  #'citar--format-reference
+  "A function that takes a list of (KEY . ENTRY), and returns
+formatted references as a string."
   :group 'citar
   :type 'function)
 
@@ -930,14 +931,31 @@ With prefix, rebuild the cache before offering candidates."
 With prefix, rebuild the cache before offering candidates."
   (interactive (list (citar-select-refs
                       :rebuild-cache current-prefix-arg)))
-  (apply citar-insert-reference-function (list keys-entries)))
+  (insert (apply citar-format-reference-function (list keys-entries))))
 
-(defun citar--insert-reference (keys-entries)
-  "Insert formatted reference(s) associated with the KEYS-ENTRIES."
-  (let ((template (citar-get-template 'preview)))
-    (dolist (key-entry keys-entries)
-      (when template
-        (insert (citar--format-entry-no-widths (cdr key-entry) template))))))
+;;;###autoload
+(defun citar-copy-reference (keys-entries)
+  "Copy formatted reference(s) associated with the KEYS-ENTRIES.
+With prefix, rebuild the cache before offering candidates."
+  (interactive (list (citar-select-refs
+                      :rebuild-cache current-prefix-arg)))
+  (let ((references (apply citar-format-reference-function (list keys-entries))))
+    (if (not (equal "" references))
+        (progn
+          (kill-new references)
+          (message (format "Copied:\n  %s" references)))
+      (message "Key not found."))))
+
+(defun citar--format-reference (keys-entries)
+  "Return formatted reference(s) associated with the KEYS-ENTRIES."
+  (let* ((template (citar-get-template 'preview))
+         (references
+          (with-temp-buffer
+            (dolist (key-entry keys-entries)
+              (when template
+                (insert (citar--format-entry-no-widths (cdr key-entry) template))))
+            (buffer-string))))
+    references))
 
 ;;;###autoload
 (defun citar-insert-keys (keys-entries)
