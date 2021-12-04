@@ -74,18 +74,22 @@ will open, via `citar-open-notes'."
 
 (defcustom citar-file-find-additional-files nil
   "Find additional library files starting with reference key.
+
 If t, all files whose base name starts with the reference key and
 whose extension is listed in `citar-file-extensions' are located
 by the functions `citar-open-library-files' and
-`citar-open-notes'.  If nil, only files with the naming scheme
-\"<key>.<extension>\" are located.  Otherwise, its value is a
-regular expression specifying how the key is separated from the
-rest of the filename."
+`citar-open-notes'.
+
+If nil, only files with the naming scheme \"<key>.<extension>\"
+are located.
+
+Otherwise, you may specify to separate the key from rest of
+filename with either a space or a hyphen."
   :group 'citar
   :type '(choice (const :tag "Ignore additional files" nil)
                  (const :tag "Find all files starting with key" t)
-                 (const :tag "Find files with space after key" "[[:space:]]")
-                 (regexp :tag "Filename separator")))
+                 (const :tag "Find files with space after key" " ")
+                 (const :tag "Find files with hyphen after key" "-")))
 
 (defvar citar-notes-paths)
 
@@ -124,13 +128,29 @@ Example: ':/path/to/test.pdf:PDF'."
          (mapcar (apply-partially #'expand-file-name fn) dirs)))
      parts)))
 
+(defun citar-file--find-additional-multi-dirs (key dirs extensions)
+  "Return a list of files and variants for KEY from list of DIRS for EXTENSIONS."
+  ;; Don't run the additional function for multiple directories unless we must.
+  (if (< (length dirs) 1)
+      (seq-mapcat
+       (lambda (dir) (citar-file--find-additional key dir extensions)) dirs)
+    (citar-file--find-additional key (car dirs) extensions)))
+
+(defun citar-file--find-additional (key dir extensions)
+  "Return a list of files and variants from DIR for KEY for EXTENSIONs."
+  (seq-filter
+    (lambda (fn)
+      (let ((fnm (concat
+                  fn
+                  (when (char-or-string-p citar-file-find-additional-files)
+                    citar-file-find-additional-files))))
+        (member (file-name-extension fnm) extensions)))
+    (file-name-all-completions key dir)))
+
 (defun citar-file--possible-names (key dirs extensions &optional entry find-additional)
   "Possible names for files correponding to KEY, ENTRY with EXTENSIONS in DIRS."
     (let* ((filematch (when find-additional
-                        (format "\\`%s\\(?:%s.*\\)?\\.\\(?:%s\\)\\'"
-                                (regexp-quote key)
-                                (if (eq t find-additional) "" find-additional)
-                                (mapconcat #'regexp-quote extensions "\\|"))))
+                        (citar-file--find-additional-multi-dirs key dirs extensions)))
            (results-key (seq-mapcat
                          (lambda (dir)
                            (if filematch
