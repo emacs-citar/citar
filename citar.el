@@ -896,17 +896,22 @@ With prefix, rebuild the cache before offering candidates."
           (browse-url-default-browser link)
         (message "No link found for %s" key-entry)))))
 
+
 ;;;###autoload
-(defun citar-insert-citation (keys-entries)
+(defun citar-insert-citation (keys-entries &optional arg)
   "Insert citation for the KEYS-ENTRIES.
-With prefix, rebuild the cache before offering candidates."
-  (interactive (list (citar-select-refs
-                      :rebuild-cache current-prefix-arg)))
+
+Prefix ARG is passed to the mode-specific insertion function. It
+should invert the default behaviour for that mode with respect to
+citation styles. See specific functions for more detail."
+  (interactive (list (citar-select-refs) ;; key-entries
+		     current-prefix-arg)) ;; arg
   (citar--major-mode-function
    'insert-citation
    (lambda (&rest _)
      (message "Citation insertion is not supported for %s" major-mode))
-   (citar--extract-keys keys-entries)))
+   (citar--extract-keys keys-entries)
+    arg))
 
 (defun citar-insert-edit (&optional arg)
   "Edit the citation at point."
