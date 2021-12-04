@@ -21,7 +21,7 @@
 ;;  CSL styles, using 'citeproc-el'.
 
 ;;  To use: load this file, set the required directory paths
-;;  'citar-citeproc-csl-locales-dir' and 'citar-citeproc-csl-styles-dir', set
+;;  'citar-citeproc-csl-locales-dir' and 'citar-citeproc-csl-style-dirs', set
 ;;  'citar-format-reference-function' to 'citar-citeproc-format-reference',
 ;;  and call one of the general reference functions, either
 ;;  'citar-insert-reference' or 'citar-copy-reference'.
@@ -29,7 +29,7 @@
 ;;  To set a CSL style, either set 'cite-citeproc-csl-style' manually to the
 ;;  path to the desired CSL style file or call
 ;;  'citar-citeproc-select-csl-style' to choose from a style file located in
-;;  'citar-citeproc-csl-style-dir'.
+;;  'citar-citeproc-csl-style-dirs'.
 
 ;;  If a CSL style is not set before running 'citar-citeproc-format-reference',
 ;;  the user will be prompted to set a style.
@@ -42,10 +42,10 @@
 (require 'citar)
 (require 'citeproc-el)
 
-(defcustom citar-citeproc-csl-styles-dir nil
-  "Path to CSL styles dir."
+(defcustom citar-citeproc-csl-style-dirs nil
+  "List of CSL style directories."
   :group 'citar
-  :type 'string)
+  :type '(repeat string))
 
 (defcustom citar-citeproc-csl-locales-dir nil
   "Path to CSL locales dir, required for 'citar-citeproc-format-reference'."
@@ -53,13 +53,17 @@
   :type 'string)
 
 (defvar citar-citeproc-csl-style nil
-  "Path to CSL style dir, for use with 'citar-citeproc-format-reference'.")
+  "Path to CSL style file to be used with 'citar-citeproc-format-reference'.")
 
 (defun citar-citeproc-select-csl-style ()
+  "Select CSL style to be used with 'citar-citeproc-format-reference'."
   (interactive)
-  (let* ((list (directory-files citar-citeproc-csl-styles-dir nil "csl"))
-         (style (completing-read "Select CSL style file: " list nil t)))
-    (setq citar-citeproc-csl-style (concat citar-citeproc-csl-styles-dir style))))
+  (let* ((files (delete-dups (apply #'append (mapcar
+                                              (lambda (dir)
+                                                (directory-files dir nil "csl"))
+                                              citar-citeproc-csl-style-dirs))))
+                (style (completing-read "Select CSL style file: " files nil t))))
+    (setq citar-citeproc-csl-style (concat citar-citeproc-csl-style-dirs style)))
 
 (defun citar-citeproc-format-reference (keys-entries)
   "Return formatted reference(s) for KEYS-ENTRIES via 'citeproc-el'.
