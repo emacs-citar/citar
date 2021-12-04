@@ -53,6 +53,23 @@ the point."
   :type '(alist :key-type (repeat string)
                 :value-type sexp))
 
+(defcustom citar-latex-prompt-for-cite-style t
+  "Whether to prompt for a citation command when inserting."
+  :group 'citar
+  :type '(radio (const :tag "Prompt for a command" t)
+                (const :tag "Do not prompt for a command" nil))
+  :safe 'always)
+
+(defcustom citar-latex-default-cite-command "cite"
+  "Default command for citations.
+
+Must be in `citar-latex-cite-commands'. Used when as a cite
+command when prompting for one is disabled, and as the default
+entry when it is enabled."
+  :group 'citar
+  :type 'string
+  :safe 'always)
+
 (defcustom citar-latex-prompt-for-extra-arguments t
   "Whether to prompt for additional arguments when inserting a citation."
   :group 'citar-latex
@@ -127,13 +144,16 @@ inside a citation macro."
   "Variable for history of cite commands.")
 
 ;;;###autoload
-(defun citar-latex-insert-citation (keys &optional command)
+(defun citar-latex-insert-citation (keys &optional invert-prompt command)
   "Insert a citation consisting of KEYS.
 
 If the command is inside a citation command keys are added to it. Otherwise
 a new command is started.
 
-If the optional COMMAND is provided use it, otherwise prompt for one.
+If the optional COMMAND is provided use it (ignoring INVERT-PROMPT).
+Otherwise prompt for a citation command, depending on the value of
+`citar-latex-prompt-for-cite-style'. If INVERT-PROMPT is non-nil, invert
+whether or not to prompt.
 
 The availiable commands and how to provide them arguments are configured
 by `citar-latex-cite-commands'.
@@ -147,11 +167,15 @@ inserted."
     (if (citar-latex-is-a-cite-command (TeX-current-macro))
         (progn (skip-chars-forward "^,}")
                (unless (equal ?} (preceding-char)) (insert ", ")))
-      (let ((macro (or command
-                       (completing-read "Cite command: "
-                                        (seq-mapcat #'car citar-latex-cite-commands)
-                                        nil nil nil
-                                        'citar-latex-cite-command-history nil nil))))
+      (let ((macro
+	     (or command
+		 (if (xor invert-prompt citar-latex-prompt-for-cite-style)
+                     (completing-read "Cite command: "
+                                      (seq-mapcat #'car citar-latex-cite-commands)
+                                      nil nil nil
+                                      'citar-latex-cite-command-history
+				      citar-latex-default-cite-command nil))
+	       citar-latex-default-cite-command)))
         (TeX-parse-macro macro
                          (when citar-latex-prompt-for-extra-arguments
                            (cdr (citar-latex-is-a-cite-command macro))))))
