@@ -111,16 +111,11 @@ for the title field for new notes."
                    :options (main suffix preview note)))
 
 (defcustom citar-format-reference-function
-  #'citar--format-reference
+  #'citar-format-reference
   "A function that takes a list of (KEY . ENTRY), and returns
 formatted references as a string."
   :group 'citar
   :type 'function)
-
-(defcustom citar-citeproc-csl-style nil
-  "Path to CSL file, required for 'citar-citeproc-format-reference'."
-  :group 'citar
-  :type 'string)
 
 (defcustom citar-display-transform-functions
   ;; TODO change this name, as it might be confusing?
@@ -932,26 +927,22 @@ With prefix, rebuild the cache before offering candidates."
 
 ;;;###autoload
 (defun citar-insert-reference (keys-entries)
-  "Insert formatted reference(s) associated with the KEYS-ENTRIES.
-With prefix, rebuild the cache before offering candidates."
-  (interactive (list (citar-select-refs
-                      :rebuild-cache current-prefix-arg)))
+  "Insert formatted reference(s) associated with the KEYS-ENTRIES."
+  (interactive (list (citar-select-refs)))
   (insert (apply citar-format-reference-function (list keys-entries))))
 
 ;;;###autoload
 (defun citar-copy-reference (keys-entries)
-  "Copy formatted reference(s) associated with the KEYS-ENTRIES.
-With prefix, rebuild the cache before offering candidates."
-  (interactive (list (citar-select-refs
-                      :rebuild-cache current-prefix-arg)))
+  "Copy formatted reference(s) associated with the KEYS-ENTRIES."
+  (interactive (list (citar-select-refs)))
   (let ((references (apply citar-format-reference-function (list keys-entries))))
     (if (not (equal "" references))
         (progn
           (kill-new references)
-          (message (format "Copied:\n  %s" references)))
+          (message (format "Copied:\n%s" references)))
       (message "Key not found."))))
 
-(defun citar--format-reference (keys-entries)
+(defun citar-format-reference (keys-entries)
   "Return formatted reference(s) associated with the KEYS-ENTRIES."
   (let* ((template (citar-get-template 'preview))
          (references
@@ -960,23 +951,6 @@ With prefix, rebuild the cache before offering candidates."
               (when template
                 (insert (citar--format-entry-no-widths (cdr key-entry) template))))
             (buffer-string))))
-    references))
-
-(defun citar-citeproc-format-reference (keys-entries)
-  "Return formatted reference(s) for KEYS-ENTRIES via 'citeproc-el'.
-  Formatting follows CSL style set in 'citar-citeproc-csl-style'.
-  With optional ARG, reference copied to kill-ring."
-  ;; requires citeproc-el; where to ensure requirement?
-  (let* ((itemids (mapcar (lambda (x) (car x)) keys-entries))
-         (proc (citeproc-create citar-citeproc-csl-style
-			        (citeproc-hash-itemgetter-from-any citar-bibliography)
-                                ;; not sure about this method of setting locale-getter
-			        (citeproc-locale-getter-from-dir org-cite-csl-locales-dir)
-			        "en-US"))
-         (references (car (progn
-                               (citeproc-add-uncited itemids proc)
-                               (citeproc-render-bib proc 'plain)
-                               ))))
     references))
 
 ;;;###autoload
