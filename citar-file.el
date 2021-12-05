@@ -74,13 +74,18 @@ will open, via `citar-open-notes'."
 
 (defcustom citar-file-find-additional-files nil
   "Find additional library files starting with reference key.
+
 If t, all files whose base name starts with the reference key and
 whose extension is listed in `citar-file-extensions' are located
 by the functions `citar-open-library-files' and
 `citar-open-notes'.  If nil, only files with the naming scheme
 \"<key>.<extension>\" are located.  Otherwise, its value is a
 regular expression specifying how the key is separated from the
-rest of the filename."
+rest of the filename.
+
+Note: setting this variable to t or a separator that is present
+in citation keys can lead to incorrect \"has:note\" indicators in
+the displayed citation key candidates."
   :group 'citar
   :type '(choice (const :tag "Ignore additional files" nil)
                  (const :tag "Find all files starting with key" t)
@@ -124,46 +129,118 @@ Example: ':/path/to/test.pdf:PDF'."
          (mapcar (apply-partially #'expand-file-name fn) dirs)))
      parts)))
 
-(defun citar-file--possible-names (key dirs extensions &optional entry find-additional)
-  "Possible names for files correponding to KEY, ENTRY with EXTENSIONS in DIRS."
-    (let* ((filematch (when find-additional
-                        (format "\\`%s\\(?:%s.*\\)?\\.\\(?:%s\\)\\'"
-                                (regexp-quote key)
-                                (if (eq t find-additional) "" find-additional)
-                                (mapconcat #'regexp-quote extensions "\\|"))))
-           (results-key (seq-mapcat
-                         (lambda (dir)
-                           (if filematch
-                               (directory-files dir t filematch)
-                             (seq-map (lambda (ext)
-                                        (expand-file-name (concat key "." ext) dir))
-                                      extensions)))
-                         dirs))
-           (file-field (citar-get-value
-                        citar-file-variable entry))
-           (results-file
-            (when file-field
-              (seq-mapcat
-               (lambda (func)
-                 (funcall
-                  func
-                  ;; Make sure this arg is non-nil.
-                  (or dirs "/")
-                  file-field))
-               citar-file-parser-functions))))
-      (delete-dups (append results-key results-file))))
+(defun citar-file--parse-file-field (entry fieldname &optional dirs)
+  "Return files listed in FIELDNAME of ENTRY.
+File names are expanded relative to the elements of DIRS."
+  (unless dirs (setq dirs (list "/")))  ; make sure DIRS is non-nil
+  (when-let ((filefield (citar-get-value fieldname entry)))
+    (seq-mapcat (lambda (parser)
+                  (funcall parser dirs filefield))
+                citar-file-parser-functions)))
+
+(defun citar-file--filename-regexp (keys extensions &optional find-additional)
+  "Regexp matching file names starting with KEYS and ending with EXTENSIONS.
+See the documentation of `citar-file--directory-files` for the
+meaning of FIND-ADDITIONAL."
+  (when (and (null keys) (eq t find-additional))
+    (setq find-additional nil))
+  (concat
+   "\\`\\(?1:"
+   (if keys (mapconcat #'regexp-quote keys "\\|") "[^z-a]*?")
+   "\\)"
+   (when find-additional
+     (concat "\\(?:"
+             (if (eq t find-additional) "" find-additional)
+             "[^z-a]*\\)?"))
+   "\\.\\(?:"
+   (if extensions (mapconcat #'regexp-quote extensions "\\|") "[^.]*")
+   "\\)\\'"))
+
+(defun citar-file--directory-files (dirs &optional keys extensions find-additional)
+  "Return files in DIRS starting with KEYS and ending with EXTENSIONS.
+
+Return a hash table mapping keys to lists of file names present
+in DIRS.  Each file name is divided into three parts: the key,
+optional additional text, and the extension:
+
+- When KEYS is non-nil, each file name must start with an element
+of KEYS.  Otherwise file names can start with any key.
+
+- When EXTENSIONS is non-nil, the file extension must match one
+of its elements.  Otherwise the files can have any extension.
+
+- When FIND-ADDITIONAL is non-nil, the file name can have
+additional text following the key.  When FIND-ADDITIONAL is t,
+any text is allowed after the key.  Otherwise, FIND-ADDITIONAL is
+a regexp separating the key from the additional text.
+
+When KEYS is nil, each file name is stored in the hash table
+under two keys: the base name of the file and, when
+FIND-ADDITIONAL is neither nil nor t, the portion of the file
+name preceding the first match of FIND-ADDITIONAL.
+
+Note: when KEYS and EXTENSIONS are non-nil and FIND-ADDITIONAL is
+nil, this function has an optimized implementation; it checks for
+existing files named \"KEY.EXT\" in DIRS, with KEY and EXT being
+the elements of KEYS and EXTENSIONS, respectively.  It does not
+need to scan the contents of DIRS in this case."
+  (let ((files (make-hash-table :test #'equal))
+        (filematch (unless (and keys extensions (not find-additional))
+                     (citar-file--filename-regexp keys extensions find-additional))))
+    (prog1 files
+      (dolist (dir dirs)
+        (when (file-directory-p dir)
+          (if filematch
+              (dolist (file (directory-files dir nil filematch 'nosort))
+                (let ((key (and (string-match filematch file) (match-string 1 file)))
+                      (filename (expand-file-name file dir))
+                      (basename (file-name-base file)))
+                  (push filename (gethash key files))
+                  (unless (or keys (string= key basename))
+                    (push filename (gethash basename files)))))
+            (dolist (key keys)
+              (dolist (ext extensions)
+                (let ((filename (expand-file-name (concat key "." ext) dir)))
+                  (when (file-exists-p filename)
+                    (push filename (gethash key files)))))))))
+      (maphash (lambda (key filelist)
+                 (puthash key (nreverse filelist) files))
+               files))))
+
+(defun citar-file--has-file-p (dirs extensions &optional find-additional entry-field)
+  "Return predicate testing whether a key and entry have associated files.
+
+Files are found in two ways:
+
+- In DIRS using `citar-file--directory-files`; see its
+documentation for the meaning of EXTENSIONS and FIND-ADDITIONAL.
+
+- In the entry field ENTRY-FIELD, when it is non-nil."
+  (let ((files (citar-file--directory-files dirs nil extensions find-additional)))
+    (lambda (key entry)
+      (or (car (gethash key files))
+          (and entry-field
+               (seq-some #'file-exists-p
+                         (citar-file--parse-file-field entry entry-field dirs)))))))
 
 (defun citar-file--files-for-entry (key entry dirs extensions)
-    "Find files related to KEY, ENTRY in DIRS with extension in EXTENSIONS."
-    (seq-filter #'file-exists-p
-                (citar-file--possible-names key dirs extensions entry citar-file-find-additional-files)))
+  "Find files related to KEY, ENTRY in DIRS with extension in EXTENSIONS."
+  (citar-file--files-for-multiple-entries (list (cons key entry)) dirs extensions))
 
 (defun citar-file--files-for-multiple-entries (keys-entries dirs extensions)
   "Find files related to a list of KEYS-ENTRIES in DIRS with extension in EXTENSIONS."
-  (seq-mapcat
-   (lambda (key-entry)
-     (citar-file--files-for-entry
-      (car key-entry) (cdr key-entry) dirs extensions)) keys-entries))
+  (let* ((keys (seq-map #'car keys-entries))
+         (files (citar-file--directory-files dirs keys extensions
+                                             citar-file-find-additional-files)))
+    (delete-dups
+     (seq-mapcat
+      (lambda (key-entry)
+        (append
+         (gethash (car key-entry) files)
+         (seq-filter
+          #'file-exists-p
+          (citar-file--parse-file-field (cdr key-entry) citar-file-variable dirs))))
+      keys-entries))))
 
 ;;;; Opening and creating files functions
 
@@ -192,17 +269,10 @@ with citekey as filename.
 
 Returns the filename whether or not the file exists, to support a
 function that will open a new file if the note is not present."
-  (let* ((possible-files
-          (citar-file--possible-names key dirs extensions))
-         (existing-files
-          (seq-filter #'file-exists-p possible-files)))
-    (if existing-files
-        (seq-map
-         (lambda (file) (cons file 'exists))
-         existing-files)
-      (seq-map
-       (lambda (file) (cons file 'new))
-       possible-files))))
+  (let ((files (citar-file--directory-files dirs (list key) extensions
+                                            citar-file-find-additional-files)))
+    (or (car (gethash key files))
+        (expand-file-name (concat key "." (car extensions)) (car dirs)))))
 
 (provide 'citar-file)
 ;;; citar-file.el ends here
