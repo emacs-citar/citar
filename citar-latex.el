@@ -171,12 +171,8 @@ inserted."
       (let ((macro
 	     (or command
 		 (if (xor invert-prompt citar-latex-prompt-for-cite-style)
-                     (completing-read "Cite command: "
-                                      (seq-mapcat #'car citar-latex-cite-commands)
-                                      nil nil nil
-                                      'citar-latex-cite-command-history
-				      citar-latex-default-cite-command nil))
-	       citar-latex-default-cite-command)))
+                     (citar-latex-select-command)
+		   citar-latex-default-cite-command))))
         (TeX-parse-macro macro
                          (when citar-latex-prompt-for-extra-arguments
                            (cdr (citar-latex-is-a-cite-command macro))))))
@@ -189,6 +185,14 @@ inserted."
 With ARG non-nil, rebuild the cache before offering candidates."
   (citar-latex-insert-citation
    (citar--extract-keys (citar-select-refs :rebuild-cache arg))))
+
+(defun citar-latex-select-command ()
+  "Complete a citation command for LaTeX."
+  (completing-read "Cite command: "
+                   (seq-mapcat #'car citar-latex-cite-commands)
+                   nil nil nil
+                   'citar-latex-cite-command-history
+		   citar-latex-default-cite-command nil))
 
 (defun citar-latex-is-a-cite-command (command)
   "Return element of `citar-latex-cite-commands` containing COMMAND."
