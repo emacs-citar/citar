@@ -275,6 +275,7 @@ With optional argument FORCE, force the creation of a new ID."
     (ignore-errors (citar-org-id-get-create))
     (ignore-errors (org-roam-ref-add (concat "@" key)))))
 
+;;;###autoload
 (defun citar-org-format-note-default (key entry filepath)
   "Format a note FILEPATH from KEY and ENTRY."
     (let* ((template (citar-get-template 'note))
