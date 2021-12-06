@@ -819,7 +819,7 @@ With prefix, rebuild the cache before offering candidates."
                       :rebuild-cache current-prefix-arg)))
   (when (and (null citar-notes-paths)
              (equal citar-format-note-function
-                    'citar-org-open-notes-default))
+                    'citar-org-format-notes-default))
     (message "You must set 'citar-notes-paths' to open notes with default notes function"))
   (dolist (key-entry keys-entries)
     (funcall citar-open-note-function (car key-entry) (cdr key-entry))))
@@ -830,7 +830,7 @@ With prefix, rebuild the cache before offering candidates."
                                                  citar-notes-paths
                                                  citar-file-note-extensions))
             (file-exists (file-exists-p file)))
-      (funcall citar-file-open-function file)
+      (find-file file)
     (funcall citar-format-note-function key entry file)))
 
 ;;;###autoload

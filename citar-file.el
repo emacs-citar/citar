@@ -138,7 +138,7 @@ File names are expanded relative to the elements of DIRS."
                   (funcall parser dirs filefield))
                 citar-file-parser-functions)))
 
-(defun citar-file--filename-regexp (keys extensions &optional find-additional)
+(defun citar-file--make-filename-regexp (keys extensions &optional find-additional)
   "Regexp matching file names starting with KEYS and ending with EXTENSIONS.
 See the documentation of `citar-file--directory-files` for the
 meaning of FIND-ADDITIONAL."
@@ -186,7 +186,7 @@ the elements of KEYS and EXTENSIONS, respectively.  It does not
 need to scan the contents of DIRS in this case."
   (let ((files (make-hash-table :test #'equal))
         (filematch (unless (and keys extensions (not find-additional))
-                     (citar-file--filename-regexp keys extensions find-additional))))
+                     (citar-file--make-filename-regexp keys extensions find-additional))))
     (prog1 files
       (dolist (dir dirs)
         (when (file-directory-p dir)
@@ -272,7 +272,9 @@ function that will open a new file if the note is not present."
   (let ((files (citar-file--directory-files dirs (list key) extensions
                                             citar-file-find-additional-files)))
     (or (car (gethash key files))
-        (expand-file-name (concat key "." (car extensions)) (car dirs)))))
+        (when-let ((dir (car dirs))
+                   (ext (car extensions)))
+          (expand-file-name (concat key "." ext) dir)))))
 
 (provide 'citar-file)
 ;;; citar-file.el ends here
