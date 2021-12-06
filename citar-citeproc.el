@@ -40,7 +40,7 @@
 ;;; Code:
 
 (require 'citar)
-(require 'citeproc-el)
+(require 'citeproc)
 
 (defcustom citar-citeproc-csl-style-dirs nil
   "List of CSL style directories."
@@ -55,20 +55,39 @@
 (defvar citar-citeproc-csl-style nil
   "Path to CSL style file to be used with 'citar-citeproc-format-reference'.")
 
+(defun citar-citeproc-csl-metadata (file)
+  "Return metadata value from csl FILE."
+  (let* ((parse-tree (xml-parse-file file))
+         (_style-node (assq 'style parse-tree))
+         (_info (car (xml-get-children _style-node 'info)))
+         (title (caddr (car (xml-get-children _info 'title)))))
+    title))
+
 (defun citar-citeproc-select-csl-style ()
   "Select CSL style to be used with 'citar-citeproc-format-reference'."
   (interactive)
+  (when (and citar-citeproc-csl-style-dirs
+             (stringp citar-citeproc-csl-style-dirs))
+    (error "Make sure 'citar-citeproc-csl-style-dirs' is a list of paths"))
   (let* ((files (delete-dups (apply #'append (mapcar
                                               (lambda (dir)
-                                                (directory-files dir nil "csl"))
+                                                (directory-files dir t "csl"))
                                               citar-citeproc-csl-style-dirs))))
-                (style (completing-read "Select CSL style file: " files nil t))))
-    (setq citar-citeproc-csl-style (concat citar-citeproc-csl-style-dirs style)))
+         (list (mapcar
+                (lambda (file)
+                  (cons (citar-citeproc-csl-metadata file) file))
+               files))
+         (style (completing-read "Select CSL style file: " list nil t))
+         (file (cdr (assoc style list))))
+    (setq citar-citeproc-csl-style file)))
 
 (defun citar-citeproc-format-reference (keys-entries)
   "Return formatted reference(s) for KEYS-ENTRIES via 'citeproc-el'.
   Formatting follows CSL style set in 'citar-citeproc-csl-style'.
   With prefix-argument, select CSL style."
+  (when (and citar-citeproc-csl-style-dirs
+             (stringp citar-citeproc-csl-style-dirs))
+    (error "Make sure 'citar-citeproc-csl-style-dirs' is a list of paths"))
   (when (or (eq citar-citeproc-csl-style nil)
             current-prefix-arg)
     (citar-citeproc-select-csl-style))
