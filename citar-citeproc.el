@@ -21,7 +21,7 @@
 ;;  CSL styles, using 'citeproc-el'.
 
 ;;  To use: load this file, set the required directory paths
-;;  'citar-citeproc-csl-locales-dir' and 'citar-citeproc-csl-style-dirs', set
+;;  'citar-citeproc-csl-locales-dir' and 'citar-citeproc-csl-styles-dir', set
 ;;  'citar-format-reference-function' to 'citar-citeproc-format-reference',
 ;;  and call one of the general reference functions, either
 ;;  'citar-insert-reference' or 'citar-copy-reference'.
@@ -29,7 +29,7 @@
 ;;  To set a CSL style, either set 'cite-citeproc-csl-style' manually to the
 ;;  path to the desired CSL style file or call
 ;;  'citar-citeproc-select-csl-style' to choose from a style file located in
-;;  'citar-citeproc-csl-style-dirs'.
+;;  'citar-citeproc-csl-styles-dir'.
 
 ;;  If a CSL style is not set before running 'citar-citeproc-format-reference',
 ;;  the user will be prompted to set a style.
@@ -38,14 +38,14 @@
 ;;  'citar-copy-reference' with a prefix-argument.
 
 ;;; Code:
-
+(require 'xml)
 (require 'citar)
 (require 'citeproc)
 
-(defcustom citar-citeproc-csl-style-dirs nil
+(defcustom citar-citeproc-csl-styles-dir nil
   "List of CSL style directories."
   :group 'citar
-  :type '(repeat string))
+  :type ' string)
 
 (defcustom citar-citeproc-csl-locales-dir nil
   "Path to CSL locales dir, required for 'citar-citeproc-format-reference'."
@@ -58,36 +58,29 @@
 (defun citar-citeproc-csl-metadata (file)
   "Return metadata value from csl FILE."
   (let* ((parse-tree (xml-parse-file file))
-         (_style-node (assq 'style parse-tree))
-         (_info (car (xml-get-children _style-node 'info)))
-         (title (caddr (car (xml-get-children _info 'title)))))
+         (style-node (assq 'style parse-tree))
+         (info (car (xml-get-children style-node 'info)))
+         (title (caddr (car (xml-get-children info 'title)))))
     title))
 
+;;;###autoload
 (defun citar-citeproc-select-csl-style ()
   "Select CSL style to be used with 'citar-citeproc-format-reference'."
   (interactive)
-  (when (and citar-citeproc-csl-style-dirs
-             (stringp citar-citeproc-csl-style-dirs))
-    (error "Make sure 'citar-citeproc-csl-style-dirs' is a list of paths"))
-  (let* ((files (delete-dups (apply #'append (mapcar
-                                              (lambda (dir)
-                                                (directory-files dir t "csl"))
-                                              citar-citeproc-csl-style-dirs))))
+  (let* ((files (directory-files citar-citeproc-csl-styles-dir t "csl"))
          (list (mapcar
                 (lambda (file)
                   (cons (citar-citeproc-csl-metadata file) file))
-               files))
+                files))
          (style (completing-read "Select CSL style file: " list nil t))
          (file (cdr (assoc style list))))
     (setq citar-citeproc-csl-style file)))
 
+;;;###autoload
 (defun citar-citeproc-format-reference (keys-entries)
   "Return formatted reference(s) for KEYS-ENTRIES via 'citeproc-el'.
-  Formatting follows CSL style set in 'citar-citeproc-csl-style'.
-  With prefix-argument, select CSL style."
-  (when (and citar-citeproc-csl-style-dirs
-             (stringp citar-citeproc-csl-style-dirs))
-    (error "Make sure 'citar-citeproc-csl-style-dirs' is a list of paths"))
+Formatting follows CSL style set in 'citar-citeproc-csl-style'.
+With prefix-argument, select CSL style."
   (when (or (eq citar-citeproc-csl-style nil)
             current-prefix-arg)
     (citar-citeproc-select-csl-style))

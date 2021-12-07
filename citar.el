@@ -112,10 +112,20 @@ for the title field for new notes."
 
 (defcustom citar-format-reference-function
   #'citar-format-reference
-  "A function that takes a list of (KEY . ENTRY), and returns
-formatted references as a string."
+  "Function used to render formatted references.
+
+This function is called by 'citar-insert-reference' and
+'citar-copy-reference'. The default value,
+'citar-format-reference', formats references using the 'preview'
+template set in 'citar-template'. To use 'citeproc-el' to format
+references according to CSL styles, set the value to
+'citar-citeproc-format-reference'. Alternatively, set to a custom
+function that takes a list of (KEY . ENTRY) and returns formatted
+references as a string."
   :group 'citar
-  :type 'function)
+  :type '(choice (const :tag "Use 'citar-template'" citar-format-reference)
+                 (const :tag "Use 'citeproc-el'" citar-citeproc-format-reference)
+                 (function :tag "Other")))
 
 (defcustom citar-display-transform-functions
   ;; TODO change this name, as it might be confusing?
