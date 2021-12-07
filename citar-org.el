@@ -283,19 +283,18 @@ With optional argument FORCE, force the creation of a new ID."
             (when template
               (citar--format-entry-no-widths
                entry
-               template)))
-           (buffer (find-file filepath)))
-      (with-current-buffer buffer
-        ;; This just overrides other template insertion.
-        (erase-buffer)
-        (citar-org-roam-make-preamble key)
-        (insert "#+title: ")
-        (when template (insert note-meta))
-        (insert "\n\n|\n\n#+print_bibliography:")
-        (search-backward "|")
-        (delete-char 1)
-        (when (boundp 'evil-state)
-          (evil-insert 1)))))
+               template))))
+      (funcall citar-file-open-function filepath)
+      ;; This just overrides other template insertion.
+      (erase-buffer)
+      (citar-org-roam-make-preamble key)
+      (insert "#+title: ")
+      (when template (insert note-meta))
+      (insert "\n\n|\n\n#+print_bibliography:")
+      (search-backward "|")
+      (delete-char 1)
+      (when (fboundp 'evil-insert)
+        (evil-insert 1))))
 
 ;;; Embark target finder
 
@@ -331,6 +330,14 @@ With optional argument FORCE, force the creation of a new ID."
       (when (and (>= (point) (car bounds))
                  (<= (point) (cdr bounds)))
         element))))
+
+(defun citar-org-list-keys ()
+  "List citation keys in the org buffer."
+  (let ((org-tree (org-element-parse-buffer)))
+    (delete-dups
+     (org-element-map org-tree 'citation-reference
+       (lambda (r) (org-element-property :key r))
+       org-tree))))
 
 ;; most of this section is adapted from org-ref-cite
 
