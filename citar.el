@@ -55,11 +55,6 @@
 (defvar embark-meta-map)
 (defvar embark-transformer-alist)
 (defvar citar-org-open-note-function)
-(defvar citar-file-extensions)
-(defvar citar-file-note-extensions)
-(defvar citar-file-open-prompt)
-(defvar citar-file-variable)
-(defvar citar-file-find-additional-files)
 
 ;;; Variables
 
@@ -488,33 +483,25 @@ personal names of the form 'family, given'."
   "Format candidates from BIB-FILES, with optional hidden CONTEXT metadata.
 This both propertizes the candidates for display, and grabs the
 key associated with each one."
-  (let* ((candidates ())
+  (let* ((candidates nil)
          (raw-candidates
           (parsebib-parse bib-files :fields (citar--fields-to-parse)))
+         (hasfilep (citar-file--has-file-p citar-library-paths
+                                           citar-file-extensions
+                                           citar-file-additional-files-separator
+                                           citar-file-variable))
+         (hasnotep (citar-file--has-file-p citar-notes-paths
+                                           citar-file-note-extensions
+                                           citar-file-additional-files-separator))
          (main-width (citar--format-width (citar-get-template 'main)))
          (suffix-width (citar--format-width (citar-get-template 'suffix)))
-         (citar-file-find-additional-files nil)
          (symbols-width (string-width (citar--symbols-string t t t)))
          (star-width (- (frame-width) (+ 2 symbols-width main-width suffix-width))))
     (maphash
      (lambda (citekey entry)
-       (let* (              (files
-               (when (citar-file--files-for-entry
-                      citekey
-                      entry
-                      citar-library-paths
-                      citar-file-extensions)
-                 " has:files"))
-              (notes
-               (when (citar-file--files-for-entry
-                      citekey
-                      nil ; don't want to check file field
-                      citar-notes-paths
-                      citar-file-note-extensions)
-                 " has:notes"))
-              (link
-               (when (citar-has-a-value '("doi" "url") entry)
-                 "has:link"))
+       (let* ((files (when (funcall hasfilep citekey entry) " has:files"))
+              (notes (when (funcall hasnotep citekey entry) " has:notes"))
+              (link (when (citar-has-a-value '("doi" "url") entry) "has:link"))
               (candidate-main
                (citar--format-entry
                 entry
@@ -554,7 +541,7 @@ key associated with each one."
      (lambda (candidate)
        (let ((candidate-symbols (citar--symbols-string
                                  (string-match "has:files" candidate)
-                                 (string-match "has:note" candidate)
+                                 (string-match "has:notes" candidate)
                                  (string-match "has:link" candidate))))
          (list candidate candidate-symbols "")))
      cands))
@@ -772,7 +759,8 @@ into the corresponding reference key.  Return
          (citar-file--files-for-multiple-entries
           keys-entries
           (append citar-library-paths citar-notes-paths)
-          (append citar-file-extensions citar-file-note-extensions)))
+          ;; find files with any extension:
+          nil))
          (links
           (seq-map
            (lambda (key-entry)
@@ -832,20 +820,18 @@ With prefix, rebuild the cache before offering candidates."
                       :rebuild-cache current-prefix-arg)))
   (when (and (null citar-notes-paths)
              (equal citar-format-note-function
-                    'citar-org-open-notes-default))
+                    'citar-org-format-notes-default))
     (message "You must set 'citar-notes-paths' to open notes with default notes function"))
   (dolist (key-entry keys-entries)
     (funcall citar-open-note-function (car key-entry) (cdr key-entry))))
 
 (defun citar--open-note (key entry)
   "Open a note file from KEY and ENTRY."
-  (if-let* ((file
-             (caar (citar-file--get-note-filename
-                    key
-                    citar-notes-paths
-                    citar-file-note-extensions)))
+  (if-let* ((file (citar-file--get-note-filename key
+                                                 citar-notes-paths
+                                                 citar-file-note-extensions))
             (file-exists (file-exists-p file)))
-      (funcall citar-file-open-function file)
+      (find-file file)
     (funcall citar-format-note-function key entry file)))
 
 ;;;###autoload
