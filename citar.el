@@ -865,6 +865,7 @@ With prefix, rebuild the cache before offering candidates."
           (seq-concatenate 'list citar-bibliography (citar--local-files-to-cache)))
          (entry
           (with-temp-buffer
+            (bibtex-set-dialect)
             (dolist (bib-file bibtex-files)
               (insert-file-contents bib-file))
             (bibtex-find-entry key)
