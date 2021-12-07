@@ -939,13 +939,13 @@ With prefix, rebuild the cache before offering candidates."
 (defun citar-insert-reference (keys-entries)
   "Insert formatted reference(s) associated with the KEYS-ENTRIES."
   (interactive (list (citar-select-refs)))
-  (insert (apply citar-format-reference-function (list keys-entries))))
+  (insert (funcall citar-format-reference-function keys-entries)))
 
 ;;;###autoload
 (defun citar-copy-reference (keys-entries)
   "Copy formatted reference(s) associated with the KEYS-ENTRIES."
   (interactive (list (citar-select-refs)))
-  (let ((references (apply citar-format-reference-function (list keys-entries))))
+  (let ((references (funcall citar-format-reference-function keys-entries)))
     (if (not (equal "" references))
         (progn
           (kill-new references)
