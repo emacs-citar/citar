@@ -30,6 +30,7 @@
 (require 'citar)
 (require 'tex nil t)
 (require 'reftex-parse)
+(require 'reftex-cite)
 
 (defvar citar-major-mode-functions)
 
