@@ -331,6 +331,14 @@ With optional argument FORCE, force the creation of a new ID."
                  (<= (point) (cdr bounds)))
         element))))
 
+(defun citar-org-list-keys ()
+  "List citation keys in the org buffer."
+  (let ((org-tree (org-element-parse-buffer)))
+    (delete-dups
+     (org-element-map org-tree 'citation-reference
+       (lambda (r) (org-element-property :key r))
+       org-tree))))
+
 ;; most of this section is adapted from org-ref-cite
 
 (defun citar-org-activate-keymap (citation)
