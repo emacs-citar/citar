@@ -67,6 +67,8 @@
 (defun citar-citeproc-select-csl-style ()
   "Select CSL style to be used with 'citar-citeproc-format-reference'."
   (interactive)
+  (unless citar-citeproc-csl-styles-dir
+    (error "Be sure to set 'cite-citeproc-csl-styles-dir' to your CSL styles directory"))
   (let* ((files (directory-files citar-citeproc-csl-styles-dir t "csl"))
          (list (mapcar
                 (lambda (file)
@@ -84,6 +86,8 @@ With prefix-argument, select CSL style."
   (when (or (eq citar-citeproc-csl-style nil)
             current-prefix-arg)
     (citar-citeproc-select-csl-style))
+  (unless citar-citeproc-csl-locales-dir
+    (error "Be sure to set 'cite-citeproc-csl-locales-dir' to your CSL locales directory"))
   (let* ((itemids (mapcar (lambda (x) (car x)) keys-entries))
          (proc (citeproc-create citar-citeproc-csl-style
 			        (citeproc-hash-itemgetter-from-any citar-bibliography)
