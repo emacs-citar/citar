@@ -124,5 +124,19 @@ citation."
              (cons (nreverse keys) (cons startpos endpos))))))
      (reverse (nth 9 (syntax-ppss))))))
 
+;;;###autoload
+(defun citar-markdown-list-keys ()
+  "Returns a list of all keys from markdown citations in buffer."
+  (interactive)
+  (save-match-data
+    (let ((pos 0)
+          matches)
+      (while (string-match citar-markdown-citation-key-regexp (buffer-string) pos)
+        (setq pos (match-end 0))
+        (push (car (split-string (match-string-no-properties 0 (buffer-string))
+                                 nil t ".*@\\|\\,.*\\]"))
+              matches))
+      (delete-dups (nreverse matches)))))
+
 (provide 'citar-markdown)
 ;;; citar-markdown.el ends here

@@ -211,19 +211,22 @@ FILEPATH: the file name."
       (insert-citation . citar-org-insert-citation)
       (insert-edit . citar-org-insert-edit)
       (key-at-point . citar-org-key-at-point)
-      (citation-at-point . citar-org-citation-at-point)))
+      (citation-at-point . citar-org-citation-at-point)
+      (list-keys . citar-org-list-keys)))
     ((latex-mode) .
      ((local-bib-files . citar-latex-local-bib-files)
       (insert-citation . citar-latex-insert-citation)
       (insert-edit . citar-latex-insert-edit)
       (key-at-point . citar-latex-key-at-point)
-      (citation-at-point . citar-latex-citation-at-point)))
+      (citation-at-point . citar-latex-citation-at-point)
+      (list-keys . reftex-all-used-citation-keys)))
     ((markdown-mode) .
      ((insert-keys . citar-markdown-insert-keys)
       (insert-citation . citar-markdown-insert-citation)
       (insert-edit . citar-markdown-insert-edit)
       (key-at-point . citar-markdown-key-at-point)
-      (citation-at-point . citar-markdown-citation-at-point)))
+      (citation-at-point . citar-markdown-citation-at-point)
+      (list-keys . citar-markdown-list-keys)))
     (t .
        ((insert-keys . citar--insert-keys-comma-separated))))
   "The variable determining the major mode specific functionality.
@@ -257,7 +260,10 @@ citation-at-point: the corresponding function should return the
 keys of the citation at point, or nil if there is none.  The
 return value should be (KEYS . BOUNDS), where KEYS is a list of
 strings and BOUNDS is pair of buffer positions indicating the
-start and end of the citation."
+start and end of the citation.
+
+list-keys: the corresponding function should return the keys
+of all citations in the current buffer."
   :group 'citar
   :type 'alist)
 
@@ -869,16 +875,33 @@ With prefix, rebuild the cache before offering candidates."
 
 (defun citar--insert-bibtex (key)
   "Insert the bibtex entry for KEY at point."
-  (let ((bibtex-files
-         (seq-concatenate 'list citar-bibliography (citar--local-files-to-cache))))
-    (insert
-     (with-temp-buffer
-       (dolist (bib-file bibtex-files)
-         (insert-file-contents bib-file))
-       (bibtex-find-entry key)
-       (let ((beg (bibtex-beginning-of-entry))
-             (end (bibtex-end-of-entry)))
-         (buffer-substring-no-properties beg end))) "\n")))
+  (let* ((bibtex-files
+          (seq-concatenate 'list citar-bibliography (citar--local-files-to-cache)))
+         (entry
+          (with-temp-buffer
+            (dolist (bib-file bibtex-files)
+              (insert-file-contents bib-file))
+            (bibtex-find-entry key)
+            (let ((beg (bibtex-beginning-of-entry))
+                  (end (bibtex-end-of-entry)))
+              (buffer-substring-no-properties beg end)))))
+    (unless (equal entry "")
+      (insert entry "\n\n"))))
+
+;;;###autoload
+(defun citar-export-local-bib-file ()
+  "Create a new bibliography file from citations in current buffer.
+
+The file is titled \"local-bib\", given the same extention as
+the first entry in 'citar-bibliography', and created in the same
+directory as current buffer."
+  (interactive)
+  (let* ((keys (citar--major-mode-function 'list-keys #'ignore))
+        (ext (file-name-extension (car citar-bibliography)))
+        (file (format "%slocal-bib.%s" (file-name-directory buffer-file-name) ext)))
+    (with-temp-file file
+      (dolist (key keys)
+          (citar--insert-bibtex key)))))
 
 ;;;###autoload
 (defun citar-open-link (keys-entries)
