@@ -283,18 +283,19 @@ With optional argument FORCE, force the creation of a new ID."
             (when template
               (citar--format-entry-no-widths
                entry
-               template))))
-      (funcall citar-file-open-function filepath)
-      ;; This just overrides other template insertion.
-      (erase-buffer)
-      (citar-org-roam-make-preamble key)
-      (insert "#+title: ")
-      (when template (insert note-meta))
-      (insert "\n\n|\n\n#+print_bibliography:")
-      (search-backward "|")
-      (delete-char 1)
-      (when (boundp 'evil-state)
-        (evil-insert 1))))
+               template)))
+           (buffer (find-file filepath)))
+      (with-current-buffer buffer
+        ;; This just overrides other template insertion.
+        (erase-buffer)
+        (citar-org-roam-make-preamble key)
+        (insert "#+title: ")
+        (when template (insert note-meta))
+        (insert "\n\n|\n\n#+print_bibliography:")
+        (search-backward "|")
+        (delete-char 1)
+        (when (boundp 'evil-state)
+          (evil-insert 1)))))
 
 ;;; Embark target finder
 

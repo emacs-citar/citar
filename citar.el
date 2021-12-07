@@ -55,11 +55,6 @@
 (defvar embark-meta-map)
 (defvar embark-transformer-alist)
 (defvar citar-org-open-note-function)
-(defvar citar-file-extensions)
-(defvar citar-file-note-extensions)
-(defvar citar-file-open-prompt)
-(defvar citar-file-variable)
-(defvar citar-file-find-additional-files)
 
 ;;; Variables
 
@@ -487,11 +482,11 @@ key associated with each one."
           (parsebib-parse bib-files :fields (citar--fields-to-parse)))
          (hasfilep (citar-file--has-file-p citar-library-paths
                                            citar-file-extensions
-                                           citar-file-find-additional-files
+                                           citar-file-additional-files-separator
                                            citar-file-variable))
          (hasnotep (citar-file--has-file-p citar-notes-paths
                                            citar-file-note-extensions
-                                           citar-file-find-additional-files))
+                                           citar-file-additional-files-separator))
          (main-width (citar--format-width (citar-get-template 'main)))
          (suffix-width (citar--format-width (citar-get-template 'suffix)))
          (symbols-width (string-width (citar--symbols-string t t t)))
