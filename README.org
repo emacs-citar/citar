@@ -153,7 +153,7 @@ There are three sections of the browsing UI.
 3. The suffix, which by default shows citekey, reference type, and (if present) tags or keywords.
 
 You can search against all of the above content.
-For the prefix, you can filter for associated PDFs or notes using =has:pdf= or =has:note= respectively (and at least with my setup, even the =:p= or =:n= shorthand).
+For the prefix, you can filter for associated files or notes using =has:file= or =has:notes= respectively (and at least with my setup, even the =:p= or =:n= shorthand).
 
 #+CAPTION: UI sections
 [[file:images/ui-segments.png]]
