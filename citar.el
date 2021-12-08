@@ -8,7 +8,7 @@
 ;; License: GPL-3.0-or-later
 ;; Version: 0.9
 ;; Homepage: https://github.com/bdarcus/citar
-;; Package-Requires: ((emacs "27.1") (s "1.12") (parsebib "3.0") (org "9.5"))
+;; Package-Requires: ((emacs "27.1") (s "1.12") (parsebib "3.0") (org "9.5") (citeproc "0.9"))
 
 ;; This file is not part of GNU Emacs.
 
@@ -123,8 +123,8 @@ references according to CSL styles, set the value to
 function that takes a list of (KEY . ENTRY) and returns formatted
 references as a string."
   :group 'citar
-  :type '(choice (const :tag "Use 'citar-template'" citar-format-reference)
-                 (const :tag "Use 'citeproc-el'" citar-citeproc-format-reference)
+  :type '(choice (function-item :tag "Use 'citar-template'" citar-format-reference)
+                 (function-item :tag "Use 'citeproc-el'" citar-citeproc-format-reference)
                  (function :tag "Other")))
 
 (defcustom citar-display-transform-functions
