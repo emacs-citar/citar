@@ -18,24 +18,36 @@
 ;;; Commentary:
 
 ;;  Provides functions for formatting bibliographic references according to
-;;  CSL styles, using 'citeproc-el'.
+;;  Citation Style Language (CSL) styles, using 'citeproc-el'. For
+;;  information on using CSL, see <http://www.citationstyles.org>.
 
-;;  To use: load this file, set the required directory paths
-;;  'citar-citeproc-csl-locales-dir' and 'citar-citeproc-csl-styles-dir', set
-;;  'citar-format-reference-function' to 'citar-citeproc-format-reference',
-;;  and call one of the general reference functions, either
-;;  'citar-insert-reference' or 'citar-copy-reference'.
+;;  Before using, be sure to set the two required directory paths,
+;;  'citar-citeproc-csl-styles-dir' and 'citar-citeproc-csl-locales-dir'. The
+;;  'styles-dir' should contain CSL style files corresponding to any citation
+;;  style you plan to use, for example, "chicago-author-date.csl" for Chicago
+;;  Manual of Style 17th edition (author-date) or "ieee.csl" for IEEE
+;;  citation style. CSL style files can be found in the official CSL styles
+;;  repository, <https://github.com/citation-style-language/styles>. The
+;;  'locales-dir' is a directory of files that are used to facilitate
+;;  localizing citations and bibliographies that are generated with CSL
+;;  styles. The simplest option here is to set this to a clone of the
+;;  official CSL locales repository,
+;;  <https://github.com/citation-style-language/locales>.
 
-;;  To set a CSL style, either set 'cite-citeproc-csl-style' manually to the
-;;  path to the desired CSL style file or call
+;;  After setting the style and locale directory paths, set the variable
+;;  'citar-format-reference-function' to 'citar-citeproc-format-reference'.
+
+;;  Finally, set a CSL style, either by setting 'cite-citeproc-csl-style'
+;;  manually to the path to the desired CSL style file or by calling
 ;;  'citar-citeproc-select-csl-style' to choose from a style file located in
-;;  'citar-citeproc-csl-styles-dir'.
-
-;;  If a CSL style is not set before running 'citar-citeproc-format-reference',
-;;  the user will be prompted to set a style.
-
-;;  A CSL style can also be set by calling 'citar-insert-reference' or
+;;  'citar-citeproc-csl-styles-dir'. If a CSL style is not set before running
+;;  'citar-citeproc-format-reference', the user is prompted to set a style. A
+;;  CSL style can also be set by calling 'citar-insert-reference' or
 ;;  'citar-copy-reference' with a prefix-argument.
+
+;;  Once these settings are in place, call either 'citar-insert-reference' or
+;;  'citar-copy-reference' and select the key or keys to be rendered in the
+;;  selected CSL style.
 
 ;;; Code:
 (require 'xml)
@@ -43,17 +55,22 @@
 (require 'citeproc)
 
 (defcustom citar-citeproc-csl-styles-dir nil
-  "List of CSL style directories."
+  "Path to CSL style directory."
   :group 'citar
   :type ' string)
 
 (defcustom citar-citeproc-csl-locales-dir nil
-  "Path to CSL locales dir, required for 'citar-citeproc-format-reference'."
+  "Path to CSL locales dir."
   :group 'citar
   :type 'string)
 
 (defvar citar-citeproc-csl-style nil
-  "Path to CSL style file to be used with 'citar-citeproc-format-reference'.")
+  "CSL style file to be used with 'citar-citeproc-format-reference'.
+
+If file is located in the directory set to
+'citar-citeproc-csl-styles-dir', only the filename itself is
+necessary, e.g., \"chicago-author-date.csl\". Full path is also
+accepted.")
 
 (defun citar-citeproc-csl-metadata (file)
   "Return metadata value from csl FILE."
@@ -72,7 +89,7 @@
   (let* ((files (directory-files citar-citeproc-csl-styles-dir t "csl"))
          (list (mapcar
                 (lambda (file)
-                  (cons (citar-citeproc-csl-metadata file) file))
+                  (cons (citar-citeproc-csl-metadata file) (file-name-nondirectory file)))
                 files))
          (style (completing-read "Select CSL style file: " list nil t))
          (file (cdr (assoc style list))))
@@ -88,8 +105,11 @@ With prefix-argument, select CSL style."
     (citar-citeproc-select-csl-style))
   (unless citar-citeproc-csl-locales-dir
     (error "Be sure to set 'citar-citeproc-csl-locales-dir' to your CSL locales directory"))
-  (let* ((itemids (mapcar (lambda (x) (car x)) keys-entries))
-         (proc (citeproc-create citar-citeproc-csl-style
+  (let* ((style (if (string-match-p "/" citar-citeproc-csl-style)
+                 citar-citeproc-csl-style
+               (concat citar-citeproc-csl-styles-dir "/" citar-citeproc-csl-style)))
+         (itemids (mapcar (lambda (x) (car x)) keys-entries))
+         (proc (citeproc-create style
 			        (citeproc-hash-itemgetter-from-any citar-bibliography)
 			        (citeproc-locale-getter-from-dir citar-citeproc-csl-locales-dir)
 			        "en-US"))
