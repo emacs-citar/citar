@@ -287,7 +287,6 @@ of all citations in the current buffer."
 
 (defvar citar-map
   (let ((map (make-sparse-keymap)))
-    (define-key map (kbd "c") #'citar-insert-citation)
     (define-key map (kbd "k") #'citar-insert-keys)
     (define-key map (kbd "R") #'citar-insert-reference)
     (define-key map (kbd "b") #'citar-insert-bibtex)
@@ -296,7 +295,7 @@ of all citations in the current buffer."
     (define-key map (kbd "l") #'citar-open-link)
     (define-key map (kbd "n") #'citar-open-notes)
     (define-key map (kbd "f") #'citar-open-library-files)
-    (define-key map (kbd "r") #'citar-refresh)
+    (define-key map (kbd "r") #'citar-copy-reference)
     (define-key map (kbd "RET") #'citar-run-default-action)
     map)
   "Keymap for Embark minibuffer actions.")
@@ -304,13 +303,12 @@ of all citations in the current buffer."
 (defvar citar-citation-map
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "i") #'citar-insert-edit)
-    (define-key map (kbd "c") #'citar-insert-citation)
     (define-key map (kbd "o") #'citar-open)
     (define-key map (kbd "e") #'citar-open-entry)
     (define-key map (kbd "l") #'citar-open-link)
     (define-key map (kbd "n") #'citar-open-notes)
     (define-key map (kbd "f") #'citar-open-library-files)
-    (define-key map (kbd "r") #'citar-refresh)
+    (define-key map (kbd "r") #'citar-copy-reference)
     (define-key map (kbd "RET") #'citar-run-default-action)
     map)
   "Keymap for Embark citation-key actions.")
@@ -913,7 +911,7 @@ With prefix, rebuild the cache before offering candidates."
     (let ((link (citar-get-link (cdr key-entry))))
       (if link
           (browse-url-default-browser link)
-        (message "No link found for %s" key-entry)))))
+        (message "No link found for %s" (car key-entry))))))
 
 ;;;###autoload
 (defun citar-insert-citation (keys-entries)
