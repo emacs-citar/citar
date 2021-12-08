@@ -110,11 +110,22 @@ for the title field for new notes."
                    :value-type string
                    :options (main suffix preview note)))
 
-(defcustom citar-insert-reference-function
-  #'citar--insert-reference
-  "A function that takes a list of (KEY . ENTRY), and returns formatted references."
+(defcustom citar-format-reference-function
+  #'citar-format-reference
+  "Function used to render formatted references.
+
+This function is called by 'citar-insert-reference' and
+'citar-copy-reference'. The default value,
+'citar-format-reference', formats references using the 'preview'
+template set in 'citar-template'. To use 'citeproc-el' to format
+references according to CSL styles, set the value to
+'citar-citeproc-format-reference'. Alternatively, set to a custom
+function that takes a list of (KEY . ENTRY) and returns formatted
+references as a string."
   :group 'citar
-  :type 'function)
+  :type '(choice (const :tag "Use 'citar-template'" citar-format-reference)
+                 (const :tag "Use 'citeproc-el'" citar-citeproc-format-reference)
+                 (function :tag "Other")))
 
 (defcustom citar-display-transform-functions
   ;; TODO change this name, as it might be confusing?
@@ -927,18 +938,31 @@ With prefix, rebuild the cache before offering candidates."
 
 ;;;###autoload
 (defun citar-insert-reference (keys-entries)
-  "Insert formatted reference(s) associated with the KEYS-ENTRIES.
-With prefix, rebuild the cache before offering candidates."
-  (interactive (list (citar-select-refs
-                      :rebuild-cache current-prefix-arg)))
-  (apply citar-insert-reference-function (list keys-entries)))
-
-(defun citar--insert-reference (keys-entries)
   "Insert formatted reference(s) associated with the KEYS-ENTRIES."
-  (let ((template (citar-get-template 'preview)))
-    (dolist (key-entry keys-entries)
-      (when template
-        (insert (citar--format-entry-no-widths (cdr key-entry) template))))))
+  (interactive (list (citar-select-refs)))
+  (insert (funcall citar-format-reference-function keys-entries)))
+
+;;;###autoload
+(defun citar-copy-reference (keys-entries)
+  "Copy formatted reference(s) associated with the KEYS-ENTRIES."
+  (interactive (list (citar-select-refs)))
+  (let ((references (funcall citar-format-reference-function keys-entries)))
+    (if (not (equal "" references))
+        (progn
+          (kill-new references)
+          (message (format "Copied:\n%s" references)))
+      (message "Key not found."))))
+
+(defun citar-format-reference (keys-entries)
+  "Return formatted reference(s) associated with the KEYS-ENTRIES."
+  (let* ((template (citar-get-template 'preview))
+         (references
+          (with-temp-buffer
+            (dolist (key-entry keys-entries)
+              (when template
+                (insert (citar--format-entry-no-widths (cdr key-entry) template))))
+            (buffer-string))))
+    references))
 
 ;;;###autoload
 (defun citar-insert-keys (keys-entries)
