@@ -304,6 +304,7 @@ of all citations in the current buffer."
 (defvar citar-citation-map
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "i") #'citar-insert-edit)
+    (define-key map (kbd "c") #'citar-insert-citation)
     (define-key map (kbd "o") #'citar-open)
     (define-key map (kbd "e") #'citar-open-entry)
     (define-key map (kbd "l") #'citar-open-link)
