@@ -57,12 +57,12 @@
 (defcustom citar-citeproc-csl-styles-dir nil
   "Path to CSL style directory."
   :group 'citar
-  :type ' string)
+  :type 'directory)
 
 (defcustom citar-citeproc-csl-locales-dir nil
   "Path to CSL locales dir."
   :group 'citar
-  :type 'string)
+  :type 'directory)
 
 (defvar citar-citeproc-csl-style nil
   "CSL style file to be used with 'citar-citeproc-format-reference'.
