@@ -224,11 +224,27 @@ documentation for the meaning of EXTENSIONS and ADDITIONAL-SEP.
              (citar-file--parse-file-field entry entry-field dirs)))))))
 
 (defun citar-file--files-for-entry (key entry dirs extensions)
-  "Find files related to KEY, ENTRY in DIRS with extension in EXTENSIONS."
+  "Find files related to bibliography item KEY with metadata ENTRY.
+See `citar-file--files-for-multiple-entries` for details on DIRS,
+EXTENSIONS, and how files are found."
   (citar-file--files-for-multiple-entries (list (cons key entry)) dirs extensions))
 
 (defun citar-file--files-for-multiple-entries (keys-entries dirs extensions)
-  "Find files related to a list of KEYS-ENTRIES in DIRS with extension in EXTENSIONS."
+  "Find files related to bibliography items in KEYS-ENTRIES.
+
+KEYS-ENTRIES is a list of (KEY . ENTRY) pairs.  Return a list of
+files found in two ways:
+
+- Scan directories in DIRS for files starting with keys in
+  KEYS-ENTRIES and having extensions in EXTENSIONS.  The files
+  may also have additional text after the key, separated by the
+  value of `citar-file-additional-files-separator`.  The scanning
+  is performed by `citar-file--directory-files`, which see.
+
+- Parse the entries in KEYS-ENTRIES and find file names listed in
+  the field named by `citar-file-variable`.  Relative paths are
+  resolved in the directories in DIRS, and only existing files
+  are returned."
   (let* ((keys (seq-map #'car keys-entries))
          (files (citar-file--directory-files dirs keys extensions
                                              citar-file-additional-files-separator)))

@@ -80,12 +80,12 @@
 (defcustom citar-library-paths nil
   "A list of files paths for related PDFs, etc."
   :group 'citar
-  :type '(repeat path))
+  :type '(repeat directory))
 
 (defcustom citar-notes-paths nil
   "A list of file paths for bibliographic notes."
   :group 'citar
-  :type '(repeat path))
+  :type '(repeat directory))
 
 (defcustom citar-additional-fields '("doi" "url")
   "A list of fields to add to parsed data.
