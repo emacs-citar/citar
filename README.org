@@ -167,7 +167,7 @@ Here's the defaults:
 (setq citar-templates
       '((main . "${author editor:30}     ${date year issued:4}     ${title:48}")
         (suffix . "          ${=key= id:15}    ${=type=:12}    ${tags keywords:*}")
-        (note . "#+title: Notes on ${author editor}, ${title}")))
+        (note . "Notes on ${author editor}, ${title}")))
 #+END_SRC
 
 Note:
