@@ -514,6 +514,33 @@ personal names of the form 'family, given'."
    (list citar-file-variable)
    citar-additional-fields))
 
+(defun citar-has-file ()
+  "Return predicate testing whether entry has associated files.
+
+Return a function that takes arguments KEY and ENTRY and returns
+non-nil when the entry has associated files, either in
+`citar-library-paths` or the field named in
+`citar-file-variable`.
+
+Note: for performance reasons, this function should be called
+once per command; the function it returns can be called
+repeatedly."
+  (citar-file--make-file-predicate citar-library-paths
+                                   citar-file-extensions
+                                   citar-file-variable))
+
+(defun citar-has-note ()
+  "Return predicate testing whether entry has associated notes.
+
+Return a function that takes arguments KEY and ENTRY and returns
+non-nil when the entry has associated notes in `citar-notes-paths`.
+
+Note: for performance reasons, this function should be called
+once per command; the function it returns can be called
+repeatedly."
+  (citar-file--make-file-predicate citar-notes-paths
+                                   citar-file-note-extensions))
+
 (defun citar--format-candidates (bib-files &optional context)
   "Format candidates from BIB-FILES, with optional hidden CONTEXT metadata.
 This both propertizes the candidates for display, and grabs the
@@ -521,11 +548,8 @@ key associated with each one."
   (let* ((candidates nil)
          (raw-candidates
           (parsebib-parse bib-files :fields (citar--fields-to-parse)))
-         (hasfilep (citar-file--make-file-predicate citar-library-paths
-                                                    citar-file-extensions
-                                                    citar-file-variable))
-         (hasnotep (citar-file--make-file-predicate citar-notes-paths
-                                                    citar-file-note-extensions))
+         (hasfilep (citar-has-file))
+         (hasnotep (citar-has-note))
          (main-width (citar--format-width (citar-get-template 'main)))
          (suffix-width (citar--format-width (citar-get-template 'suffix)))
          (symbols-width (string-width (citar--symbols-string t t t)))

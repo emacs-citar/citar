@@ -206,7 +206,7 @@ need to scan the contents of DIRS in this case."
                  (puthash key (nreverse filelist) files))
                files))))
 
-(defun citar-file--make-file-predicate (dirs extensions &optional entry-field)
+(defun citar-file--has-file (dirs extensions &optional entry-field)
   "Return predicate testing whether a key and entry have associated files.
 
 Files are found in two ways:
