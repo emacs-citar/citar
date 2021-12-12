@@ -130,10 +130,8 @@ citation."
   (save-excursion
     (let (matches)
       (goto-char (point-min))
-      (while (re-search-forward "@" nil t)
-        (push (buffer-substring-no-properties
-               (point) (1- (re-search-forward "[]\s,.;]")))
-              matches))
+      (while (re-search-forward citar-markdown-citation-key-regexp nil t)
+        (push (match-string-no-properties 1) matches))
       (delete-dups (nreverse matches)))))
 
 (provide 'citar-markdown)
