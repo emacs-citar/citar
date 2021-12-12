@@ -535,9 +535,9 @@ non-nil when the entry has associated files, either in
 Note: for performance reasons, this function should be called
 once per command; the function it returns can be called
 repeatedly."
-  (citar-file--make-file-predicate citar-library-paths
-                                   citar-file-extensions
-                                   citar-file-variable))
+  (citar-file--has-file citar-library-paths
+                        citar-file-extensions
+                        citar-file-variable))
 
 (defun citar-has-note ()
   "Return predicate testing whether entry has associated notes.
@@ -548,8 +548,8 @@ non-nil when the entry has associated notes in `citar-notes-paths`.
 Note: for performance reasons, this function should be called
 once per command; the function it returns can be called
 repeatedly."
-  (citar-file--make-file-predicate citar-notes-paths
-                                   citar-file-note-extensions))
+  (citar-file--has-file citar-notes-paths
+                        citar-file-note-extensions))
 
 (defun citar--format-candidates (bib-files &optional context)
   "Format candidates from BIB-FILES, with optional hidden CONTEXT metadata.
