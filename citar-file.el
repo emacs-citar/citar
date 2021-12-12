@@ -218,7 +218,11 @@ Files are found in two ways:
 - When ENTRY-FIELD is non-nil, by parsing the entry field it
   names using `citar-file--parse-file-field`; see its
   documentation.  DIRS is used to resolve relative paths and
-  non-existent files are ignored."
+  non-existent files are ignored.
+
+Note: for performance reasons, this function should be called
+once per command; the function it returns can be called
+repeatedly."
   (let ((files (citar-file--directory-files dirs nil extensions
                                             citar-file-additional-files-separator)))
     (lambda (key entry)

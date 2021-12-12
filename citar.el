@@ -350,17 +350,27 @@ where ENTRY is a field-value alist.  Therefore 'car' of the
 return value is the cite key, and 'cdr' is an alist of structured
 data.
 
-Includes the following optional arguments:
+Takes the following optional keyword arguments:
 
-REBUILD-CACHE if t, forces rebuilding the cache before offering
-the selection candidates.
+REBUILD-CACHE: if t, forces rebuilding the cache before offering
+  the selection candidates.
 
-MULTIPLE if t, calls `completing-read-multiple` and returns an
-alist of (KEY . ENTRY) pairs.
+MULTIPLE: if t, calls `completing-read-multiple` and returns an
+  alist of (KEY . ENTRY) pairs.
 
-FILTER, if non-nil, should be a predicate function taking
-arguments KEY and ENTRY.  Only candidates for which this function
-returns non-nil will be offered for completion."
+FILTER: if non-nil, should be a predicate function taking
+  arguments KEY and ENTRY.  Only candidates for which this
+  function returns non-nil will be offered for completion.  For
+  example:
+
+  (citar-select-ref :filter (citar-has-file))
+
+  (citar-select-ref :filter (citar-has-note))
+
+  (citar-select-ref
+   :filter (lambda (_key entry)
+             (when-let ((keywords (assoc-default \"keywords\" entry)))
+               (string-match-p \"foo\" keywords))))"
   (let* ((candidates (citar--get-candidates rebuild-cache))
          (completions (citar--completion-table candidates filter))
          (embark-transformer-alist (citar--embark-transformer-alist candidates))
