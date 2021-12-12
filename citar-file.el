@@ -222,11 +222,17 @@ Files are found in two ways:
   (let ((files (citar-file--directory-files dirs nil extensions
                                             citar-file-additional-files-separator)))
     (lambda (key entry)
-      (or (car (gethash key files))
-          (when entry-field
-            (seq-some
-             #'file-exists-p
-             (citar-file--parse-file-field entry entry-field dirs)))))))
+      (let ((cached (gethash key files 'unknown)))
+        (if (not (eq cached 'unknown))
+            cached
+          ;; KEY has no files in DIRS, so check the ENTRY-FIELD field of
+          ;; ENTRY.  This will run at most once for each KEY; after that, KEY
+          ;; in hash table FILES will either contain nil or a file name found
+          ;; in ENTRY.
+          (puthash key (seq-some
+                        #'file-exists-p
+                        (citar-file--parse-file-field entry entry-field dirs))
+                   files))))))
 
 (defun citar-file--files-for-entry (key entry dirs extensions)
   "Find files related to bibliography item KEY with metadata ENTRY.
