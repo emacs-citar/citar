@@ -316,7 +316,33 @@ of all citations in the current buffer."
 
 ;;; Completion functions
 
-(cl-defun citar-select-ref (&optional &key rebuild-cache multiple)
+(defun citar--completion-table (candidates &optional filter)
+  "Return a completion table for CANDIDATES.
+
+CANDIDATES is an alist with entries (CAND KEY . ENTRY), where
+  CAND is a display string for the bibliography item given
+  by (KEY . ENTRY).
+
+FILTER, if non-nil, should be a predicate function taking
+  arguments KEY and ENTRY.  Only candidates for which this
+  function returns non-nil will be offered for completion.
+
+The returned completion table can be used with `completing-read`
+and other completion functions."
+  (let ((metadata `(metadata (category . citar-reference)
+                             (affixation-function . ,#'citar--affixation))))
+    (lambda (string predicate action)
+      (if (eq action 'metadata)
+          metadata
+        (let ((predicate
+               (when (or filter predicate)
+                 (lambda (cand-key-entry)
+                   (pcase-let ((`(,cand ,key . ,entry) cand-key-entry))
+                     (and (or (null filter) (funcall filter key entry))
+                          (or (null predicate) (funcall predicate cand))))))))
+          (complete-with-action action candidates string predicate))))))
+
+(cl-defun citar-select-ref (&optional &key rebuild-cache multiple filter)
   "Select bibliographic references.
 
 A wrapper around 'completing-read' that returns (KEY . ENTRY),
@@ -330,14 +356,13 @@ REBUILD-CACHE if t, forces rebuilding the cache before offering
 the selection candidates.
 
 MULTIPLE if t, calls `completing-read-multiple` and returns an
-alist of (KEY . ENTRY) pairs."
+alist of (KEY . ENTRY) pairs.
+
+FILTER, if non-nil, should be a predicate function taking
+arguments KEY and ENTRY.  Only candidates for which this function
+returns non-nil will be offered for completion."
   (let* ((candidates (citar--get-candidates rebuild-cache))
-         (metadata `(metadata (category . citar-reference)
-                              (affixation-function . ,#'citar--affixation)))
-         (completions (lambda (string predicate action)
-                        (if (eq action 'metadata)
-                            metadata
-                          (complete-with-action action candidates string predicate))))
+         (completions (citar--completion-table candidates filter))
          (embark-transformer-alist (citar--embark-transformer-alist candidates))
          (crm-separator "\\s-*&\\s-*")
          (chosen (if multiple
@@ -367,13 +392,13 @@ alist of (KEY . ENTRY) pairs."
       (message "Keys not found: %s" (mapconcat #'identity notfound "; ")))
     (if multiple keyentries (car keyentries))))
 
-(cl-defun citar-select-refs (&optional &key rebuild-cache)
+(cl-defun citar-select-refs (&optional &key rebuild-cache filter)
   "Select bibliographic references.
 
-A wrapper around 'citar-select-ref' that returns an alist of (KEY . ENTRY)
-cons pairs.  If REBUILD-CACHE is non-nil, forces rebuilding the cache before
-offering the selection candidates."
-  (citar-select-ref :rebuild-cache rebuild-cache :multiple t))
+Call 'citar-select-ref' with argument :multiple; see its
+documentation for the return value and the meaning of
+REBUILD-CACHE and FILTER."
+  (citar-select-ref :rebuild-cache rebuild-cache :multiple t :filter filter))
 
 (defun citar-select-files (files)
   "Select file(s) from a list of FILES."
@@ -496,13 +521,11 @@ key associated with each one."
   (let* ((candidates nil)
          (raw-candidates
           (parsebib-parse bib-files :fields (citar--fields-to-parse)))
-         (hasfilep (citar-file--has-file-p citar-library-paths
-                                           citar-file-extensions
-                                           citar-file-additional-files-separator
-                                           citar-file-variable))
-         (hasnotep (citar-file--has-file-p citar-notes-paths
-                                           citar-file-note-extensions
-                                           citar-file-additional-files-separator))
+         (hasfilep (citar-file--make-file-predicate citar-library-paths
+                                                    citar-file-extensions
+                                                    citar-file-variable))
+         (hasnotep (citar-file--make-file-predicate citar-notes-paths
+                                                    citar-file-note-extensions))
          (main-width (citar--format-width (citar-get-template 'main)))
          (suffix-width (citar--format-width (citar-get-template 'suffix)))
          (symbols-width (string-width (citar--symbols-string t t t)))

@@ -206,16 +206,21 @@ need to scan the contents of DIRS in this case."
                  (puthash key (nreverse filelist) files))
                files))))
 
-(defun citar-file--has-file-p (dirs extensions &optional additional-sep entry-field)
+(defun citar-file--make-file-predicate (dirs extensions &optional entry-field)
   "Return predicate testing whether a key and entry have associated files.
 
 Files are found in two ways:
 
-- In DIRS using `citar-file--directory-files`; see its
-documentation for the meaning of EXTENSIONS and ADDITIONAL-SEP.
+- By scanning DIRS for files with EXTENSIONS using
+  `citar-file--directory-files`, which see.  Its ADDITIONAL-SEP
+  argument is taken from `citar-file-additional-files-separator`.
 
-- In the entry field ENTRY-FIELD, when it is non-nil."
-  (let ((files (citar-file--directory-files dirs nil extensions additional-sep)))
+- When ENTRY-FIELD is non-nil, by parsing the entry field it
+  names using `citar-file--parse-file-field`; see its
+  documentation.  DIRS is used to resolve relative paths and
+  non-existent files are ignored."
+  (let ((files (citar-file--directory-files dirs nil extensions
+                                            citar-file-additional-files-separator)))
     (lambda (key entry)
       (or (car (gethash key files))
           (when entry-field
@@ -235,16 +240,16 @@ EXTENSIONS, and how files are found."
 KEYS-ENTRIES is a list of (KEY . ENTRY) pairs.  Return a list of
 files found in two ways:
 
-- Scan directories in DIRS for files starting with keys in
+- By scanning directories in DIRS for files starting with keys in
   KEYS-ENTRIES and having extensions in EXTENSIONS.  The files
   may also have additional text after the key, separated by the
   value of `citar-file-additional-files-separator`.  The scanning
   is performed by `citar-file--directory-files`, which see.
 
-- Parse the entries in KEYS-ENTRIES and find file names listed in
-  the field named by `citar-file-variable`.  Relative paths are
-  resolved in the directories in DIRS, and only existing files
-  are returned."
+- By parsing the field named by `citar-file-variable` of the
+  entries in KEYS-ENTRIES.  DIRS is used to resolve relative
+  paths and non-existent files are ignored; see
+  `citar-file--parse-file-field`."
   (let* ((keys (seq-map #'car keys-entries))
          (files (citar-file--directory-files dirs keys extensions
                                              citar-file-additional-files-separator)))
