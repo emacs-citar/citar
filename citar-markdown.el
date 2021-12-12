@@ -38,6 +38,18 @@
   :group 'citar-markdown
   :type 'boolean)
 
+(defconst citar-markdown-citation-key-regexp
+  (concat "-?@"                         ; @ preceded by optional -
+          "\\(?:"
+          "{\\(?1:.*?\\)}"              ; brace-delimited key
+          "\\|"
+          "\\(?1:[[:alnum:]_][[:alnum:]]*\\(?:[:.#$%&+?<>~/-][[:alnum:]]+\\)*\\)"
+          "\\)")
+  "Regular expression for a Pandoc citation key.
+Captures the actual key in group 1.  Implements the syntax
+specified at URL
+'https://pandoc.org/MANUAL.html#citation-syntax'.")
+
 ;;;###autoload
 (defun citar-markdown-insert-keys (keys)
   "Insert semicolon-separated and @-prefixed KEYS in a markdown buffer."
@@ -77,15 +89,6 @@ to the beginning of the citation."
 With ARG non-nil, rebuild the cache before offering candidates."
   (citar-markdown-insert-citation
    (citar--extract-keys (citar-select-refs :rebuild-cache arg))))
-
-(defconst citar-markdown-citation-key-regexp
-  (concat "-?@"                         ; @ preceded by optional -
-          "\\(?:"
-          "{\\(?1:.*?\\)}"              ; brace-delimited key
-          "\\|"
-          "\\(?1:[[:alnum:]_][[:alnum:]]*\\(?:[:.#$%&+?<>~/-][[:alnum:]]+\\)*\\)"
-          "\\)")
-  "Regular expression for a citation key.")
 
 ;;;###autoload
 (defun citar-markdown-key-at-point ()
