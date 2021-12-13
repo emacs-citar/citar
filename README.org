@@ -267,10 +267,10 @@ For additional configuration options on this, see [[https://github.com/bdarcus/c
 
 ** Notes
 
-Citar provides a ~citar-format-note-function~ variable, and a simple default function.
-You can configure the title display using the "note" template, and the function should work well for simple use cases, including with org-roam.
+Citar provides a ~citar-format-note-function~ variable, and a default function for org, which also works well with org-roam (v2 now supports org-cite).
+You can configure the title display using the "note" template.
 
-You can use the ~citar-open-note-function~ variable to replace the default with one from org-roam-bibtex:
+You can also use the ~citar-open-note-function~ variable to replace the default with another; for example from org-roam-bibtex:
 
 #+BEGIN_SRC emacs-lisp
 (setq citar-open-note-function 'orb-citar-edit-note)
