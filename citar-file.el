@@ -244,10 +244,10 @@ See `citar-file--files-for-multiple-entries` for details on DIRS,
 EXTENSIONS, and how files are found."
   (citar-file--files-for-multiple-entries (list (cons key entry)) dirs extensions))
 
-(defun citar-file--files-for-multiple-entries (keys-entries dirs extensions)
+(defun citar-file--files-for-multiple-entries (key-entry-alist dirs extensions)
   "Find files related to bibliography items in KEYS-ENTRIES.
 
-KEYS-ENTRIES is a list of (KEY . ENTRY) pairs.  Return a list of
+KEYS-ENTRY-ALIST is a list of (KEY . ENTRY) pairs.  Return a list of
 files found in two ways:
 
 - By scanning directories in DIRS for files starting with keys in
@@ -260,7 +260,7 @@ files found in two ways:
   entries in KEYS-ENTRIES.  DIRS is used to resolve relative
   paths and non-existent files are ignored; see
   `citar-file--parse-file-field`."
-  (let* ((keys (seq-map #'car keys-entries))
+  (let* ((keys (seq-map #'car key-entry-alist))
          (files (citar-file--directory-files dirs keys extensions
                                              citar-file-additional-files-separator)))
     (delete-dups
@@ -271,7 +271,7 @@ files found in two ways:
          (seq-filter
           #'file-exists-p
           (citar-file--parse-file-field (cdr key-entry) citar-file-variable dirs))))
-      keys-entries))))
+      key-entry-alist))))
 
 ;;;; Opening and creating files functions
 
