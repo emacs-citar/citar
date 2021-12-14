@@ -247,8 +247,8 @@ EXTENSIONS, and how files are found."
 (defun citar-file--files-for-multiple-entries (key-entry-alist dirs extensions)
   "Find files related to bibliography items in KEYS-ENTRIES.
 
-KEYS-ENTRY-ALIST is a list of (KEY . ENTRY) pairs.  Return a list of
-files found in two ways:
+KEY-ENTRY-ALIST is a list of (KEY . ENTRY) pairs.  Return a list
+of files found in two ways:
 
 - By scanning directories in DIRS for files starting with keys in
   KEYS-ENTRIES and having extensions in EXTENSIONS.  The files
