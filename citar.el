@@ -828,7 +828,14 @@ into the corresponding reference key.  Return
 ;;;###autoload
 (with-eval-after-load 'embark
   (add-to-list 'embark-target-finders 'citar-citation-finder)
-  (add-to-list 'embark-target-finders 'citar-key-finder)
+  (add-to-list 'embark-target-finders 'citar-key-finder))
+
+(with-eval-after-load 'embark
+  (set-keymap-parent citar-map embark-general-map)
+  (add-to-list 'embark-keymap-alist '(citar-reference . citar-map))
+  (add-to-list 'embark-keymap-alist '(citar-key . citar-citation-map))
+  (add-to-list 'embark-keymap-alist '(citar-citation . citar-citation-map))
+  (add-to-list 'embark-pre-action-hooks '(citar-insert-edit embark--ignore-target))
   (when (boundp 'embark-multitarget-actions)
     (dolist (command (list #'citar-open #'citar-open-notes
                            #'citar-open-entry #'citar-open-link
@@ -837,13 +844,6 @@ into the corresponding reference key.  Return
                            #'citar-insert-reference #'citar-copy-reference
                            #'citar-insert-keys #'citar-run-default-action))
       (add-to-list 'embark-multitarget-actions command))))
-
-(with-eval-after-load 'embark
-  (set-keymap-parent citar-map embark-general-map)
-  (add-to-list 'embark-keymap-alist '(citar-reference . citar-map))
-  (add-to-list 'embark-keymap-alist '(citar-key . citar-citation-map))
-  (add-to-list 'embark-keymap-alist '(citar-citation . citar-citation-map))
-  (add-to-list 'embark-pre-action-hooks '(citar-insert-edit embark--ignore-target)))
 
 ;;; Commands
 
