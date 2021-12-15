@@ -108,13 +108,13 @@ With prefix-argument, select CSL style."
   (let* ((style (if (string-match-p "/" citar-citeproc-csl-style)
                  citar-citeproc-csl-style
                (concat citar-citeproc-csl-styles-dir "/" citar-citeproc-csl-style)))
-         (itemids (mapcar (lambda (x) (car x)) keys-entries))
+         (keys (citar--extract-keys keys-entries))
          (proc (citeproc-create style
 			        (citeproc-hash-itemgetter-from-any citar-bibliography)
 			        (citeproc-locale-getter-from-dir citar-citeproc-csl-locales-dir)
 			        "en-US"))
          (references (car (progn
-                            (citeproc-add-uncited itemids proc)
+                            (citeproc-add-uncited keys proc)
                             (citeproc-render-bib proc 'plain)
                             ))))
     references))

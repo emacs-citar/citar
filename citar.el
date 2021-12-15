@@ -54,6 +54,7 @@
 (defvar embark-general-map)
 (defvar embark-meta-map)
 (defvar embark-transformer-alist)
+(defvar embark-multitarget-actions)
 (defvar citar-org-open-note-function)
 
 ;;; Variables
@@ -169,7 +170,9 @@ manager like Zotero or JabRef."
   :type 'hook)
 
 (defcustom citar-default-action #'citar-open
-  "The default action for the `citar-at-point' command."
+  "The default action for the `citar-at-point' command.
+Should be a function that takes one argument, a list with each
+entry being either a citation KEY or a (KEY . ENTRY) pair."
   :group 'citar
   :type 'function)
 
@@ -706,7 +709,31 @@ If FORCE-REBUILD-CACHE is t, force reload the cache."
 
 (defun citar--extract-keys (keys-entries)
   "Extract list of keys from KEYS-ENTRIES alist."
-  (seq-map #'car keys-entries))
+  (seq-map (lambda (key-entry)
+             (if (consp key-entry) (car key-entry) key-entry))
+           keys-entries))
+
+(defun citar--ensure-entries (keys-entries)
+  "Return copy of KEYS-ENTRIES with every element a (KEY . ENTRY) pair.
+Each element of KEYS-ENTRIES should be either a KEY or a (KEY
+. ENTRY) pair.  If it is the former, look up the corresponding
+ENTRY and transform the element to a (KEY . ENTRY) pair."
+  (let ((candidates 'uninitialized))
+    ;; Get candidates only if some key has a missing entry, to avoid nasty
+    ;; recursion issues like https://github.com/bdarcus/citar/issues/286. Also
+    ;; avoids lots of memory allocation in the common case when all entries are
+    ;; present.
+    (seq-map
+     (lambda (key-entry)
+       (if (consp key-entry)
+           key-entry
+         (when (eq candidates 'uninitialized)
+           (setq candidates (citar--get-candidates)))
+         (cons key-entry
+               (cddr (seq-find (lambda (cand-key-entry)
+                                 (string= key-entry (cadr cand-key-entry)))
+                               candidates)))))
+     keys-entries)))
 
 ;;;###autoload
 (defun citar-insert-preset ()
@@ -804,13 +831,20 @@ into the corresponding reference key.  Return
   (add-to-list 'embark-target-finders 'citar-citation-finder)
   (add-to-list 'embark-target-finders 'citar-key-finder))
 
-
 (with-eval-after-load 'embark
   (set-keymap-parent citar-map embark-general-map)
   (add-to-list 'embark-keymap-alist '(citar-reference . citar-map))
   (add-to-list 'embark-keymap-alist '(citar-key . citar-citation-map))
   (add-to-list 'embark-keymap-alist '(citar-citation . citar-citation-map))
-  (add-to-list 'embark-pre-action-hooks '(citar-insert-edit embark--ignore-target)))
+  (add-to-list 'embark-pre-action-hooks '(citar-insert-edit embark--ignore-target))
+  (when (boundp 'embark-multitarget-actions)
+    (dolist (command (list #'citar-open #'citar-open-notes
+                           #'citar-open-entry #'citar-open-link
+                           #'citar-open-library-files #'citar-attach-library-files
+                           #'citar-insert-bibtex #'citar-insert-citation
+                           #'citar-insert-reference #'citar-copy-reference
+                           #'citar-insert-keys #'citar-run-default-action))
+      (add-to-list 'embark-multitarget-actions command))))
 
 ;;; Commands
 
@@ -822,17 +856,18 @@ into the corresponding reference key.  Return
   (when (and citar-library-paths
              (stringp citar-library-paths))
     (message "Make sure 'citar-library-paths' is a list of paths"))
-  (let* ((files
-         (citar-file--files-for-multiple-entries
-          keys-entries
-          (append citar-library-paths citar-notes-paths)
-          ;; find files with any extension:
-          nil))
+  (let* ((key-entry-alist (citar--ensure-entries keys-entries))
+         (files
+          (citar-file--files-for-multiple-entries
+           key-entry-alist
+           (append citar-library-paths citar-notes-paths)
+           ;; find files with any extension:
+           nil))
          (links
           (seq-map
            (lambda (key-entry)
              (citar-get-link (cdr key-entry)))
-           keys-entries))
+           key-entry-alist))
          (resource-candidates (delete-dups (append files (remq nil links))))
          (resources
           (when resource-candidates
@@ -851,7 +886,7 @@ into the corresponding reference key.  Return
                  ('attach 'mml-attach-file)))
            (files
             (citar-file--files-for-multiple-entries
-             keys-entries
+             (citar--ensure-entries keys-entries)
              citar-library-paths
              citar-file-extensions)))
       (if (and citar-file-open-prompt
@@ -889,7 +924,7 @@ With prefix, rebuild the cache before offering candidates."
              (equal citar-format-note-function
                     'citar-org-format-note-default))
     (error "You must set 'citar-notes-paths' to open notes with default notes function"))
-  (dolist (key-entry keys-entries)
+  (dolist (key-entry (citar--ensure-entries keys-entries))
     (funcall citar-open-note-function (car key-entry) (cdr key-entry))))
 
 (defun citar--open-note (key entry)
@@ -902,13 +937,13 @@ With prefix, rebuild the cache before offering candidates."
     (funcall citar-format-note-function key entry file)))
 
 ;;;###autoload
-(defun citar-open-entry (key-entry)
-  "Open bibliographic entry associated with the KEY-ENTRY.
+(defun citar-open-entry (keys-entries)
+  "Open bibliographic entry associated with the first of KEYS-ENTRIES.
 With prefix, rebuild the cache before offering candidates."
   (interactive (list (citar-select-refs
                       :rebuild-cache current-prefix-arg)))
-  (let ((key (citar--extract-keys key-entry)))
-    (citar--open-entry (car key))))
+  (when-let ((key (car (citar--extract-keys keys-entries))))
+    (citar--open-entry key)))
 
 (defun citar--open-entry (key)
   "Open bibliographic entry asociated with the KEY."
@@ -922,9 +957,8 @@ With prefix, rebuild the cache before offering candidates."
 With prefix, rebuild the cache before offering candidates."
   (interactive (list (citar-select-refs
                       :rebuild-cache current-prefix-arg)))
-  (let ((keys (citar--extract-keys keys-entries)))
-    (dolist (key keys)
-      (citar--insert-bibtex key))))
+  (dolist (key (citar--extract-keys keys-entries))
+    (citar--insert-bibtex key)))
 
 (defun citar--insert-bibtex (key)
   "Insert the bibtex entry for KEY at point."
@@ -965,7 +999,7 @@ With prefix, rebuild the cache before offering candidates."
   ;;      (browse-url-default-browser "https://google.com")
   (interactive (list (citar-select-refs
                       :rebuild-cache current-prefix-arg)))
-  (dolist (key-entry keys-entries)
+  (dolist (key-entry (citar--ensure-entries keys-entries))
     (let ((link (citar-get-link (cdr key-entry))))
       (if link
           (browse-url-default-browser link)
@@ -1001,25 +1035,27 @@ citation styles. See specific functions for more detail."
 (defun citar-insert-reference (keys-entries)
   "Insert formatted reference(s) associated with the KEYS-ENTRIES."
   (interactive (list (citar-select-refs)))
-  (insert (funcall citar-format-reference-function keys-entries)))
+  (let ((key-entry-alist (citar--ensure-entries keys-entries)))
+    (insert (funcall citar-format-reference-function key-entry-alist))))
 
 ;;;###autoload
 (defun citar-copy-reference (keys-entries)
   "Copy formatted reference(s) associated with the KEYS-ENTRIES."
   (interactive (list (citar-select-refs)))
-  (let ((references (funcall citar-format-reference-function keys-entries)))
+  (let* ((key-entry-alist (citar--ensure-entries keys-entries))
+         (references (funcall citar-format-reference-function key-entry-alist)))
     (if (not (equal "" references))
         (progn
           (kill-new references)
           (message (format "Copied:\n%s" references)))
       (message "Key not found."))))
 
-(defun citar-format-reference (keys-entries)
-  "Return formatted reference(s) associated with the KEYS-ENTRIES."
+(defun citar-format-reference (key-entry-alist)
+  "Return formatted reference(s) for the elements of KEY-ENTRY-ALIST."
   (let* ((template (citar-get-template 'preview))
          (references
           (with-temp-buffer
-            (dolist (key-entry keys-entries)
+            (dolist (key-entry key-entry-alist)
               (when template
                 (insert (citar--format-entry-no-widths (cdr key-entry) template))))
             (buffer-string))))
@@ -1055,26 +1091,18 @@ With prefix, rebuild the cache before offering candidates."
 (make-obsolete 'citar-add-pdf-attachment 'citar-attach-library-files "0.9")
 
 ;;;###autoload
-(defun citar-run-default-action (keys)
-  "Run the default action `citar-default-action' on KEYS."
-  (let* ((keys-parsed
-          (if (stringp keys)
-              (split-string keys " & ")
-            (split-string (cdr keys) " & ")))
-         (keys-entries
-          (seq-map
-           (lambda (key)
-             (cons key (citar--get-entry key))) keys-parsed)))
-    (funcall citar-default-action keys-entries)))
+(defun citar-run-default-action (keys-entries)
+  "Run the default action `citar-default-action' on KEYS-ENTRIES."
+  (funcall citar-default-action keys-entries))
 
 ;;;###autoload
 (defun citar-dwim ()
   "Run the default action on citation keys found at point."
   (interactive)
   (if-let ((keys (or (car (citar--major-mode-function 'citation-at-point #'ignore))
-                     (list (car (citar--major-mode-function 'key-at-point #'ignore))))))
-      ;; FIX how?
-      (citar-run-default-action (citar--stringify-keys keys))))
+                     (car (citar--major-mode-function 'key-at-point #'ignore)))))
+      (citar-run-default-action (if (listp keys) keys (list keys)))
+    (user-error "No citation keys found")))
 
 (provide 'citar)
 ;;; citar.el ends here
