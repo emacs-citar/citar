@@ -57,16 +57,18 @@
   :group 'citar
   :type '(function))
 
-(defcustom citar-file-extensions '("pdf")
-  "List of file extensions to recognize for related files.
+(defcustom citar-file-extensions nil
+  "List of file extensions to filter for related files.
 
 These are the extensions the 'citar-file-open-function'
-will open, via `citar-file-open'."
+will open, via `citar-file-open'.
+
+When nil, the function will not filter the list of files."
   :group 'citar
   :type '(repeat string))
 
 (defcustom citar-file-note-extensions '("org" "md")
-  "List of file extensions to recognize for notes.
+  "List of file extensions to filter for notes.
 
 These are the extensions the 'citar-open-note-function'
 will open, via `citar-open-notes'."
@@ -128,14 +130,29 @@ Example: ':/path/to/test.pdf:PDF'."
          (mapcar (apply-partially #'expand-file-name fn) dirs)))
      parts)))
 
-(defun citar-file--parse-file-field (entry fieldname &optional dirs)
+(defun citar-file--extension-p (filename extensions)
+  "Return non-nil if FILENAME extension is among EXTENSIONS."
+  (member (file-name-extension filename) extensions))
+
+(defun citar-file--parse-file-field (entry fieldname &optional dirs extensions)
   "Return files listed in FIELDNAME of ENTRY.
-File names are expanded relative to the elements of DIRS."
+File names are expanded relative to the elements of DIRS.
+
+Filter by EXTENSIONS when present."
   (unless dirs (setq dirs (list "/")))  ; make sure DIRS is non-nil
-  (when-let ((filefield (citar-get-value fieldname entry)))
-    (seq-mapcat (lambda (parser)
-                  (funcall parser dirs filefield))
-                citar-file-parser-functions)))
+  (let* ((filefield (citar-get-value fieldname entry))
+         (files
+          (when filefield
+            (delete-dups
+             (seq-mapcat
+              (lambda (parser)
+                (funcall parser dirs filefield))
+              citar-file-parser-functions)))))
+    (if extensions
+        (seq-filter
+         (lambda (fn)
+           (citar-file--extension-p fn extensions)) files)
+      files)))
 
 (defun citar-file--make-filename-regexp (keys extensions &optional additional-sep)
   "Regexp matching file names starting with KEYS and ending with EXTENSIONS.
@@ -234,9 +251,10 @@ repeatedly."
           ;; ENTRY.  This will run at most once for each KEY; after that, KEY
           ;; in hash table FILES will either contain nil or a file name found
           ;; in ENTRY.
-          (puthash key (seq-some
-                        #'file-exists-p
-                        (citar-file--parse-file-field entry entry-field dirs))
+          (puthash key
+                   (seq-some
+                    #'file-exists-p
+                    (citar-file--parse-file-field entry entry-field dirs extensions))
                    files))))))
 
 (defun citar-file--files-for-entry (key entry dirs extensions)
@@ -271,7 +289,7 @@ of files found in two ways:
          (gethash (car key-entry) files)
          (seq-filter
           #'file-exists-p
-          (citar-file--parse-file-field (cdr key-entry) citar-file-variable dirs))))
+          (citar-file--parse-file-field (cdr key-entry) citar-file-variable dirs extensions))))
       key-entry-alist))))
 
 ;;;; Opening and creating files functions
