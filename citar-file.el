@@ -24,7 +24,8 @@
 ;;; Code:
 
 (eval-when-compile
-  (require 'cl-lib))
+  (require 'cl-lib)
+  (require 'subr-x))
 (require 'seq)
 
 (declare-function citar-get-entry "citar")
