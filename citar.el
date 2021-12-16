@@ -419,26 +419,36 @@ documentation for the return value and the meaning of
 REBUILD-CACHE and FILTER."
   (citar-select-ref :rebuild-cache rebuild-cache :multiple t :filter filter))
 
-(defun citar-select-files (files)
-  "Select file(s) from a list of FILES."
-  ;; TODO add links to candidates
-  (completing-read-multiple
-   "Open related file(s): "
-   (lambda (string predicate action)
-     (if (eq action 'metadata)
-         `(metadata
-        ; (group-function . citar-select-group-related-sources)
-           (category . file))
-       (complete-with-action action files string predicate)))))
+(defun citar-select-resources (files &optional links)
+  "Select resource(s) from a list of FILES, and optionally LINKS."
+  ;; DONE Add links to candidates
+  ;; DONE Add group-function
+  ;; FIX: set category metadata depending on type (differentiate links and files); possible?
+  (let* ((resources (append
+                     (mapcar
+                      (lambda (file)
+                        (abbreviate-file-name file))
+                      files)
+                     (remq nil links))))
+    (completing-read-multiple
+     "Select resources: "
+     (lambda (string predicate action)
+       (if (eq action 'metadata)
+           `(metadata
+             (group-function . citar-select-group-related-resources)
+             ;; FIX: currently sets category "file" for all candidates
+             (category . file))
+         (complete-with-action action resources string predicate))))))
 
-(defun citar-select-group-related-sources (file transform)
-  "Group by FILE by source, TRANSFORM."
-    (let ((extension (file-name-extension file)))
-      (when transform file
-        ;; Transform for grouping and group title display.
+(defun citar-select-group-related-resources (resource transform)
+  "Group RESOURCE by type or TRANSFORM."
+    (let ((extension (file-name-extension resource)))
+      (if transform
+          resource
         (cond
-         ((string= extension (or "org" "md")) "Notes")
-          (t "Library Files")))))
+         ((member extension citar-file-note-extensions) "Notes")
+         ((string-match "http" resource 0) "Links")
+         (t "Files")))))
 
 (defun citar--get-major-mode-function (key &optional default)
   "Return KEY from 'major-mode-functions'."
@@ -903,15 +913,14 @@ into the corresponding reference key.  Return
            (lambda (key-entry)
              (citar-get-link (cdr key-entry)))
            key-entry-alist))
-         (resource-candidates (delete-dups (append files (remq nil links))))
-         (resources
-          (when resource-candidates
-            (completing-read-multiple "Related resources: " resource-candidates))))
-    (if resource-candidates
-        (dolist (resource resources)
-          (cond ((string-match "http" resource 0)
-                 (browse-url resource))
-                (t (citar-file-open resource))))
+         (resources))
+    (if files
+        (progn
+          (setq resources (citar-select-resources files links))
+          (dolist (resource resources)
+            (cond ((string-match "http" resource 0)
+                   (browse-url resource))
+                  (t (citar-file-open resource)))))
       (message "No associated resources"))))
 
 (defun citar--library-files-action (keys-entries action)
@@ -927,7 +936,7 @@ into the corresponding reference key.  Return
       (if (and citar-file-open-prompt
                (> (length files) 1))
           (let ((selected-files
-                 (citar-select-files files)))
+                 (citar-select-resources files)))
             (dolist (file selected-files)
               (funcall fn file)))
         (dolist (file files)

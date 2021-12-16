@@ -296,7 +296,7 @@ of files found in two ways:
 
 (defun citar-file-open (file)
   "Open FILE."
-  (funcall citar-file-open-function file))
+  (funcall citar-file-open-function (expand-file-name file)))
 
 (defun citar-file-open-external (file)
   "Open FILE with external application."
