@@ -964,12 +964,20 @@ With prefix, rebuild the cache before offering candidates."
 
 (defun citar--open-note (key entry)
   "Open a note file from KEY and ENTRY."
-  (if-let* ((file (citar-file--get-note-filename key
-                                                 citar-notes-paths
-                                                 citar-file-note-extensions))
-            (file-exists (file-exists-p file)))
-      (find-file file)
-    (funcall citar-format-note-function key entry file)))
+  (if-let* ((raw-files (citar-file--get-note-filenames key
+                                                       citar-notes-paths
+                                                       citar-file-note-extensions))
+            (files
+             (mapcar
+              (lambda (file)
+                (abbreviate-file-name file))
+              raw-files))
+            (file (when (= (length files) 1)
+                    (car files))))
+      (if  (file-exists-p file)
+          (find-file (expand-file-name file))
+        (funcall citar-format-note-function key entry (expand-file-name file)))
+    (find-file (expand-file-name (completing-read "Open note: " files nil t)))))
 
 ;;;###autoload
 (defun citar-open-entry (keys-entries)

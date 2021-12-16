@@ -311,20 +311,18 @@ of files found in two ways:
                   nil 0 nil
                   file)))
 
-(defun citar-file--get-note-filename (key dirs extensions)
-  "Return existing or new filename for KEY in DIRS with extension in EXTENSIONS.
+(defun citar-file--get-note-filenames (key dirs extensions)
+  "Return list of existing notes or a new filename for KEY in DIRS with extension in EXTENSIONS.
 
-This is for use in a note function where notes are one-per-file,
-with citekey as filename.
-
-Returns the filename whether or not the file exists, to support a
-function that will open a new file if the note is not present."
-  (let ((files (citar-file--directory-files dirs (list key) extensions
-                                            citar-file-additional-files-separator)))
-    (or (car (gethash key files))
-        (when-let ((dir (car dirs))
-                   (ext (car extensions)))
-          (expand-file-name (concat key "." ext) dir)))))
+If no notes exist, returns a filename to support a function that
+will open a new file if the note is not present."
+  (if-let* ((files
+             (gethash key (citar-file--directory-files dirs
+                                                       (list key)
+                                                       extensions
+                                                       citar-file-additional-files-separator))))
+      files
+    (list (concat (car dirs) "/" key "." (car extensions)))))
 
 (provide 'citar-file)
 ;;; citar-file.el ends here
