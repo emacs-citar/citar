@@ -319,6 +319,12 @@ of all citations in the current buffer."
 
 ;;; Completion functions
 
+(defcustom citar-select-multiple t
+  "Use `completing-read-multiple' for selecting citation keys.
+  When nil, all citar commands will use `completing-read`."
+  :type 'boolean
+  :group 'citar)
+
 (defun citar--completion-table (candidates &optional filter)
   "Return a completion table for CANDIDATES.
 
@@ -378,7 +384,7 @@ FILTER: if non-nil, should be a predicate function taking
          (completions (citar--completion-table candidates filter))
          (embark-transformer-alist (citar--embark-transformer-alist candidates))
          (crm-separator "\\s-*&\\s-*")
-         (chosen (if multiple
+         (chosen (if (and multiple citar-select-multiple)
                      (completing-read-multiple "References: " completions nil nil nil
                                                'citar-history citar-presets nil)
                    (completing-read "Reference: " completions nil nil nil
