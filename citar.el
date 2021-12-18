@@ -714,32 +714,61 @@ If FORCE-REBUILD-CACHE is t, force reload the cache."
       (concat base-url (citar-get-value field entry)))))
 
 (defun citar--extract-keys (keys-entries)
-  "Extract list of keys from KEYS-ENTRIES alist."
-  (seq-map (lambda (key-entry)
-             (if (consp key-entry) (car key-entry) key-entry))
-           keys-entries))
+  "Extract list of keys from KEYS-ENTRIES.
+
+Each element of KEYS-ENTRIES should be either a (KEY . ENTRY)
+pair or a string KEYS.
+
+- If it is a (KEY . ENTRY) pair, it is replaced by KEY in the
+  returned list.
+
+- Otherwise, it should be a string KEYS consisting of multiple
+  keys separated by \" & \".  The string is split and the
+  separated keys are included in the returned list.
+
+Return a list containing only KEY strings."
+  (seq-mapcat
+   (lambda (key-entry)
+     (if (consp key-entry)
+         (list (car key-entry))
+       (split-string key-entry " & ")))
+   keys-entries))
 
 (defun citar--ensure-entries (keys-entries)
   "Return copy of KEYS-ENTRIES with every element a (KEY . ENTRY) pair.
-Each element of KEYS-ENTRIES should be either a KEY or a (KEY
-. ENTRY) pair.  If it is the former, look up the corresponding
-ENTRY and transform the element to a (KEY . ENTRY) pair."
-  (let ((candidates 'uninitialized))
+
+Each element of KEYS-ENTRIES should be either a (KEY . ENTRY)
+pair or a string KEYS.
+
+- If it is a (KEY . ENTRY) pair, it is included in the returned
+  list.
+
+- Otherwise, it should be a string KEYS consisting of multiple
+  keys separated by \" & \".  Look up the corresponding ENTRY for
+  each KEY and, if found, include the (KEY . ENTRY) pairs in the
+  returned list.
+
+Return a list containing only (KEY . ENTRY) pairs."
+  (if (seq-every-p #'consp keys-entries)
+      keys-entries
     ;; Get candidates only if some key has a missing entry, to avoid nasty
     ;; recursion issues like https://github.com/bdarcus/citar/issues/286. Also
     ;; avoids lots of memory allocation in the common case when all entries are
     ;; present.
-    (seq-map
-     (lambda (key-entry)
-       (if (consp key-entry)
-           key-entry
-         (when (eq candidates 'uninitialized)
-           (setq candidates (citar--get-candidates)))
-         (cons key-entry
-               (cddr (seq-find (lambda (cand-key-entry)
-                                 (string= key-entry (cadr cand-key-entry)))
-                               candidates)))))
-     keys-entries)))
+    (let ((candidates (citar--get-candidates)))
+      (seq-mapcat
+       (lambda (key-entry)
+         (if (consp key-entry)
+             (list key-entry)
+           (cl-delete-if                ; remove keys not found in CANDIDATES
+            #'null
+            (seq-map
+             (lambda (key)
+               (cdr (seq-find (lambda (cand-key-entry)
+                                (string= key (cadr cand-key-entry)))
+                              candidates)))
+             (split-string key-entry " & ")))))
+       keys-entries))))
 
 ;;;###autoload
 (defun citar-insert-preset ()
