@@ -760,7 +760,7 @@ Return a list containing only (KEY . ENTRY) pairs."
        (lambda (key-entry)
          (if (consp key-entry)
              (list key-entry)
-           (cl-delete-if                ; remove keys not found in CANDIDATES
+           (seq-remove      ; remove keys not found in CANDIDATES
             #'null
             (seq-map
              (lambda (key)
@@ -1048,8 +1048,8 @@ With prefix, rebuild the cache before offering candidates."
 Prefix ARG is passed to the mode-specific insertion function. It
 should invert the default behaviour for that mode with respect to
 citation styles. See specific functions for more detail."
-  (interactive (list (citar-select-refs) ;; key-entries
-		     current-prefix-arg)) ;; arg
+  (interactive (list (citar-select-refs) ; key-entries
+		     current-prefix-arg)) ; arg
   (citar--major-mode-function
    'insert-citation
    (lambda (&rest _)
