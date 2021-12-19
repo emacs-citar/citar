@@ -55,7 +55,7 @@
 (defvar embark-meta-map)
 (defvar embark-transformer-alist)
 (defvar embark-multitarget-actions)
-(defvar citar-org-open-note-function)
+;(defvar citar-org-open-note-function)
 
 ;;; Variables
 
@@ -319,7 +319,7 @@ of all citations in the current buffer."
 
 ;;; Completion functions
 
-(defcustom citar-select-multiple t
+(defcustom citar-select-multiple nil
   "Use `completing-read-multiple' for selecting citation keys.
   When nil, all citar commands will use `completing-read`."
   :type 'boolean
@@ -419,11 +419,10 @@ documentation for the return value and the meaning of
 REBUILD-CACHE and FILTER."
   (citar-select-ref :rebuild-cache rebuild-cache :multiple t :filter filter))
 
-(defun citar-select-files (files)
-  "Select file(s) from a list of FILES."
-  ;; TODO add links to candidates
-  (completing-read-multiple
-   "Open related file(s): "
+(defun citar-select-file (files)
+  "Select file from a list of FILES."
+  (completing-read
+   "Related file: "
    (lambda (string predicate action)
      (if (eq action 'metadata)
          `(metadata
@@ -760,7 +759,7 @@ Return a list containing only (KEY . ENTRY) pairs."
        (lambda (key-entry)
          (if (consp key-entry)
              (list key-entry)
-           (seq-remove      ; remove keys not found in CANDIDATES
+           (seq-remove    ; remove keys not found in CANDIDATES
             #'null
             (seq-map
              (lambda (key)
@@ -873,9 +872,7 @@ into the corresponding reference key.  Return
   (add-to-list 'embark-keymap-alist '(citar-citation . citar-citation-map))
   (add-to-list 'embark-pre-action-hooks '(citar-insert-edit embark--ignore-target))
   (when (boundp 'embark-multitarget-actions)
-    (dolist (command (list #'citar-open #'citar-open-notes
-                           #'citar-open-entry #'citar-open-link
-                           #'citar-open-library-files #'citar-attach-library-files
+    (dolist (command (list #'citar-open-library-files #'citar-attach-library-files
                            #'citar-insert-bibtex #'citar-insert-citation
                            #'citar-insert-reference #'citar-copy-reference
                            #'citar-insert-keys #'citar-run-default-action))
@@ -906,7 +903,7 @@ into the corresponding reference key.  Return
          (resource-candidates (delete-dups (append files (remq nil links))))
          (resources
           (when resource-candidates
-            (completing-read-multiple "Related resources: " resource-candidates))))
+            (completing-read "Related resources: " resource-candidates))))
     (if resource-candidates
         (dolist (resource resources)
           (cond ((string-match "http" resource 0)
@@ -914,53 +911,51 @@ into the corresponding reference key.  Return
                 (t (citar-file-open resource))))
       (message "No associated resources"))))
 
-(defun citar--library-files-action (keys-entries action)
-  "Run ACTION on files associated with KEYS-ENTRIES."
-  (if-let ((fn (pcase action
-                 ('open 'citar-file-open)
-                 ('attach 'mml-attach-file)))
-           (files
-            (citar-file--files-for-multiple-entries
-             (citar--ensure-entries keys-entries)
-             citar-library-paths
-             citar-file-extensions)))
+(defun citar--library-files-action (key-entry action)
+  "Run ACTION on files associated with KEY-ENTRY."
+  (let* ((fn (pcase action
+               ('open 'citar-file-open)
+               ('attach 'mml-attach-file)))
+         (ke (citar--ensure-entries key-entry))
+         (key (caar ke))
+         (entry (cdar ke))
+         (files
+          (citar-file--files-for-entry
+           key
+           entry
+           citar-library-paths
+           citar-file-extensions)))
       (if (and citar-file-open-prompt
                (> (length files) 1))
-          (let ((selected-files
-                 (citar-select-files files)))
-            (dolist (file selected-files)
-              (funcall fn file)))
-        (dolist (file files)
-          (funcall fn file)))
-    (message "No associated file")))
+          (let ((file
+                 (citar-select-file files)))
+              (funcall fn file)
+              (funcall fn file))
+    (message "No associated file"))))
 
 ;;;###autoload
-(defun citar-open-library-files (keys-entries)
- "Open library files associated with the KEYS-ENTRIES.
+(defun citar-open-library-file (key-entry)
+ "Open library file associated with the KEY-ENTRY.
 
 With prefix, rebuild the cache before offering candidates."
-  (interactive (list (citar-select-refs
+  (interactive (list (citar-select-ref
                       :rebuild-cache current-prefix-arg)))
     (when (and citar-library-paths
                (stringp citar-library-paths))
       (message "Make sure 'citar-library-paths' is a list of paths"))
-    (citar--library-files-action keys-entries 'open))
-
-(make-obsolete 'citar-open-pdf
-               'citar-open-library-files "1.0")
+    (citar--library-files-action key-entry 'open))
 
 ;;;###autoload
-(defun citar-open-notes (keys-entries)
-  "Open notes associated with the KEYS-ENTRIES.
+(defun citar-open-notes (key-entry)
+  "Open notes associated with the KEY-ENTRY.
 With prefix, rebuild the cache before offering candidates."
-  (interactive (list (citar-select-refs
+  (interactive (list (citar-select-ref
                       :rebuild-cache current-prefix-arg)))
   (when (and (null citar-notes-paths)
              (equal citar-format-note-function
                     'citar-org-format-note-default))
     (error "You must set 'citar-notes-paths' to open notes with default notes function"))
-  (dolist (key-entry (citar--ensure-entries keys-entries))
-    (funcall citar-open-note-function (car key-entry) (cdr key-entry))))
+  (funcall citar-open-note-function (car key-entry) (cdr key-entry)))
 
 (defun citar--open-note (key entry)
   "Open a note file from KEY and ENTRY."
@@ -972,18 +967,17 @@ With prefix, rebuild the cache before offering candidates."
     (funcall citar-format-note-function key entry file)))
 
 ;;;###autoload
-(defun citar-open-entry (keys-entries)
-  "Open bibliographic entry associated with the first of KEYS-ENTRIES.
+(defun citar-open-entry (key-entry)
+  "Open bibliographic entry associated with the KEY-ENTRY.
 With prefix, rebuild the cache before offering candidates."
-  (interactive (list (citar-select-refs
+  (interactive (list (citar-select-ref
                       :rebuild-cache current-prefix-arg)))
-  (when-let ((key (car (citar--extract-keys keys-entries))))
-    (citar--open-entry key)))
-
-(defun citar--open-entry (key)
-  "Open bibliographic entry asociated with the KEY."
-  (let ((bibtex-files
-         (seq-concatenate 'list citar-bibliography (citar--local-files-to-cache))))
+  (when-let* ((key (car key-entry))
+              (bibtex-files
+               (seq-concatenate
+                'list
+                citar-bibliography
+                (citar--local-files-to-cache))))
     (bibtex-find-entry key t nil t)))
 
 ;;;###autoload
@@ -1027,19 +1021,16 @@ directory as current buffer."
           (citar--insert-bibtex key)))))
 
 ;;;###autoload
-(defun citar-open-link (keys-entries)
-  "Open URL or DOI link associated with the KEYS-ENTRIES in a browser.
+(defun citar-open-link (key-entry)
+  "Open URL or DOI link associated with the KEY-ENTRY in a browser.
 
 With prefix, rebuild the cache before offering candidates."
-  ;;      (browse-url-default-browser "https://google.com")
-  (interactive (list (citar-select-refs
+  (interactive (list (citar-select-ref
                       :rebuild-cache current-prefix-arg)))
-  (dolist (key-entry (citar--ensure-entries keys-entries))
-    (let ((link (citar-get-link (cdr key-entry))))
-      (if link
-          (browse-url-default-browser link)
-        (message "No link found for %s" (car key-entry))))))
-
+  (let ((link (citar-get-link (cdr key-entry))))
+    (if link
+        (browse-url-default-browser link)
+      (message "No link found for %s" (car key-entry)))))
 
 ;;;###autoload
 (defun citar-insert-citation (keys-entries &optional arg)
@@ -1112,18 +1103,16 @@ With prefix, rebuild the cache before offering candidates."
   (insert (string-join keys ", ")))
 
 ;;;###autoload
-(defun citar-attach-library-files (keys-entries)
-  "Attach library files associated with KEYS-ENTRIES to outgoing MIME message.
+(defun citar-attach-library-file (key-entry)
+  "Attach library file associated with KEY-ENTRY to outgoing MIME message.
 
 With prefix, rebuild the cache before offering candidates."
-  (interactive (list (citar-select-refs
+  (interactive (list (citar-select-ref
                       :rebuild-cache current-prefix-arg)))
   (when (and citar-library-paths
              (stringp citar-library-paths))
     (message "Make sure 'citar-library-paths' is a list of paths"))
-  (citar--library-files-action keys-entries 'attach))
-
-(make-obsolete 'citar-add-pdf-attachment 'citar-attach-library-files "0.9")
+  (citar--library-files-action key-entry 'attach))
 
 ;;;###autoload
 (defun citar-run-default-action (keys-entries)
