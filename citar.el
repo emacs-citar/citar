@@ -423,22 +423,26 @@ REBUILD-CACHE and FILTER."
   "Select resource(s) from a list of FILES, and optionally LINKS."
   ;; DONE Add links to candidates
   ;; DONE Add group-function
-  ;; FIX: set category metadata depending on type (differentiate links and files); possible?
-  (let* ((resources (append
-                     (mapcar
-                      (lambda (file)
-                        (abbreviate-file-name file))
-                      files)
-                     (remq nil links))))
-    (completing-read-multiple
+  ;; DONE: set category metadata depending on type (differentiate links and files)
+  (let* ((files (mapcar
+                 (lambda (cand)
+                   (abbreviate-file-name cand))
+                 files))
+         (resources (append files (remq nil links))))
+    (dolist (item resources)
+      (cond ((string-match "http" item 0)
+             (add-text-properties 0 (length item) `(consult-multi (url . ,item)) item))
+            (t
+             (add-text-properties 0 (length item) `(consult-multi (file . ,item)) item)))
+      (push item resources))
+    (completing-read
      "Select resources: "
      (lambda (string predicate action)
        (if (eq action 'metadata)
            `(metadata
              (group-function . citar-select-group-related-resources)
-             ;; FIX: currently sets category "file" for all candidates
-             (category . file))
-         (complete-with-action action resources string predicate))))))
+             (category . consult-multi))
+         (complete-with-action action (delete-dups resources) string predicate))))))
 
 (defun citar-select-group-related-resources (resource transform)
   "Group RESOURCE by type or TRANSFORM."
