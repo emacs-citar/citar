@@ -421,9 +421,6 @@ REBUILD-CACHE and FILTER."
 
 (defun citar-select-resources (files &optional links)
   "Select resource(s) from a list of FILES, and optionally LINKS."
-  ;; DONE Add links to candidates
-  ;; DONE Add group-function
-  ;; DONE: set category metadata depending on type (differentiate links and files)
   (let* ((files (mapcar
                  (lambda (cand)
                    (abbreviate-file-name cand))
@@ -436,7 +433,7 @@ REBUILD-CACHE and FILTER."
              (add-text-properties 0 (length item) `(consult-multi (file . ,item)) item)))
       (push item resources))
     (completing-read
-     "Select resources: "
+     "Select resource: "
      (lambda (string predicate action)
        (if (eq action 'metadata)
            `(metadata
@@ -452,7 +449,7 @@ REBUILD-CACHE and FILTER."
         (cond
          ((member extension citar-file-note-extensions) "Notes")
          ((string-match "http" resource 0) "Links")
-         (t "Files")))))
+         (t "Library Files")))))
 
 (defun citar--get-major-mode-function (key &optional default)
   "Return KEY from 'major-mode-functions'."
@@ -899,7 +896,7 @@ into the corresponding reference key.  Return
 
 ;;;###autoload
 (defun citar-open (keys-entries)
-  "Open related resources (links or files) for KEYS-ENTRIES."
+  "Open any related resources (links, files, or notes) for KEYS-ENTRIES."
   (interactive (list (citar-select-refs
                       :rebuild-cache current-prefix-arg)))
   (when (and citar-library-paths
@@ -917,14 +914,11 @@ into the corresponding reference key.  Return
            (lambda (key-entry)
              (citar-get-link (cdr key-entry)))
            key-entry-alist))
-         (resources))
+         (selection (citar-select-resources files links)))
     (if files
-        (progn
-          (setq resources (citar-select-resources files links))
-          (dolist (resource resources)
-            (cond ((string-match "http" resource 0)
-                   (browse-url resource))
-                  (t (citar-file-open resource)))))
+        (cond ((string-match "http" selection 0)
+               (browse-url selection))
+              (t (citar-file-open selection)))
       (message "No associated resources"))))
 
 (defun citar--library-files-action (keys-entries action)
@@ -939,12 +933,9 @@ into the corresponding reference key.  Return
              citar-file-extensions)))
       (if (and citar-file-open-prompt
                (> (length files) 1))
-          (let ((selected-files
-                 (citar-select-resources files)))
-            (dolist (file selected-files)
-              (funcall fn file)))
-        (dolist (file files)
-          (funcall fn file)))
+          (let ((selection (citar-select-resources files)))
+            (funcall fn selection))
+        (funcall fn files))
     (message "No associated file")))
 
 ;;;###autoload
@@ -987,10 +978,10 @@ With prefix, rebuild the cache before offering candidates."
               raw-files))
             (file (when (= (length files) 1)
                     (car files))))
-      (if  (file-exists-p file)
+      (if (file-exists-p file)
           (find-file (expand-file-name file))
         (funcall citar-format-note-function key entry (expand-file-name file)))
-    (find-file (expand-file-name (completing-read "Open note: " files nil t)))))
+    (find-file (citar-select-resources files))))
 
 ;;;###autoload
 (defun citar-open-entry (keys-entries)
