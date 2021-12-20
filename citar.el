@@ -419,8 +419,8 @@ documentation for the return value and the meaning of
 REBUILD-CACHE and FILTER."
   (citar-select-ref :rebuild-cache rebuild-cache :multiple t :filter filter))
 
-(defun citar-select-resources (files &optional links)
-  "Select resource(s) from a list of FILES, and optionally LINKS."
+(defun citar-select-resource (files &optional links)
+  "Select resource from a list of FILES, and optionally LINKS."
   (let* ((files (mapcar
                  (lambda (cand)
                    (abbreviate-file-name cand))
@@ -914,7 +914,7 @@ into the corresponding reference key.  Return
            (lambda (key-entry)
              (citar-get-link (cdr key-entry)))
            key-entry-alist))
-         (selection (citar-select-resources files links)))
+         (selection (citar-select-resource files links)))
     (if files
         (cond ((string-match "http" selection 0)
                (browse-url selection))
@@ -933,9 +933,9 @@ into the corresponding reference key.  Return
              citar-file-extensions)))
       (if (and citar-file-open-prompt
                (> (length files) 1))
-          (let ((selection (citar-select-resources files)))
+          (let ((selection (citar-select-resource files)))
             (funcall fn selection))
-        (funcall fn files))
+        (funcall fn (car files)))
     (message "No associated file")))
 
 ;;;###autoload
@@ -981,7 +981,7 @@ With prefix, rebuild the cache before offering candidates."
       (if (file-exists-p file)
           (find-file (expand-file-name file))
         (funcall citar-format-note-function key entry (expand-file-name file)))
-    (find-file (citar-select-resources files))))
+    (find-file (citar-select-resource files))))
 
 ;;;###autoload
 (defun citar-open-entry (keys-entries)
@@ -1043,7 +1043,6 @@ directory as current buffer."
   "Open URL or DOI link associated with the KEYS-ENTRIES in a browser.
 
 With prefix, rebuild the cache before offering candidates."
-  ;;      (browse-url-default-browser "https://google.com")
   (interactive (list (citar-select-refs
                       :rebuild-cache current-prefix-arg)))
   (dolist (key-entry (citar--ensure-entries keys-entries))
