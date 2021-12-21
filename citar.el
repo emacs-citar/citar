@@ -993,7 +993,8 @@ With prefix, rebuild the cache before offering candidates."
                     (car files))))
       (if (file-exists-p file)
           (find-file (expand-file-name file))
-        (funcall citar-format-note-function key entry (expand-file-name file)))
+        (when (yes-or-no-p (format "No note associated with %s. Create one?" key))
+          (funcall citar-format-note-function key entry (expand-file-name file))))
     (find-file (citar-select-resource files))))
 
 ;;;###autoload
@@ -1062,7 +1063,7 @@ With prefix, rebuild the cache before offering candidates."
     (dolist (key-entry (citar--ensure-entries keys-entries))
       (let ((link (citar-get-link (cdr key-entry))))
 	(if link
-            (browse-url-default-browser link)
+            (browse-url link)
           (message "No link found for %s" (car key-entry)))))))
 
 ;;;###autoload
