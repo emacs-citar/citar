@@ -896,13 +896,16 @@ into the corresponding reference key.  Return
 
 ;;;###autoload
 (defun citar-open (keys-entries)
-  "Open any related resources (links, files, or notes) for KEYS-ENTRIES."
+  "Open any related resource (links, files, or notes) for KEYS-ENTRIES."
   (interactive (list (citar-select-refs
                       :rebuild-cache current-prefix-arg)))
   (when (and citar-library-paths
              (stringp citar-library-paths))
     (message "Make sure 'citar-library-paths' is a list of paths"))
-  (let* ((key-entry-alist (citar--ensure-entries keys-entries))
+  (let* ((embark-default-action-overrides '((consult-multi . citar-open-multi)
+					    (file . citar-file-open)
+                                            (url . browse-url)))
+         (key-entry-alist (citar--ensure-entries keys-entries))
          (files
           (citar-file--files-for-multiple-entries
            key-entry-alist
@@ -920,6 +923,14 @@ into the corresponding reference key.  Return
                (browse-url selection))
               (t (citar-file-open selection)))
       (message "No associated resources"))))
+
+(defun citar-open-multi (selection)
+  "Act appropriately on SELECTION when type is 'consult-multi'.
+
+For use with 'embark-act-all'."
+  (cond ((string-match "http" selection 0)
+         (browse-url selection))
+        (t (citar-file-open selection))))
 
 (defun citar--library-files-action (keys-entries action)
   "Run ACTION on files associated with KEYS-ENTRIES."
@@ -945,10 +956,11 @@ into the corresponding reference key.  Return
 With prefix, rebuild the cache before offering candidates."
   (interactive (list (citar-select-refs
                       :rebuild-cache current-prefix-arg)))
+  (let ((embark-default-action-overrides '((file . citar-file-open))))
     (when (and citar-library-paths
                (stringp citar-library-paths))
       (message "Make sure 'citar-library-paths' is a list of paths"))
-    (citar--library-files-action keys-entries 'open))
+    (citar--library-files-action keys-entries 'open)))
 
 (make-obsolete 'citar-open-pdf
                'citar-open-library-files "1.0")
@@ -959,12 +971,13 @@ With prefix, rebuild the cache before offering candidates."
 With prefix, rebuild the cache before offering candidates."
   (interactive (list (citar-select-refs
                       :rebuild-cache current-prefix-arg)))
-  (when (and (null citar-notes-paths)
-             (equal citar-format-note-function
-                    'citar-org-format-note-default))
-    (error "You must set 'citar-notes-paths' to open notes with default notes function"))
-  (dolist (key-entry (citar--ensure-entries keys-entries))
-    (funcall citar-open-note-function (car key-entry) (cdr key-entry))))
+  (let ((embark-default-action-overrides '((file . find-file))))
+    (when (and (null citar-notes-paths)
+               (equal citar-format-note-function
+                      'citar-org-format-note-default))
+      (error "You must set 'citar-notes-paths' to open notes with default notes function"))
+    (dolist (key-entry (citar--ensure-entries keys-entries))
+      (funcall citar-open-note-function (car key-entry) (cdr key-entry)))))
 
 (defun citar--open-note (key entry)
   "Open a note file from KEY and ENTRY."
@@ -1045,12 +1058,12 @@ directory as current buffer."
 With prefix, rebuild the cache before offering candidates."
   (interactive (list (citar-select-refs
                       :rebuild-cache current-prefix-arg)))
-  (dolist (key-entry (citar--ensure-entries keys-entries))
-    (let ((link (citar-get-link (cdr key-entry))))
-      (if link
-          (browse-url-default-browser link)
-        (message "No link found for %s" (car key-entry))))))
-
+  (let ((embark-default-action-overrides '((url . browse-url))))
+    (dolist (key-entry (citar--ensure-entries keys-entries))
+      (let ((link (citar-get-link (cdr key-entry))))
+	(if link
+            (browse-url-default-browser link)
+          (message "No link found for %s" (car key-entry)))))))
 
 ;;;###autoload
 (defun citar-insert-citation (keys-entries &optional arg)
@@ -1129,10 +1142,11 @@ With prefix, rebuild the cache before offering candidates."
 With prefix, rebuild the cache before offering candidates."
   (interactive (list (citar-select-refs
                       :rebuild-cache current-prefix-arg)))
+  (let ((embark-default-action-overrides '((file . mml-attach-file))))
   (when (and citar-library-paths
              (stringp citar-library-paths))
     (message "Make sure 'citar-library-paths' is a list of paths"))
-  (citar--library-files-action keys-entries 'attach))
+  (citar--library-files-action keys-entries 'attach)))
 
 (make-obsolete 'citar-add-pdf-attachment 'citar-attach-library-files "0.9")
 
