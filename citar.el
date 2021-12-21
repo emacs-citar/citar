@@ -55,6 +55,7 @@
 (defvar embark-meta-map)
 (defvar embark-transformer-alist)
 (defvar embark-multitarget-actions)
+(defvar embark-default-action-overrides)
 (defvar citar-org-open-note-function)
 
 ;;; Variables
