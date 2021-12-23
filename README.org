@@ -72,8 +72,6 @@ This is the minimal configuration, and will work with any completing-read compli
   (citar-bibliography '("~/bib/references.bib"))
 #+END_SRC
 
-Since most of the command logic resides in bibtex-completion, that is where to look for different [[https://github.com/tmalsburg/helm-bibtex#basic-configuration-recommended][configuration options]].
-
 *** Embark
 
 Citar will automatically integrate with Embark if it is installed, offering contextual access to actions in the
@@ -275,8 +273,6 @@ You can also use the ~citar-open-note-function~ variable to replace the default 
 #+BEGIN_SRC emacs-lisp
 (setq citar-open-note-function 'orb-citar-edit-note)
 #+END_SRC
-
-Note, however: if you use that function you need to ensure that the ~bibtex-completion-bibliography~ variable is correctly set to the same paths as ~citar-bibliography~.
 
 ** Files, file association and file-field parsing
 
