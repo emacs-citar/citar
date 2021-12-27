@@ -296,7 +296,9 @@ of files found in two ways:
 
 (defun citar-file-open (file)
   "Open FILE."
-  (funcall citar-file-open-function file))
+  (if (equal (file-name-extension file) "html")
+      (citar-file-open-external file)
+    (funcall citar-file-open-function file)))
 
 (defun citar-file-open-external (file)
   "Open FILE with external application."
