@@ -911,8 +911,8 @@ into the corresponding reference key.  Return
                 (t (citar-file-open resource))))
       (message "No associated resources"))))
 
-(defun citar--library-files-action (key-entry action)
-  "Run ACTION on files associated with KEY-ENTRY."
+(defun citar--library-file-action (key-entry action)
+  "Run ACTION on file associated with KEY-ENTRY."
   (let* ((fn (pcase action
                ('open 'citar-file-open)
                ('attach 'mml-attach-file)))
@@ -924,14 +924,15 @@ into the corresponding reference key.  Return
            key
            entry
            citar-library-paths
-           citar-file-extensions)))
-      (if (and citar-file-open-prompt
-               (> (length files) 1))
-          (let ((file
-                 (citar-select-file files)))
-              (funcall fn file)
-              (funcall fn file))
-    (message "No associated file"))))
+           citar-file-extensions))
+         (file
+          (pcase (length files)
+            (1 (car files))
+            ((guard (> 1))
+             (citar-select-file files)))))
+    (if file
+        (funcall fn file)
+      (message "No associated file"))))
 
 ;;;###autoload
 (defun citar-open-library-file (key-entry)
@@ -943,7 +944,7 @@ With prefix, rebuild the cache before offering candidates."
     (when (and citar-library-paths
                (stringp citar-library-paths))
       (message "Make sure 'citar-library-paths' is a list of paths"))
-    (citar--library-files-action key-entry 'open))
+    (citar--library-file-action key-entry 'open))
 
 ;;;###autoload
 (defun citar-open-notes (key-entry)
@@ -1112,7 +1113,7 @@ With prefix, rebuild the cache before offering candidates."
   (when (and citar-library-paths
              (stringp citar-library-paths))
     (message "Make sure 'citar-library-paths' is a list of paths"))
-  (citar--library-files-action key-entry 'attach))
+  (citar--library-file-action key-entry 'attach))
 
 ;;;###autoload
 (defun citar-run-default-action (keys-entries)
