@@ -902,15 +902,14 @@ into the corresponding reference key.  Return
              (citar-get-link (cdr key-entry)))
            key-entry-alist))
          (resource-candidates (delete-dups (append files (remq nil links))))
-         (resources
+         (resource
           (when resource-candidates
-            (list (completing-read "Related resources: " resource-candidates)))))
+            (completing-read "Related resources: " resource-candidates))))
     (if resource-candidates
-        (dolist (resource resources)
-          (cond ((string-match "http" resource 0)
-                 (browse-url resource))
-                (t (citar-file-open resource))))
-      (message "No associated resources"))))
+        (cond ((string-match "http" resource 0)
+               (browse-url resource))
+              (t (citar-file-open resource))))
+    (message "No associated resources")))
 
 (defun citar--library-file-action (key-entry action)
   "Run ACTION on file associated with KEY-ENTRY."
