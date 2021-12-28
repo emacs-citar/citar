@@ -299,7 +299,7 @@ of all citations in the current buffer."
     (define-key map (kbd "e") #'citar-open-entry)
     (define-key map (kbd "l") #'citar-open-link)
     (define-key map (kbd "n") #'citar-open-notes)
-    (define-key map (kbd "f") #'citar-open-library-file)
+    (define-key map (kbd "f") #'citar-open-library-files)
     (define-key map (kbd "RET") #'citar-run-default-action)
     map)
   "Keymap for Embark minibuffer actions.")
@@ -311,7 +311,7 @@ of all citations in the current buffer."
     (define-key map (kbd "e") #'citar-open-entry)
     (define-key map (kbd "l") #'citar-open-link)
     (define-key map (kbd "n") #'citar-open-notes)
-    (define-key map (kbd "f") #'citar-open-library-file)
+    (define-key map (kbd "f") #'citar-open-library-files)
     (define-key map (kbd "r") #'citar-copy-reference)
     (define-key map (kbd "RET") #'citar-run-default-action)
     map)
@@ -319,7 +319,7 @@ of all citations in the current buffer."
 
 ;;; Completion functions
 
-(defcustom citar-select-multiple t
+(defcustom citar-select-multiple nil
   "Use `completing-read-multiple' for selecting citation keys.
   When nil, all citar commands will use `completing-read`."
   :type 'boolean
@@ -881,18 +881,17 @@ into the corresponding reference key.  Return
 ;;; Commands
 
 ;;;###autoload
-(defun citar-open (key-entry)
-  "Open related resources (links or files) for KEY-ENTRY."
-  (interactive (list (citar-select-ref
+(defun citar-open (keys-entries)
+  "Open related resources (links or files) for KEYS-ENTRIES."
+  (interactive (list (citar-select-refs
                       :rebuild-cache current-prefix-arg)))
   (when (and citar-library-paths
              (stringp citar-library-paths))
     (message "Make sure 'citar-library-paths' is a list of paths"))
-  (let* ((key-entry-alist (citar--ensure-entries key-entry))
+  (let* ((key-entry-alist (citar--ensure-entries keys-entries))
          (files
-          (citar-file--files-for-entry
-           (caar key-entry-alist)
-           (cdar key-entry-alist)
+          (citar-file--files-for-multiple-entries
+           key-entry-alist
            (append citar-library-paths citar-notes-paths)
            ;; find files with any extension:
            nil))
@@ -902,14 +901,15 @@ into the corresponding reference key.  Return
              (citar-get-link (cdr key-entry)))
            key-entry-alist))
          (resource-candidates (delete-dups (append files (remq nil links))))
-         (resource
+         (resources
           (when resource-candidates
             (completing-read "Related resources: " resource-candidates))))
     (if resource-candidates
-        (cond ((string-match "http" resource 0)
-               (browse-url resource))
-              (t (citar-file-open resource))))
-    (message "No associated resources")))
+        (dolist (resource resources)
+          (cond ((string-match "http" resource 0)
+                 (browse-url resource))
+                (t (citar-file-open resource))))
+      (message "No associated resources"))))
 
 (defun citar--library-file-action (key-entry action)
   "Run ACTION on file associated with KEY-ENTRY."
