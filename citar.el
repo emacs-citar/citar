@@ -430,14 +430,37 @@ REBUILD-CACHE and FILTER."
            (category . file))
        (complete-with-action action files string predicate)))))
 
-(defun citar-select-group-related-sources (file transform)
-  "Group by FILE by source, TRANSFORM."
-    (let ((extension (file-name-extension file)))
-      (when transform file
-        ;; Transform for grouping and group title display.
+(defun citar-select-resource (files &optional links)
+  "Select resource from a list of FILES, and optionally LINKS."
+  (let* ((files (mapcar
+                 (lambda (cand)
+                   (abbreviate-file-name cand))
+                 files))
+         (resources (append files (remq nil links))))
+    (dolist (item resources)
+      (cond ((string-match "http" item 0)
+             (propertize item `consult-multi '(url . ,item)))
+            (t
+             (propertize item `consult-multi '(file . ,item))))
+      (push item resources))
+    (completing-read
+     "Select resource: "
+     (lambda (string predicate action)
+       (if (eq action 'metadata)
+           `(metadata
+             (group-function . citar-select-group-related-resources)
+             (category . consult-multi))
+         (complete-with-action action (delete-dups resources) string predicate))))))
+
+(defun citar-select-group-related-resources (resource transform)
+  "Group RESOURCE by type or TRANSFORM."
+    (let ((extension (file-name-extension resource)))
+      (if transform
+          resource
         (cond
-         ((string= extension (or "org" "md")) "Notes")
-          (t "Library Files")))))
+         ((member extension citar-file-note-extensions) "Notes")
+         ((string-match "http" resource 0) "Links")
+         (t "Library Files")))))
 
 (defun citar--get-major-mode-function (key &optional default)
   "Return KEY from 'major-mode-functions'."
@@ -904,7 +927,7 @@ into the corresponding reference key.  Return
          (resource-candidates (delete-dups (append files (remq nil links))))
          (resource
           (when resource-candidates
-            (completing-read "Related resources: " resource-candidates))))
+            (citar-select-resource files links))))
     (if resource-candidates
         (cond ((string-match "http" resource 0)
                (browse-url resource))
