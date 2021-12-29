@@ -55,6 +55,7 @@
 (defvar embark-meta-map)
 (defvar embark-transformer-alist)
 (defvar embark-multitarget-actions)
+(defvar embark-default-action-overrides)
 ;(defvar citar-org-open-note-function)
 
 ;;; Variables
@@ -895,8 +896,7 @@ into the corresponding reference key.  Return
   (add-to-list 'embark-keymap-alist '(citar-citation . citar-citation-map))
   (add-to-list 'embark-pre-action-hooks '(citar-insert-edit embark--ignore-target))
   (when (boundp 'embark-multitarget-actions)
-    (dolist (command (list #'citar-open-library-files #'citar-attach-library-files
-                           #'citar-insert-bibtex #'citar-insert-citation
+    (dolist (command (list #'citar-insert-bibtex #'citar-insert-citation
                            #'citar-insert-reference #'citar-copy-reference
                            #'citar-insert-keys #'citar-run-default-action))
       (add-to-list 'embark-multitarget-actions command))))
@@ -912,7 +912,9 @@ into the corresponding reference key.  Return
   (when (and citar-library-paths
              (stringp citar-library-paths))
     (message "Make sure 'citar-library-paths' is a list of paths"))
-  (let* ((key-entry-alist (citar--ensure-entries keys-entries))
+  (let* ((embark-default-action-overrides
+          '((consult-multi . citar-open-multi)))
+         (key-entry-alist (citar--ensure-entries keys-entries))
          (files
           (citar-file--files-for-multiple-entries
            key-entry-alist
@@ -928,11 +930,14 @@ into the corresponding reference key.  Return
          (resource
           (when resource-candidates
             (citar-select-resource files links))))
-    (if resource-candidates
-        (cond ((string-match "http" resource 0)
-               (browse-url resource))
-              (t (citar-file-open resource))))
-    (message "No associated resources")))
+    (citar-open-multi resource)))
+
+(defun citar-open-multi (selection)
+  "Act appropriately on SELECTION when type is 'consult-multi'.
+For use with 'embark-act-all'."
+  (cond ((string-match "http" selection 0)
+         (browse-url selection))
+        (t (citar-file-open selection))))
 
 (defun citar--library-file-action (key-entry action)
   "Run ACTION on file associated with KEY-ENTRY."
