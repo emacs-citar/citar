@@ -894,7 +894,10 @@ into the corresponding reference key.  Return
   (add-to-list 'embark-keymap-alist '(citar-reference . citar-map))
   (add-to-list 'embark-keymap-alist '(citar-key . citar-citation-map))
   (add-to-list 'embark-keymap-alist '(citar-citation . citar-citation-map))
-  (add-to-list 'embark-pre-action-hooks '(citar-insert-edit embark--ignore-target))
+  (add-to-list (if (boundp 'embark-allow-edit-actions)
+                   'embark-pre-action-hooks
+                 'embark-target-injection-hooks)
+               '(citar-insert-edit embark--ignore-target))
   (when (boundp 'embark-multitarget-actions)
     (dolist (command (list #'citar-insert-bibtex #'citar-insert-citation
                            #'citar-insert-reference #'citar-copy-reference
