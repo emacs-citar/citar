@@ -55,6 +55,7 @@
 (defvar embark-meta-map)
 (defvar embark-transformer-alist)
 (defvar embark-multitarget-actions)
+(defvar embark-default-action-overrides)
 ;(defvar citar-org-open-note-function)
 
 ;;; Variables
@@ -430,14 +431,37 @@ REBUILD-CACHE and FILTER."
            (category . file))
        (complete-with-action action files string predicate)))))
 
-(defun citar-select-group-related-sources (file transform)
-  "Group by FILE by source, TRANSFORM."
-    (let ((extension (file-name-extension file)))
-      (when transform file
-        ;; Transform for grouping and group title display.
+(defun citar-select-resource (files &optional links)
+  "Select resource from a list of FILES, and optionally LINKS."
+  (let* ((files (mapcar
+                 (lambda (cand)
+                   (abbreviate-file-name cand))
+                 files))
+         (resources (append files (remq nil links))))
+    (dolist (item resources)
+      (cond ((string-match "http" item 0)
+             (propertize item `consult-multi '(url . ,item)))
+            (t
+             (propertize item `consult-multi '(file . ,item))))
+      (push item resources))
+    (completing-read
+     "Select resource: "
+     (lambda (string predicate action)
+       (if (eq action 'metadata)
+           `(metadata
+             (group-function . citar-select-group-related-resources)
+             (category . consult-multi))
+         (complete-with-action action (delete-dups resources) string predicate))))))
+
+(defun citar-select-group-related-resources (resource transform)
+  "Group RESOURCE by type or TRANSFORM."
+    (let ((extension (file-name-extension resource)))
+      (if transform
+          resource
         (cond
-         ((string= extension (or "org" "md")) "Notes")
-          (t "Library Files")))))
+         ((member extension citar-file-note-extensions) "Notes")
+         ((string-match "http" resource 0) "Links")
+         (t "Library Files")))))
 
 (defun citar--get-major-mode-function (key &optional default)
   "Return KEY from 'major-mode-functions'."
@@ -872,8 +896,7 @@ into the corresponding reference key.  Return
   (add-to-list 'embark-keymap-alist '(citar-citation . citar-citation-map))
   (add-to-list 'embark-pre-action-hooks '(citar-insert-edit embark--ignore-target))
   (when (boundp 'embark-multitarget-actions)
-    (dolist (command (list #'citar-open-library-files #'citar-attach-library-files
-                           #'citar-insert-bibtex #'citar-insert-citation
+    (dolist (command (list #'citar-insert-bibtex #'citar-insert-citation
                            #'citar-insert-reference #'citar-copy-reference
                            #'citar-insert-keys #'citar-run-default-action))
       (add-to-list 'embark-multitarget-actions command))))
@@ -889,7 +912,9 @@ into the corresponding reference key.  Return
   (when (and citar-library-paths
              (stringp citar-library-paths))
     (message "Make sure 'citar-library-paths' is a list of paths"))
-  (let* ((key-entry-alist (citar--ensure-entries keys-entries))
+  (let* ((embark-default-action-overrides
+          '((consult-multi . citar-open-multi)))
+         (key-entry-alist (citar--ensure-entries keys-entries))
          (files
           (citar-file--files-for-multiple-entries
            key-entry-alist
@@ -904,12 +929,15 @@ into the corresponding reference key.  Return
          (resource-candidates (delete-dups (append files (remq nil links))))
          (resource
           (when resource-candidates
-            (completing-read "Related resources: " resource-candidates))))
-    (if resource-candidates
-        (cond ((string-match "http" resource 0)
-               (browse-url resource))
-              (t (citar-file-open resource))))
-    (message "No associated resources")))
+            (citar-select-resource files links))))
+    (citar-open-multi resource)))
+
+(defun citar-open-multi (selection)
+  "Act appropriately on SELECTION when type is 'consult-multi'.
+For use with 'embark-act-all'."
+  (cond ((string-match "http" selection 0)
+         (browse-url selection))
+        (t (citar-file-open selection))))
 
 (defun citar--library-file-action (key-entry action)
   "Run ACTION on file associated with KEY-ENTRY."
