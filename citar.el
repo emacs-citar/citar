@@ -440,9 +440,9 @@ REBUILD-CACHE and FILTER."
          (resources (append files (remq nil links))))
     (dolist (item resources)
       (cond ((string-match "http" item 0)
-             (propertize item `consult-multi '(url . ,item)))
+             (add-text-properties 0 (length item) `(multi-category (url . ,item)) item))
             (t
-             (propertize item `consult-multi '(file . ,item))))
+             (add-text-properties 0 (length item) `(multi-category (file . ,item)) item)))
       (push item resources))
     (completing-read
      "Select resource: "
@@ -913,7 +913,9 @@ into the corresponding reference key.  Return
              (stringp citar-library-paths))
     (message "Make sure 'citar-library-paths' is a list of paths"))
   (let* ((embark-default-action-overrides
-          '((multi-category . citar-open-multi)))
+          '((multi-category . citar-open-multi)
+              (file . citar-file-open)
+              (url . browse-url)))
          (key-entry-alist (citar--ensure-entries keys-entries))
          (files
           (citar-file--files-for-multiple-entries
