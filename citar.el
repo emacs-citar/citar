@@ -969,10 +969,11 @@ For use with 'embark-act-all'."
 With prefix, rebuild the cache before offering candidates."
   (interactive (list (citar-select-ref
                       :rebuild-cache current-prefix-arg)))
+  (let ((embark-default-action-overrides '((file . citar-file-open))))
     (when (and citar-library-paths
                (stringp citar-library-paths))
-      (message "Make sure 'citar-library-paths' is a list of paths"))
-    (citar--library-file-action key-entry 'open))
+      (error "Make sure 'citar-library-paths' is a list of paths"))
+    (citar--library-file-action key-entry 'open)))
 
 ;;;###autoload
 (defun citar-open-notes (key-entry)
@@ -980,11 +981,12 @@ With prefix, rebuild the cache before offering candidates."
 With prefix, rebuild the cache before offering candidates."
   (interactive (list (citar-select-ref
                       :rebuild-cache current-prefix-arg)))
-  (when (and (null citar-notes-paths)
-             (equal citar-format-note-function
-                    'citar-org-format-note-default))
-    (error "You must set 'citar-notes-paths' to open notes with default notes function"))
-  (funcall citar-open-note-function (car key-entry) (cdr key-entry)))
+  (let ((embark-default-action-overrides '((file . find-file))))
+    (when (and (null citar-notes-paths)
+               (equal citar-format-note-function
+                      'citar-org-format-note-default))
+      (error "You must set 'citar-notes-paths' to open notes with default notes function"))
+    (funcall citar-open-note-function (car key-entry) (cdr key-entry))))
 
 (defun citar--open-note (key entry)
   "Open a note file from KEY and ENTRY."
@@ -1138,10 +1140,11 @@ With prefix, rebuild the cache before offering candidates."
 With prefix, rebuild the cache before offering candidates."
   (interactive (list (citar-select-ref
                       :rebuild-cache current-prefix-arg)))
-  (when (and citar-library-paths
-             (stringp citar-library-paths))
-    (message "Make sure 'citar-library-paths' is a list of paths"))
-  (citar--library-file-action key-entry 'attach))
+  (let ((embark-default-action-overrides '((file . mml-attach-file))))
+     (when (and citar-library-paths
+                (stringp citar-library-paths))
+       (error "Make sure 'citar-library-paths' is a list of paths"))
+     (citar--library-file-action key-entry 'attach)))
 
 ;;;###autoload
 (defun citar-run-default-action (keys-entries)
