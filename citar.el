@@ -450,7 +450,7 @@ REBUILD-CACHE and FILTER."
        (if (eq action 'metadata)
            `(metadata
              (group-function . citar-select-group-related-resources)
-             (category . consult-multi))
+             (category . multi-category))
          (complete-with-action action (delete-dups resources) string predicate))))))
 
 (defun citar-select-group-related-resources (resource transform)
@@ -913,7 +913,7 @@ into the corresponding reference key.  Return
              (stringp citar-library-paths))
     (message "Make sure 'citar-library-paths' is a list of paths"))
   (let* ((embark-default-action-overrides
-          '((consult-multi . citar-open-multi)))
+          '((multi-category . citar-open-multi)))
          (key-entry-alist (citar--ensure-entries keys-entries))
          (files
           (citar-file--files-for-multiple-entries
@@ -933,7 +933,7 @@ into the corresponding reference key.  Return
     (citar-open-multi resource)))
 
 (defun citar-open-multi (selection)
-  "Act appropriately on SELECTION when type is 'consult-multi'.
+  "Act appropriately on SELECTION when type is 'multi-category'.
 For use with 'embark-act-all'."
   (cond ((string-match "http" selection 0)
          (browse-url selection))
