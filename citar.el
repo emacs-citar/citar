@@ -440,10 +440,9 @@ REBUILD-CACHE and FILTER."
          (resources (append files (remq nil links))))
     (dolist (item resources)
       (cond ((string-match "http" item 0)
-             (add-text-properties 0 (length item) `(multi-category (url . ,item)) item))
+             (push (propertize item 'multi-category `(url . ,item)) resources))
             (t
-             (add-text-properties 0 (length item) `(multi-category (file . ,item)) item)))
-      (push item resources))
+             (push (propertize item 'multi-category `(file . ,item)) resources))))
     (completing-read
      "Select resource: "
      (lambda (string predicate action)
