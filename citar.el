@@ -932,8 +932,9 @@ into the corresponding reference key.  Return
            key-entry-alist))
          (resource-candidates (delete-dups (append files (remq nil links))))
          (resource
-          (when resource-candidates
-            (citar-select-resource files links))))
+          (if resource-candidates
+              (citar-select-resource files links)
+            (error "No associated resources"))))
     (citar-open-multi resource)))
 
 (defun citar-open-multi (selection)
@@ -1074,14 +1075,16 @@ With prefix, rebuild the cache before offering candidates."
 Prefix ARG is passed to the mode-specific insertion function. It
 should invert the default behaviour for that mode with respect to
 citation styles. See specific functions for more detail."
-  (interactive (list (citar-select-refs) ; key-entries
-		     current-prefix-arg)) ; arg
+  (interactive
+   (if (member major-mode citar-major-modes)
+       (list (citar-select-refs)  ; key-entries
+	     current-prefix-arg) ; arg
+     (error "Citation insertion is not supported for %s" major-mode)))
   (citar--major-mode-function
    'insert-citation
-   (lambda (&rest _)
-     (message "Citation insertion is not supported for %s" major-mode))
+   #'ignore
    (citar--extract-keys keys-entries)
-    arg))
+   arg))
 
 (defun citar-insert-edit (&optional arg)
   "Edit the citation at point."
