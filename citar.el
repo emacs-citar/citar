@@ -277,6 +277,9 @@ of all citations in the current buffer."
   :group 'citar
   :type 'alist)
 
+(defvar citar-major-modes '(org-mode latex-mode markdown-mode)
+  "List of supported major modes.")
+
 ;;; History, including future history list.
 
 (defvar citar-history nil
