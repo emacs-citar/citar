@@ -277,9 +277,6 @@ of all citations in the current buffer."
   :group 'citar
   :type 'alist)
 
-(defvar citar-major-modes '(org-mode latex-mode markdown-mode)
-  "List of supported major modes.")
-
 ;;; History, including future history list.
 
 (defvar citar-history nil
@@ -1079,7 +1076,9 @@ Prefix ARG is passed to the mode-specific insertion function. It
 should invert the default behaviour for that mode with respect to
 citation styles. See specific functions for more detail."
   (interactive
-   (if (member major-mode citar-major-modes)
+   (if (member major-mode (mapcar
+                           'caar
+                           (butlast citar-major-mode-functions)))
        (list (citar-select-refs)  ; key-entries
 	     current-prefix-arg) ; arg
      (error "Citation insertion is not supported for %s" major-mode)))
