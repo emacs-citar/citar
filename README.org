@@ -292,7 +292,7 @@ If you have a mix of entries created with Zotero and Calibre, you can set it lik
     citar-file-parser-triplet))
 #+END_SRC
 
-The ~citar-file-extension~ variable governs which file extensions the open commands will recognize.
+The ~citar-file-extensions~ variable governs which file extensions the open commands will recognize.
 
 The =citar-open-library-files= command includes an optional file browser, which can be set with the ~citar-file-open-prompt~ boolean variable.
 When used with embark and consult, you will have a range of alternate actions available for the candidates.
