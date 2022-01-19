@@ -698,7 +698,11 @@ are refreshed."
 
 (defun citar-get-template (template-name)
   "Return template string for TEMPLATE-NAME."
-  (cdr (assoc template-name citar-templates)))
+  (let ((template
+         (cdr (assoc template-name citar-templates))))
+    (unless template
+      (error "No template for \"%s\" - check variable 'citar-templates'" template-name))
+    template))
 
 (defun citar--get-candidates (&optional force-rebuild-cache)
   "Get the cached candidates.
