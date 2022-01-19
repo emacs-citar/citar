@@ -167,7 +167,9 @@ inserted."
   (when keys
     (if (citar-latex-is-a-cite-command (TeX-current-macro))
         (progn (skip-chars-forward "^,}")
-               (unless (equal ?} (preceding-char)) (insert ", ")))
+               (unless (or (equal ?} (preceding-char))
+                           (equal ?, (preceding-char)))
+                 (insert ", ")))
       (let ((macro
 	     (or command
 		 (if (xor invert-prompt citar-latex-prompt-for-cite-style)
