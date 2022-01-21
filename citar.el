@@ -8,7 +8,7 @@
 ;; License: GPL-3.0-or-later
 ;; Version: 0.9
 ;; Homepage: https://github.com/bdarcus/citar
-;; Package-Requires: ((emacs "27.1") (s "1.12") (parsebib "3.0") (org "9.5") (citeproc "0.9"))
+;; Package-Requires: ((emacs "27.1") (parsebib "3.0") (org "9.5") (citeproc "0.9"))
 
 ;; This file is not part of GNU Emacs.
 
@@ -43,7 +43,6 @@
 (require 'browse-url)
 (require 'citar-file)
 (require 'parsebib)
-(require 's)
 (require 'crm)
 
 ;;; Declare variables for byte compiler
@@ -99,11 +98,15 @@ to include."
   :type '(repeat string))
 
 (defcustom citar-templates
-  '((main . "${author editor:30}     ${date year issued:4}     ${title:48}")
-    (suffix . "          ${=key= id:15}    ${=type=:12}    ${tags keywords keywords:*}")
-    (preview . "${author editor} (${year issued date}) ${title}, ${journal journaltitle publisher container-title collection-title}.\n")
-    (note . "Notes on ${author editor}, ${title}"))
+  '((main . "%->30a     %4d     %->48t")
+    (suffix . "          %>15k    %>12T   %K")
+    (preview . "%>a (%d) %t, %p.\n")
+    (note . "Notes on %a, %t"))
   "Configures formatting for the bibliographic entry.
+
+Uses the 'format-spec' library. The specification characters in
+each template are associated with bibliographic fields in the
+alist 'citar-template-fields'.
 
 The main and suffix templates are for candidate display, and note
 for the title field for new notes."
@@ -112,8 +115,29 @@ for the title field for new notes."
                    :value-type string
                    :options (main suffix preview note)))
 
+(defcustom citar-template-fields
+  '((?a . ("author" "editor"))
+    (?d . ("date" "year" "issued"))
+    (?t . ("title"))
+    (?k . ("=key="))
+    (?T . ("=type="))
+    (?K . ("tags" "keywords"))
+    (?p . ("journal" "journaltitle"
+           "publisher" "containter-title"
+           "collection-title")))
+  "Associates 'format-spec' specification characters with bibliographic fields.
+
+For a given entry, the specification character will be replaced
+in the template by the value of one of the fields associated with
+it. When there is more than one field, the non-nil field will be
+the replacement. If multiple fields have a value, the earliest in
+the list will be the replacement."
+  :group 'citar
+  :type '(alist :key-type character
+                :value-type (repeat string)))
+
 (defcustom citar-format-reference-function
-  #'citar-format-reference
+#'citar-format-reference
   "Function used to render formatted references.
 
 This function is called by 'citar-insert-reference' and
@@ -322,7 +346,7 @@ of all citations in the current buffer."
 
 (defcustom citar-select-multiple nil
   "Use `completing-read-multiple' for selecting citation keys.
-  When nil, all citar commands will use `completing-read`."
+When nil, all citar commands will use `completing-read`."
   :type 'boolean
   :group 'citar)
 
@@ -528,32 +552,20 @@ personal names of the form 'family, given'."
          (car (split-string name ", "))))
      (split-string names " and ") ", ")))
 
-(defun citar--fields-for-format (template)
-  "Return list of fields for TEMPLATE."
-  ;; REVIEW I don't really like this code, but it works correctly.
-  ;;        Would be good to at least refactor to remove s dependency.
-  (let* ((fields-rx "${\\([^}]+\\)}")
-         (raw-fields (seq-mapcat #'cdr (s-match-strings-all fields-rx template))))
-    (seq-map
-     (lambda (field)
-       (car (split-string field ":")))
-     (seq-mapcat (lambda (raw-field) (split-string raw-field " ")) raw-fields))))
-
-(defun citar--fields-in-formats ()
-  "Find the fields to mentioned in the templates."
-  (seq-mapcat #'citar--fields-for-format
-              (list (citar-get-template 'main)
-                    (citar-get-template 'suffix)
-                    (citar-get-template 'preview)
-                    (citar-get-template 'note))))
-
 (defun citar--fields-to-parse ()
-  "Determine the fields to parse from the template."
-  (seq-concatenate
-   'list
-   (citar--fields-in-formats)
-   (list citar-file-variable)
-   citar-additional-fields))
+  "Lists fields to parse from the template."
+  (let* ((template-fields (mapcar
+                           (lambda (x)
+                             (cdr x))
+                           citar-template-fields))
+         (all-fields (append template-fields
+                             (list citar-additional-fields
+                                   (list citar-file-variable))))
+         (output))
+    (dolist (x all-fields)
+      (dolist (y x)
+        (push y output)))
+    output))
 
 (defun citar-has-file ()
   "Return predicate testing whether entry has associated files.
@@ -590,11 +602,7 @@ key associated with each one."
          (raw-candidates
           (parsebib-parse bib-files :fields (citar--fields-to-parse)))
          (hasfilep (citar-has-file))
-         (hasnotep (citar-has-note))
-         (main-width (citar--format-width (citar-get-template 'main)))
-         (suffix-width (citar--format-width (citar-get-template 'suffix)))
-         (symbols-width (string-width (citar--symbols-string t t t)))
-         (star-width (- (frame-width) (+ 2 symbols-width main-width suffix-width))))
+         (hasnotep (citar-has-note)))
     (maphash
      (lambda (citekey entry)
        (let* ((files (when (funcall hasfilep citekey entry) " has:files"))
@@ -603,12 +611,10 @@ key associated with each one."
               (candidate-main
                (citar--format-entry
                 entry
-                star-width
                 (citar-get-template 'main)))
               (candidate-suffix
                (citar--format-entry
                 entry
-                star-width
                 (citar-get-template 'suffix)))
               ;; We display this content already using symbols; here we add back
               ;; text to allow it to be searched, and citekey to ensure uniqueness
@@ -808,51 +814,19 @@ Return a list containing only (KEY . ENTRY) pairs."
 
 ;;; Formatting functions
 
-(defun citar--format-width (format-string)
-  "Calculate minimal width needed by the FORMAT-STRING."
-  (let ((content-width (apply #'+
-                              (seq-map #'string-to-number
-                                       (split-string format-string ":"))))
-        (whitespace-width (string-width (s-format format-string
-                                                  (lambda (_) "")))))
-    (+ content-width whitespace-width)))
+(defun citar-get-template (template-name)
+  "Return template string for TEMPLATE-NAME."
+  (cdr (assoc template-name citar-templates)))
 
-(defun citar--fit-to-width (value width)
-  "Propertize the string VALUE so that only the WIDTH columns are visible."
-  (let* ((truncated-value (truncate-string-to-width value width))
-         (display-value (truncate-string-to-width truncated-value width 0 ?\s)))
-    (if (> (string-width value) width)
-        (concat display-value (propertize (substring value (length truncated-value))
-                                          'invisible t))
-      display-value)))
-
-(defun citar--format-entry (entry width format-string)
+(defun citar--format-entry (entry template)
   "Formats a BibTeX ENTRY for display in results list.
-WIDTH is the width for the * field, and the display format is governed by
-FORMAT-STRING."
-  ;; TODO remove s-format dependency, generalize to allow 'truncate' option
-  (s-format
-   format-string
-   (lambda (raw-field)
-     (let* ((field (split-string raw-field ":"))
-            (field-names (split-string (car field) "[ ]+"))
-            (field-width (string-to-number (cadr field)))
-            (display-width (if (> field-width 0)
-                               ;; If user specifies field width of "*", use
-                               ;; WIDTH; else use the explicit 'field-width'.
-                               field-width
-                             width))
-            ;; Make sure we always return a string, even if empty.
-            (display-value (citar-display-value field-names entry)))
-       (citar--fit-to-width display-value display-width)))))
-
-(defun citar--format-entry-no-widths (entry format-string)
-  "Format ENTRY for display per FORMAT-STRING."
-  (s-format
-   format-string
-   (lambda (raw-field)
-     (let ((field-names (split-string raw-field "[ ]+")))
-       (citar-display-value field-names entry)))))
+Display format is governed by TEMPLATE."
+  (format-spec template
+               (mapcar
+                (lambda (x)
+                  (cons (car x) (citar-clean-string
+                                 (citar-display-value (cdr x) entry))))
+                citar-template-fields)))
 
 ;;; At-point functions for Embark
 
@@ -1127,7 +1101,7 @@ citation styles. See specific functions for more detail."
           (with-temp-buffer
             (dolist (key-entry key-entry-alist)
               (when template
-                (insert (citar--format-entry-no-widths (cdr key-entry) template))))
+                (insert (citar--format-entry (cdr key-entry) template))))
             (buffer-string))))
     references))
 

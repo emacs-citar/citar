@@ -281,7 +281,7 @@ With optional argument FORCE, force the creation of a new ID."
     (let* ((template (citar-get-template 'note))
            (note-meta
             (when template
-              (citar--format-entry-no-widths
+              (citar--format-entry
                entry
                template)))
            (buffer (find-file filepath)))
