@@ -352,7 +352,7 @@ and other completion functions."
                           (or (null predicate) (funcall predicate cand))))))))
           (complete-with-action action candidates string predicate))))))
 
-(cl-defun citar-select-ref (&optional &key rebuild-cache multiple filter)
+(cl-defun citar-select-ref (&optional &key rebuild-cache multiple filter initial-input)
   "Select bibliographic references.
 
 A wrapper around 'completing-read' that returns (KEY . ENTRY),
@@ -380,15 +380,17 @@ FILTER: if non-nil, should be a predicate function taking
   (citar-select-ref
    :filter (lambda (_key entry)
              (when-let ((keywords (assoc-default \"keywords\" entry)))
-               (string-match-p \"foo\" keywords))))"
+               (string-match-p \"foo\" keywords))))
+
+INITIAL-INPUT: Initial input passed to completing-read."
   (let* ((candidates (citar--get-candidates rebuild-cache))
          (completions (citar--completion-table candidates filter))
          (embark-transformer-alist (citar--embark-transformer-alist candidates))
          (crm-separator "\\s-*&\\s-*")
          (chosen (if (and multiple citar-select-multiple)
-                     (completing-read-multiple "References: " completions nil nil nil
+                     (completing-read-multiple "References: " completions nil nil initial-input
                                                'citar-history citar-presets nil)
-                   (completing-read "Reference: " completions nil nil nil
+                   (completing-read "Reference: " completions nil nil initial-input
                                     'citar-history citar-presets nil)))
          (notfound nil)
          (keyentries
