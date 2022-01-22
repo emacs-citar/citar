@@ -98,7 +98,7 @@ to include."
   :type '(repeat string))
 
 (defcustom citar-templates
-  '((main . "%->30a     %4d     %->48t")
+  '((main . "%->30a     %>4d     %->48t")
     (suffix . "          %>15k    %>12T   %K")
     (preview . "%>a (%d) %t, %p.\n")
     (note . "Notes on %a, %t"))
