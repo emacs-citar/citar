@@ -608,6 +608,7 @@ key associated with each one."
        (let* ((files (when (funcall hasfilep citekey entry) " has:files"))
               (notes (when (funcall hasnotep citekey entry) " has:notes"))
               (link (when (citar-has-a-value '("doi" "url") entry) "has:link"))
+              (full-fields (citar--format-entry entry "%a %t"))
               (candidate-main
                (citar--format-entry
                 entry
@@ -619,7 +620,7 @@ key associated with each one."
               ;; We display this content already using symbols; here we add back
               ;; text to allow it to be searched, and citekey to ensure uniqueness
               ;; of the candidate.
-              (candidate-hidden (string-join (list files notes link context citekey) " ")))
+              (candidate-hidden (string-join (list files notes link context citekey full-fields) " ")))
          (push
           (cons
            ;; If we don't trim the trailing whitespace,

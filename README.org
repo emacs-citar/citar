@@ -174,8 +174,8 @@ The formatting is done using Emacs's built-in =format-spec= library. For
 details about setting the templates, see that library and the GNU Emacs Lisp
 Reference Manual =(info "(elisp) Custom Format Strings")=.
 
-For purposes specific to Citar, each alphabetic character in the templates
-above (e.g., "a", "d", "t", etc.) is keyed to one or more bibliographic
+For purposes specific to Citar, the alphabetic characters in the templates
+above (e.g., "a", "d", "t", etc.) are keyed to one or more bibliographic
 fields as specified in the variable =citar-template-fields=:
 
 #+BEGIN_SRC emacs-lisp
