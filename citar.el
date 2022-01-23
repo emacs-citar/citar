@@ -100,7 +100,7 @@ to include."
 (defcustom citar-templates
   '((main . "%->30a     %>4d     %->48t")
     (suffix . "          %>15k    %>12T   %K")
-    (preview . "%>a (%d) %t, %p.\n")
+    (preview . "%>a (%>4d) %t, %p.\n")
     (note . "Notes on %a, %t"))
   "Configures formatting for the bibliographic entry.
 

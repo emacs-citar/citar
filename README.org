@@ -160,21 +160,44 @@ For the prefix, you can filter for associated files or notes using =has:file= or
 *** Templates
 
 The =citar-templates= variable configures formatting for these sections, as well as the default note function.
-Here's the defaults:
+Here are the defaults:
 
 #+BEGIN_SRC emacs-lisp
 (setq citar-templates
-      '((main . "${author editor:30}     ${date year issued:4}     ${title:48}")
-        (suffix . "          ${=key= id:15}    ${=type=:12}    ${tags keywords:*}")
-        (note . "Notes on ${author editor}, ${title}")))
+      '((main . "%->30a     %>4d     %->48t")
+        (suffix . "          %>15k    %>12T   %K")
+        (preview . "%>a (%>4d) %t, %p.\n")
+        (note . "Notes on %a, %t")))
 #+END_SRC
+
+The formatting is done using Emacs's built-in =format-spec= library. For
+details about setting the templates, see that library and the GNU Emacs Lisp
+Reference Manual =(info "(elisp) Custom Format Strings")=.
+
+For purposes specific to Citar, each alphabetic character in the templates
+above (e.g., "a", "d", "t", etc.) is keyed to one or more bibliographic
+fields as specified in the variable =citar-template-fields=:
+
+#+BEGIN_SRC emacs-lisp
+(setq citar-template-fields
+      '((?a . ("author" "editor"))
+        (?d . ("date" "year" "issued"))
+        (?t . ("title"))
+        (?k . ("=key="))
+        (?T . ("=type="))
+        (?K . ("tags" "keywords"))
+        (?p . ("journal" "journaltitle"
+               "publisher" "containter-title"
+               "collection-title")))
+#+END_SRC
+
+You may associated multiple field names with a given letter, as in the case
+of "a" above; the formatter will print the first one it finds.
 
 Note:
 
-1. You may include multiple variables in a field; the formatter will print the first one it finds.
-2. If you plan to use CSL JSON at all, you can and should include CSL JSON variables names where appropriate as such options. The default main template dates field demonstrates this.
-3. The asterisk signals to the formatter to use available space for the column.
-4. The note template does not take widths, as formatting is inline there rather than columnar.
+1. If you plan to use CSL JSON at all, you can and should include CSL JSON variables names where appropriate as such options. The default main template dates field demonstrates this.
+2. The note template does not take widths, as formatting is inline there rather than columnar.
 
 *** Icons
 
