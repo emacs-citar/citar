@@ -1,4 +1,9 @@
+
 [[https://melpa.org/#/citar][file:https://melpa.org/packages/citar-badge.svg]]
+
+* Breaking Changes
+
+- Templating is now handled with Emacs's built-in =format-spec= library, so any customizations to the variable =citar-templates= will need to be updated to conform to that specification. See [[#templates][Templates]] for more details.
 
 * Citar
   :PROPERTIES:
@@ -194,10 +199,7 @@ fields as specified in the variable =citar-template-fields=:
 You may associated multiple field names with a given letter, as in the case
 of "a" above; the formatter will print the first one it finds.
 
-Note:
-
-1. If you plan to use CSL JSON at all, you can and should include CSL JSON variables names where appropriate as such options. The default main template dates field demonstrates this.
-2. The note template does not take widths, as formatting is inline there rather than columnar.
+Note: If you plan to use CSL JSON at all, you can and should include CSL JSON variables names where appropriate as such options. The default main template dates field demonstrates this.
 
 *** Icons
 

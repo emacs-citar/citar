@@ -138,7 +138,7 @@ the list will be the replacement."
                 :value-type (repeat string)))
 
 (defcustom citar-format-reference-function
-#'citar-format-reference
+  #'citar-format-reference
   "Function used to render formatted references.
 
 This function is called by 'citar-insert-reference' and
