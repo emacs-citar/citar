@@ -42,6 +42,7 @@
 (require 'seq)
 (require 'browse-url)
 (require 'citar-file)
+(require 'format-spec)
 (require 'parsebib)
 (require 'crm)
 
