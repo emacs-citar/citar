@@ -946,6 +946,10 @@ into the corresponding reference key.  Return
 For use with 'embark-act-all'."
   (cond ((string-match "http" selection 0)
          (browse-url selection))
+        ((member t (mapcar (lambda (x)
+                             (file-in-directory-p selection x))
+                           citar-notes-paths))
+         (find-file selection))
         (t (citar-file-open selection))))
 
 (defun citar--library-file-action (key-entry action)
