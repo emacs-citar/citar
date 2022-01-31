@@ -186,6 +186,12 @@ and nil means no action."
   :type '(radio (const :tag "Prompt" prompt)
                 (const :tag "Ignore" nil)))
 
+(defcustom citar-open-prompt t
+  "Always prompt for selection files with 'citar-open'.
+If nil, single resources will open without prompting."
+  :group 'citar
+  :type '(boolean))
+
 (defcustom citar-open-note-function
   'citar--open-note
   "Function to open a new or existing note.
@@ -196,7 +202,6 @@ KEY: a string to represent the citekey
 ENTRY: an alist with the structured data (title, author, etc.)"
   :group 'citar
   :type 'function)
-
 
 (defcustom citar-format-note-function
   'citar-org-format-note-default
@@ -934,12 +939,15 @@ into the corresponding reference key.  Return
            (lambda (key-entry)
              (citar-get-link (cdr key-entry)))
            key-entry-alist))
-         (resource-candidates (delete-dups (append files (remq nil links))))
-         (resource
-          (if resource-candidates
-              (citar-select-resource files links)
-            (error "No associated resources"))))
-    (citar-open-multi resource)))
+         (resource-candidates (delete-dups (append files (remq nil links)))))
+    (cond
+     ((eq nil resource-candidates)
+      (error "No associated resources"))
+     ((unless citar-open-prompt
+        (eq 1 (length resource-candidates)))
+      (citar-open-multi (car resource-candidates)))
+     (t (citar-open-multi
+         (citar-select-resource files links))))))
 
 (defun citar-open-multi (selection)
   "Act appropriately on SELECTION when type is 'multi-category'.
