@@ -425,17 +425,6 @@ documentation for the return value and the meaning of
 REBUILD-CACHE and FILTER."
   (citar-select-ref :rebuild-cache rebuild-cache :multiple t :filter filter))
 
-(defun citar-select-file (files)
-  "Select file from a list of FILES."
-  (completing-read
-   "Related file: "
-   (lambda (string predicate action)
-     (if (eq action 'metadata)
-         `(metadata
-        ; (group-function . citar-select-group-related-sources)
-           (category . file))
-       (complete-with-action action files string predicate)))))
-
 (defun citar-select-resource (files &optional links)
   "Select resource from a list of FILES, and optionally LINKS."
   (let* ((files (mapcar
@@ -978,7 +967,7 @@ For use with 'embark-act-all'."
           (pcase (length files)
             (1 (car files))
             ((guard (> 1))
-             (citar-select-file files)))))
+             (citar-select-resource files)))))
     (if file
         (funcall fn file)
       (message "No associated file"))))
