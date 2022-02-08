@@ -89,7 +89,7 @@
   :group 'citar
   :type '(repeat directory))
 
-(defcustom citar-additional-fields '("doi" "url")
+(defcustom citar-additional-fields '("doi" "url" "crossref")
   "A list of fields to add to parsed data.
 
 By default, citar filters parsed data based on the fields
