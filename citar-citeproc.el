@@ -106,8 +106,8 @@ With prefix-argument, select CSL style."
   (unless citar-citeproc-csl-locales-dir
     (error "Be sure to set 'citar-citeproc-csl-locales-dir' to your CSL locales directory"))
   (let* ((style (if (string-match-p "/" citar-citeproc-csl-style)
-                 citar-citeproc-csl-style
-               (concat citar-citeproc-csl-styles-dir "/" citar-citeproc-csl-style)))
+                    citar-citeproc-csl-style
+                  (expand-file-name citar-citeproc-csl-style citar-citeproc-csl-styles-dir)))
          (keys (citar--extract-keys keys-entries))
          (proc (citeproc-create style
 			        (citeproc-hash-itemgetter-from-any citar-bibliography)
