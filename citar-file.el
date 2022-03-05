@@ -28,7 +28,7 @@
   (require 'subr-x))
 (require 'seq)
 
-(declare-function citar-get-entry "citar")
+(declare-function citar--get-entry "citar")
 (declare-function citar-get-value "citar")
 (declare-function citar-get-template "citar")
 (declare-function citar--format-entry-no-widths "citar")
@@ -161,15 +161,20 @@ that separates the key from optional additional text that follows
 it in matched file names.  The returned regexp captures the key
 as group 1, the extension as group 2, and any additional text
 following the key as group 3."
-  (when (and (null keys) (string-empty-p additional-sep))
-    (setq additional-sep nil))
-  (concat
-   "\\`"
-   (if keys (regexp-opt keys "\\(?1:") "\\(?1:[^z-a]*?\\)")
-   (when additional-sep (concat "\\(?3:" additional-sep "[^z-a]*\\)?"))
-   "\\."
-   (if extensions (regexp-opt extensions "\\(?2:") "\\(?2:[^.]*\\)")
-   "\\'"))
+  (let* ((entry (when keys
+                  (citar--get-entry (car keys))))
+         (xref (citar-get-value "crossref" entry)))
+    (unless (or (null xref) (string-empty-p xref))
+      (push xref keys))
+    (when (and (null keys) (string-empty-p additional-sep))
+      (setq additional-sep nil))
+    (concat
+     "\\`"
+     (if keys (regexp-opt keys "\\(?1:") "\\(?1:[^z-a]*?\\)")
+     (when additional-sep (concat "\\(?3:" additional-sep "[^z-a]*\\)?"))
+     "\\."
+     (if extensions (regexp-opt extensions "\\(?2:") "\\(?2:[^.]*\\)")
+     "\\'")))
 
 (defun citar-file--directory-files (dirs &optional keys extensions additional-sep)
   "Return files in DIRS starting with KEYS and ending with EXTENSIONS.
@@ -207,7 +212,8 @@ need to scan the contents of DIRS in this case."
           (if filematch
               ;; Use regexp to scan directory
               (dolist (file (directory-files dir nil filematch))
-                (let ((key (and (string-match filematch file) (match-string 1 file)))
+                (let ((key (if keys (car keys)
+                             (and (string-match filematch file) (match-string 1 file))))
                       (filename (expand-file-name file dir))
                       (basename (file-name-base file)))
                   (push filename (gethash key files))
@@ -244,7 +250,11 @@ repeatedly."
   (let ((files (citar-file--directory-files dirs nil extensions
                                             citar-file-additional-files-separator)))
     (lambda (key entry)
-      (let ((cached (gethash key files 'unknown)))
+      (let* ((xref (citar-get-value "crossref" entry))
+             (cached (if (and xref
+                              (not (eq 'unknown (gethash xref files 'unknown))))
+                         (gethash xref files 'unknown)
+                       (gethash key files 'unknown))))
         (if (not (eq cached 'unknown))
             cached
           ;; KEY has no files in DIRS, so check the ENTRY-FIELD field of
