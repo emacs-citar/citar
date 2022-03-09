@@ -300,6 +300,14 @@ When used with embark and consult, you will have a range of alternate actions av
 #+CAPTION: File candidates with embark options
 [[file:images/file-browser-embark.png]]
 
+*** BibTeX Crossref File Support
+
+For BibTeX entries that have a 'crossref' field, Citar will associate the entry's key with the resources (files, notes, links) that are associated with the cross-referenced entry.
+
+For example: consider an entry for "Baym1965" that has a 'crossref' field "Meyers1999". When citar-open is called and "Baym1965" is selected, the minibuffer will list all files, notes, and links associated with both "Baym1965" and "Meyers1999". The proper prefixes, denoting an associated file, note, or link, will also be listed with each candidate in the minibuffer.
+
+NOTE: For the BibTeX crossref feature to work properly, the entry with the 'crossref' field must come *before* the cross-referenced entry in the bib file. (This is a requirement of BibTeX, not of Citar specifically.) In the example above, then, the entry for "Baym1965" must come before the entry for "Meyers1999".
+
 ** Usage
    :PROPERTIES:
    :CUSTOM_ID: usage
