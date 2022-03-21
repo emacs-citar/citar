@@ -1019,7 +1019,7 @@ With prefix, rebuild the cache before offering candidates."
                 'list
                 citar-bibliography
                 (citar--local-files-to-cache))))
-    (bibtex-find-entry key t nil t)))
+    (bibtex-search-entry key t nil t)))
 
 ;;;###autoload
 (defun citar-insert-bibtex (keys-entries)
