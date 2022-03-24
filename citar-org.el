@@ -94,8 +94,8 @@ Each function takes one argument, a citation."
     (define-key map (kbd "<mouse-1>") (cons "default action" #'org-open-at-point))
     (with-eval-after-load 'embark
       (define-key map (kbd "<mouse-3>") (cons "embark act" #'embark-act)))
-    (define-key map (kbd "C-d") (cons "delete citation" #'citar-org-delete-citation))
-    (define-key map (kbd "C-k") (cons "kill citation" #'citar-org-kill-citation))
+    (define-key map (kbd "C-c C-x DEL") (cons "delete citation" #'citar-org-delete-citation))
+    (define-key map (kbd "C-c C-x k") (cons "kill citation" #'citar-org-kill-citation))
     (define-key map (kbd "S-<left>") (cons "shift left" #'citar-org-shift-reference-left))
     (define-key map (kbd "S-<right>") (cons "shift right" #'citar-org-shift-reference-right))
     (define-key map (kbd "M-p") (cons "update prefix/suffix" #'citar-org-update-pre-suffix))
