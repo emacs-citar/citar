@@ -129,23 +129,32 @@ Each function takes one argument, a citation."
     ("noauthor" . "(2019)")
     ("noauthor/b" . "2019")))
 
-(defun citar-org--style-candidates (&optional proc)
-  "Return a flat list of supported styles.
+(defun citar-org--style-candidates ()
+  "Return a list of supported styles as completion candidates."
+  (let ((styles (citar-org--flat-styles)))
+    (mapcar
+     (lambda (style)
+       (if (and (string-search "/" style)
+                (< 1 (length style)))
+           (propertize style 'face 'citar)
+         (propertize style 'face 'citar-highlight)))
+     styles)))
 
-Convert 'org-cite-supported-styles' to a flat list for use as
-completion candidates.
+(defun citar-org--flat-styles (&optional proc)
+  "Return a flat list of supported styles.
 
 With PROC list, limit to specific processor(s)."
   (let ((styles (list)))
     (dolist (style-variants (org-cite-supported-styles proc))
       (seq-let (style &rest variants) style-variants
-        (let ((style-name (if (string= "nil" (car style)) "" (car style))))
-          (push (propertize
-                 (if (string= "" style-name) "/" style-name) 'face 'citar-highlight) styles)
+        (let ((style-name (if (string= "nil" (car style)) "/" (car style))))
+          (push style-name styles)
           (dolist (variant variants)
             (let ((fstyle
-                   (concat style-name "/" (cadr variant))))
-              (push (propertize fstyle 'face 'citar) styles))))))
+                   (concat style-name
+                           (unless (string= "/" style-name) "/")
+                           (cadr variant))))
+              (push fstyle styles))))))
       styles))
 
 ;;; Org-cite processors
