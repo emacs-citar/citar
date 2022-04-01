@@ -331,15 +331,15 @@ For example, if point:
 The "activate processor" runs the list of functions in ~citar-org-activation-functions~, which by default is the ~basic~ processor from ~oc-basic~ to provide fontification, and also a little function that adds a keymap for editing citations at point.
 That keymap includes the following bindings that provide additional citation and citation-reference editing options.
 
-| key       | binding                        |
-|-----------+--------------------------------|
-| C-d       | oc-citar-delete-citation       |
-| C-k       | oc-citar-kill-citation         |
-| S-<left>  | oc-citar-shift-reference-left  |
-| S-<right> | oc-citar-shift-reference-right |
-| M-p       | oc-citar-update-pre-suffix     |
-| <mouse-1> | citar-dwim                     |
-| <mouse-3> | embark-act                     |
+| key         | binding                        |
+|-------------+--------------------------------|
+| C-c C-x DEL | oc-citar-delete-citation       |
+| C-c C-x k   | oc-citar-kill-citation         |
+| S-<left>    | oc-citar-shift-reference-left  |
+| S-<right>   | oc-citar-shift-reference-right |
+| M-p         | oc-citar-update-pre-suffix     |
+| <mouse-1>   | citar-dwim                     |
+| <mouse-3>   | embark-act                     |
 
 
 The "follow processor" provides at-point functionality accessible via the =org-open-at-point= command.
@@ -431,10 +431,6 @@ The former is an integrated package that supports citations, cross-references, a
 The ideas in this project were initially worked out in a [[https://github.com/tmalsburg/helm-bibtex/issues/353][conversation]] with [[https://github.com/mtreca][Maxime Tréca]] and [[https://github.com/minad][Daniel Mendler]]. Daniel, author of [[https://github.com/minad/consult][consult]] and [[https://github.com/minad/marginalia][marginalia]], helped us understand the possibilities of the new suite of completing-read packages, while Maxime came up with an [[https://github.com/tmalsburg/helm-bibtex/pull/355][initial prototype]].
 
 This code takes those ideas and re-implements them to fill out the feature set, and also optimize the code clarity and performance.
-
-Along the way, [[https://github.com/clemera][Clemens Radermacher]] and [[https://github.com/oantolin][Omar Antolín]] helped with some of the intricacies of completing-read and elisp.
-
-And, of course, thanks to [[https://github.com/tmalsburg][Titus von der Malsburg]] for creating and maintaining =bibtex-completion= and =helm-bibtex= and =ivy-bibtex=.
 
 # Local Variables:
 # org-edit-src-content-indentation: 0
