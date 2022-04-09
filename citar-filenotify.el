@@ -120,6 +120,11 @@ CHANGE refers to the filenotify argument."
                   (citar-filenotify--callback 'local x)))))
            (citar--local-files-to-cache)))))
 
+(defun  citar-filenotify-rm-local-watches ()
+  "Delete the filenotify watches for the local bib files."
+  (mapc #'file-notify-rm-watch citar-filenotify--local-watches)
+  (setq citar-filenotify--local-watches 'uninitialized))
+
 (defun citar-filenotify-local-watches ()
   "Hook to add and remove watches on local bib files.
 
@@ -129,11 +134,7 @@ watches aren't added.  This means a mode hook containing this
 function can run several times without adding duplicate watches."
   (when (eq 'uninitialized citar-filenotify--local-watches)
     (citar-filenotify--add-local-watches))
-  (add-hook 'kill-buffer-hook
-            (lambda ()
-              (mapc #'file-notify-rm-watch citar-filenotify--local-watches)
-              (setq citar-filenotify--local-watches 'uninitialized))
-            nil t))
+  (add-hook 'kill-buffer-hook #'citar-filenotify-rm-local-watches nil t))
 
 (defun citar-filenotify--files ()
   "Get the list of files to watch from `citar-filenotify-files'."
