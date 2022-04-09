@@ -79,15 +79,16 @@ entry when it is enabled."
 ;;;###autoload
 (defun citar-latex-local-bib-files ()
   "Local bibliographic for latex retrieved using reftex."
-  (reftex-access-scan-info t)
-  (ignore-errors (reftex-get-bibfile-list)))
+  (ignore-errors
+    (reftex-access-scan-info t)
+    (reftex-get-bibfile-list)))
 
 ;;;###autoload
 (defun citar-latex-key-at-point ()
   "Return citation key at point with its bounds.
   
 The return value is (KEY . BOUNDS), where KEY is the citation key
-at point and BOUNDS is a pair of buffer positions.  
+at point and BOUNDS is a pair of buffer positions.
 
 Return nil if there is no key at point."
   (save-excursion
