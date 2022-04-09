@@ -66,12 +66,6 @@
           (const long)
           (const short)))
 
-(defcustom citar-file-note-org-include nil
-  "The org note type."
-  :group 'citar
-  :type '(repeat (const :tag "Org ID" 'org-id)
-                 (const :tag "Org-Roam :ROAM_REF:" 'org-roam-ref)))
-
 (defcustom citar-org-style-targets nil
   "Export processor targets to include in styles list.
 
