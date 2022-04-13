@@ -8,7 +8,7 @@
 ;; License: GPL-3.0-or-later
 ;; Version: 0.9
 ;; Homepage: https://github.com/bdarcus/citar
-;; Package-Requires: ((emacs "27.1") (s "1.12") (parsebib "3.0") (org "9.5") (citeproc "0.9"))
+;; Package-Requires: ((emacs "27.1") (parsebib "3.0") (org "9.5") (citeproc "0.9"))
 
 ;; This file is not part of GNU Emacs.
 
@@ -43,7 +43,6 @@
 (require 'browse-url)
 (require 'citar-file)
 (require 'parsebib)
-(require 's)
 (require 'crm)
 
 ;;; Declare variables for byte compiler
@@ -327,7 +326,7 @@ of all citations in the current buffer."
 
 (defcustom citar-select-multiple nil
   "Use `completing-read-multiple' for selecting citation keys.
-  When nil, all citar commands will use `completing-read`."
+When nil, all citar commands will use `completing-read`."
   :type 'boolean
   :group 'citar)
 
@@ -524,14 +523,10 @@ personal names of the form 'family, given'."
 
 (defun citar--fields-for-format (template)
   "Return list of fields for TEMPLATE."
-  ;; REVIEW I don't really like this code, but it works correctly.
-  ;;        Would be good to at least refactor to remove s dependency.
-  (let* ((fields-rx "${\\([^}]+\\)}")
-         (raw-fields (seq-mapcat #'cdr (s-match-strings-all fields-rx template))))
-    (seq-map
-     (lambda (field)
-       (car (split-string field ":")))
-     (seq-mapcat (lambda (raw-field) (split-string raw-field " ")) raw-fields))))
+  (let* ((regexp "\\(?:\\`\\|}\\|:\\)[^{]*\\(?:\\${\\|\\'\\)\\|[[:space:]]+"))
+    ;; The readable version of regexp is:
+    ;; (rx (or (seq (or bos "}" ":") (0+ (not "{")) (or "${" eos)) (1+ space)))
+    (split-string template regexp t)))
 
 (defun citar--fields-in-formats ()
   "Find the fields to mentioned in the templates."
@@ -807,7 +802,7 @@ Return a list containing only (KEY . ENTRY) pairs."
   (let ((content-width (apply #'+
                               (seq-map #'string-to-number
                                        (split-string format-string ":"))))
-        (whitespace-width (string-width (s-format format-string
+        (whitespace-width (string-width (citar--format format-string
                                                   (lambda (_) "")))))
     (+ content-width whitespace-width)))
 
@@ -820,12 +815,27 @@ Return a list containing only (KEY . ENTRY) pairs."
                                           'invisible t))
       display-value)))
 
+(defun citar--format (template replacer)
+  "Format TEMPLATE with the function REPLACER.
+The templates are of form ${foo} for variable foo.
+REPLACER takes an argument of the format variable.
+Adapted from `org-roam-format-template'."
+  (replace-regexp-in-string
+   "\\${\\([^}]+\\)}"
+   (lambda (md)
+     (save-match-data
+       (if-let ((text (funcall replacer (match-string 1 md))))
+           text
+         (signal 'citar-format-resolve md))))
+   template
+   ;; Need literal to make sure it works
+   t t))
+
 (defun citar--format-entry (entry width format-string)
   "Formats a BibTeX ENTRY for display in results list.
 WIDTH is the width for the * field, and the display format is governed by
 FORMAT-STRING."
-  ;; TODO remove s-format dependency, generalize to allow 'truncate' option
-  (s-format
+  (citar--format
    format-string
    (lambda (raw-field)
      (let* ((field (split-string raw-field ":"))
@@ -842,7 +852,7 @@ FORMAT-STRING."
 
 (defun citar--format-entry-no-widths (entry format-string)
   "Format ENTRY for display per FORMAT-STRING."
-  (s-format
+  (citar--format
    format-string
    (lambda (raw-field)
      (let ((field-names (split-string raw-field "[ ]+")))
@@ -1039,7 +1049,7 @@ With prefix, rebuild the cache before offering candidates."
             (bibtex-set-dialect)
             (dolist (bib-file bibtex-files)
               (insert-file-contents bib-file))
-            (bibtex-find-entry key)
+            (bibtex-search-entry key)
             (let ((beg (bibtex-beginning-of-entry))
                   (end (bibtex-end-of-entry)))
               (buffer-substring-no-properties beg end)))))
