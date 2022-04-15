@@ -324,7 +324,7 @@ of all citations in the current buffer."
 
 ;;; Completion functions
 
-(defcustom citar-select-multiple nil
+(defcustom citar-select-multiple t
   "Use `completing-read-multiple' for selecting citation keys.
 When nil, all citar commands will use `completing-read`."
   :type 'boolean
