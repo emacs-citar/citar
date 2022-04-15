@@ -33,6 +33,7 @@
 
 (require 'citar)
 (require 'org)
+(require 'org-element)
 (require 'org-id)
 (require 'oc)
 (require 'oc-basic)
@@ -198,7 +199,7 @@ ARG is used as the prefix argument."
   (call-interactively citar-at-point-function))
 
 ;;;###autoload
-(defun citar-org-select-style ()
+(defun citar-org-select-style (&optional _arg)
   "Complete a citation style for org-cite with preview."
   (let* ((oc-styles
           ;; Sort the list upfront, but let completion UI handle beyond that.
@@ -320,13 +321,19 @@ With optional argument FORCE, force the creation of a new ID."
 ;;; Functions for editing/modifying citations
 
 (defun citar-org--reference-at-point (&optional context)
-  "Return citation-reference org-element at point, if any."
+  "Return citation-reference org-element at point, if any.
+
+Argument CONTEXT is an org element at point, usually a citation
+or citation-reference."
   (when-let ((context (or context (org-element-context))))
     (when (eq 'citation-reference (org-element-type context))
       context)))
 
 (defun citar-org--citation-at-point (&optional context)
-  "Return citation element containing point, if any."
+  "Return citation element containing point, if any.
+
+Argument CONTEXT is an org element at point, usually a citation
+or citation-reference."
   (let ((element (or context (org-element-context))))
     (while (and element (not (eq 'citation (org-element-type element))))
       (setq element (org-element-property :parent element)))
