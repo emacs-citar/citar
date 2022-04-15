@@ -347,7 +347,8 @@ By default, in org-mode with org-cite support, when point is on a citation or ci
 Changing this value to =embark-act= with embark installed and configured will provide access to the standard citar commands at point.
 
 Org-cite citations include optional "styles" and "variants" to locally modify the citation rendering.
-To edit these, just make sure point is on the citation prefix before running =org-cite-insert=, and you will get a list of available styles.
+When inserting a new citation, calling =org-cite-insert= with a prefix arg will prompt to select a style.
+To edit an existing citation's style, just make sure point is on the citation prefix before running =org-cite-insert=, and you will get a list of available styles.
 That list is based on your configuration; if you have the =oc-natbib= and =oc-csl= processors configured, for example, the list will include the styles and variants available in those two processors.
 The variants included in the bundled processors include the following, with the shortcuts in parentheses:
 
