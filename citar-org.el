@@ -167,6 +167,12 @@ With PROC list, limit to specific processor(s)."
 (defun citar-org-insert-citation (keys &optional style)
   "Insert KEYS in org-cite format, with STYLE."
   (let ((context (org-element-context)))
+    (when style
+      (let ((raw-style
+             (citar-org-select-style)))
+             (setq style
+                   (if (string-equal raw-style "") raw-style
+                     (concat "/" raw-style)))))
     (if-let ((citation (citar-org--citation-at-point context)))
         (when-let ((keys (seq-difference keys (org-cite-get-references citation t)))
                    (keystring (mapconcat (lambda (key) (concat "@" key)) keys "; "))
