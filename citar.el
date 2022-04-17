@@ -456,7 +456,9 @@ REBUILD-CACHE and FILTER."
          (t "Library Files")))))
 
 (defun citar--get-major-mode-function (key &optional default)
-  "Return KEY from 'major-mode-functions'."
+  "Return  function associated with KEY in 'major-mode-functions'.
+If no function is found matching KEY for the current major mode,
+return DEFAULT."
   (alist-get
    key
    (cdr (seq-find
