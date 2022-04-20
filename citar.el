@@ -1082,7 +1082,7 @@ With prefix, rebuild the cache before offering candidates."
                       :rebuild-cache current-prefix-arg)))
   (let ((link (citar-get-link (cdr key-entry))))
     (if link
-        (browse-url-default-browser link)
+        (browse-url link)
       (message "No link found for %s" (car key-entry)))))
 
 ;;;###autoload
