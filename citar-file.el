@@ -108,7 +108,7 @@ separator that does not otherwise occur in citation keys."
 
 (defun citar-file-parser-default (dirs file-field)
   "Return a list of files from DIRS and FILE-FIELD."
-  (let ((files (split-string file-field ";")))
+  (let ((files (split-string file-field "[:;]")))
     (delete-dups
      (seq-mapcat
       (lambda (dir)
