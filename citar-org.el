@@ -129,7 +129,7 @@ Each function takes one argument, a citation."
   (let ((styles (citar-org--flat-styles)))
     (mapcar
      (lambda (style)
-       (if (and (string-search "/" style)
+       (if (and (string-match "/" style)
                 (< 1 (length style)))
            (propertize style 'face 'citar)
          (propertize style 'face 'citar-highlight)))
