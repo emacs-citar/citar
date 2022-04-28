@@ -23,7 +23,7 @@ This package provides a completing-read front-end to browse and act on BibTeX, B
 
 When used with vertico (or selectrum), embark, and marginalia, it provides similar functionality to helm-bibtex and ivy-bibtex: quick filtering and selecting of bibliographic entries from the minibuffer, and the option to run different commands against them.
 
-With embark, it also makes available at-point actions in org-mode citations.
+With embark, it also makes available at-point actions in org, markdown, and LaTeX buffers.
 
 Here's a screenshot with [[https://github.com/minad/vertico][vertico]] and =consult-completing-read-multiple=, and symbol customization [[https://github.com/bdarcus/citar#icons][noted below]].
 
