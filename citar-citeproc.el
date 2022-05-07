@@ -37,7 +37,7 @@
 ;;  After setting the style and locale directory paths, set the variable
 ;;  'citar-format-reference-function' to 'citar-citeproc-format-reference'.
 
-;;  Finally, set a CSL style, either by setting 'cite-citeproc-csl-style'
+;;  Finally, set a CSL style, either by setting 'citar-citeproc-csl-style'
 ;;  manually to the path to the desired CSL style file or by calling
 ;;  'citar-citeproc-select-csl-style' to choose from a style file located in
 ;;  'citar-citeproc-csl-styles-dir'. If a CSL style is not set before running
