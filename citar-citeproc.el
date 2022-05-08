@@ -109,10 +109,15 @@ With prefix-argument, select CSL style."
                     citar-citeproc-csl-style
                   (expand-file-name citar-citeproc-csl-style citar-citeproc-csl-styles-dir)))
          (keys (citar--extract-keys keys-entries))
+         (local-bib-files-function (citar--get-major-mode-function 'local-bib-files))
+         (local-bib-files (when local-bib-files-function
+                            (funcall local-bib-files-function)))
          (proc (citeproc-create style
-			        (citeproc-hash-itemgetter-from-any citar-bibliography)
-			        (citeproc-locale-getter-from-dir citar-citeproc-csl-locales-dir)
-			        "en-US"))
+                                (citeproc-hash-itemgetter-from-any
+                                 (when local-bib-files local-bib-files)
+                                 citar-bibliography)
+                                (citeproc-locale-getter-from-dir citar-citeproc-csl-locales-dir)
+	                        "en-US"))
          (references (car (progn
                             (citeproc-add-uncited keys proc)
                             (citeproc-render-bib proc 'plain)
