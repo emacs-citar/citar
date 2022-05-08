@@ -45,7 +45,7 @@
 (require 'parsebib)
 (require 'crm)
 
-;;; Declare variables for byte compiler
+;;; Declare variables and functions for byte compiler
 
 (defvar embark-keymap-alist)
 (defvar embark-target-finders)
@@ -55,7 +55,8 @@
 (defvar embark-transformer-alist)
 (defvar embark-multitarget-actions)
 (defvar embark-default-action-overrides)
-;(defvar citar-org-open-note-function)
+
+(declare-function 'embark--target-buffer "ext:embark")
 
 ;;; Variables
 
@@ -387,7 +388,6 @@ FILTER: if non-nil, should be a predicate function taking
                (string-match-p \"foo\" keywords))))"
   (let* ((candidates (citar--get-candidates rebuild-cache))
          (completions (citar--completion-table candidates filter))
-         (embark-transformer-alist (citar--embark-transformer-alist candidates))
          (crm-separator "\\s-*&\\s-*")
          (chosen (if (and multiple citar-select-multiple)
                      (completing-read-multiple "References: " completions nil nil nil
@@ -880,22 +880,17 @@ FORMAT-STRING."
   "Return a list of KEYS as a crm-string for `embark'."
   (if (listp keys) (string-join keys " & ") keys))
 
-(defun citar--embark-transformer-alist (candidates)
-  "Return modified `embark-transformer-alist` with citar-reference transformer.
-Create an Embark target transformer that looks up formatted
-reference candidate strings in CANDIDATES and transforms them
-into the corresponding reference key.  Return
-`embark-transformer-alist` with this transformer added for
-'citar-reference targets."
-  (cons `(citar-reference
-          . ,(lambda (type target)
-               (cons type (or (cadr (assoc target candidates))
-                              target))))
-        (bound-and-true-p embark-transformer-alist)))
+(defun citar--reference-transformer (type target)
+  "Look up key for a citar-reference TYPE and TARGET."
+  (cons type (or (cadr (assoc target
+                              (with-current-buffer (embark--target-buffer)
+                                (citar--get-candidates)))))))
 
 ;;;###autoload
 (with-eval-after-load 'embark
   (add-to-list 'embark-target-finders 'citar-citation-finder)
+  (add-to-list 'embark-transformer-alist
+             '(citar-reference . citar--reference-transformer))
   (add-to-list 'embark-target-finders 'citar-key-finder))
 
 (with-eval-after-load 'embark
