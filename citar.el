@@ -56,7 +56,7 @@
 (defvar embark-multitarget-actions)
 (defvar embark-default-action-overrides)
 
-(declare-function 'embark--target-buffer "ext:embark")
+(declare-function embark--target-buffer "ext:embark")
 
 ;;; Variables
 
