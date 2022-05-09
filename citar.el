@@ -388,10 +388,8 @@ FILTER: if non-nil, should be a predicate function taking
                (string-match-p \"foo\" keywords))))"
   (let* ((candidates (citar--get-candidates rebuild-cache))
          (completions (citar--completion-table candidates filter))
-         (crm-separator "\\s-*&\\s-*")
          (chosen (if (and multiple citar-select-multiple)
-                     (completing-read-multiple "References: " completions nil nil nil
-                                               'citar-history citar-presets nil)
+                     (citar--select-multiple "References: " candidates 'citar-history)
                    (completing-read "Reference: " completions nil nil nil
                                     'citar-history citar-presets nil)))
          (notfound nil)
@@ -423,6 +421,55 @@ Call 'citar-select-ref' with argument :multiple; see its
 documentation for the return value and the meaning of
 REBUILD-CACHE and FILTER."
   (citar-select-ref :rebuild-cache rebuild-cache :multiple t :filter filter))
+
+(defun citar--select-multiple (prompt candidates &optional history)
+  "Select multiple CANDIDATES with PROMPT.
+
+HISTORY is the 'completing-read' history argument."
+  ;; Because completing-read-multiple just does not work for long candidate
+  ;; strings, and IMO is a poor UI.
+  (let ((selected-list)
+        (selected-hash (make-hash-table :test #'equal))
+        (items candidates))
+    (while
+        (let ((item
+               (completing-read
+                (format "%s (%s/%s): " prompt
+                        (hash-table-count selected-hash)
+                        (length candidates))
+                (lambda (str pred action)
+                  (if (eq action 'metadata)
+                      `(metadata (display-sort-function . ,#'identity)
+                                 (cycle-sort-function . ,#'identity)
+                                 (group-function
+                                  . ,(lambda (cand transform)
+                                       (cond
+                                        (transform cand)
+                                        ((get-text-property 0 'simple-crm-selected cand) "Selected")
+                                        (t "Select Multiple")))))
+                    (complete-with-action action items str pred)))
+                nil
+                t
+                nil
+                history ; FIX
+                "")))
+          (unless (equal item "")
+            (cond
+             ((gethash item selected-hash)
+              (remhash item selected-hash)
+              (setq selected-list (delete item selected-list)))
+             (t
+              (puthash item t selected-hash)
+              (setq selected-list (nconc selected-list
+                                         (list (propertize item 'face 'region
+                                                           'simple-crm-selected t))))))
+            (setq items
+                  (append selected-list
+                          (seq-remove (lambda (x)
+                                        (gethash x selected-hash))
+                                      candidates)))
+            t)))
+    selected-list))
 
 (defun citar-select-resource (files &optional links)
   "Select resource from a list of FILES, and optionally LINKS."
