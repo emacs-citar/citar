@@ -605,6 +605,8 @@ key associated with each one."
               ;; text to allow it to be searched, and citekey to ensure uniqueness
               ;; of the candidate.
               (candidate-hidden (string-join (list files notes link context citekey) " ")))
+         (when files (push (cons "has-file" t) entry))
+         (when notes (push (cons "has-note" t) entry))
          (push
           (cons
            ;; If we don't trim the trailing whitespace,
