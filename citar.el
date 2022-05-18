@@ -697,12 +697,14 @@ are refreshed."
       (error "No template for \"%s\" - check variable 'citar-templates'" template-name))
     template))
 
-(defun citar--get-candidates (&optional force-rebuild-cache)
+(defun citar--get-candidates (&optional force-rebuild-cache filter)
   "Get the cached candidates.
 
 If the cache is unintialized, this will load the cache.
 
-If FORCE-REBUILD-CACHE is t, force reload the cache."
+If FORCE-REBUILD-CACHE is t, force reload the cache.
+
+If FILTER, use the function to filter the candidate list."
   (unless (or citar-bibliography (citar--local-files-to-cache))
     (error "Make sure to set citar-bibliography and related paths"))
   (when force-rebuild-cache
@@ -711,9 +713,16 @@ If FORCE-REBUILD-CACHE is t, force reload the cache."
     (citar-refresh nil 'global))
   (when (eq 'uninitialized citar--local-candidates-cache)
     (citar-refresh nil 'local))
-  (seq-concatenate 'list
-                   citar--local-candidates-cache
-                   citar--candidates-cache))
+  (let ((candidates
+         (seq-concatenate 'list
+                          citar--local-candidates-cache
+                          citar--candidates-cache)))
+    (if filter
+        (seq-filter
+         (pcase-lambda (`(_ ,citekey . ,entry))
+           (funcall filter citekey entry))
+         candidates)
+      candidates)))
 
 (defun citar--get-entry (key)
   "Return the cached entry for KEY."
