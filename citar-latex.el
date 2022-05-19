@@ -32,6 +32,13 @@
 (require 'reftex-parse)
 (require 'reftex-cite)
 
+;;; pre-1.0 API cleanup
+
+;; make all these private
+
+(make-obsolete 'citar-latex-select-command 'citar-latex--select-command "1.0")
+(make-obsolete 'citar-latex-is-a-cite-command 'citar-latex--is-a-cite-command "1.0")
+
 (defvar citar-major-mode-functions)
 
 (defcustom citar-latex-cite-commands
@@ -139,7 +146,7 @@ inside a citation macro."
                               (looking-at (concat (regexp-quote TeX-esc)
                                                   "\\([@A-Za-z]+\\)"))
                               (match-string-no-properties 1))))
-      (when (citar-latex-is-a-cite-command macro)
+      (when (citar-latex--is-a-cite-command macro)
         bounds))))
 
 (defvar citar-latex-cite-command-history nil
@@ -182,11 +189,11 @@ inserted."
       (let ((macro
 	     (or command
 		 (if (xor invert-prompt citar-latex-prompt-for-cite-style)
-                     (citar-latex-select-command)
+                     (citar-latex--select-command)
 		   citar-latex-default-cite-command))))
         (TeX-parse-macro macro
                          (when citar-latex-prompt-for-extra-arguments
-                           (cdr (citar-latex-is-a-cite-command macro))))))
+                           (cdr (citar-latex--is-a-cite-command macro))))))
     (insert (string-join keys ","))
     (skip-chars-forward "^}") (forward-char 1)))
 
@@ -197,7 +204,7 @@ With ARG non-nil, rebuild the cache before offering candidates."
   (citar-latex-insert-citation
    (citar--extract-keys (citar-select-refs :rebuild-cache arg))))
 
-(defun citar-latex-select-command ()
+(defun citar-latex--select-command ()
   "Complete a citation command for LaTeX."
   (completing-read "Cite command: "
                    (seq-mapcat #'car citar-latex-cite-commands)
@@ -205,7 +212,7 @@ With ARG non-nil, rebuild the cache before offering candidates."
                    'citar-latex-cite-command-history
 		   citar-latex-default-cite-command nil))
 
-(defun citar-latex-is-a-cite-command (command)
+(defun citar-latex--is-a-cite-command (command)
   "Return element of `citar-latex-cite-commands` containing COMMAND."
   (seq-find (lambda (x) (member command (car x)))
             citar-latex-cite-commands))

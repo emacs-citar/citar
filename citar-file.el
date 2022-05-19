@@ -28,9 +28,18 @@
   (require 'subr-x))
 (require 'seq)
 
+;;; pre-1.0 API cleanup
+
+;; make all these private
+
+(make-obsolete 'citar-file-parser-default 'citar-file--parser-default "1.0")
+(make-obsolete 'citar-file-parser-triplet 'citar-file--parser-triplet "1.0")
+(make-obsolete-variable 'citar-file-extensions
+                        'citar-library-file-extensions "1.0")
+
 (declare-function citar--get-entry "citar")
-(declare-function citar-get-value "citar")
-(declare-function citar-get-template "citar")
+(declare-function citar--get-value "citar")
+(declare-function citar--get-template "citar")
 (declare-function citar--format-entry-no-widths "citar")
 
 ;;;; File related variables
@@ -46,8 +55,8 @@
   :type '(boolean))
 
 (defcustom citar-file-parser-functions
-  '(citar-file-parser-default
-    citar-file-parser-triplet)
+  '(citar-file--parser-default
+    citar-file--parser-triplet)
   "List of functions to parse file field."
   :group 'citar
   :type '(repeat function))
@@ -56,16 +65,6 @@
   "Function to use to open files."
   :group 'citar
   :type '(function))
-
-(defcustom citar-file-extensions nil
-  "List of file extensions to filter for related files.
-
-These are the extensions the 'citar-file-open-function'
-will open, via `citar-file-open'.
-
-When nil, the function will not filter the list of files."
-  :group 'citar
-  :type '(repeat string))
 
 (defcustom citar-file-note-extensions '("org" "md")
   "List of file extensions to filter for notes.
@@ -106,7 +105,7 @@ separator that does not otherwise occur in citation keys."
      (mapcar
       (lambda (p) (file-truename p)) file-paths))))
 
-(defun citar-file-parser-default (dirs file-field)
+(defun citar-file--parser-default (dirs file-field)
   "Return a list of files from DIRS and FILE-FIELD."
   (let ((files (split-string file-field "[:;]")))
     (delete-dups
@@ -117,7 +116,7 @@ separator that does not otherwise occur in citation keys."
            (expand-file-name file dir)) files))
       dirs))))
 
-(defun citar-file-parser-triplet (dirs file-field)
+(defun citar-file--parser-triplet (dirs file-field)
   "Return a list of files from DIRS and a FILE-FIELD formatted as a triplet.
 
 This is file-field format seen in, for example, Calibre and Mendeley.
@@ -140,7 +139,7 @@ File names are expanded relative to the elements of DIRS.
 
 Filter by EXTENSIONS when present."
   (unless dirs (setq dirs (list "/")))  ; make sure DIRS is non-nil
-  (let* ((filefield (citar-get-value fieldname entry))
+  (let* ((filefield (citar--get-value fieldname entry))
          (files
           (when filefield
             (delete-dups
@@ -163,7 +162,7 @@ as group 1, the extension as group 2, and any additional text
 following the key as group 3."
   (let* ((entry (when keys
                   (citar--get-entry (car keys))))
-         (xref (citar-get-value "crossref" entry)))
+         (xref (citar--get-value "crossref" entry)))
     (unless (or (null xref) (string-empty-p xref))
       (push xref keys))
     (when (and (null keys) (string-empty-p additional-sep))
@@ -250,7 +249,7 @@ repeatedly."
   (let ((files (citar-file--directory-files dirs nil extensions
                                             citar-file-additional-files-separator)))
     (lambda (key entry)
-      (let* ((xref (citar-get-value "crossref" entry))
+      (let* ((xref (citar--get-value "crossref" entry))
              (cached (if (and xref
                               (not (eq 'unknown (gethash xref files 'unknown))))
                          (gethash xref files 'unknown)
