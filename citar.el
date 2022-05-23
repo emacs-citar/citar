@@ -479,7 +479,9 @@ REBUILD-CACHE and FILTER."
   "Group RESOURCE by type or TRANSFORM."
     (let ((extension (file-name-extension resource)))
       (if transform
-          resource
+          (if (file-regular-p resource)
+              (file-name-nondirectory resource)
+            resource)
         (cond
          ((member extension citar-file-note-extensions) "Notes")
          ((string-match "http" resource 0) "Links")
