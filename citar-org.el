@@ -39,6 +39,10 @@
 (require 'oc-basic)
 (require 'oc-csl)
 
+;; Pre-1.0 API cleanup
+
+(make-obsolete 'citar-org-id-get-create 'citar-org--id-get-create "1.0")
+
 (declare-function citar-at-point "citar")
 (declare-function org-open-at-point "org")
 (declare-function org-element-property "org")
@@ -259,7 +263,7 @@ strings by style."
 
 ;;; Org note function
 
-(defun citar-org-id-get-create (&optional force)
+(defun citar-org--id-get-create (&optional force)
   "Call `org-id-get-create` while maintaining point.
 
 If point is at the beginning of the buffer and a new properties
@@ -282,13 +286,13 @@ With optional argument FORCE, force the creation of a new ID."
   (when (and (derived-mode-p 'org-mode)
              (fboundp 'org-roam-buffer-p)
              (org-roam-buffer-p))
-    (ignore-errors (citar-org-id-get-create))
+    (ignore-errors (citar-org--id-get-create))
     (ignore-errors (org-roam-ref-add (concat "@" key)))))
 
 ;;;###autoload
 (defun citar-org-format-note-default (key entry filepath)
   "Format a note FILEPATH from KEY and ENTRY."
-    (let* ((template (citar-get-template 'note))
+    (let* ((template (citar--get-template 'note))
            (note-meta
             (when template
               (citar--format-entry-no-widths

@@ -45,6 +45,26 @@
 (require 'parsebib)
 (require 'crm)
 
+;;; pre-1.0 API cleanup
+
+;; make public
+;(make-obsolete 'citar--get-candidates 'citar-get-candidates "1.0")
+
+;; make all these private
+(make-obsolete 'citar-get-template 'citar--get-template "1.0")
+(make-obsolete 'citar-get-link 'citar--get-link "1.0")
+(make-obsolete 'citar-get-value 'citar--get-value "1.0")
+(make-obsolete 'citar-display-value 'citar--display-value "1.0")
+(make-obsolete 'citar-open-multi 'citar--open-multi "1.0")
+(make-obsolete 'citar-select-group-related-resources
+               'citar--select-group-related-resources "1.0")
+(make-obsolete 'citar-select-resource 'citar--select-resource "1.0")
+
+;; also rename
+(make-obsolete 'citar-has-a-value 'citar--field-with-value "1.0")
+
+
+
 ;;; Declare variables and functions for byte compiler
 
 (defvar embark-keymap-alist)
@@ -83,6 +103,16 @@
   "A list of files paths for related PDFs, etc."
   :group 'citar
   :type '(repeat directory))
+
+(defcustom citar-library-file-extensions nil
+  "List of file extensions to filter for related files.
+
+These are the extensions the 'citar-file-open-function'
+will open, via `citar-file-open'.
+
+When nil, the function will not filter the list of files."
+  :group 'citar
+  :type '(repeat string))
 
 (defcustom citar-notes-paths nil
   "A list of file paths for bibliographic notes."
@@ -469,7 +499,7 @@ HISTORY is the 'completing-read' history argument."
             t)))
     (hash-table-keys selected-hash)))
 
-(defun citar-select-resource (files &optional links)
+(defun citar--select-resource (files &optional links)
   "Select resource from a list of FILES, and optionally LINKS."
   (let* ((files (mapcar
                  (lambda (cand)
@@ -486,15 +516,17 @@ HISTORY is the 'completing-read' history argument."
      (lambda (string predicate action)
        (if (eq action 'metadata)
            `(metadata
-             (group-function . citar-select-group-related-resources)
+             (group-function . citar--select-group-related-resources)
              (category . multi-category))
          (complete-with-action action (delete-dups resources) string predicate))))))
 
-(defun citar-select-group-related-resources (resource transform)
+(defun citar--select-group-related-resources (resource transform)
   "Group RESOURCE by type or TRANSFORM."
     (let ((extension (file-name-extension resource)))
       (if transform
-          resource
+          (if (file-regular-p resource)
+              (file-name-nondirectory resource)
+            resource)
         (cond
          ((member extension citar-file-note-extensions) "Notes")
          ((string-match "http" resource 0) "Links")
@@ -527,19 +559,19 @@ If no function is found, the DEFAULT function is called."
                   (citar-file--normalize-paths
                    citar-bibliography)))
 
-(defun citar-get-value (field item)
-  "Return the FIELD value for ITEM."
-  (cdr (assoc-string field item 'case-fold)))
+(defun citar--get-value (field entry)
+  "Return the FIELD value for ENTRY."
+  (cdr (assoc-string field entry 'case-fold)))
 
-(defun citar-has-a-value (fields item)
-  "Return the first field that has a value in ITEM among FIELDS ."
-  (seq-find (lambda (field) (citar-get-value field item)) fields))
+(defun citar--field-with-value (fields entry)
+  "Return the first field that has a value in ENTRY among FIELDS ."
+  (seq-find (lambda (field) (citar--get-value field entry)) fields))
 
-(defun citar-display-value (fields item)
-  "Return the first non nil value for ITEM among FIELDS .
+(defun citar--display-value (fields entry)
+  "Return the first non nil value for ENTRY among FIELDS .
 
 The value is transformed using `citar-display-transform-functions'"
-  (let ((field (citar-has-a-value fields item)))
+  (let ((field (citar--field-with-value fields entry)))
     (seq-reduce (lambda (string fun)
                   (if (or (eq t (car fun))
                           (member field (car fun)))
@@ -547,7 +579,7 @@ The value is transformed using `citar-display-transform-functions'"
                     string))
                 citar-display-transform-functions
             ;; Make sure we always return a string, even if empty.
-                (or (citar-get-value field item) ""))))
+                (or (citar--get-value field entry) ""))))
 
 ;; Lifted from bibtex-completion
 (defun citar-clean-string (s)
@@ -578,10 +610,10 @@ personal names of the form 'family, given'."
 (defun citar--fields-in-formats ()
   "Find the fields to mentioned in the templates."
   (seq-mapcat #'citar--fields-for-format
-              (list (citar-get-template 'main)
-                    (citar-get-template 'suffix)
-                    (citar-get-template 'preview)
-                    (citar-get-template 'note))))
+              (list (citar--get-template 'main)
+                    (citar--get-template 'suffix)
+                    (citar--get-template 'preview)
+                    (citar--get-template 'note))))
 
 (defun citar--fields-to-parse ()
   "Determine the fields to parse from the template."
@@ -603,7 +635,7 @@ Note: for performance reasons, this function should be called
 once per command; the function it returns can be called
 repeatedly."
   (citar-file--has-file citar-library-paths
-                        citar-file-extensions
+                        citar-library-file-extensions
                         citar-file-variable))
 
 (defun citar-has-note ()
@@ -627,25 +659,25 @@ key associated with each one."
           (parsebib-parse bib-files :fields (citar--fields-to-parse)))
          (hasfilep (citar-has-file))
          (hasnotep (citar-has-note))
-         (main-width (citar--format-width (citar-get-template 'main)))
-         (suffix-width (citar--format-width (citar-get-template 'suffix)))
+         (main-width (citar--format-width (citar--get-template 'main)))
+         (suffix-width (citar--format-width (citar--get-template 'suffix)))
          (symbols-width (string-width (citar--symbols-string t t t)))
          (star-width (- (frame-width) (+ 2 symbols-width main-width suffix-width))))
     (maphash
      (lambda (citekey entry)
        (let* ((files (when (funcall hasfilep citekey entry) " has:files"))
               (notes (when (funcall hasnotep citekey entry) " has:notes"))
-              (link (when (citar-has-a-value '("doi" "url") entry) "has:link"))
+              (link (when (citar--field-with-value '("doi" "url") entry) "has:link"))
               (candidate-main
                (citar--format-entry
                 entry
                 star-width
-                (citar-get-template 'main)))
+                (citar--get-template 'main)))
               (candidate-suffix
                (citar--format-entry
                 entry
                 star-width
-                (citar-get-template 'suffix)))
+                (citar--get-template 'suffix)))
               ;; We display this content already using symbols; here we add back
               ;; text to allow it to be searched, and citekey to ensure uniqueness
               ;; of the candidate.
@@ -734,7 +766,7 @@ are refreshed."
           (citar--format-candidates
            (citar--local-files-to-cache) "is:local"))))
 
-(defun citar-get-template (template-name)
+(defun citar--get-template (template-name)
   "Return template string for TEMPLATE-NAME."
   (let ((template
          (cdr (assoc template-name citar-templates))))
@@ -776,15 +808,15 @@ If FILTER, use the function to filter the candidate list."
              (string-equal key (cadr entry)))
            (citar--get-candidates))))
 
-(defun citar-get-link (entry)
+(defun citar--get-link (entry)
   "Return a link for an ENTRY."
-  (let* ((field (citar-has-a-value '(doi pmid pmcid url) entry))
+  (let* ((field (citar--field-with-value '(doi pmid pmcid url) entry))
          (base-url (pcase field
                      ('doi "https://doi.org/")
                      ('pmid "https://www.ncbi.nlm.nih.gov/pubmed/")
                      ('pmcid "https://www.ncbi.nlm.nih.gov/pmc/articles/"))))
     (when field
-      (concat base-url (citar-get-value field entry)))))
+      (concat base-url (citar--get-value field entry)))))
 
 (defun citar--extract-keys (keys-entries)
   "Extract list of keys from KEYS-ENTRIES.
@@ -905,7 +937,7 @@ FORMAT-STRING."
                                field-width
                              width))
             ;; Make sure we always return a string, even if empty.
-            (display-value (citar-display-value field-names entry)))
+            (display-value (citar--display-value field-names entry)))
        (citar--fit-to-width display-value display-width)))))
 
 (defun citar--format-entry-no-widths (entry format-string)
@@ -914,7 +946,7 @@ FORMAT-STRING."
    format-string
    (lambda (raw-field)
      (let ((field-names (split-string raw-field "[ ]+")))
-       (citar-display-value field-names entry)))))
+       (citar--display-value field-names entry)))))
 
 ;;; At-point functions for Embark
 
@@ -976,7 +1008,7 @@ FORMAT-STRING."
              (stringp citar-library-paths))
     (message "Make sure 'citar-library-paths' is a list of paths"))
   (let* ((embark-default-action-overrides
-          '((multi-category . citar-open-multi)
+          '((multi-category . citar--open-multi)
               (file . citar-file-open)
               (url . browse-url)))
          (key-entry-alist (citar--ensure-entries keys-entries))
@@ -989,7 +1021,7 @@ FORMAT-STRING."
          (links
           (seq-map
            (lambda (key-entry)
-             (citar-get-link (cdr key-entry)))
+             (citar--get-link (cdr key-entry)))
            key-entry-alist))
          (resource-candidates (delete-dups (append files (remq nil links)))))
     (cond
@@ -997,11 +1029,11 @@ FORMAT-STRING."
       (error "No associated resources"))
      ((unless citar-open-prompt
         (eq 1 (length resource-candidates)))
-      (citar-open-multi (car resource-candidates)))
-     (t (citar-open-multi
-         (citar-select-resource files links))))))
+      (citar--open-multi (car resource-candidates)))
+     (t (citar--open-multi
+         (citar--select-resource files links))))))
 
-(defun citar-open-multi (selection)
+(defun citar--open-multi (selection)
   "Act appropriately on SELECTION when type is 'multi-category'.
 For use with 'embark-act-all'."
   (cond ((string-match "http" selection 0)
@@ -1025,12 +1057,12 @@ For use with 'embark-act-all'."
            key
            entry
            citar-library-paths
-           citar-file-extensions))
+           citar-library-file-extensions))
          (file
           (pcase (length files)
             (1 (car files))
             ((guard (> 1))
-             (citar-select-resource files)))))
+             (citar--select-resource files)))))
     (if file
         (funcall fn file)
       (message "No associated file"))))
@@ -1131,7 +1163,7 @@ directory as current buffer."
 With prefix, rebuild the cache before offering candidates."
   (interactive (list (citar-select-ref
                       :rebuild-cache current-prefix-arg)))
-  (let ((link (citar-get-link (cdr key-entry))))
+  (let ((link (citar--get-link (cdr key-entry))))
     (if link
         (browse-url link)
       (message "No link found for %s" (car key-entry)))))
@@ -1186,7 +1218,7 @@ citation styles. See specific functions for more detail."
 
 (defun citar-format-reference (key-entry-alist)
   "Return formatted reference(s) for the elements of KEY-ENTRY-ALIST."
-  (let* ((template (citar-get-template 'preview))
+  (let* ((template (citar--get-template 'preview))
          (references
           (with-temp-buffer
             (dolist (key-entry key-entry-alist)
