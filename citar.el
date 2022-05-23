@@ -62,8 +62,10 @@
 
 ;; also rename
 (make-obsolete 'citar-has-a-value 'citar--field-with-value "1.0")
+(make-obsolete 'citar--open-note 'citar-file--open-note "1.0")
 
-
+(make-obsolete-variable
+ 'citar-format-note-function 'citar-create-note-function "1.0")
 
 ;;; Declare variables and functions for byte compiler
 
@@ -222,6 +224,20 @@ If nil, single resources will open without prompting."
   :group 'citar
   :type '(boolean))
 
+;;; Note-handling setup
+
+(defcustom citar-open-note-functions
+  '(citar-file--open-note)
+  "List of functions to open a note."
+  :group 'citar
+  :type '(function))
+
+(defcustom citar-keys-with-notes-functions
+  '(citar-file--keys-with-file-notes)
+  "Functions, without argument, to return a list of keys with notes."
+  :group 'citar
+  :type '(function))
+
 (defcustom citar-open-note-function
   'citar--open-note
   "Function to open a new or existing note.
@@ -233,9 +249,9 @@ ENTRY: an alist with the structured data (title, author, etc.)"
   :group 'citar
   :type 'function)
 
-(defcustom citar-format-note-function
+(defcustom citar-create-note-function
   'citar-org-format-note-default
-  "Function to format a new note.
+  "Function to create a new note.
 
 A note function must take three arguments:
 
@@ -475,6 +491,14 @@ REBUILD-CACHE and FILTER."
              (category . multi-category))
          (complete-with-action action (delete-dups resources) string predicate))))))
 
+(defun citar--keys-with-notes ()
+  "Return a list of keys with associated notes."
+  (seq-uniq
+   (seq-mapcat
+    (lambda (fn)
+      (funcall fn))
+    citar-keys-with-notes-functions)))
+
 (defun citar--select-group-related-resources (resource transform)
   "Group RESOURCE by type or TRANSFORM."
     (let ((extension (file-name-extension resource)))
@@ -605,6 +629,7 @@ repeatedly."
   (citar-file--has-file citar-notes-paths
                         citar-file-note-extensions))
 
+
 (defun citar--format-candidates (bib-files &optional context)
   "Format candidates from BIB-FILES, with optional hidden CONTEXT metadata.
 This both propertizes the candidates for display, and grabs the
@@ -613,7 +638,7 @@ key associated with each one."
          (raw-candidates
           (parsebib-parse bib-files :fields (citar--fields-to-parse)))
          (hasfilep (citar-has-file))
-         (hasnotep (citar-has-note))
+         (hasnote (citar--keys-with-notes))
          (main-width (citar--format-width (citar--get-template 'main)))
          (suffix-width (citar--format-width (citar--get-template 'suffix)))
          (symbols-width (string-width (citar--symbols-string t t t)))
@@ -621,7 +646,7 @@ key associated with each one."
     (maphash
      (lambda (citekey entry)
        (let* ((files (when (funcall hasfilep citekey entry) " has:files"))
-              (notes (when (funcall hasnotep citekey entry) " has:notes"))
+              (notes (when (member citekey hasnote) " has:notes"))
               (link (when (citar--field-with-value '("doi" "url") entry) "has:link"))
               (candidate-main
                (citar--format-entry
@@ -1041,21 +1066,19 @@ With prefix, rebuild the cache before offering candidates."
 With prefix, rebuild the cache before offering candidates."
   (interactive (list (citar-select-ref
                       :rebuild-cache current-prefix-arg)))
-  (let ((embark-default-action-overrides '((file . find-file))))
-    (when (and (null citar-notes-paths)
-               (equal citar-format-note-function
-                      'citar-org-format-note-default))
-      (error "You must set 'citar-notes-paths' to open notes with default notes function"))
-    (funcall citar-open-note-function (car key-entry) (cdr key-entry))))
+  (let* ((embark-default-action-overrides '((file . find-file)))
+         (key (car key-entry))
+         (entry (cdr key-entry)))
+    (if (listp citar-open-note-functions)
+        (citar--open-notes key entry)
+      (error "Please change the value of 'citar-open-note-functions' to a list"))))
 
-(defun citar--open-note (key entry)
-  "Open a note file from KEY and ENTRY."
-  (if-let* ((file (citar-file--get-note-filename key
-                                                 citar-notes-paths
-                                                 citar-file-note-extensions))
-            (file-exists (file-exists-p file)))
-      (find-file file)
-    (funcall citar-format-note-function key entry file)))
+(defun citar--open-notes (key entry)
+  "Open note(s) associated with KEY and ENTRY."
+  (or (seq-some
+       (lambda (opener)
+         (funcall opener key entry)) citar-open-note-functions)
+      (funcall citar-create-note-function key entry)))
 
 ;;;###autoload
 (defun citar-open-entry (key-entry)

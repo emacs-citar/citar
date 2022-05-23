@@ -27,6 +27,7 @@
   (require 'cl-lib)
   (require 'subr-x))
 (require 'seq)
+(make-obsolete 'citar-format-note-function 'citar-create-note-function "1.0")
 
 ;;; pre-1.0 API cleanup
 
@@ -93,6 +94,9 @@ separator that does not otherwise occur in citation keys."
                  (regexp :tag "Filename separator")))
 
 (defvar citar-notes-paths)
+(defvar citar-create-note-function)
+(defvar citar-library-paths)
+(defvar citar-library-file-extensions)
 
 ;;;; Convenience functions for files and paths
 
@@ -229,6 +233,26 @@ need to scan the contents of DIRS in this case."
                  (puthash key (nreverse filelist) files))
                files))))
 
+(defun citar-file--has-file-notes-hash ()
+  "Return a hash of keys and file paths for notes."
+  (citar-file--directory-files
+   citar-notes-paths nil citar-file-note-extensions
+   citar-file-additional-files-separator))
+
+(defun citar-file--has-library-files-hash ()
+  "Return a hash of keys and file paths for library files."
+  (citar-file--directory-files
+   citar-library-paths nil citar-library-file-extensions
+   citar-file-additional-files-separator))
+
+(defun citar-file--keys-with-file-notes ()
+  "Return a list of keys with file notes."
+  (hash-table-keys (citar-file--has-file-notes-hash)))
+
+(defun citar-file--keys-with-library-files ()
+  "Return a list of keys with file notes."
+  (hash-table-keys (citar-file--has-library-files-hash)))
+
 (defun citar-file--has-file (dirs extensions &optional entry-field)
   "Return predicate testing whether a key and entry have associated files.
 
@@ -321,6 +345,19 @@ of files found in two ways:
                     (_ "xdg-open"))
                   nil 0 nil
                   file)))
+
+(defun citar-file--open-note (key entry)
+  "Open a note file from KEY and ENTRY."
+  (if-let* ((file (citar-file--get-note-filename key
+                                                 citar-notes-paths
+                                                 citar-file-note-extensions))
+            (file-exists (file-exists-p file)))
+      (find-file file)
+    (if (and (null citar-notes-paths)
+             (equal citar-create-note-function
+                    'citar-org-format-note-default))
+      (error "You must set 'citar-notes-paths'")
+      (funcall citar-create-note-function key entry file))))
 
 (defun citar-file--get-note-filename (key dirs extensions)
   "Return existing or new filename for KEY in DIRS with extension in EXTENSIONS.
