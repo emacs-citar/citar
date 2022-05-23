@@ -267,14 +267,20 @@ For additional configuration options on this, see [[https://github.com/bdarcus/c
 
 ** Notes
 
-Citar provides a ~citar-format-note-function~ variable, and a default function for org, which also works well with org-roam (v2 now supports org-cite).
+Citar provides a ~citar-create-note-function~ variable, and a default function for org, which also works well with org-roam (v2 now supports org-cite).
 You can configure the title display using the "note" template.
 
-You can also use the ~citar-open-note-function~ variable to replace the default with another; for example from org-roam-bibtex:
+You can also use the ~citar-open-note-functions~ variable to replace or augment the default with another; for example from org-roam-bibtex:
 
 #+BEGIN_SRC emacs-lisp
-(setq citar-open-note-function 'orb-citar-edit-note)
+(setq citar-open-note-functions '(orb-citar-edit-note))
 #+END_SRC
+
+Since ~citar-open-note-functions~ is a list, you can also include multiple functions, to handle different note scenarios.
+
+Citar also includes a ~citar-keys-with-notes-functions~ variable, which specifies a list of functions, each of which returns a list of keys that have associated notes.
+This function allows Citar to correctly format the completion UI candidates.
+The default function only supports one-file-per-key notes.
 
 ** Files, file association and file-field parsing
 
