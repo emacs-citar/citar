@@ -292,7 +292,7 @@ With optional argument FORCE, force the creation of a new ID."
 ;;;###autoload
 (defun citar-org-format-note-default (key entry filepath)
   "Format a note FILEPATH from KEY and ENTRY."
-    (let* ((template (citar-get-template 'note))
+    (let* ((template (citar--get-template 'note))
            (note-meta
             (when template
               (citar--format-entry-no-widths
