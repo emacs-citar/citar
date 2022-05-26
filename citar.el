@@ -6,7 +6,7 @@
 ;; Maintainer: Bruce D'Arcus <https://github.com/bdarcus>
 ;; Created: February 27, 2021
 ;; License: GPL-3.0-or-later
-;; Version: 0.9
+;; Version: 0.9.5
 ;; Homepage: https://github.com/bdarcus/citar
 ;; Package-Requires: ((emacs "27.1") (parsebib "3.0") (org "9.5") (citeproc "0.9"))
 
