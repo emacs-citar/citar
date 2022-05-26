@@ -247,7 +247,15 @@ need to scan the contents of DIRS in this case."
 
 (defun citar-file--keys-with-file-notes ()
   "Return a list of keys with file notes."
-  (hash-table-keys (citar-file--has-file-notes-hash)))
+  (let ((all-keys (mapcar (lambda (x) (nth 1 x)) (citar--get-candidates)))
+        (note-keys (hash-table-keys (citar-file--has-file-notes-hash))))
+    (mapc (lambda (key)
+            (let* ((entry (citar--get-entry key))
+                   (xref (citar--get-value "crossref" entry)))
+              (when (member xref note-keys)
+                (push key note-keys))))
+          all-keys)
+    note-keys))
 
 (defun citar-file--keys-with-library-files ()
   "Return a list of keys with file notes."
