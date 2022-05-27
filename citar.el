@@ -1078,7 +1078,7 @@ With prefix, rebuild the cache before offering candidates."
   (or (seq-some
        (lambda (opener)
          (funcall opener key entry)) citar-open-note-functions)
-      (funcall citar-create-note-function key entry)))
+      (funcall citar-file--open-note key entry)))
 
 ;;;###autoload
 (defun citar-open-entry (key-entry)
