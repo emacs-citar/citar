@@ -278,6 +278,9 @@ You can also use the ~citar-open-note-functions~ variable to replace or augment 
 
 Since ~citar-open-note-functions~ is a list, you can also include multiple functions, to handle different note scenarios.
 
+Please note that if you choose to use org-roam-bibtex using the above configuration, you will need to set ~:immediate-finish t~ in the template that you use for bibliography notes in ~org-roam-capture-templates~.
+Since ~citar-open-note-functions~ attempts multiple functions one after the other, this is needed to ensure the ~org-capture~ returns immediately without waiting for further user input.
+
 Citar also includes a ~citar-keys-with-notes-functions~ variable, which specifies a list of functions, each of which returns a list of keys that have associated notes.
 This function allows Citar to correctly format the completion UI candidates.
 The default function only supports one-file-per-key notes.
