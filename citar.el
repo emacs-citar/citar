@@ -377,7 +377,7 @@ When nil, all citar commands will use `completing-read`."
   :type 'boolean
   :group 'citar)
 
-(defun citar--completion-table (candidates &optional filter)
+(defun citar--completion-table (candidates &optional filter &rest metadata)
   "Return a completion table for CANDIDATES.
 
 CANDIDATES is an alist with entries (CAND KEY . ENTRY), where
@@ -388,10 +388,15 @@ FILTER, if non-nil, should be a predicate function taking
   arguments KEY and ENTRY.  Only candidates for which this
   function returns non-nil will be offered for completion.
 
+By default the metadata of the table contains the category and
+affixation function. METADATA are extra entries for metadata of
+the form (KEY . VAL).
+
 The returned completion table can be used with `completing-read`
 and other completion functions."
-  (let ((metadata `(metadata (category . citar-reference)
-                             (affixation-function . ,#'citar--affixation))))
+  (let ((metadata `(metadata . ((category . citar-reference)
+                                . ((affixation-function . ,#'citar--affixation)
+                                   . ,metadata)))))
     (lambda (string predicate action)
       (if (eq action 'metadata)
           metadata
@@ -433,13 +438,11 @@ FILTER: if non-nil, should be a predicate function taking
              (when-let ((keywords (assoc-default \"keywords\" entry)))
                (string-match-p \"foo\" keywords))))"
   (let* ((candidates (citar--get-candidates rebuild-cache))
-         (completions (citar--completion-table candidates filter))
-         (crm-separator "\\s-*&\\s-*")
          (chosen (if (and multiple citar-select-multiple)
-                     (completing-read-multiple "References: " completions nil nil nil
-                                               'citar-history citar-presets nil)
-                   (completing-read "Reference: " completions nil nil nil
-                                    'citar-history citar-presets nil)))
+                     (citar--select-multiple "References: " candidates
+                                             filter 'citar-history citar-presets)
+                   (completing-read "Reference: " (citar--completion-table candidates filter)
+                                    nil nil nil 'citar-history citar-presets nil)))
          (notfound nil)
          (keyentries
           (seq-mapcat
@@ -469,6 +472,71 @@ Call 'citar-select-ref' with argument :multiple; see its
 documentation for the return value and the meaning of
 REBUILD-CACHE and FILTER."
   (citar-select-ref :rebuild-cache rebuild-cache :multiple t :filter filter))
+
+(defun citar--sort-by-selection (selected-hash candidates)
+  "Sort the CANDIDATES by putting those in SELECTED-HASH first."
+  (let ((selected)
+        (others))
+    (dolist (cand candidates (nreverse (nconc others selected)))
+      (if (gethash (substring-no-properties cand) selected-hash)
+          (push cand selected)
+        (push cand others)))))
+
+(defun citar--multiple-completion-table (selected-hash candidates filter)
+  "Return a completion table for multiple selection.
+SELECTED-HASH is the hash-table containining selected-candidates.
+CANDIDATES is the list of completion candidates, FILTER is the function
+to filter them."
+  (citar--completion-table
+   candidates filter
+   `(display-sort-function . (lambda (cands) (citar--sort-by-selection ,selected-hash cands)))
+   `(group-function . (lambda (cand transform)
+                        (pcase (list (not (not transform))
+                                     (gethash (substring-no-properties cand) ,selected-hash))
+                          ('(nil nil) "Select Multiple")
+                          ('(nil t)   "Selected")
+                          ('(t   nil) cand)
+                          ('(t   t  ) (propertize cand 'face 'highlight)))))))
+
+(defvar citar--multiple-setup '("TAB" "RET" exit-minibuffer)
+  "Variable whose value should be a list of three elements.
+First the key which should be used for selection. Second the key which
+should be used for final selection and exiting. The last element should
+be the command which caused the selection.")
+
+(defun citar--multiple-exit ()
+  "Exit with the currently selected candidates."
+  (interactive)
+  (setq unread-command-events (listify-key-sequence (kbd (car  citar--multiple-setup)))))
+
+(defun citar--setup-multiple-keymap ()
+  "Make a keymap suitable for `citar--select-multiple'."
+  (let ((keymap (make-composed-keymap nil (current-local-map))))
+    (define-key keymap (kbd (car  citar--multiple-setup)) (caddr citar--multiple-setup))
+    (define-key keymap (kbd (cadr citar--multiple-setup)) #'citar--multiple-exit)
+    (use-local-map keymap)))
+
+(defun citar--select-multiple (prompt candidates &optional filter history def)
+  "Select multiple CANDIDATES with PROMPT.
+HISTORY is the 'completing-read' history argument."
+  ;; Because completing-read-multiple just does not work for long candidate
+  ;; strings, and IMO is a poor UI.
+  (let* ((selected-hash (make-hash-table :test #'equal)))
+    (while (let ((item (minibuffer-with-setup-hook #'citar--setup-multiple-keymap
+                         (completing-read
+                          (format "%s (%s/%s): " prompt
+                                  (hash-table-count selected-hash)
+                                  (length candidates))
+                          (citar--multiple-completion-table selected-hash candidates filter)
+                          nil t nil history `("" . ,def)))))
+             (unless (equal item "")
+               (cond ((gethash item selected-hash)
+                      (remhash item selected-hash))
+                     (t
+                      (puthash item t selected-hash))))
+             (not (or (eq last-command #'citar--multiple-exit)
+                      (equal item "")))))
+    (hash-table-keys selected-hash)))
 
 (defun citar--select-resource (files &optional links)
   "Select resource from a list of FILES, and optionally LINKS."
