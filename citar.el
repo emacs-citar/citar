@@ -77,8 +77,10 @@
 (defvar embark-transformer-alist)
 (defvar embark-multitarget-actions)
 (defvar embark-default-action-overrides)
+(defvar embark-candidate-collectors)
 
 (declare-function embark--target-buffer "ext:embark")
+(declare-function embark--metadata "ext:embark")
 
 ;;; Variables
 
@@ -94,6 +96,11 @@
 (defface citar-highlight
   '((t :weight bold))
   "Face used to highlight content in `citar' candidates."
+  :group 'citar)
+
+(defface citar-selection
+  '((t :inherit highlight :slant italic))
+  "Face used for the currently selected candidates."
   :group 'citar)
 
 (defcustom citar-bibliography nil
@@ -496,7 +503,7 @@ to filter them."
                           ('(nil nil) "Select Multiple")
                           ('(nil t)   "Selected")
                           ('(t   nil) cand)
-                          ('(t   t  ) (propertize cand 'face 'highlight)))))))
+                          ('(t   t  ) (add-face-text-property 0 (length cand) 'citar-selection nil cand) cand))))))
 
 (defvar citar--multiple-setup '("TAB" "RET" exit-minibuffer)
   "Variable whose value should be a list of three elements.
@@ -1022,12 +1029,26 @@ FORMAT-STRING."
                               (with-current-buffer (embark--target-buffer)
                                 (citar--get-candidates)))))))
 
+(defun citar--embark-selected ()
+  "Return selected candidates from `citar--select-multiple' for embark."
+  (when-let (((eq minibuffer-history-variable 'citar-history))
+             (metadata (embark--metadata))
+             (group-function (completion-metadata-get metadata 'group-function))
+             (cands (all-completions
+                     "" minibuffer-completion-table
+                     (lambda (cand)
+                       (and (equal "Selected" (funcall group-function cand nil))
+                            (or (not minibuffer-completion-predicate)
+                                (funcall minibuffer-completion-predicate cand)))))))
+    (cons (completion-metadata-get metadata 'category) cands)))
+
 ;;;###autoload
 (with-eval-after-load 'embark
   (add-to-list 'embark-target-finders 'citar-citation-finder)
   (add-to-list 'embark-transformer-alist
              '(citar-reference . citar--reference-transformer))
-  (add-to-list 'embark-target-finders 'citar-key-finder))
+  (add-to-list 'embark-target-finders 'citar-key-finder)
+  (add-to-list 'embark-candidate-collectors #'citar--embark-selected))
 
 (with-eval-after-load 'embark
   (set-keymap-parent citar-map embark-general-map)
