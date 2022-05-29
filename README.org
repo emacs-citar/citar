@@ -21,11 +21,11 @@ Note: this package was formerly called "bibtex-actions."
 
 This package provides a completing-read front-end to browse and act on BibTeX, BibLaTeX, and CSL JSON bibliographic data, and LaTeX, markdown, and org-cite editing support.
 
-When used with vertico (or selectrum), embark, and marginalia, it provides similar functionality to helm-bibtex and ivy-bibtex: quick filtering and selecting of bibliographic entries from the minibuffer, and the option to run different commands against them.
+When used with vertico, embark, and marginalia, it provides similar functionality to helm-bibtex and ivy-bibtex: quick filtering and selecting of bibliographic entries from the minibuffer, and the option to run different commands against them.
 
 With embark, it also makes available at-point actions in org, markdown, and LaTeX buffers.
 
-Here's a screenshot with [[https://github.com/minad/vertico][vertico]] and =consult-completing-read-multiple=, and symbol customization [[https://github.com/bdarcus/citar#icons][noted below]].
+Here's a screenshot with [[https://github.com/minad/vertico][vertico]] and symbol customization [[https://github.com/bdarcus/citar#icons][noted below]].
 
 #+CAPTION: vertico with citar
 [[file:images/vertico.png]]
@@ -45,11 +45,10 @@ There are a variety of ways to install citar:
 
 In addition, the following packages are strongly recommended for the best experience.
 
-1. [[https://github.com/minad/vertico][Vertico]] or [[https://github.com/raxod502/selectrum][Selectrum]] (completion interface)
+1. [[https://github.com/minad/vertico][Vertico]] (completion interface)
 2. [[https://github.com/oantolin/orderless][Orderless]] (completion style)
 3. [[https://github.com/oantolin/embark][Embark]] (contextual actions)
 4. [[https://github.com/minad/marginalia][Marginalia]] (annotations, and also candidate classification for Embark)
-4. [[https://github.com/minad/consult][Consult]] (enhanced interface for multiple candidate selection)
 
 ** Configuration
    :PROPERTIES:
@@ -61,7 +60,7 @@ In addition, the following packages are strongly recommended for the best experi
     :CUSTOM_ID: basic
     :END:
 
-This is the minimal configuration, and will work with any completing-read compliant vertical completion UI, like Vertico, Selectrum, or the built-in icomplete-vertical, with actions available via =M-x= commands.
+This is the minimal configuration, and will work with any completing-read compliant vertical completion UI, like Vertico, or the built-in icomplete-vertical, with actions available via =M-x= commands.
 
 #+BEGIN_SRC emacs-lisp
 (use-package citar
@@ -74,15 +73,7 @@ This is the minimal configuration, and will work with any completing-read compli
 
 *** Embark
 
-Citar will automatically integrate with Embark if it is installed, offering contextual access to actions in the
-minibuffer and at-point.  Some citation commands prompt for multiple citation keys, for which Consult offers an enhanced
-interface:
-
-#+BEGIN_SRC emacs-lisp
-;; use consult-completing-read for enhanced interface
-(advice-add #'completing-read-multiple :override #'consult-completing-read-multiple)
-#+END_SRC
-
+Citar will automatically integrate with Embark if it is installed, offering contextual access to actions in the minibuffer and at-point.
 When using Embark, the Citar actions are generic, and work the same across org, markdown, and latex modes.
 
 *** Org-Cite
@@ -377,14 +368,6 @@ For example, if you specify =text/f=, and the export processor you use doesn't s
 Simply do =M-x= and select the command that you want, enter the terms to find the item you are looking for, and hit return.
 This runs the default action: the command you invoked.
 
-A note on multiple candidate selection:
-
-These commands do allow you to select multiple items, with two caveats:
-
-1. For this to work correctly, you /must/ use the ampersand (=&=) as ~crm-separator~ to separate the candidates.
-2. We use long candidate strings, so if you use a completion system that requires you to =TAB=-complete, the experience is less-than-ideal.
-3. For these reasons, =consult-completing-read-multiple= is strongly recommended.
-
 *** Access an alternate action via =embark-act=
     :PROPERTIES:
     :CUSTOM_ID: access-an-alternate-action-via-embark-act
@@ -421,24 +404,15 @@ You can disable this behavior by setting =citar-at-point-fallback= to nil.
    :CUSTOM_ID: comparisons
    :END:
 
-This is inspired by =helm-bibtex= and =ivy-bibtex=, but is based on =completing-read=.
-In comparison:
-
-- =helm-bibtex= and =ivy-bibtex= provide a single command, and the actions accessed from there; =citar= provides all of its actions as standard commands, available from =M-x=, without a single entry point.
-- =citar= is based on =completing-read-multiple=, with a single dependency, and works with different completion systems (though in practice is best supported in =selectrum=) and supporting packages that are =completing-read= compliant; =helm-bibtex= and =ivy-bibtex= are based on =helm= and =ivy= respectively.
-
-What about =org-ref= and =org-ref-cite=?
-
-The future of the latter package at this point is unclear, though there is some cross-fertilization of ideas and code between this project and that.
-
-The former is an integrated package that supports citations, cross-references, acronyms and glossaries, but notably does not support org-cite; =citar= will only ever support org-cite, and exclusively focus on citations.
+To understand how citar compares to other packages like =org-ref=, =ivy-bibtex= and =helm-bibtex= (and the related =bibtex-completion=), see the [[https://github.com/emacs-citar/citar/wiki/Comparisons][comparisons]] page on the wiki.
 
 ** Acknowledgements
    :PROPERTIES:
    :CUSTOM_ID: acknowledgements
    :END:
 
-The ideas in this project were initially worked out in a [[https://github.com/tmalsburg/helm-bibtex/issues/353][conversation]] with [[https://github.com/mtreca][Maxime Tréca]] and [[https://github.com/minad][Daniel Mendler]]. Daniel, author of [[https://github.com/minad/consult][consult]] and [[https://github.com/minad/marginalia][marginalia]], helped us understand the possibilities of the new suite of completing-read packages, while Maxime came up with an [[https://github.com/tmalsburg/helm-bibtex/pull/355][initial prototype]].
+The ideas in this project were initially worked out in a [[https://github.com/tmalsburg/helm-bibtex/issues/353][conversation]] with [[https://github.com/mtreca][Maxime Tréca]] and [[https://github.com/minad][Daniel Mendler]].
+Daniel, author of [[https://github.com/minad/consult][consult]] and [[https://github.com/minad/marginalia][marginalia]], helped us understand the possibilities of the new suite of completing-read packages, while Maxime came up with an [[https://github.com/tmalsburg/helm-bibtex/pull/355][initial prototype]].
 
 This code takes those ideas and re-implements them to fill out the feature set, and also optimize the code clarity and performance.
 
