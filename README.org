@@ -318,7 +318,7 @@ You have a few different ways to use citar.
 
 *** Org-cite
 
-citar includes org-cite integration in =oc-citar=, which includes a processor with "insert," "activate" and "follow" capabilities.
+Citar includes an org-cite =citar= processor, with "insert," "activate" and "follow" capabilities.
 
 The "insert processor" uses =citar-select-refs= to browse your library to insert and edit citations and citation references using the =org-cite-insert= command.
 The command is context-aware, so depending on where point is in the buffer, will behave differently.
