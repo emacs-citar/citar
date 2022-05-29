@@ -837,8 +837,6 @@ If the cache is unintialized, this will load the cache.
 If FORCE-REBUILD-CACHE is t, force reload the cache.
 
 If FILTER, use the function to filter the candidate list."
-  (unless (or citar-bibliography (citar--local-files-to-cache))
-    (error "Make sure to set citar-bibliography and related paths"))
   (when force-rebuild-cache
     (citar-refresh force-rebuild-cache))
   (when (eq 'uninitialized citar--candidates-cache)
@@ -849,12 +847,15 @@ If FILTER, use the function to filter the candidate list."
          (seq-concatenate 'list
                           citar--local-candidates-cache
                           citar--candidates-cache)))
-    (if filter
-        (seq-filter
-         (pcase-lambda (`(_ ,citekey . ,entry))
-           (funcall filter citekey entry))
-         candidates)
-      candidates)))
+    (if candidates
+        (if filter
+            (seq-filter
+             (pcase-lambda (`(_ ,citekey . ,entry))
+               (funcall filter citekey entry))
+             candidates)
+          candidates)
+      (unless (or citar--candidates-cache citar--local-candidates-cache)
+        (error "Make sure to set citar-bibliography and related paths")) )))
 
 (defun citar--get-entry (key)
   "Return the cached entry for KEY."
