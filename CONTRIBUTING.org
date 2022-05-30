@@ -3,18 +3,11 @@
   :CUSTOM_ID: contributing
   :END:
 
-This is a simple package at the moment.
-I imagine it will stay pretty simple and stable, and that enhancements will focus on the =citar-read= function.
+If you would like to contribute, details:
 
-Otherwise, I expect most innovations to focus on configuration details laid out on the wiki.
-You should feel free to add your ideas there.
-
-If you do submit a PR, details:
-
-- Follow the [[https://github.com/bbatsov/emacs-lisp-style-guide][elisp style guide]].
-- If the CI flags any errors or warnings, which it will report on the "files" tab, please fix them.
-- For working on lists and such, we primarily use the =seq= functions, and would like to remove the dependence on =s= and =bibtex-completion= in general.
-
+- For more signifiant potential changes, file an issue first to get feedback on the basic idea.
+- If you do submit a PR, follow the [[https://github.com/bbatsov/emacs-lisp-style-guide][elisp style guide]], and [[https://cbea.ms/git-commit/][these suggestions]] on git commit messages.
+- For working on lists and such, we primarily use the =seq= functions, and occassionally ~dolist~.
 
 ** Extending citar
 
