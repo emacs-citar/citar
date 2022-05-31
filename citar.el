@@ -566,7 +566,7 @@ HISTORY is the 'completing-read' history argument."
              (category . multi-category))
          (complete-with-action action (delete-dups resources) string predicate))))))
 
-(defun citar--keys-with-notes ()
+(defun citar-keys-with-notes ()
   "Return a list of keys with associated notes."
   (seq-uniq
    (seq-mapcat
@@ -713,7 +713,7 @@ key associated with each one."
          (raw-candidates
           (parsebib-parse bib-files :fields (citar--fields-to-parse)))
          (hasfilep (citar-has-file))
-         (hasnote (citar--keys-with-notes))
+         (hasnote (citar-keys-with-notes))
          (main-width (citar--format-width (citar--get-template 'main)))
          (suffix-width (citar--format-width (citar--get-template 'suffix)))
          (symbols-width (string-width (citar--symbols-string t t t)))
