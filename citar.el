@@ -480,15 +480,6 @@ documentation for the return value and the meaning of
 REBUILD-CACHE and FILTER."
   (citar-select-ref :rebuild-cache rebuild-cache :multiple t :filter filter))
 
-(defun citar--sort-by-selection (selected-hash candidates)
-  "Sort the CANDIDATES by putting those in SELECTED-HASH first."
-  (let ((selected)
-        (others))
-    (dolist (cand candidates (nreverse (nconc others selected)))
-      (if (gethash (substring-no-properties cand) selected-hash)
-          (push cand selected)
-        (push cand others)))))
-
 (defun citar--multiple-completion-table (selected-hash candidates filter)
   "Return a completion table for multiple selection.
 SELECTED-HASH is the hash-table containining selected-candidates.
@@ -496,7 +487,6 @@ CANDIDATES is the list of completion candidates, FILTER is the function
 to filter them."
   (citar--completion-table
    candidates filter
-   `(display-sort-function . (lambda (cands) (citar--sort-by-selection ,selected-hash cands)))
    `(group-function . (lambda (cand transform)
                         (pcase (list (not (not transform))
                                      (gethash (substring-no-properties cand) ,selected-hash))
@@ -505,22 +495,21 @@ to filter them."
                           ('(t   nil) cand)
                           ('(t   t  ) (add-face-text-property 0 (length cand) 'citar-selection nil cand) cand))))))
 
-(defvar citar--multiple-setup '("TAB" "RET" exit-minibuffer)
-  "Variable whose value should be a list of three elements.
-First the key which should be used for selection. Second the key which
-should be used for final selection and exiting. The last element should
-be the command which caused the selection.")
+(defvar citar--multiple-setup '("TAB" . "RET")
+  "Variable whose value should be a cons (SEL . EXIT)
+SEL is the key which should be used for selection. EXIT is the key which
+is used for exiting the minibuffer during completing read.")
 
 (defun citar--multiple-exit ()
   "Exit with the currently selected candidates."
   (interactive)
-  (setq unread-command-events (listify-key-sequence (kbd (car  citar--multiple-setup)))))
+  (setq unread-command-events (listify-key-sequence (kbd (car citar--multiple-setup)))))
 
 (defun citar--setup-multiple-keymap ()
   "Make a keymap suitable for `citar--select-multiple'."
   (let ((keymap (make-composed-keymap nil (current-local-map))))
-    (define-key keymap (kbd (car  citar--multiple-setup)) (caddr citar--multiple-setup))
-    (define-key keymap (kbd (cadr citar--multiple-setup)) #'citar--multiple-exit)
+    (define-key keymap (kbd (car citar--multiple-setup)) (lookup-key keymap (kbd (cdr citar--multiple-setup))))
+    (define-key keymap (kbd (cdr citar--multiple-setup)) #'citar--multiple-exit)
     (use-local-map keymap)))
 
 (defun citar--select-multiple (prompt candidates &optional filter history def)
@@ -538,7 +527,8 @@ HISTORY is the 'completing-read' history argument."
                           nil t nil history `("" . ,def)))))
              (unless (equal item "")
                (cond ((gethash item selected-hash)
-                      (remhash item selected-hash))
+                      (remhash item selected-hash)
+                      (cl-callf cdr (symbol-value history)))
                      (t
                       (puthash item t selected-hash))))
              (not (or (eq last-command #'citar--multiple-exit)
