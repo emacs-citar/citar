@@ -253,6 +253,11 @@ need to scan the contents of DIRS in this case."
   "Return a list of keys with file notes."
   (hash-table-keys (citar-file--has-library-files-hash)))
 
+(defun citar-file-has-notes ()
+  "Return a predicate testing whether a reference has associated notes."
+  (citar-file--has-file citar-notes-paths
+                        citar-file-note-extensions))
+
 (defun citar-file--has-file (dirs extensions &optional entry-field)
   "Return predicate testing whether a key and entry have associated files.
 

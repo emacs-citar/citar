@@ -239,9 +239,13 @@ If nil, single resources will open without prompting."
   :group 'citar
   :type '(function))
 
-(defcustom citar-keys-with-notes-functions
-  '(citar-file--keys-with-file-notes)
-  "Functions, without argument, to return a list of keys with notes."
+(defcustom citar-has-note-functions
+  '(citar-file-has-notes)
+  "Functions to return a predicate testing whether a reference has
+associated notes.
+
+Such functions must take arguments KEY and ENTRY and return
+non-nil when the reference has associated notes."
   :group 'citar
   :type '(function))
 
@@ -556,14 +560,6 @@ HISTORY is the 'completing-read' history argument."
              (category . multi-category))
          (complete-with-action action (delete-dups resources) string predicate))))))
 
-(defun citar-keys-with-notes ()
-  "Return a list of keys with associated notes."
-  (seq-uniq
-   (seq-mapcat
-    (lambda (fn)
-      (funcall fn))
-    citar-keys-with-notes-functions)))
-
 (defun citar--select-group-related-resources (resource transform)
   "Group RESOURCE by type or TRANSFORM."
     (let ((extension (file-name-extension resource)))
@@ -691,9 +687,12 @@ non-nil when the entry has associated notes in `citar-notes-paths`.
 Note: for performance reasons, this function should be called
 once per command; the function it returns can be called
 repeatedly."
-  (citar-file--has-file citar-notes-paths
-                        citar-file-note-extensions))
-
+  ;; Call each function in `citar-has-note-functions` to get a list of predicates
+  (let ((preds (mapcar #'funcall citar-has-note-functions)))
+    ;; Return a predicate that checks if `citekey` and `entry` have a note
+    (lambda (citekey entry)
+      ;; Call each predicate with `citekey` and `entry`; return the first non-nil result
+      (seq-some (lambda (pred) (funcall pred citekey entry)) preds))))
 
 (defun citar--format-candidates (bib-files &optional context)
   "Format candidates from BIB-FILES, with optional hidden CONTEXT metadata.
@@ -703,7 +702,7 @@ key associated with each one."
          (raw-candidates
           (parsebib-parse bib-files :fields (citar--fields-to-parse)))
          (hasfilep (citar-has-file))
-         (hasnote (citar-keys-with-notes))
+         (hasnotep (citar-has-note))
          (main-width (citar--format-width (citar--get-template 'main)))
          (suffix-width (citar--format-width (citar--get-template 'suffix)))
          (symbols-width (string-width (citar--symbols-string t t t)))
@@ -711,7 +710,7 @@ key associated with each one."
     (maphash
      (lambda (citekey entry)
        (let* ((files (when (funcall hasfilep citekey entry) " has:files"))
-              (notes (when (member citekey hasnote) " has:notes"))
+              (notes (when (funcall hasnotep citekey entry) " has:notes"))
               (link (when (citar--field-with-value '("doi" "url") entry) "has:link"))
               (candidate-main
                (citar--format-entry
@@ -1158,7 +1157,7 @@ With prefix, rebuild the cache before offering candidates."
   (or (seq-some
        (lambda (opener)
          (funcall opener key entry)) citar-open-note-functions)
-      (funcall citar-file--open-note key entry)))
+      (funcall citar-create-note-function key entry)))
 
 ;;;###autoload
 (defun citar-open-entry (key-entry)
