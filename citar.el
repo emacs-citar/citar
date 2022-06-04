@@ -599,9 +599,10 @@ If no function is found, the DEFAULT function is called."
                   (citar-file--normalize-paths
                    citar-bibliography)))
 
-(defun citar--get-value (field entry)
-  "Return the FIELD value for ENTRY."
-  (cdr (assoc-string field entry 'case-fold)))
+(defun citar--get-value (citekey field)
+  "Return FIELD value for CITEKEY."
+  (let ((entry (citar--get-entry citekey)))
+    (cdr (assoc-string field entry 'case-fold))))
 
 (defun citar--field-with-value (fields entry)
   "Return the first field that has a value in ENTRY among FIELDS ."
@@ -778,13 +779,13 @@ key associated with each one."
                       "")
                 "")))
 
-(defvar citar--candidates-cache 'uninitialized
-  "Store the global candidates list.
+(defvar citar--data-cache 'uninitialized
+  "Store the global bibliographic data.
 
 Default value of 'uninitialized is used to indicate that cache
 has not yet been created")
 
-(defvar-local citar--local-candidates-cache 'uninitialized
+(defvar-local citar--local-data-cache 'uninitialized
   ;; We use defvar-local so can maintain per-buffer candidate caches.
   "Store the local (per-buffer) candidates list.")
 
@@ -802,13 +803,13 @@ are refreshed."
   (when force-rebuild-cache
     (run-hooks 'citar-force-refresh-hook))
   (unless (eq 'local scope)
-    (setq citar--candidates-cache
-      (citar--format-candidates
+    (setq citar--data-cache
+      (parsebib-parse
         (citar-file--normalize-paths citar-bibliography))))
   (unless (eq 'global scope)
-    (setq citar--local-candidates-cache
-          (citar--format-candidates
-           (citar--local-files-to-cache) "is:local"))))
+    (setq citar--local-data-cache
+          (parsebib-parse
+           (citar--local-files-to-cache)))))
 
 (defun citar--get-template (template-name)
   "Return template string for TEMPLATE-NAME."
@@ -818,7 +819,25 @@ are refreshed."
       (error "No template for \"%s\" - check variable 'citar-templates'" template-name))
     template))
 
-(defun citar--get-candidates (&optional force-rebuild-cache filter)
+(defun citar--update-hashes (table from-table)
+  "Update TABLE according to every key-value pair in FROM-TABLE."
+  ;; Adapted from 'ht-update!'
+  ;; REVIEW better to just require 'ht'?
+  (maphash
+   (lambda (key value) (puthash key value table))
+   from-table)
+  nil)
+
+(defun citar--merge-hashes (&rest tables)
+  "Create a new hash-table that includes all the key-value pairs from TABLES.
+If multiple have tables have the same key, the value in the last
+table is used."
+  ;; Adapted from 'ht-merge'
+  (let ((merged (make-hash-table :test 'equal)))
+    (mapc (lambda (table) (citar--update-hashes merged table)) tables)
+    merged))
+
+(defun citar-get-data (&optional force-rebuild-cache)
   "Get the cached candidates.
 
 If the cache is unintialized, this will load the cache.
@@ -828,30 +847,21 @@ If FORCE-REBUILD-CACHE is t, force reload the cache.
 If FILTER, use the function to filter the candidate list."
   (when force-rebuild-cache
     (citar-refresh force-rebuild-cache))
-  (when (eq 'uninitialized citar--candidates-cache)
+  (when (eq 'uninitialized citar--data-cache)
     (citar-refresh nil 'global))
-  (when (eq 'uninitialized citar--local-candidates-cache)
+  (when (eq 'uninitialized citar--local-data-cache)
     (citar-refresh nil 'local))
   (let ((candidates
-         (seq-concatenate 'list
-                          citar--local-candidates-cache
-                          citar--candidates-cache)))
-    (if candidates
-        (if filter
-            (seq-filter
-             (pcase-lambda (`(_ ,citekey . ,entry))
-               (funcall filter citekey entry))
-             candidates)
-          candidates)
-      (unless (or citar--candidates-cache citar--local-candidates-cache)
-        (error "Make sure to set citar-bibliography and related paths")) )))
+         (citar--merge-hashes
+          citar--local-data-cache
+          citar--data-cache)))
+    (if candidates candidates
+      (unless (or citar--data-cache citar--local-data-cache)
+        (error "Make sure to set citar-bibliography and related paths")))))
 
-(defun citar--get-entry (key)
-  "Return the cached entry for KEY."
-    (cddr (seq-find
-           (lambda (entry)
-             (string-equal key (cadr entry)))
-           (citar--get-candidates))))
+(defun citar--get-entry (citekey)
+  "Return the cached entry for CITEKEY."
+    (gethash citekey (citar-get-data)))
 
 (defun citar--get-link (entry)
   "Return a link for an ENTRY."
