@@ -52,8 +52,6 @@
 
 ;; make all these private
 (make-obsolete 'citar-get-template 'citar--get-template "1.0")
-(make-obsolete 'citar-get-link 'citar--get-link "1.0")
-(make-obsolete 'citar-get-value 'citar--get-value "1.0")
 (make-obsolete 'citar-display-value 'citar--display-value "1.0")
 (make-obsolete 'citar-open-multi 'citar--open-multi "1.0")
 (make-obsolete 'citar-select-group-related-resources
@@ -380,6 +378,25 @@ of all citations in the current buffer."
     map)
   "Keymap for Embark citation-key actions.")
 
+;;; Caches
+
+(defvar citar--completion-cache 'uninitialized
+  "Alist with completion strings as car and citekey as cdr.")
+
+(defvar citar--data-cache 'uninitialized
+  "Hash with global bibliographic data.
+
+The hash keys are citekeys, and the values alists.
+
+Default value of 'uninitialized is used to indicate that cache
+has not yet been created")
+
+(defvar-local citar--data-local-cache 'uninitialized
+  ;; We use defvar-local so can maintain per-buffer candidate caches.
+  "Hash with local (per-buffer) candidates list.
+
+The hash keys are citekeys, and the values alists.")
+
 ;;; Completion functions
 
 (defcustom citar-select-multiple t
@@ -448,7 +465,7 @@ FILTER: if non-nil, should be a predicate function taking
    :filter (lambda (_key entry)
              (when-let ((keywords (assoc-default \"keywords\" entry)))
                (string-match-p \"foo\" keywords))))"
-  (let* ((candidates (citar--get-candidates rebuild-cache))
+  (let* ((candidates (citar--get-reference-candidates rebuild-cache))
          (chosen (if (and multiple citar-select-multiple)
                      (citar--select-multiple "References: " candidates
                                              filter 'citar-history citar-presets)
@@ -599,19 +616,20 @@ If no function is found, the DEFAULT function is called."
                   (citar-file--normalize-paths
                    citar-bibliography)))
 
-(defun citar--get-value (field entry)
-  "Return the FIELD value for ENTRY."
-  (cdr (assoc-string field entry 'case-fold)))
+(defun citar-get-value (field citekey)
+  "Return FIELD value for CITEKEY."
+  (let ((entry (citar-get-entry citekey)))
+    (cdr (assoc-string field entry 'case-fold))))
 
-(defun citar--field-with-value (fields entry)
-  "Return the first field that has a value in ENTRY among FIELDS ."
-  (seq-find (lambda (field) (citar--get-value field entry)) fields))
+(defun citar--field-with-value (fields citekey)
+  "Return the first field that has a value in CITEKEY among FIELDS ."
+  (seq-find (lambda (field) (citar-get-value field citekey)) fields))
 
-(defun citar--display-value (fields entry)
-  "Return the first non nil value for ENTRY among FIELDS .
+(defun citar--display-value (fields citekey)
+  "Return the first non nil value for CITEKEY among FIELDS .
 
 The value is transformed using `citar-display-transform-functions'"
-  (let ((field (citar--field-with-value fields entry)))
+  (let ((field (citar--field-with-value fields citekey)))
     (seq-reduce (lambda (string fun)
                   (if (or (eq t (car fun))
                           (member field (car fun)))
@@ -619,7 +637,7 @@ The value is transformed using `citar-display-transform-functions'"
                     string))
                 citar-display-transform-functions
             ;; Make sure we always return a string, even if empty.
-                (or (citar--get-value field entry) ""))))
+                (or (citar-get-value field citekey) ""))))
 
 ;; Lifted from bibtex-completion
 (defun citar-clean-string (s)
@@ -694,57 +712,54 @@ repeatedly."
       ;; Call each predicate with `citekey` and `entry`; return the first non-nil result
       (seq-some (lambda (pred) (funcall pred citekey entry)) preds))))
 
-(defun citar--format-candidates (bib-files &optional context)
+(defun citar--format-candidates (&optional context)
   "Format candidates from BIB-FILES, with optional hidden CONTEXT metadata.
 This both propertizes the candidates for display, and grabs the
 key associated with each one."
   (let* ((candidates nil)
-         (raw-candidates
-          (parsebib-parse bib-files :fields (citar--fields-to-parse)))
+         (raw-candidates (citar-get-data))
          (hasfilep (citar-has-file))
          (hasnotep (citar-has-note))
          (main-width (citar--format-width (citar--get-template 'main)))
          (suffix-width (citar--format-width (citar--get-template 'suffix)))
          (symbols-width (string-width (citar--symbols-string t t t)))
          (star-width (- (frame-width) (+ 2 symbols-width main-width suffix-width))))
-    (maphash
-     (lambda (citekey entry)
-       (let* ((files (when (funcall hasfilep citekey entry) " has:files"))
-              (notes (when (funcall hasnotep citekey entry) " has:notes"))
-              (link (when (citar--field-with-value '("doi" "url") entry) "has:link"))
-              (candidate-main
-               (citar--format-entry
-                entry
-                star-width
-                (citar--get-template 'main)))
-              (candidate-suffix
-               (citar--format-entry
-                entry
-                star-width
-                (citar--get-template 'suffix)))
-              ;; We display this content already using symbols; here we add back
-              ;; text to allow it to be searched, and citekey to ensure uniqueness
-              ;; of the candidate.
-              (candidate-hidden (string-join (list files notes link context citekey) " ")))
-         (when files (push (cons "has-file" t) entry))
-         (when notes (push (cons "has-note" t) entry))
-         (push
-          (cons
-           ;; If we don't trim the trailing whitespace,
-           ;; 'completing-read-multiple' will get confused when there are
-           ;; multiple selected candidates.
-           (string-trim-right
-            (concat
-             ;; We need all of these searchable:
-             ;;   1. the 'candidate-main' variable to be displayed
-             ;;   2. the 'candidate-suffix' variable to be displayed with a different face
-             ;;   3. the 'candidate-hidden' variable to be hidden
-             (propertize candidate-main 'face 'citar-highlight) " "
-             (propertize candidate-suffix 'face 'citar) " "
-             (propertize candidate-hidden 'invisible t)))
-           (cons citekey entry))
-          candidates)))
-       raw-candidates)
+    (dolist (hash raw-candidates)
+      (maphash
+       (lambda (citekey entry)
+         (let* ((files (when (funcall hasfilep citekey entry) " has:files"))
+                (notes (when (funcall hasnotep citekey entry) " has:notes"))
+                (link (when (citar--field-with-value '("doi" "url") entry) "has:link"))
+                (candidate-main
+                 (citar--format-entry
+                  citekey
+                  star-width
+                  (citar--get-template 'main)))
+                (candidate-suffix
+                 (citar--format-entry
+                  citekey
+                  star-width
+                  (citar--get-template 'suffix)))
+                ;; We display this content already using symbols; here we add back
+                ;; text to allow it to be searched, and citekey to ensure uniqueness
+                ;; of the candidate.
+                (candidate-hidden (string-join (list files notes link context citekey) " ")))
+           (when files (push (cons "has-file" t) entry))
+           (when notes (push (cons "has-note" t) entry))
+           (push
+            (cons
+             (string-trim-right
+              (concat
+               ;; We need all of these searchable:
+               ;;   1. the 'candidate-main' variable to be displayed
+               ;;   2. the 'candidate-suffix' variable to be displayed with a different face
+               ;;   3. the 'candidate-hidden' variable to be hidden
+               (propertize candidate-main 'face 'citar-highlight) " "
+               (propertize candidate-suffix 'face 'citar) " "
+               (propertize candidate-hidden 'invisible t)))
+             citekey) ; TODO/REVIEW if we have fast data access, do we need entry?
+            candidates)))
+       hash))
     candidates))
 
   (defun citar--affixation (cands)
@@ -778,15 +793,22 @@ key associated with each one."
                       "")
                 "")))
 
-(defvar citar--candidates-cache 'uninitialized
-  "Store the global candidates list.
+(defun citar--get-template (template-name)
+  "Return template string for TEMPLATE-NAME."
+  (let ((template
+         (cdr (assoc template-name citar-templates))))
+    (unless template
+      (error "No template for \"%s\" - check variable 'citar-templates'" template-name))
+    template))
 
-Default value of 'uninitialized is used to indicate that cache
-has not yet been created")
-
-(defvar-local citar--local-candidates-cache 'uninitialized
-  ;; We use defvar-local so can maintain per-buffer candidate caches.
-  "Store the local (per-buffer) candidates list.")
+(defun citar--update-hashes (table from-table)
+  "Update TABLE according to every key-value pair in FROM-TABLE."
+  ;; Adapted from 'ht-update!'
+  ;; REVIEW better to just require 'ht'?
+  (maphash
+   (lambda (key value) (puthash key value table))
+   from-table)
+  nil)
 
 ;;;###autoload
 (defun citar-refresh (&optional force-rebuild-cache scope)
@@ -802,24 +824,25 @@ are refreshed."
   (when force-rebuild-cache
     (run-hooks 'citar-force-refresh-hook))
   (unless (eq 'local scope)
-    (setq citar--candidates-cache
-      (citar--format-candidates
-        (citar-file--normalize-paths citar-bibliography))))
+    (setq citar--data-cache
+      (parsebib-parse
+        (citar-file--normalize-paths citar-bibliography)
+        :fields (citar--fields-to-parse))))
   (unless (eq 'global scope)
-    (setq citar--local-candidates-cache
-          (citar--format-candidates
-           (citar--local-files-to-cache) "is:local"))))
+    (setq citar--data-local-cache
+          (parsebib-parse
+           (citar--local-files-to-cache)
+           :fields (citar--fields-to-parse)))))
 
-(defun citar--get-template (template-name)
-  "Return template string for TEMPLATE-NAME."
-  (let ((template
-         (cdr (assoc template-name citar-templates))))
-    (unless template
-      (error "No template for \"%s\" - check variable 'citar-templates'" template-name))
-    template))
+(defun citar--get-reference-candidates (&optional _force-rebuild-cache)
+  "Return the completion candidate list."
+  ;; TODO this isn't right; needs to be integrated with 'citar-refresh'
+    (when (eq 'uninitialized citar--completion-cache)
+      (setq citar--completion-cache (citar--format-candidates)))
+    citar--completion-cache)
 
-(defun citar--get-candidates (&optional force-rebuild-cache filter)
-  "Get the cached candidates.
+(defun citar-get-data (&optional force-rebuild-cache)
+  "Get data caches.
 
 If the cache is unintialized, this will load the cache.
 
@@ -828,40 +851,35 @@ If FORCE-REBUILD-CACHE is t, force reload the cache.
 If FILTER, use the function to filter the candidate list."
   (when force-rebuild-cache
     (citar-refresh force-rebuild-cache))
-  (when (eq 'uninitialized citar--candidates-cache)
+  (when (eq 'uninitialized citar--data-cache)
     (citar-refresh nil 'global))
-  (when (eq 'uninitialized citar--local-candidates-cache)
+  (when (eq 'uninitialized citar--data-local-cache)
     (citar-refresh nil 'local))
-  (let ((candidates
-         (seq-concatenate 'list
-                          citar--local-candidates-cache
-                          citar--candidates-cache)))
-    (if candidates
-        (if filter
-            (seq-filter
-             (pcase-lambda (`(_ ,citekey . ,entry))
-               (funcall filter citekey entry))
-             candidates)
-          candidates)
-      (unless (or citar--candidates-cache citar--local-candidates-cache)
-        (error "Make sure to set citar-bibliography and related paths")) )))
+  (let ((data ; REVIEW I see no need to merge these tables; see 'citar-get-entry'
+         (list
+          citar--data-local-cache
+          citar--data-cache)))
+    (if data data
+      (unless (or citar--data-cache citar--data-local-cache)
+        (error "Make sure to set citar-bibliography and related paths")))))
 
-(defun citar--get-entry (key)
-  "Return the cached entry for KEY."
-    (cddr (seq-find
-           (lambda (entry)
-             (string-equal key (cadr entry)))
-           (citar--get-candidates))))
+(defun citar-get-entry (citekey)
+  "Return the cached entry for CITEKEY."
+  (let ((caches (citar-get-data)))
+    (seq-some
+     (lambda (hash)
+       (gethash citekey hash))
+     caches)))
 
-(defun citar--get-link (entry)
-  "Return a link for an ENTRY."
-  (let* ((field (citar--field-with-value '(doi pmid pmcid url) entry))
+(defun citar-get-link (citekey)
+  "Return a link for an CITEKEY."
+  (let* ((field (citar--field-with-value '(doi pmid pmcid url) citekey))
          (base-url (pcase field
                      ('doi "https://doi.org/")
                      ('pmid "https://www.ncbi.nlm.nih.gov/pubmed/")
                      ('pmcid "https://www.ncbi.nlm.nih.gov/pmc/articles/"))))
     (when field
-      (concat base-url (citar--get-value field entry)))))
+      (concat base-url (citar-get-value field citekey)))))
 
 (defun citar--extract-keys (keys-entries)
   "Extract list of keys from KEYS-ENTRIES.
@@ -966,8 +984,8 @@ Adapted from `org-roam-format-template'."
    ;; Need literal to make sure it works
    t t))
 
-(defun citar--format-entry (entry width format-string)
-  "Formats a BibTeX ENTRY for display in results list.
+(defun citar--format-entry (citekey width format-string)
+  "Formats an CITEKEY reference for display in results list.
 WIDTH is the width for the * field, and the display format is governed by
 FORMAT-STRING."
   (citar--format
@@ -982,16 +1000,16 @@ FORMAT-STRING."
                                field-width
                              width))
             ;; Make sure we always return a string, even if empty.
-            (display-value (citar--display-value field-names entry)))
+            (display-value (citar--display-value field-names citekey)))
        (citar--fit-to-width display-value display-width)))))
 
-(defun citar--format-entry-no-widths (entry format-string)
-  "Format ENTRY for display per FORMAT-STRING."
+(defun citar--format-entry-no-widths (citekey format-string)
+  "Format CITEKEY for display per FORMAT-STRING."
   (citar--format
    format-string
    (lambda (raw-field)
      (let ((field-names (split-string raw-field "[ ]+")))
-       (citar--display-value field-names entry)))))
+       (citar--display-value field-names citekey)))))
 
 ;;; At-point functions for Embark
 
