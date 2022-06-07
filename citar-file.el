@@ -233,31 +233,6 @@ need to scan the contents of DIRS in this case."
                  (puthash key (nreverse filelist) files))
                files))))
 
-(defun citar-file--has-file-notes-hash ()
-  "Return a hash of keys and file paths for notes."
-  (citar-file--directory-files
-   citar-notes-paths nil citar-file-note-extensions
-   citar-file-additional-files-separator))
-
-(defun citar-file--has-library-files-hash ()
-  "Return a hash of keys and file paths for library files."
-  (citar-file--directory-files
-   citar-library-paths nil citar-library-file-extensions
-   citar-file-additional-files-separator))
-
-(defun citar-file--keys-with-file-notes ()
-  "Return a list of keys with file notes."
-  (hash-table-keys (citar-file--has-file-notes-hash)))
-
-(defun citar-file--keys-with-library-files ()
-  "Return a list of keys with file notes."
-  (hash-table-keys (citar-file--has-library-files-hash)))
-
-(defun citar-file-has-notes ()
-  "Return a predicate testing whether a reference has associated notes."
-  (citar-file--has-file citar-notes-paths
-                        citar-file-note-extensions))
-
 (defun citar-file--has-file (dirs extensions &optional entry-field)
   "Return predicate testing whether a key and entry have associated files.
 
@@ -277,8 +252,9 @@ once per command; the function it returns can be called
 repeatedly."
   (let ((files (citar-file--directory-files dirs nil extensions
                                             citar-file-additional-files-separator)))
-    (lambda (key entry)
-      (let* ((xref (citar--get-value "crossref" entry))
+    (lambda (key &optional entry)
+      (let* ((nentry (or entry (citar--get-entry key)))
+             (xref (citar--get-value "crossref" nentry))
              (cached (if (and xref
                               (not (eq 'unknown (gethash xref files 'unknown))))
                          (gethash xref files 'unknown)
@@ -292,7 +268,7 @@ repeatedly."
           (puthash key
                    (seq-some
                     #'file-exists-p
-                    (citar-file--parse-file-field entry entry-field dirs extensions))
+                    (citar-file--parse-file-field nentry entry-field dirs extensions))
                    files))))))
 
 (defun citar-file--files-for-entry (key entry dirs extensions)
@@ -350,6 +326,11 @@ of files found in two ways:
                     (_ "xdg-open"))
                   nil 0 nil
                   file)))
+
+(defun citar-file-has-notes ()
+  "Return a predicate testing whether a reference has associated notes."
+  (citar-file--has-file citar-notes-paths
+                        citar-file-note-extensions))
 
 (defun citar-file--open-note (key entry)
   "Open a note file from KEY and ENTRY."
