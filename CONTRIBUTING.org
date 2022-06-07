@@ -5,31 +5,49 @@
 
 If you would like to contribute, details:
 
-- For more signifiant potential changes, file an issue first to get feedback on the basic idea.
+- For more significant potential changes, file an issue first to get feedback on the basic idea.
 - If you do submit a PR, follow the [[https://github.com/bbatsov/emacs-lisp-style-guide][elisp style guide]], and [[https://cbea.ms/git-commit/][these suggestions]] on git commit messages.
 - For working on lists and such, we primarily use the =seq= functions, and occassionally ~dolist~.
 
+** Basic Architecture
+
+Citar has two primary caches, each of which store the data in hash tables:
+
+- bibliographic ::  keys are citekeys, values are alists of entry fields
+- completion :: keys are completion strings, values are citekeys
+
+The =citar--ref-completion-table= function returns a hash table from the bibliographic cache, and ~citar--get-entry~ and ~-citar--get-value~ provide access to those data.
+Most user-accessible citar functions take an argument ~key~ or ~keys~.
+Some functions also take an ~entry~ argument, and ~citar--get-value~ takes either.
+When using these functions, you should keep in mind that unless you pass an entry alist to ~citar--get-value~, and instead use a key, each call to that function will query the cache.
+This, therefore, is a better pattern to use:
+
+#+begin_src emacs-lisp
+
+(let* ((entry (citar--get-entry key))
+       (title (citar--get-value entry "title")))
+  (message title))
+
+#+end_src
+
+
 ** Extending citar
 
-Most user-accessible citar functions take an argument ~key-entry~ or ~keys-entries~.
-These expect, respectively, a cons cell of a citation key (a string like "SmithWritingHistory1987") and the corresponding bibliography entry for that citation, or a list of such cons cells.
-If you wish to extend citar at the user-action level, perhaps by adding a function to one of the embark keymaps, you will find it easiest to reproduce this pattern.
-If you need to build the cons cells manually, this can be accomplished via ~citar--get-entry~.
-So, for example, to insert the annotations from a pdf into a buffer, the following pair of functions might be used:
+You can use ~citar-select-ref~ or ~citar-select-refs~ to write custom commands.
+An example:
 
 #+begin_src emacs-lisp
 
 
-(defun my/citar-insert-annots (keys-entries)
+(defun my/citar-insert-annots (keys)
   "insert annotations as org text from KEYS-ENTRIES"
-  (interactive (list (citar-select-refs
-                      :rebuild-cache current-prefix-arg)))
+  (interactive (list (citar-select-refs)))
   (let* ((files
-          (seq-mapcat (lambda (key-entry)
+          (seq-mapcat (lambda (key)
                         (citar-file--files-for-entry
-                         (car key-entry) (cdr key-entry)
+                         key (citar--get-entry key)
                          '("/") '("pdf")))
-                      keys-entries ))
+                      keys ))
          (output (seq-map
                   (lambda (file)
                     (pdf-annot-markups-as-org-text ;; you'll still need to write this function!
@@ -44,8 +62,7 @@ So, for example, to insert the annotations from a pdf into a buffer, the followi
 
   (defun my/independent-insert-annots (key)
     "helper function to insert annotations without the bibtex-actins apparatus"
-    (let ((key-entry (cons key  (citar--get-entry key))))
-      (my/citar-insert-annots (list key-entry))))
+    (my/citar-insert-annots (list key)))
 
 
 #+end_src
