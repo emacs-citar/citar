@@ -914,6 +914,71 @@ FORMAT-STRING."
      (let ((field-names (split-string raw-field "[ ]+")))
        (citar--display-value field-names entry)))))
 
+;;; Completion at Point Function
+
+(defvar citar-capf--extra-properties
+  (list
+   :exit-function
+   (lambda (str _status)
+     ;; take completion str and replace with key
+     (delete-char (- (length str)))
+     (insert (cadr (assoc str candidates))))
+   :exclusive 'no)
+  "Completion extra properties for `citar-capf'.")
+
+;;;###autoload
+(defun citar-capf ()
+  "Complete citation key at point for org, markdown, or latex.
+Parsing by citar is of bibtex, biblatex and csl json files, and
+supports multiple different files. Please see citar's
+documentation for further info."
+  (let ((element (org-element-at-point))
+        (capf-citar-latex-regexp "\\(?:cite\\(?:\\(?:[pt]\\*\\|[pt]\\)?{\\)\\)\\([[:alnum:]_-]*,\\)*\\([[:alnum:]_-]*\\)")
+        (capf-citar-markdown-regexp (concat "-?@"                         ; @ preceded by optional -
+                                            "\\(?:"
+                                            "{\\(?1:.*?\\)}"              ; brace-delimited key
+                                            "\\|"
+                                            "\\(?1:[[:alnum:]_][[:alnum:]]*\\(?:[:.#$%&+?<>~/-][[:alnum:]]+\\)*\\)"
+                                            "\\)")))
+
+    ;; only list candidates in certain contexts
+    (when
+
+        ;; conditional recognition of citation key by mode
+        (cond
+
+         ;; latex-mode
+         ((derived-mode-p 'latex-mode)
+          (looking-back capf-citar-latex-regexp 2))
+
+         ;; org-mode
+         ((and (derived-mode-p 'org-mode)
+               (or (eq 'citation (org-element-type (org-element-context element)))
+                   (and (or (eq ?@ (char-before))
+                            (looking-back org-element-citation-key-re
+                                          (line-beginning-position)))
+                        (let ((origin (point)))
+                          (save-excursion
+                            (and (re-search-backward org-element-citation-prefix-re
+                                                     (org-element-property
+                                                      :begin element)
+                                                     t)
+                                 (not (search-forward "]" origin t)))))))))
+         ;; markdown-mode
+         ((and (derived-mode-p 'markdown-mode)
+               (or (eq ?@ (char-before))
+                   (looking-back capf-citar-markdown-regexp
+                                 (line-beginning-position))))))
+
+      ;; Get and insert candidate
+      (let* ((candidates (citar--ref-completion-table))
+             (begin (save-excursion (backward-word) (point)))
+             (end (point)))
+        (list begin end candidates
+              citar-capf--extra-properties
+              )))))
+
+
 ;;; At-point functions for Embark
 
 ;;;###autoload
