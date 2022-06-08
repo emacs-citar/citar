@@ -1059,11 +1059,12 @@ With prefix, rebuild the cache before offering candidates."
 (defun citar-open-notes (key)
   "Open notes associated with the KEY.
 With prefix, rebuild the cache before offering candidates."
+  ;; REVIEW KEY, or KEYS
   (interactive (list (citar-select-ref)))
   (let* ((embark-default-action-overrides '((file . find-file)))
          (entry (citar--get-entry key)))
     (if (listp citar-open-note-functions)
-        (citar--open-notes key entry)
+        (citar--open-notes (car key) entry)
       (error "Please change the value of 'citar-open-note-functions' to a list"))))
 
 (defun citar--open-notes (key entry)
@@ -1083,7 +1084,7 @@ With prefix, rebuild the cache before offering candidates."
                'list
                citar-bibliography
                (citar--local-files-to-cache))))
-    (bibtex-search-entry key t nil t)))
+    (bibtex-search-entry (car key) t nil t)))
 
 ;;;###autoload
 (defun citar-insert-bibtex (keys)
