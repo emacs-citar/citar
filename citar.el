@@ -922,7 +922,7 @@ FORMAT-STRING."
    (lambda (str _status)
      ;; take completion str and replace with key
      (delete-char (- (length str)))
-     (insert (cadr (assoc str candidates))))
+     (insert (gethash str candidates)))
    :exclusive 'no)
   "Completion extra properties for `citar-capf'.")
 
