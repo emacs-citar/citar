@@ -459,10 +459,9 @@ FILTER: if non-nil, should be a predicate function taking
   function returns non-nil will be offered for completion.  For
   example:
 
-  (citar-select-ref :filter 'citar-has-library-file-p)
+  (citar-select-ref :filter (citar-has-note))
 
-  (citar-select-ref :filter 'citar-has-note-p)"
-  ;; TODO readd an example filter or two above?
+  (citar-select-ref :filter (citar-has-file))"
   (let* ((candidates (or (citar--ref-completion-table)
                          (user-error "No bibliography set")))
          (chosen (if (and multiple citar-select-multiple)
@@ -578,6 +577,10 @@ HISTORY is the `completing-read' history argument."
        ((string-match "http" resource 0) "Links")
        (t "Library Files")))))
 
+(defun citar--bibliography-files ()
+  "The list of global and local bibliography files."
+  (seq-concatenate 'list citar-bibliography (citar--local-files-to-cache)))
+
 (defun citar--ref-completion-table ()
   "Return completion table for cite keys, as a hash table.
 In this hash table, keys are a strings with author, date, and
@@ -642,9 +645,7 @@ strings or nil."
   (unless (hash-table-p citar--file-id-cache)
     (setq citar--file-id-cache (make-hash-table :test #'equal)))
   (let ((results nil))
-    ;; FIX the files to parse needs to be a function that returns the right
-    ;; local and/or global bibliography files for the current buffer.
-    (dolist (file citar-bibliography)
+    (dolist (file (citar--bibliography-files))
       (when (file-readable-p file)
         (with-temp-buffer
           (when (or (file-has-changed-p file)
