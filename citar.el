@@ -409,12 +409,41 @@ When nil, all citar commands will use `completing-read`."
     map)
   "Keymap for Embark citation-key actions.")
 
-;; Internal variables
+;;; Bibliography cache
 
-;; Most of this design is adapted from org-mode 'oc-basic',
-;; written by Nicolas Goaziou.
+(cl-defstruct (citar--bibliography
+               (:constructor citar--make-bibliography (filename))
+               (:copier nil))
+  "Cached bibliography file."
+  (filename
+   nil
+   :read-only t
+   :documentation
+   "True filename of a bibliography, as returned by `file-truename`.")
+  (hash
+   nil
+   :documentation
+   "Hash of the file's contents, as returned by `buffer-hash`.")
+  (buffers
+   nil
+   :documentation
+   "List of buffers that require this bibliography.")
+  (entries
+   (make-hash-table :test 'equal)
+   :documentation
+   "Hash table mapping citation keys to bibliography entries,
+   as returned by `parsebib-parse`.")
+  (preformatted
+   (make-hash-table :test 'equal)
+   :documentation
+   "Pre-formatted strings used to display bibliography entries;
+   see `citar--preformatter`.")
+  (format-string
+   nil
+   :documentation
+   "Format string used to generate pre-formatted strings."))
 
-(defvar citar--bibliography-cache nil
+(defvar citar--bibliography-cache (make-hash-table :test 'equal)
   "Cache for parsed bibliography files.
 This is an association list following the pattern:
   (FILE-ID . ENTRIES)
@@ -423,8 +452,114 @@ the bibliography file, and HASH a hash of its contents.
 ENTRIES is a hash table with citation references as keys and fields alist as
 values.")
 
-(defvar citar--completion-cache (make-hash-table :test #'equal)
-  "Hash with key as completion string, value as citekey.")
+(defun citar--get-bibliography (filename &optional buffer)
+  "Return cached bibliography for FILENAME and associate it with BUFFER.
+If FILENAME is not already cached, read and cache it.  If BUFFER
+is nil, use the current buffer.  Otherwise, BUFFER should be a
+buffer object or name that requires the bibliography FILENAME, or
+a symbol like 'global."
+  (let* ((buffer (cond ((null buffer) (current-buffer))
+                       ((symbolp buffer) buffer)
+                       (t (get-buffer buffer))))
+         (cached (gethash filename citar--bibliography-cache))
+         (bib (or cached (citar--make-bibliography filename))))
+    (unless cached
+      (citar--update-bibliography bib)
+      (puthash filename bib citar--bibliography-cache))
+    (cl-pushnew buffer (citar--bibliography-buffers bib))
+    (unless (symbolp buffer)
+      (with-current-buffer buffer
+        (dolist (hook '(change-major-mode-hook kill-buffer-hook))
+          (add-hook hook #'citar--release-bibliographies 0 'local))))
+    bib))
+
+(defun citar--cache-bibliographies (filenames &optional buffer)
+  "Return cached bibliographies for FILENAMES and associate them with BUFFER.
+FILENAMES is a list of bibliography file names.  If BUFFER is
+nil, use the current buffer.  Otherwise, BUFFER should be a
+buffer object or name that requires these bibliographies, or a
+symbol like 'global.
+
+Remove any existing associations between BUFFER and cached files
+not included in FILENAMES.  Release cached files that are no
+longer needed by any other buffer.
+
+Return a list of `citar--bibliography` objects, one for each
+element of FILENAMES."
+  (citar--release-bibliographies filenames buffer)
+  (mapcar
+   (lambda (filename) (citar--get-bibliography filename buffer))
+   filenames))
+
+(defun citar--release-bibliographies (&optional keep-filenames buffer)
+  "Dissociate BUFFER from cached bibliographies.
+If BUFFER is nil, use the current buffer.  Otherwise, BUFFER
+should be a buffer object, buffer name, or a symbol like 'global.
+KEEP-FILENAMES is a list of file names that are not dissociated
+from BUFFER.
+
+Remove any bibliographies from the cache that are no longer
+needed by any other buffer."
+  (let ((buffer (cond ((null buffer) (current-buffer))
+                      ((symbolp buffer) buffer)
+                      (t (get-buffer buffer)))))
+    (maphash
+     (lambda (filename bib)
+       (unless (member filename keep-filenames)
+         (setf (citar--bibliography-buffers bib)
+               (delq buffer (citar--bibliography-buffers bib)))
+         (unless (citar--bibliography-buffers bib)
+           (citar--delete-bibliography-from-cache filename))))
+     citar--bibliography-cache)))
+
+(defun citar--bibliographies (&rest buffers)
+  "Return bibliographies for BUFFERS."
+  (delete-dups
+   (mapcan
+    (lambda (buffer)
+      (citar--cache-bibliographies (citar--bibliography-files buffer) buffer))
+    (or buffers (list (current-buffer) 'global)))))
+
+(defun citar--delete-bibliography-from-cache (filename)
+  "Remove bibliography cache entry for FILENAME."
+  ;; TODO Perform other needed  actions, like removing filenotify watches
+  (remhash filename citar--bibliography-cache))
+
+(defun citar--update-bibliography (bib &optional force)
+  "Update the bibliography BIB from the original file.
+
+Unless FORCE is non-nil, the file is re-read only if it has been
+modified since the last time BIB was updated."
+  (let* ((filename (citar--bibliography-filename bib))
+         (entries (citar--bibliography-entries bib))
+         (preformatted (citar--bibliography-preformatted bib))
+         (formatstring (citar--bibliography-format-string bib))
+         (newformatstring
+          (concat (propertize (citar--get-template 'main) 'face 'citar-highlight)
+                  (propertize (citar--get-template 'suffix) 'face 'citar)))
+         (newhash
+          (with-temp-buffer
+            (insert-file-contents filename)
+            (buffer-hash))))
+    ;; TODO Also check file size and modification time before hashing?
+    ;; See `file-has-changed-p` in emacs 29, or `org-file-has-changed-p`
+    (unless (or force
+                (and (equal newhash (citar--bibliography-hash bib))
+                     (equal-including-properties formatstring newformatstring)))
+      ;; Update entries
+      (clrhash entries)
+      (parsebib-parse filename
+                      :entries entries
+                      :fields (citar--fields-to-parse))
+      (setf (citar--bibliography-hash bib) newhash)
+      ;; Update preformatted strings
+      (clrhash preformatted)
+      (let ((preformatter (citar--preformatter newformatstring)))
+        (maphash
+         (lambda (citekey entry)
+           (puthash citekey (funcall preformatter entry) preformatted))
+         entries))
+      (setf (citar--bibliography-format-string bib) newformatstring))))
 
 ;;; Completion functions
 
@@ -596,9 +731,22 @@ HISTORY is the `completing-read' history argument."
        ((string-match "http" resource 0) "Links")
        (t "Library Files")))))
 
-(defun citar--bibliography-files ()
-  "The list of global and local bibliography files."
-  (seq-concatenate 'list citar-bibliography (citar--local-files-to-cache)))
+(defun citar--bibliography-files (&rest buffers)
+  "Bibliography file names for BUFFERS.
+The elements of BUFFERS are either buffers or the symbol 'global.
+Returns the absolute file names of the bibliographies in all
+these contexts.
+
+When BUFFERS is empty, return local bibliographies for the
+current buffer and global bibliographies."
+  (citar-file--normalize-paths
+   (mapcan (lambda (buffer)
+             (if (eq buffer 'global)
+                 (if (listp citar-bibliography) citar-bibliography
+                   (list citar-bibliography))
+               (with-current-buffer buffer
+                 (citar--major-mode-function 'local-bib-files #'ignore))))
+            (or buffers (list (current-buffer) 'global)))))
 
 (defun citar--ref-completion-table ()
   "Return completion table for cite keys, as a hash table.
@@ -615,10 +763,10 @@ Return nil if there are no bibliography files or no entries."
          (starwidth
           (- (frame-width) (+ 2 symbolswidth mainwidth suffixwidth))))
     (cond
-     ((null entries) nil)  ; no bibliography files
+     ((null entries) nil)               ; no bibliography files
      ;; if completion-cache is same as bibliography-cache, use the former
      ((gethash entries citar--completion-cache)
-      citar--completion-cache) ; REVIEW ?
+      citar--completion-cache)          ; REVIEW ?
      (t
       (clrhash citar--completion-cache)
       (dolist (key (citar--all-keys))
@@ -649,37 +797,6 @@ Return nil if there are no bibliography files or no entries."
         (puthash entries t citar--completion-cache) ; REVIEW ?
         citar--completion-cache)))))
 
-;; adapted from 'org-cite-basic--parse-bibliography'
-(defvar citar--file-id-cache nil
-   "Hash table linking files to their hash.")
-
-(defun citar--parse-bibliography ()
-  "List all entries available in the buffer.
-Each association follows the pattern
-  (FILE . ENTRIES)
-where FILE is the absolute file name of the bibliography file,
-and ENTRIES is a hash table where keys are references and values
-are association lists between fields, as symbols, and values as
-strings or nil."
-  (unless (hash-table-p citar--file-id-cache)
-    (setq citar--file-id-cache (make-hash-table :test #'equal)))
-  (let ((results nil))
-    (dolist (file (citar--bibliography-files))
-      (when (file-readable-p file)
-        (with-temp-buffer
-          (when (or (file-has-changed-p file)
-                    (not (gethash file citar--file-id-cache)))
-            (insert-file-contents file)
-            (puthash file (md5 (current-buffer)) citar--file-id-cache))
-          (let* ((file-id (cons file (gethash file citar--file-id-cache)))
-                 (entries
-                  (or (cdr (assoc file-id citar--bibliography-cache))
-                      (let ((table (parsebib-parse file)))
-                        (push (cons file-id table) citar--bibliography-cache)
-                        table))))
-            (push (cons file entries) results)))))
-    results))
-
 (defun citar--get-major-mode-function (key &optional default)
   "Return function associated with KEY in `major-mode-functions'.
 If no function is found matching KEY for the current major mode,
@@ -699,14 +816,6 @@ return DEFAULT."
 If no function is found, the DEFAULT function is called."
   (apply (citar--get-major-mode-function key default) args))
 
-(defun citar--local-files-to-cache ()
-  "The local bibliographic files not included in the global bibliography."
-  ;; We cache these locally to the buffer.
-  (seq-difference (citar-file--normalize-paths
-                   (citar--major-mode-function 'local-bib-files #'ignore))
-                  (citar-file--normalize-paths
-                   citar-bibliography)))
-
 ;; Data access functions
 
 (cl-defun citar-get-data-entries (&optional &key filter)
@@ -722,14 +831,23 @@ If no function is found, the DEFAULT function is called."
        (cdr bibliography)))
     results))
 
-(defun citar--get-entry (key)
+(defun citar--get-entry (key &optional bibs)
   "Return entry for KEY, as an association list."
   (catch :found
     ;; Iterate through the cached bibliography hashes and find a key.
-    (pcase-dolist (`(,_ . ,entries) (citar--parse-bibliography))
-      (let ((entry (gethash key entries)))
+    (dolist (bib (or bibs (citar--bibliographies)))
+      (let* ((entries (citar--bibliography-entries bib))
+             (entry (gethash key entries)))
         (when entry (throw :found entry))))
     nil))
+
+(defun citar--get-entries (&optional bibs)
+  (let ((entries (make-hash-table :test 'equal)))
+    (dolist (bib (reverse (or bibs (citar--bibliographies))))
+      (maphash (lambda (citekey entry)
+                 (puthash citekey entry entries))
+               (citar--bibliography-entries bib)))
+    entries))
 
 (defun citar--get-value (field key-or-entry)
   "Return FIELD value for KEY-OR-ENTRY."
@@ -908,6 +1026,99 @@ repeatedly."
     (insert search)))
 
 ;;; Formatting functions
+
+(defun citar--format-parse (format-string)
+  "Parse FORMAT-STRING."
+  (let ((regex (concat "\\${"                ; ${
+                       "\\(.*?\\)"           ; field names
+                       "\\(?::[[:blank:]]*"  ; : + space
+                       "\\(.*?\\)"           ; format spec
+                       "[[:blank:]]*\\)?}")) ; space + }
+        (position 0)
+        (parsed nil))
+    (while (string-match regex format-string position)
+      (let* ((begin (match-beginning 0))
+             (end (match-end 0))
+             (textprops (text-properties-at begin format-string))
+             (fields (match-string-no-properties 1 format-string))
+             (spec (match-string-no-properties 2 format-string))
+             (width (cond
+                     ((null spec) nil)
+                     ((equal spec "*") '*)
+                     (t (string-to-number spec)))))
+        (when (< position begin)
+          (push (substring format-string position begin) parsed))
+        (setq position end)
+        (push (cons (nconc (when width `(:width ,width))
+                           (when textprops `(:text-properties ,textprops)))
+                    (split-string-and-unquote fields))
+              parsed)))
+    (when (< position (length format-string))
+      (push (substring format-string position) parsed))
+    (nreverse parsed)))
+
+(defun citar--preformat-parse (format-string)
+  "Parse and group FORMAT-STRING."
+  (let ((parsed (citar--format-parse format-string))
+        groups group props)
+    (dolist (field parsed)
+      (unless props (setq props (list :width 0)))
+      (let ((fieldwidth (cond
+                         ((stringp field) (string-width field))
+                         ((listp field) (plist-get (car field) :width)))))
+        (cond
+         ((eq fieldwidth '*)
+          (push (cons props (nreverse group)) groups)
+          (setcar field (plist-put (car field) :width nil))
+          (push (cons '(:width *) (list field)) groups)
+          (setq group nil props nil))
+         ((numberp fieldwidth)
+          (push field group)
+          (if-let* ((oldwidth (plist-get props :width))
+                    ((numberp oldwidth)))
+              (setq props (plist-put props :width (+ oldwidth fieldwidth)))))
+         (t
+          (push field group)
+          (setq props (plist-put props :width nil))))))
+    (when group
+      (push (cons props (nreverse group)) groups))
+    (nreverse groups)))
+
+(defun citar--preformatter (format-string)
+  "Preformat according to FORMAT-STRING."
+  (let ((groups (citar--preformat-parse format-string)))
+    (lambda (entry)
+      (mapcar
+       (pcase-lambda (`(,props . ,group))
+         (citar--format-string-with-props
+          props
+          (mapconcat
+           (lambda (field)
+             (if (stringp field)
+                 field
+               (apply #'citar--format-entry-with-props entry field)))
+           group "")))
+       groups))))
+
+(defun citar--format-preformatted (format-string)
+  (let* ((groups (citar--preformat-parse format-string))
+         (widths (mapcar (lambda (group) (plist-get (car group) :width))
+                         groups))
+         (nstars (cl-count '* )))
+    (lambda (preformatted))))
+
+(defun citar--format-string-with-props (props string)
+  (let ((width (plist-get props :width))
+        (textprops (plist-get props :text-properties)))
+    (when textprops
+      (setq string (apply #'propertize string textprops)))
+    (when (numberp width)
+      (setq string (truncate-string-to-width string width 0 ?\s )))
+    string))
+
+(defun citar--format-entry-with-props (entry props &rest fields)
+  "Format FIELDS of ENTRY using PROPS."
+  (citar--format-string-with-props props (citar--display-value fields entry)))
 
 (defun citar--format-width (format-string)
   "Calculate minimal width needed by the FORMAT-STRING."
