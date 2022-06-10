@@ -179,6 +179,25 @@ All functions that match a particular field are run in order."
   :type '(alist :key-type   (choice (const t) (repeat string))
                 :value-type function))
 
+(defcustom citar-prefilter-entries '(nil . t)
+  "When non-nil pre-filter note and library files commands.
+For commands like 'citar-open-notes', this will only show
+completion candidates that have such notes.
+
+The downside is that, if using Embark and you want to use a different
+command for the action, you will not be able to remove the
+filter.
+
+The value should be a cons of the form:
+
+(FILTER . TOGGLE)
+
+FILTER turns this on by default
+
+TOGGLE use prefix arg to toggle behavior"
+  :group 'citar
+  :type 'cons)
+
 (defcustom citar-symbols
   `((file  .  ("F" . " "))
     (note .   ("N" . " "))
