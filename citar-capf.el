@@ -75,8 +75,8 @@
       (let* ((candidates (citar--get-candidates))
              (begin (save-excursion (backward-word) (point)))
              (end (point)))
-        (list begin end candidates
-              citar-capf--properties)))))
+        (append (list begin end candidates)
+                citar-capf--properties))))
 
 (provide 'citar-capf)
 ;;; citar-capf.el ends here
