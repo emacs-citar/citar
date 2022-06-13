@@ -41,7 +41,6 @@
 (declare-function citar--get-entry "citar")
 (declare-function citar--get-value "citar")
 (declare-function citar--get-template "citar")
-(declare-function citar--format-entry-no-widths "citar")
 
 ;;;; File related variables
 
