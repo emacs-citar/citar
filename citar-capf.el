@@ -31,7 +31,9 @@
 
 (defun citar-capf--exit (str _status candidates)
   "Return key for STR from CANDIDATES hash."
-  (insert (cadr (assoc str candidates))))
+  (let* ((candidates (or (citar--ref-completion-table)
+                         (user-error "No bibliography set"))))
+  (insert (gethash str candidates)))
 
 ;;;###autoload
 (defun citar-capf ()
