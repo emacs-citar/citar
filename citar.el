@@ -669,19 +669,6 @@ If no function is found, the DEFAULT function is called."
 
 ;; Data access functions
 
-(cl-defun citar-get-data-entries (&optional &key filter)
-  "Return a subset of entries in bibliography by FILTER.
-
-  (citar-get-data-entries :filter (citar-has-note))"
-  (let ((results (make-hash-table :test #'equal)))
-    (dolist (bibliography citar--bibliography-cache)
-      (maphash
-       (lambda (citekey entry)
-         (when (funcall filter citekey)
-           (puthash citekey entry results)))
-       (cdr bibliography)))
-    results))
-
 (defun citar--get-entry (key)
   "Return entry for KEY, as an association list."
   (citar-cache--entry key (citar--bibliographies)))
@@ -837,12 +824,6 @@ repeatedly."
      (concat (propertize (citar--get-template 'main) 'face 'citar-highlight)
              (propertize (citar--get-template 'suffix) 'face 'citar)))
    (error "No template for \"%s\" - check variable 'citar-templates'" template-name)))
-
-(defun citar--all-keys ()
-  "List all keys available in current bibliography."
-  (seq-mapcat (pcase-lambda (`(,_ . ,entries))
-                (map-keys entries))
-              (citar--parse-bibliography)))
 
 (defun citar--get-link (entry)
   "Return a link for an ENTRY."
