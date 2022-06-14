@@ -11,10 +11,10 @@ If you would like to contribute, details:
 
 ** Basic Architecture
 
-Citar has two primary caches, each of which store the data in hash tables:
+Citar uses a cache, which stores two hash tables for each bibliography file:
 
-- bibliographic ::  keys are citekeys, values are alists of entry fields
-- completion :: keys are completion strings, values are citekeys
+- entries ::  as returned by =parsebib-parse=, keys are citekeys, values are alists of entry fields
+- pre-formatted :: values are partially-formatted completion strings
 
 The =citar--ref-completion-table= function returns a hash table from the bibliographic cache, and ~citar--get-entry~ and ~-citar--get-value~ provide access to those data.
 Most user-accessible citar functions take an argument ~key~ or ~keys~.
