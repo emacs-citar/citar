@@ -641,12 +641,30 @@ Return nil if there are no bibliography files or no entries."
       (maphash
        (lambda (citekey preform)
          (let* ((entry (gethash citekey entries))
-                (cand (concat (string-trim-right (funcall format preform))
-                              (when (funcall hasnotep citekey entry) hasnotetag)
-                              (when (funcall hasfilep citekey entry) hasfiletag))))
+                (starswidth (- width (car preform)))
+                (strings (cdr preform))
+                (display (citar-format--star-widths
+                          starswidth strings t citar-ellipsis))
+                ;; (hasfile (and hasfilep (funcall hasfilep citekey entry)))
+                (hasnote (and hasnotep (funcall hasnotep citekey entry)))
+                (hasfile t)
+                ;; (hasnote t)
+                (cand (if (not (or hasfile hasnote)) display
+                        (concat display
+                                (when hasnote hasnotetag)
+                                (when hasfile hasfiletag)))))
            (puthash cand citekey completions)))
        preformatted)
       completions)))
+
+(defun citar--extract-candidate-citekey (candidate)
+  "Extract the citation key from string CANDIDATE."
+  (unless (string-empty-p candidate)
+    (if (= ?\" (aref candidate 0))
+        (read candidate)
+      (substring-no-properties candidate 0 (cl-position ?\s candidate)))))
+
+;;; Major-mode functions
 
 (defun citar--get-major-mode-function (key &optional default)
   "Return function associated with KEY in `major-mode-functions'.
@@ -667,7 +685,7 @@ return DEFAULT."
 If no function is found, the DEFAULT function is called."
   (apply (citar--get-major-mode-function key default) args))
 
-;; Data access functions
+;;; Data access functions
 
 (defun citar--get-entry (key)
   "Return entry for KEY, as an association list."
@@ -722,10 +740,8 @@ personal names of the form \"family, given\"."
 
 (defun citar--fields-for-format (template)
   "Return list of fields for TEMPLATE."
-  (let* ((regexp "\\(?:\\`\\|}\\|:\\)[^{]*\\(?:\\${\\|\\'\\)\\|[[:space:]]+"))
-    ;; The readable version of regexp is:
-    ;; (rx (or (seq (or bos "}" ":") (0+ (not "{")) (or "${" eos)) (1+ space)))
-    (split-string template regexp t)))
+  (mapcan (lambda (fieldspec) (when (consp fieldspec) (cdr fieldspec)))
+          (citar-format--parse template)))
 
 (defun citar--fields-in-formats ()
   "Find the fields to mentioned in the templates."
@@ -737,11 +753,10 @@ personal names of the form \"family, given\"."
 
 (defun citar--fields-to-parse ()
   "Determine the fields to parse from the template."
-  (seq-concatenate
-   'list
-   (citar--fields-in-formats)
-   (list citar-file-variable)
-   citar-additional-fields))
+  (delete-dups (append (citar--fields-in-formats)
+                       (when citar-file-variable
+                         (list citar-file-variable))
+                       citar-additional-fields)))
 
 (defun citar-has-file ()
   "Return predicate testing whether entry has associated files.
@@ -869,10 +884,7 @@ repeatedly."
 
 (defun citar--reference-transformer (type target)
   "Look up key for a citar-reference TYPE and TARGET."
-  (cons type (or (cadr (assoc target
-                              (with-current-buffer (embark--target-buffer)
-                                ;; FIX how?
-                                (citar--get-candidates)))))))
+  (cons type (citar--extract-candidate-citekey target)))
 
 (defun citar--embark-selected ()
   "Return selected candidates from `citar--select-multiple' for embark."
@@ -1028,7 +1040,7 @@ With prefix, rebuild the cache before offering candidates."
 (defun citar--insert-bibtex (key)
   "Insert the bibtex entry for KEY at point."
   (let* ((bibtex-files
-          (seq-concatenate 'list citar-bibliography (citar--local-files-to-cache)))
+          (citar--bibliography-files))
          (entry
           (with-temp-buffer
             (bibtex-set-dialect)

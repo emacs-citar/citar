@@ -27,64 +27,63 @@
   (require 'cl-lib))
 
 (declare-function citar--display-value "citar")
-(defvar citar-ellipsis)
 
 
 ;;; Formatting bibliography entries
 
 
-(cl-defun citar-format--entry (format-string entry &key width hide-elided
-                                             (ellipsis citar-ellipsis))
+(cl-defun citar-format--entry (format-string entry &optional width
+                                             &key hide-elided ellipsis)
   "Format ENTRY according to FORMAT-STRING."
-  (cl-flet ((getwidth (fieldspec)
-              (unless (stringp fieldspec)
-                (plist-get (car fieldspec) :width)))
-            (fmtfield (fieldspec)
-              (citar-format--fieldspec fieldspec entry
-                                       :hide-elided hide-elided
-                                       :ellipsis ellipsis)))
-    (let* ((fieldspecs (citar-format--parse format-string))
-           (widths (mapcar #'getwidth fieldspecs))
-           (strings (mapcar #'fmtfield fieldspecs)))
-      (citar-format--star-widths widths strings :width width
-                                 :hide-elided hide-elided :ellipsis ellipsis))))
+  (let* ((fieldspecs (citar-format--parse format-string))
+         (preform (citar-format--preformat fieldspecs entry
+                                           hide-elided ellipsis)))
+    (if width
+        (citar-format--star-widths (- width (car preform)) (cdr preform)
+                                   hide-elided ellipsis)
+      (apply #'concat (cdr preform)))))
 
 
 ;;; Pre-formatting bibliography entries
 
 
-(cl-defun citar-format--preformat (format-string &key hide-elided
-                                                 (ellipsis citar-ellipsis))
-  "Preformat according to FORMAT-STRING.
-See `citar-format--string for the meaning of HIDE-ELIDED and ELLIPSIS."
-  (let ((fieldgroups (citar-format--preformat-parse format-string)))
-    (lambda (entry)
-      (cl-flet ((fmtfield (fieldspec)
-                  (citar-format--fieldspec fieldspec entry
-                                           :hide-elided hide-elided
-                                           :ellipsis ellipsis)))
-        (mapcar (lambda (groupspec)
-                  (mapconcat #'fmtfield (cdr groupspec) ""))
-                fieldgroups)))))
-
-
-(cl-defun citar-format--preformatted (format-string &key width hide-elided
-                                                    (ellipsis citar-ellipsis))
-  "Fit pre-formatted strings to WIDTH according to FORMAT-STRING.
-See `citar-format--string for the meaning of HIDE-ELIDED and ELLIPSIS."
-  (let* ((fieldgroups (citar-format--preformat-parse format-string))
-         (widths (mapcar (lambda (groupspec)
-                           (plist-get (car groupspec) :width))
-                         fieldgroups)))
-    (lambda (preformatted)
-      (citar-format--star-widths widths preformatted :width width
-                                 :hide-elided hide-elided :ellipsis ellipsis))))
+(defun citar-format--preformat (fieldspecs entry hide-elided ellipsis)
+  (let ((preformatted nil)
+        (fields "")
+        (width 0))
+    (dolist (fieldspec fieldspecs)
+      (pcase fieldspec
+        ((pred stringp)
+         (cl-callf concat fields fieldspec)
+         (cl-incf width (string-width fieldspec)))
+        (`(,props . ,fieldnames)
+         (let* ((fieldwidth (plist-get props :width))
+                (textprops (plist-get props :text-properties))
+                (value (citar--display-value fieldnames entry))
+                (display (citar-format--string value
+                                               :width fieldwidth
+                                               :text-properties textprops
+                                               :hide-elided hide-elided
+                                               :ellipsis ellipsis)))
+           (cond
+            ((eq '* fieldwidth)
+             (push fields preformatted)
+             (setq fields "")
+             (push display preformatted))
+            (t
+             (cl-callf concat fields display)
+             (cl-incf width (if (numberp fieldwidth)
+                                fieldwidth
+                              (string-width value)))))))))
+    (unless (string-empty-p fields)
+      (push fields preformatted))
+    (cons width (nreverse preformatted))))
 
 
 ;;; Internal implementation functions
 
 
-(cl-defun citar-format--fieldspec (fieldspec entry &key hide-elided ellipsis)
+(defun citar-format--fieldspec (fieldspec entry hide-elided ellipsis)
   "Format FIELDSPEC using information from ENTRY.
 See `citar-format--string` for the meaning of HIDE-ELIDED and ELLIPSIS."
   (if (stringp fieldspec)
@@ -97,7 +96,7 @@ See `citar-format--string` for the meaning of HIDE-ELIDED and ELLIPSIS."
              fmtprops))))
 
 
-(cl-defun citar-format--string (string
+(cl-defsubst citar-format--string (string
                                 &key width text-properties hide-elided ellipsis)
   "Truncate STRING to WIDTH and apply TEXT-PROPERTIES.
 If HIDE-ELIDED is non-nil, the truncated part of STRING is
@@ -110,38 +109,38 @@ display instead of the truncated part of the text."
     (setq string (truncate-string-to-width string width 0 ?\s ellipsis hide-elided)))
   string)
 
+(defun citar-format--star-widths (alloc strings &optional hide-elided ellipsis)
+  "Concatenate STRINGS and truncate every other element to fit in ALLOC.
+Use this function along with `citar-format--preformat' to fit a
+formatted string to a desired display width; see
+`citar-format--entry' for how to do this.
 
-(cl-defun citar-format--star-widths (widths strings &key width
-                                            hide-elided ellipsis)
-  "Format STRINGS according to WIDTHS to fit WIDTH."
-  (if (not (and (numberp width) (cl-find '* widths)))
-      ;; If width is unlimited or there are no *-width fields, just join strings.
-      ;; We only support truncating *-width fields.
-      (string-join strings)
-    ;; Otherwise, calculate extra space available for *-width fields
-    (let ((usedwidth 0) (nstars 0))
-      ;; For fields without width spec, add their actual width to usedwidth
-      (cl-mapc
-       (lambda (width string)
-         (cond ((eq '* width) (cl-incf nstars))
-               ((numberp width) (cl-incf usedwidth width))
-               ((null width) (cl-incf usedwidth (string-width string)))))
-       widths strings)
-      (let* ((extrawidth (max 0 (- width usedwidth)))
-             (starwidth (/ extrawidth nstars))
-             (remainder (% extrawidth nstars))
-             (starindex 0))
-        (string-join
-         (cl-mapcar
-          (lambda (width string)
-            (if (not (eq width '*))
-                string
-              (cl-incf starindex)
-              (citar-format--string
-               string
-               :width (+ starwidth (if (<= starindex remainder) 1 0))
-               :hide-elided hide-elided :ellipsis ellipsis)))
-          widths strings))))))
+Return a string consisting of the concatenated elements of
+STRINGS.  The odd-numbered elements are included as-is, while the
+even-numbered elements are padded or truncated to a total width
+of ALLOC, which must be an integer.  All these odd-numbered
+elements are allocated close-to-equal widths.
+
+Perform the truncation using `citar-format--string', which see
+for the meaning of HIDE-ELIDED and ELLIPSIS."
+  (let ((nstars (/ (length strings) 2)))
+    (if (= 0 nstars)
+        (or (car strings) "")
+      (cl-loop
+       with alloc = (max 0 alloc)
+       with starwidth = (/ alloc nstars)
+       with remainder = (% alloc nstars)
+       with formatted = (car strings)
+       for (starstring following) on (cdr strings) by #'cddr
+       for nthstar from 1
+       do (let* ((starwidth (if (> nthstar remainder) starwidth
+                              (1+ starwidth)))
+                 (starstring (citar-format--string
+                              starstring
+                              :width starwidth
+                              :hide-elided hide-elided :ellipsis ellipsis)))
+            (cl-callf concat formatted starstring following))
+       finally return formatted))))
 
 
 ;;; Parsing format strings
@@ -176,49 +175,6 @@ display instead of the truncated part of the text."
     (when (< position (length format-string))
       (push (substring format-string position) fieldspecs))
     (nreverse fieldspecs)))
-
-
-(defun citar-format--preformat-parse (format-string)
-  "Parse and group FORMAT-STRING."
-  (let (fieldgroups group (groupwidth 0))
-    (cl-flet ((newgroup ()
-                (when group
-                  (push (cons (when groupwidth `(:width ,groupwidth))
-                              (nreverse group))
-                        fieldgroups)
-                  (setq group nil))
-                (setq groupwidth 0)))
-      (dolist (fieldspec (citar-format--parse format-string))
-        (let ((fieldwidth (cond
-                           ((stringp fieldspec) (string-width fieldspec))
-                           ((listp fieldspec) (plist-get (car fieldspec) :width)))))
-          (cond
-           ((eq fieldwidth '*)
-            ;; *-width field; start a new group
-            (newgroup)
-            ;; Pre-format the field at unlimited width by setting :width to nil
-            (cl-callf plist-put (car fieldspec) :width nil)
-            ;; Add the field in its own pre-format group with :width *
-            (push fieldspec group)
-            (setq groupwidth '*)
-            (newgroup))
-           ((numberp fieldwidth)
-            ;; Fixed-length field; start new group if needed
-            (unless (numberp groupwidth)
-              (newgroup))
-            ;; Add field to group and increment group width
-            (push fieldspec group)
-            (cl-incf groupwidth fieldwidth))
-           (t
-            ;; Unknown-length field; start new group if needed
-            (unless (null groupwidth)
-              (newgroup))
-            ;; Add field to group; group width is now unknown
-            (push fieldspec group)
-            (setq groupwidth nil)))))
-      ;; Add any remaining fields to group
-      (newgroup))
-    (nreverse fieldgroups)))
 
 
 (provide 'citar-format)
