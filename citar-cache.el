@@ -31,6 +31,7 @@
 (declare-function citar--get-template "citar")
 (declare-function citar--fields-to-parse "citar")
 
+(defvar citar-ellipsis)
 
 ;;; Variables:
 
@@ -189,7 +190,7 @@ modified since the last time BIB was updated."
                     (buffer-hash))))
     ;; TODO Also check file size and modification time before hashing?
     ;; See `file-has-changed-p` in emacs 29, or `org-file-has-changed-p`
-    (unless (or force (equal newhash (citar-cache--bibliography-hash bib)))
+    (when (or force (not (equal newhash (citar-cache--bibliography-hash bib))))
       ;; Update entries
       (clrhash entries)
       (parsebib-parse filename :entries entries :fields (citar--fields-to-parse))
@@ -201,13 +202,26 @@ modified since the last time BIB was updated."
 (defun citar-cache--preformat-bibliography (bib)
   "Updated pre-formatted strings in BIB."
   (let* ((entries (citar-cache--bibliography-entries bib))
-         (fmtstr (citar-cache--bibliography-format-string bib))
-         (preformat (citar-format--preformat fmtstr :hide-elided t))
+         (formatstr (citar-cache--bibliography-format-string bib))
+         (fieldspecs (citar-format--parse formatstr))
          (preformatted (citar-cache--bibliography-preformatted bib)))
     (clrhash preformatted)
-    (maphash (lambda (citekey entry)
-               (puthash citekey (funcall preformat entry) preformatted))
-             entries)))
+    (maphash
+     (lambda (citekey entry)
+       (let* ((preformat (citar-format--preformat fieldspecs entry
+                                                  t citar-ellipsis))
+              ;; CSL-JSOM lets citekey be an arbitrary string. Quote it if...
+              (keyquoted (if (or (string-empty-p citekey) ; ... it's empty,
+                                 (= ?\" (aref citekey 0)) ; ... starts with ",
+                                 (cl-find ?\s citekey))   ; ... or has a space
+                             (prin1-to-string citekey)
+                           citekey))
+              (prefix (propertize (concat keyquoted (when (cdr preformat) " "))
+                                  'invisible t)))
+         (setcdr preformat (cons (concat prefix (cadr preformat))
+                                 (cddr preformat)))
+         (puthash citekey preformat preformatted)))
+     entries)))
 
 
 ;;; Utility functions:
