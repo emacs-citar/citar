@@ -1014,7 +1014,7 @@ With prefix, rebuild the cache before offering candidates."
   "Open bibliographic entry associated with the KEY.
 With prefix, rebuild the cache before offering candidates."
   (interactive (list (citar-select-ref)))
-  (when-let ((bibtex-files (citar--bibliography-files))
+  (when-let ((bibtex-files (citar--bibliography-files)))
     (bibtex-search-entry (car key) t nil t)))
 
 ;;;###autoload
