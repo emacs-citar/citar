@@ -27,6 +27,7 @@
   (require 'cl-lib))
 (require 'parsebib)
 (require 'citar-format)
+(require 'map)
 
 (declare-function citar--get-template "citar")
 (declare-function citar--fields-to-parse "citar")
@@ -110,12 +111,12 @@ element of FILENAMES."
     nil))
 
 (defun citar-cache--entries (bibs)
-  (citar-cache--merge-hash-tables
-   (mapcar #'citar-cache--bibliography-entries bibs)))
+  (apply #'map-merge '(hash-table :test equal)
+         (nreverse (mapcar #'citar-cache--bibliography-entries bibs))))
 
 (defun citar-cache--preformatted (bibs)
-  (citar-cache--merge-hash-tables
-   (mapcar #'citar-cache--bibliography-preformatted bibs)))
+  (apply #'map-merge '(hash-table :test equal)
+         (nreverse (mapcar #'citar-cache--bibliography-preformatted bibs))))
 
 
 ;;; Creating and deleting bibliography caches
@@ -236,17 +237,6 @@ Otherwise, return the buffer object whose name is BUFFER."
   (cond ((null buffer) (current-buffer))
         ((symbolp buffer) buffer)
         (t (get-buffer buffer))))
-
-
-(defun citar-cache--merge-hash-tables (hash-tables)
-  "Merge hash tables in HASH-TABLES."
-  (when-let ((hash-tables (reverse hash-tables))
-             (first (pop hash-tables)))
-    (if (null hash-tables)
-        first
-      (let ((result (copy-hash-table first)))
-        (dolist (table hash-tables result)
-          (maphash (lambda (key entry) (puthash key entry result)) table))))))
 
 
 (provide 'citar-cache)
