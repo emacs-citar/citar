@@ -3,9 +3,14 @@
 
 # Packaging
 .cask
+/.eldev
+/Eldev-local
 
 # Backup files
 *~
 
 # Undo-tree save-files
 *.~undo-tree
+
+# Autoloads
+/citar-autoloads.el
