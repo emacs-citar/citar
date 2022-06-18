@@ -242,8 +242,7 @@ If nil, single resources will open without prompting."
 
 (defcustom citar-has-note-functions
   '(citar-file-has-notes)
-  "Functions to return a predicate testing whether a reference has
-associated notes.
+  "Functions used for displaying note indicators.
 
 Such functions must take arguments KEY and ENTRY and return
 non-nil when the reference has associated notes."
@@ -1251,7 +1250,9 @@ citation styles. See specific functions for more detail."
    arg))
 
 (defun citar-insert-edit (&optional arg)
-  "Edit the citation at point."
+  "Edit the citation at point.
+ARG is forwarded to the mode-specific insertion function given in
+`citar-major-mode-functions`."
   (interactive "P")
   (citar--major-mode-function
    'insert-edit
