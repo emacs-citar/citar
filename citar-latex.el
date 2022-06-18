@@ -188,7 +188,7 @@ inserted."
              (insert ",")
              (backward-char)))
           (?}                           ; insert before "}"
-           (skip-chars-backward "[[:space:]]")
+           (skip-chars-backward "[:space:]")
            (unless (member (preceding-char) '(?{ ?,))
              (insert ","))))
       (let ((macro
