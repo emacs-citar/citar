@@ -1023,6 +1023,7 @@ FORMAT-STRING."
                               (with-current-buffer (embark--target-buffer)
                                 (citar--get-candidates)))))))
 
+;;;###autoload
 (defun citar--embark-selected ()
   "Return selected candidates from `citar--select-multiple' for embark."
   (when-let (((eq minibuffer-history-variable 'citar-history))
