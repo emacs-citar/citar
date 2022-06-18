@@ -48,7 +48,7 @@
 ;;; pre-1.0 API cleanup
 
 ;; make public
-;(make-obsolete 'citar--get-candidates 'citar-get-candidates "1.0")
+;; (make-obsolete 'citar--get-candidates 'citar-get-candidates "1.0")
 
 ;; make all these private
 (make-obsolete 'citar-get-template 'citar--get-template "1.0")
@@ -146,10 +146,10 @@ to include."
 
 The main and suffix templates are for candidate display, and note
 for the title field for new notes."
-    :group 'citar
-    :type  '(alist :key-type symbol
-                   :value-type string
-                   :options (main suffix preview note)))
+  :group 'citar
+  :type  '(alist :key-type symbol
+                 :value-type string
+                 :options (main suffix preview note)))
 
 (defcustom citar-format-reference-function
   #'citar-format-reference
@@ -562,15 +562,15 @@ HISTORY is the 'completing-read' history argument."
 
 (defun citar--select-group-related-resources (resource transform)
   "Group RESOURCE by type or TRANSFORM."
-    (let ((extension (file-name-extension resource)))
-      (if transform
-          (if (file-regular-p resource)
-              (file-name-nondirectory resource)
-            resource)
-        (cond
-         ((member extension citar-file-note-extensions) "Notes")
-         ((string-match "http" resource 0) "Links")
-         (t "Library Files")))))
+  (let ((extension (file-name-extension resource)))
+    (if transform
+        (if (file-regular-p resource)
+            (file-name-nondirectory resource)
+          resource)
+      (cond
+       ((member extension citar-file-note-extensions) "Notes")
+       ((string-match "http" resource 0) "Links")
+       (t "Library Files")))))
 
 (defun citar--get-major-mode-function (key &optional default)
   "Return  function associated with KEY in 'major-mode-functions'.
@@ -618,14 +618,14 @@ The value is transformed using `citar-display-transform-functions'"
                       (funcall (cdr fun) string)
                     string))
                 citar-display-transform-functions
-            ;; Make sure we always return a string, even if empty.
+                ;; Make sure we always return a string, even if empty.
                 (or (citar--get-value field entry) ""))))
 
 ;; Lifted from bibtex-completion
 (defun citar-clean-string (s)
   "Remove quoting brackets and superfluous whitespace from string S."
   (replace-regexp-in-string "[\n\t ]+" " "
-         (replace-regexp-in-string "[\"{}]+" "" s)))
+                            (replace-regexp-in-string "[\"{}]+" "" s)))
 
 (defun citar-shorten-names (names)
   "Return a list of family names from a list of full NAMES.
@@ -744,19 +744,19 @@ key associated with each one."
              (propertize candidate-hidden 'invisible t)))
            (cons citekey entry))
           candidates)))
-       raw-candidates)
+     raw-candidates)
     candidates))
 
-  (defun citar--affixation (cands)
-    "Add affixation prefix to CANDS."
-    (seq-map
-     (lambda (candidate)
-       (let ((candidate-symbols (citar--symbols-string
-                                 (string-match "has:files" candidate)
-                                 (string-match "has:notes" candidate)
-                                 (string-match "has:link" candidate))))
-         (list candidate candidate-symbols "")))
-     cands))
+(defun citar--affixation (cands)
+  "Add affixation prefix to CANDS."
+  (seq-map
+   (lambda (candidate)
+     (let ((candidate-symbols (citar--symbols-string
+                               (string-match "has:files" candidate)
+                               (string-match "has:notes" candidate)
+                               (string-match "has:link" candidate))))
+       (list candidate candidate-symbols "")))
+   cands))
 
 (defun citar--symbols-string (has-files has-note has-link)
   "String for display from booleans HAS-FILES HAS-LINK HAS-NOTE."
@@ -803,8 +803,8 @@ are refreshed."
     (run-hooks 'citar-force-refresh-hook))
   (unless (eq 'local scope)
     (setq citar--candidates-cache
-      (citar--format-candidates
-        (citar-file--normalize-paths citar-bibliography))))
+          (citar--format-candidates
+           (citar-file--normalize-paths citar-bibliography))))
   (unless (eq 'global scope)
     (setq citar--local-candidates-cache
           (citar--format-candidates
@@ -848,10 +848,10 @@ If FILTER, use the function to filter the candidate list."
 
 (defun citar--get-entry (key)
   "Return the cached entry for KEY."
-    (cddr (seq-find
-           (lambda (entry)
-             (string-equal key (cadr entry)))
-           (citar--get-candidates))))
+  (cddr (seq-find
+         (lambda (entry)
+           (string-equal key (cadr entry)))
+         (citar--get-candidates))))
 
 (defun citar--get-link (entry)
   "Return a link for an ENTRY."
@@ -938,7 +938,7 @@ Return a list containing only (KEY . ENTRY) pairs."
                               (seq-map #'string-to-number
                                        (split-string format-string ":"))))
         (whitespace-width (string-width (citar--format format-string
-                                                  (lambda (_) "")))))
+                                                       (lambda (_) "")))))
     (+ content-width whitespace-width)))
 
 (defun citar--fit-to-width (value width)
@@ -1036,7 +1036,7 @@ FORMAT-STRING."
 (with-eval-after-load 'embark
   (add-to-list 'embark-target-finders 'citar-citation-finder)
   (add-to-list 'embark-transformer-alist
-             '(citar-reference . citar--reference-transformer))
+               '(citar-reference . citar--reference-transformer))
   (add-to-list 'embark-target-finders 'citar-key-finder)
   (add-to-list 'embark-candidate-collectors #'citar--embark-selected))
 
@@ -1068,8 +1068,8 @@ FORMAT-STRING."
     (message "Make sure 'citar-library-paths' is a list of paths"))
   (let* ((embark-default-action-overrides
           '((multi-category . citar--open-multi)
-              (file . citar-file-open)
-              (url . browse-url)))
+            (file . citar-file-open)
+            (url . browse-url)))
          (key-entry-alist (citar--ensure-entries keys-entries))
          (files
           (citar-file--files-for-multiple-entries
@@ -1128,7 +1128,7 @@ For use with 'embark-act-all'."
 
 ;;;###autoload
 (defun citar-open-library-file (key-entry)
- "Open library file associated with the KEY-ENTRY.
+  "Open library file associated with the KEY-ENTRY.
 
 With prefix, rebuild the cache before offering candidates."
   (interactive (list (citar-select-ref
@@ -1207,11 +1207,11 @@ the first entry in 'citar-bibliography', and created in the same
 directory as current buffer."
   (interactive)
   (let* ((keys (citar--major-mode-function 'list-keys #'ignore))
-        (ext (file-name-extension (car citar-bibliography)))
-        (file (format "%slocal-bib.%s" (file-name-directory buffer-file-name) ext)))
+         (ext (file-name-extension (car citar-bibliography)))
+         (file (format "%slocal-bib.%s" (file-name-directory buffer-file-name) ext)))
     (with-temp-file file
       (dolist (key keys)
-          (citar--insert-bibtex key)))))
+        (citar--insert-bibtex key)))))
 
 ;;;###autoload
 (defun citar-open-link (key-entry)
@@ -1307,10 +1307,10 @@ With prefix, rebuild the cache before offering candidates."
   (interactive (list (citar-select-ref
                       :rebuild-cache current-prefix-arg)))
   (let ((embark-default-action-overrides '((file . mml-attach-file))))
-     (when (and citar-library-paths
-                (stringp citar-library-paths))
-       (error "Make sure 'citar-library-paths' is a list of paths"))
-     (citar--library-file-action key-entry 'attach)))
+    (when (and citar-library-paths
+               (stringp citar-library-paths))
+      (error "Make sure 'citar-library-paths' is a list of paths"))
+    (citar--library-file-action key-entry 'attach)))
 
 (defun citar--add-file-to-library (key)
   "Add a file to the library for KEY.
@@ -1334,8 +1334,8 @@ URL."
       ("f"
        (let* ((file (read-file-name "Add file: " nil nil t))
               (extension (file-name-extension file)))
-        (copy-file file
-         (concat file-path "." extension) 1)))
+         (copy-file file
+                    (concat file-path "." extension) 1)))
       ("u"
        (let* ((url (read-string "Add file URL: "))
               (extension (url-file-extension url)))
@@ -1350,7 +1350,7 @@ The FILE can be added either from an open buffer, a file, or a
 URL."
   (interactive (list (citar-select-ref
                       :rebuild-cache current-prefix-arg)))
-   (citar--add-file-to-library (car key-entry)))
+  (citar--add-file-to-library (car key-entry)))
 
 ;;;###autoload
 (defun citar-run-default-action (keys-entries)

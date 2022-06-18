@@ -17,7 +17,7 @@
 (global-set-key (kbd "M-.") #'embark-dwim)
 
 ;; replace CRM with consult alernative
-;(advice-add #'completing-read-multiple :override #'consult-completing-read-multiple)
+;; (advice-add #'completing-read-multiple :override #'consult-completing-read-multiple)
 
 (with-eval-after-load "oc"
   (setq org-cite-follow-processor 'citar

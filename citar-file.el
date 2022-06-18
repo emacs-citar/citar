@@ -361,7 +361,7 @@ of files found in two ways:
     (if (and (null citar-notes-paths)
              (equal citar-create-note-function
                     'citar-org-format-note-default))
-      (error "You must set 'citar-notes-paths'")
+        (error "You must set 'citar-notes-paths'")
       (funcall citar-create-note-function key entry file))))
 
 (defun citar-file--get-note-filename (key dirs extensions)
