@@ -98,7 +98,7 @@ entry when it is enabled."
 ;;;###autoload
 (defun citar-latex-key-at-point ()
   "Return citation key at point with its bounds.
-  
+
 The return value is (KEY . BOUNDS), where KEY is the citation key
 at point and BOUNDS is a pair of buffer positions.
 
@@ -120,7 +120,7 @@ Return nil if there is no key at point."
 ;;;###autoload
 (defun citar-latex-citation-at-point ()
   "Find citation macro at point and extract keys.
-  
+
 Find brace-delimited strings inside the bounds of the macro,
 splits them at comma characters, and trims whitespace.
 
@@ -139,7 +139,7 @@ the start and end of the citation macro."
 
 (defun citar-latex--macro-bounds ()
   "Return the bounds of the citation macro at point.
-  
+
 Return a pair of buffer positions indicating the beginning and
 end of the enclosing citation macro, or nil if point is not
 inside a citation macro."

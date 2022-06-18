@@ -58,9 +58,9 @@ specified at URL
 ;;;###autoload
 (defun citar-markdown-insert-citation (keys &optional invert-prompt)
   "Insert a pandoc-style citation consisting of KEYS.
-  
+
 If the point is inside a citation, add new keys after the current
-key.  
+key.
 
 If point is immediately after the opening \[, add new keys
 to the beginning of the citation."
