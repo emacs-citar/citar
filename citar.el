@@ -1237,7 +1237,7 @@ citation styles. See specific functions for more detail."
                            'caar
                            (butlast citar-major-mode-functions)))
        (list (citar-select-refs)  ; key-entries
-	     current-prefix-arg) ; arg
+             current-prefix-arg) ; arg
      (error "Citation insertion is not supported for %s" major-mode)))
   (citar--major-mode-function
    'insert-citation

@@ -192,10 +192,10 @@ inserted."
            (unless (member (preceding-char) '(?{ ?,))
              (insert ","))))
       (let ((macro
-	     (or command
-		 (if (xor invert-prompt citar-latex-prompt-for-cite-style)
+             (or command
+                 (if (xor invert-prompt citar-latex-prompt-for-cite-style)
                      (citar-latex--select-command)
-		   citar-latex-default-cite-command))))
+                   citar-latex-default-cite-command))))
         (TeX-parse-macro macro
                          (when citar-latex-prompt-for-extra-arguments
                            (cdr (citar-latex--is-a-cite-command macro))))))
@@ -215,7 +215,7 @@ With ARG non-nil, rebuild the cache before offering candidates."
                    (seq-mapcat #'car citar-latex-cite-commands)
                    nil nil nil
                    'citar-latex-cite-command-history
-		   citar-latex-default-cite-command nil))
+                   citar-latex-default-cite-command nil))
 
 (defun citar-latex--is-a-cite-command (command)
   "Return element of `citar-latex-cite-commands` containing COMMAND."
