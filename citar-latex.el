@@ -32,6 +32,11 @@
 (require 'reftex-parse)
 (require 'reftex-cite)
 
+(defvar TeX-esc)
+
+(declare-function TeX-find-macro-boundaries "ext:tex")
+(declare-function TeX-parse-macro "ext:tex")
+
 ;;; pre-1.0 API cleanup
 
 ;; make all these private

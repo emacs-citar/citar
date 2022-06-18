@@ -21,8 +21,9 @@
 (defvar org-element-citation-key-re)
 (defvar org-element-citation-prefix-re)
 (declare-function org-element-at-point "ext:org-element")
-(declare-function org-eement-at-point "ext:org-element")
 (declare-function org-element-property "ext:org-element")
+(declare-function org-element-type "ext:org-element")
+(declare-function org-element-context "ext:org-element")
 ;; Declare function from citar
 ;; (declare-function citar--ref-completion-table "citar") ;; pending cache revisions
 
