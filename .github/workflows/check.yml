@@ -1,0 +1,67 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+      - 'releases/**'
+    paths:
+      - '**.el'
+      - Eldev
+  pull_request:
+    paths:
+      - '**.el'
+      - Eldev
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        emacs_version:
+          - 27.2
+          - 28.1
+          - snapshot
+        action:
+          - compile
+          - test
+          - lint
+    steps:
+    - name: Set up Emacs ${{matrix.emacs_version}}
+      uses: purcell/setup-emacs@master
+      with:
+        version: ${{matrix.emacs_version}}
+    - name: Install Eldev
+      run: curl -fsSL https://raw.github.com/doublep/eldev/master/webinstall/github-eldev | sh
+    - name: Check out project
+      uses: actions/checkout@v2
+    - name: Install dependencies
+      run: |
+        eldev --color --trace prepare
+    - name: Byte-compile
+      if: ${{ matrix.action == 'compile' }}
+      run: |
+        eldev --color --debug --backtrace --packaged \
+        compile --load-before-compiling --keep-going --warnings-as-errors
+    - name: Run tests
+      if: ${{ matrix.action == 'test' }}
+      run: |
+        eldev --color --packaged --debug --time test
+    - name: Lint Elisp
+      if: ${{ matrix.action == 'lint' }}
+      run: |
+        eldev --color --packaged lint elisp
+    - name: Lint documentation
+      if: ${{ matrix.action == 'lint' }}
+      run: |
+        eldev --color lint doc
+    - name: Lint regex
+      if: ${{ matrix.action == 'lint' }}
+      run: |
+        eldev --color lint re
+    - name: Lint package metadata
+      if: ${{ matrix.action == 'lint' }}
+      run: |
+        eldev --color lint package || true

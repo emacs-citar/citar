@@ -48,7 +48,7 @@
   "Regular expression for a Pandoc citation key.
 Captures the actual key in group 1.  Implements the syntax
 specified at URL
-'https://pandoc.org/MANUAL.html#citation-syntax'.")
+`https://pandoc.org/MANUAL.html#citation-syntax'.")
 
 ;;;###autoload
 (defun citar-markdown-insert-keys (keys)
@@ -58,12 +58,15 @@ specified at URL
 ;;;###autoload
 (defun citar-markdown-insert-citation (keys &optional invert-prompt)
   "Insert a pandoc-style citation consisting of KEYS.
-  
+
 If the point is inside a citation, add new keys after the current
-key.  
+key.
 
 If point is immediately after the opening \[, add new keys
-to the beginning of the citation."
+to the beginning of the citation.
+
+If INVERT-PROMPT is non-nil, invert the meaning of
+`citar-markdown-prompt-for-extra-arguments`."
   (let* ((citation (citar-markdown-citation-at-point))
          (keys (if citation (seq-difference keys (car citation)) keys))
          (keyconcat (mapconcat (lambda (k) (concat "@" k)) keys "; "))
@@ -128,7 +131,7 @@ citation."
 
 ;;;###autoload
 (defun citar-markdown-list-keys ()
-  "Returns a list of all keys from markdown citations in buffer."
+  "Return a list of all keys from markdown citations in buffer."
   (save-excursion
     (let (matches)
       (goto-char (point-min))

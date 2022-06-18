@@ -43,10 +43,9 @@
 
 (make-obsolete 'citar-org-id-get-create 'citar-org--id-get-create "1.0")
 
-(declare-function citar-at-point "citar")
 (declare-function org-open-at-point "org")
-(declare-function org-element-property "org")
-(declare-function org-element-type "org")
+(declare-function org-element-property "org-element")
+(declare-function org-element-type "org-element")
 (declare-function org-cite-make-insert-processor "oc")
 (declare-function org-cite-get-references "oc")
 (declare-function embark-act "ext:embark")
@@ -60,7 +59,7 @@
 
 (defface citar-org-style-preview
   ;; Not sure if this is the best parent face.
-    '((t :inherit citar))
+  '((t :inherit citar))
   "Face for org-cite previews."
   :group 'citar-org)
 
@@ -74,7 +73,7 @@
 (defcustom citar-org-style-targets nil
   "Export processor targets to include in styles list.
 
-If nil, use 'org-cite-supported-styles'."
+If nil, use `org-cite-supported-styles'."
   :group 'citar-org
   :type '(repeat :tag "org-cite export processor" symbol))
 
@@ -154,7 +153,7 @@ With PROC list, limit to specific processor(s)."
                            (unless (string= "/" style-name) "/")
                            (cadr variant))))
               (push fstyle styles))))))
-      styles))
+    styles))
 
 ;;; Org-cite processors
 
@@ -174,9 +173,9 @@ With PROC list, limit to specific processor(s)."
     (when style
       (let ((raw-style
              (citar-org-select-style)))
-             (setq style
-                   (if (string-equal raw-style "") raw-style
-                     (concat "/" raw-style)))))
+        (setq style
+              (if (string-equal raw-style "") raw-style
+                (concat "/" raw-style)))))
     (if-let ((citation (citar-org--citation-at-point context)))
         (when-let ((keys (seq-difference keys (org-cite-get-references citation t)))
                    (keystring (mapconcat (lambda (key) (concat "@" key)) keys "; "))
@@ -230,22 +229,22 @@ ARG is used as the prefix argument."
   "Return group title of STYLE or TRANSFORM the candidate.
 This is a group-function that groups org-cite style/variant
 strings by style."
-    (let* ((style-str (string-trim style))
-           (short-style
-            (if (string-match "^/[bcf]*" style-str) "default"
-              (car (split-string style-str "/")))))
+  (let* ((style-str (string-trim style))
+         (short-style
+          (if (string-match "^/[bcf]*" style-str) "default"
+            (car (split-string style-str "/")))))
     (if transform
         ;; Use the candidate string as is, but add back whitespace alignment.
         (concat "  " (truncate-string-to-width style-str 20 nil 32))
       ;; Transform for grouping and display.
       (pcase short-style
-       ("author" "Author-Only")
-       ("locators" "Locators-Only")
-       ("text" "Textual/Narrative")
-       ("nocite" "No Cite")
-       ("year" "Year-Only")
-       ("noauthor" "Suppress Author")
-       (_ (upcase-initials short-style))))))
+        ("author" "Author-Only")
+        ("locators" "Locators-Only")
+        ("text" "Textual/Narrative")
+        ("nocite" "No Cite")
+        ("year" "Year-Only")
+        ("noauthor" "Suppress Author")
+        (_ (upcase-initials short-style))))))
 
 (defun citar-org--style-preview-annote (style &optional _citation)
   "Annotate STYLE with CITATION preview."
@@ -292,24 +291,24 @@ With optional argument FORCE, force the creation of a new ID."
 ;;;###autoload
 (defun citar-org-format-note-default (key entry filepath)
   "Format a note FILEPATH from KEY and ENTRY."
-    (let* ((template (citar--get-template 'note))
-           (note-meta
-            (when template
-              (citar--format-entry-no-widths
-               entry
-               template)))
-           (buffer (find-file filepath)))
-      (with-current-buffer buffer
-        ;; This just overrides other template insertion.
-        (erase-buffer)
-        (citar-org-roam-make-preamble key)
-        (insert "#+title: ")
-        (when template (insert note-meta))
-        (insert "\n\n|\n\n#+print_bibliography:")
-        (search-backward "|")
-        (delete-char 1)
-        (when (fboundp 'evil-insert)
-          (evil-insert 1)))))
+  (let* ((template (citar--get-template 'note))
+         (note-meta
+          (when template
+            (citar--format-entry-no-widths
+             entry
+             template)))
+         (buffer (find-file filepath)))
+    (with-current-buffer buffer
+      ;; This just overrides other template insertion.
+      (erase-buffer)
+      (citar-org-roam-make-preamble key)
+      (insert "#+title: ")
+      (when template (insert note-meta))
+      (insert "\n\n|\n\n#+print_bibliography:")
+      (search-backward "|")
+      (delete-char 1)
+      (when (fboundp 'evil-insert)
+        (evil-insert 1)))))
 
 ;;; Embark target finder
 
@@ -396,7 +395,7 @@ or citation-reference."
 (defun citar-org--shift-reference (datum direction)
   "When point is on a citation-reference DATUM, shift it in DIRECTION."
   (let*  ((current-citation (if (eq 'citation (org-element-type datum)) datum
-                             (org-element-property :parent datum)))
+                              (org-element-property :parent datum)))
           (current-ref (when (eq 'citation-reference (org-element-type datum)) datum))
           (refs (org-cite-get-references current-citation))
           (index
