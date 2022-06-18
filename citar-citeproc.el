@@ -65,10 +65,10 @@
   :type 'directory)
 
 (defvar citar-citeproc-csl-style nil
-  "CSL style file to be used with 'citar-citeproc-format-reference'.
+  "CSL style file to be used with `citar-citeproc-format-reference`.
 
 If file is located in the directory set to
-'citar-citeproc-csl-styles-dir', only the filename itself is
+`citar-citeproc-csl-styles-dir', only the filename itself is
 necessary, e.g., \"chicago-author-date.csl\". Full path is also
 accepted.")
 
@@ -82,7 +82,7 @@ accepted.")
 
 ;;;###autoload
 (defun citar-citeproc-select-csl-style ()
-  "Select CSL style to be used with 'citar-citeproc-format-reference'."
+  "Select CSL style to be used with `citar-citeproc-format-reference`."
   (interactive)
   (unless citar-citeproc-csl-styles-dir
     (error "Be sure to set 'citar-citeproc-csl-styles-dir' to your CSL styles directory"))
@@ -97,8 +97,8 @@ accepted.")
 
 ;;;###autoload
 (defun citar-citeproc-format-reference (keys-entries)
-  "Return formatted reference(s) for KEYS-ENTRIES via 'citeproc-el'.
-Formatting follows CSL style set in 'citar-citeproc-csl-style'.
+  "Return formatted reference(s) for KEYS-ENTRIES via `citeproc-el`.
+Formatting follows CSL style set in `citar-citeproc-csl-style`.
 With prefix-argument, select CSL style."
   (when (or (eq citar-citeproc-csl-style nil)
             current-prefix-arg)
@@ -118,8 +118,7 @@ With prefix-argument, select CSL style."
                                 "en-US"))
          (references (car (progn
                             (citeproc-add-uncited keys proc)
-                            (citeproc-render-bib proc 'plain)
-                            ))))
+                            (citeproc-render-bib proc 'plain)))))
     references))
 
 (provide 'citar-citeproc)

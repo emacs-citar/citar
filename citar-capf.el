@@ -46,7 +46,7 @@
 ;;;; Citar-Capf
 ;;;###autoload
 (defun citar-capf ()
-  "Citation key 'completion-at-point' for org, markdown, or latex."
+  "Citation key `completion-at-point` for org, markdown, or latex."
   (let ((citar-capf-latex-regexp
          "\\(?:cite\\(?:\\(?:[pt]\\*\\|[pt]\\)?{\\)\\)\\([[:alnum:]_-]*,\\)*\\([[:alnum:]_-]*\\)")
         (citar-capf-markdown-regexp

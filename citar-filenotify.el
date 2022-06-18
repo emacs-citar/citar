@@ -41,7 +41,7 @@
 (defcustom citar-filenotify-callback 'invalidate-cache
   "The callback that is run when the bibliography related files change.
 
-Its value can be either 'invalidate-cache, 'refresh-cache or else a function.
+Its value can be either `invalidate-cache', `refresh-cache' or else a function.
 
 The function takes two arguments.
 
@@ -73,7 +73,7 @@ The callback is called without it when
 
 (defun citar-filenotify--invalidate-cache (&optional scope)
   "Invalidate local or global caches according to SCOPE.
-If it is other than 'global or 'local invalidate both"
+If it is other than `global' or `local' invalidate both."
   (unless (eq 'local scope)
     (setq citar--candidates-cache 'uninitialized))
   (unless (eq 'global scope)
@@ -191,7 +191,7 @@ This function only needs to be called if a bib file has been added or removed."
 
 This functions adds watches to the files in
 `citar-filenotify-files' and adds a hook to the
-'major-mode' hooks in 'MODE-HOOKS' which adds watches for the
+major mode hooks in 'MODE-HOOKS' which adds watches for the
 local bib files.  These local watches are removed when the buffer
 closes."
   (citar-filenotify-global-watches)

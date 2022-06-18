@@ -48,7 +48,7 @@
   "Regular expression for a Pandoc citation key.
 Captures the actual key in group 1.  Implements the syntax
 specified at URL
-'https://pandoc.org/MANUAL.html#citation-syntax'.")
+`https://pandoc.org/MANUAL.html#citation-syntax'.")
 
 ;;;###autoload
 (defun citar-markdown-insert-keys (keys)

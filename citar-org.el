@@ -73,7 +73,7 @@
 (defcustom citar-org-style-targets nil
   "Export processor targets to include in styles list.
 
-If nil, use 'org-cite-supported-styles'."
+If nil, use `org-cite-supported-styles'."
   :group 'citar-org
   :type '(repeat :tag "org-cite export processor" symbol))
 
