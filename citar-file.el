@@ -232,44 +232,6 @@ need to scan the contents of DIRS in this case."
                  (puthash key (nreverse filelist) files))
                files))))
 
-(defun citar-file--has-file (dirs extensions &optional entry-field)
-  "Return predicate testing whether a key and entry have associated files.
-
-Files are found in two ways:
-
-- By scanning DIRS for files with EXTENSIONS using
-  `citar-file--directory-files`, which see.  Its ADDITIONAL-SEP
-  argument is taken from `citar-file-additional-files-separator`.
-
-- When ENTRY-FIELD is non-nil, by parsing the entry field it
-  names using `citar-file--parse-file-field`; see its
-  documentation.  DIRS is used to resolve relative paths and
-  non-existent files are ignored.
-
-Note: for performance reasons, this function should be called
-once per command; the function it returns can be called
-repeatedly."
-  (let ((files (citar-file--directory-files dirs nil extensions
-                                            citar-file-additional-files-separator)))
-    (lambda (key &optional entry)
-      (let* ((nentry (or entry (citar--get-entry key)))
-             (xref (citar--get-value "crossref" nentry))
-             (cached (if (and xref
-                              (not (eq 'unknown (gethash xref files 'unknown))))
-                         (gethash xref files 'unknown)
-                       (gethash key files 'unknown))))
-        (if (not (eq cached 'unknown))
-            cached
-          ;; KEY has no files in DIRS, so check the ENTRY-FIELD field of
-          ;; ENTRY.  This will run at most once for each KEY; after that, KEY
-          ;; in hash table FILES will either contain nil or a file name found
-          ;; in ENTRY.
-          (puthash key
-                   (seq-some
-                    #'file-exists-p
-                    (citar-file--parse-file-field nentry entry-field dirs extensions))
-                   files))))))
-
 (defun citar-file--files-for-entry (key entry dirs extensions)
   "Find files related to bibliography item KEY with metadata ENTRY.
 See `citar-file--files-for-multiple-entries` for details on DIRS,
@@ -326,10 +288,21 @@ of files found in two ways:
                   nil 0 nil
                   file)))
 
-(defun citar-file-has-notes ()
-  "Return a predicate testing whether a reference has associated notes."
-  (citar-file--has-file citar-notes-paths
-                        citar-file-note-extensions))
+(defun citar-file-has-library-files (&optional _entries)
+  "Return predicate testing whether cite key has library files."
+  (let ((files (citar-file--directory-files
+                citar-library-paths nil citar-library-file-extensions
+                citar-file-additional-files-separator)))
+    (lambda (key)
+      (gethash key files))))
+
+(defun citar-file-has-notes (&optional _entries)
+  "Return predicate testing whether cite key has associated notes."
+  (let ((files (citar-file--directory-files
+                citar-notes-paths nil citar-file-note-extensions
+                citar-file-additional-files-separator)))
+    (lambda (key)
+      (gethash key files))))
 
 (defun citar-file--open-note (key entry)
   "Open a note file from KEY and ENTRY."
