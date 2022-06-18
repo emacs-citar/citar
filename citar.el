@@ -140,7 +140,8 @@ to include."
 (defcustom citar-templates
   '((main . "${author editor:30}     ${date year issued:4}     ${title:48}")
     (suffix . "          ${=key= id:15}    ${=type=:12}    ${tags keywords keywords:*}")
-    (preview . "${author editor} (${year issued date}) ${title}, ${journal journaltitle publisher container-title collection-title}.\n")
+    (preview . "${author editor} (${year issued date}) ${title}, \
+${journal journaltitle publisher container-title collection-title}.\n")
     (note . "Notes on ${author editor}, ${title}"))
   "Configures formatting for the bibliographic entry.
 
@@ -496,8 +497,10 @@ to filter them."
                                      (gethash (substring-no-properties cand) ,selected-hash))
                           ('(nil nil) "Select Multiple")
                           ('(nil t)   "Selected")
-                          ('(t   nil) cand)
-                          ('(t   t  ) (add-face-text-property 0 (length cand) 'citar-selection nil cand) cand))))))
+                          ('(t nil) cand)
+                          ('(t t)
+                           (add-face-text-property 0 (length cand) 'citar-selection nil cand)
+                           cand))))))
 
 (defvar citar--multiple-setup '("TAB" . "RET")
   "Variable whose value should be a cons (SEL . EXIT)
@@ -512,8 +515,10 @@ is used for exiting the minibuffer during completing read.")
 (defun citar--setup-multiple-keymap ()
   "Make a keymap suitable for `citar--select-multiple'."
   (let ((keymap (make-composed-keymap nil (current-local-map))))
-    (define-key keymap (kbd (car citar--multiple-setup)) (lookup-key keymap (kbd (cdr citar--multiple-setup))))
-    (define-key keymap (kbd (cdr citar--multiple-setup)) #'citar--multiple-exit)
+    (define-key keymap (kbd (car citar--multiple-setup))
+      (lookup-key keymap (kbd (cdr citar--multiple-setup))))
+    (define-key keymap (kbd (cdr citar--multiple-setup))
+      #'citar--multiple-exit)
     (use-local-map keymap)))
 
 (defun citar--select-multiple (prompt candidates &optional filter history def)
