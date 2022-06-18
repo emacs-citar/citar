@@ -40,6 +40,7 @@
   (require 'cl-lib)
   (require 'subr-x))
 (require 'seq)
+(require 'map)
 (require 'browse-url)
 (require 'citar-cache)
 (require 'citar-format)
@@ -109,6 +110,12 @@
   :group 'citar
   :type '(repeat file))
 
+(defcustom citar-has-file-functions '(citar-has-file-field
+                                      citar-file-has-library-files)
+  "List of functions to test if an entry has associated files."
+  :group 'citar
+  :type '(repeat function))
+
 (defcustom citar-library-paths nil
   "A list of files paths for related PDFs, etc."
   :group 'citar
@@ -129,7 +136,18 @@ When nil, the function will not filter the list of files."
   :group 'citar
   :type '(repeat directory))
 
-(defcustom citar-additional-fields '("doi" "url" "crossref")
+(defcustom citar-crossref-variable "crossref"
+  "The bibliography field to look for cross-referenced entries.
+
+When non-nil, find associated files and notes not only in the
+original entry, but also in entries specified in the field named
+by this variable."
+  :group 'citar
+  :type '(choice (const "crossref")
+                 (string :tag "Field name")
+                 (const :tag "Ignore cross-references" nil)))
+
+(defcustom citar-additional-fields '("doi" "url")
   "A list of fields to add to parsed data.
 
 By default, citar filters parsed data based on the fields
@@ -619,42 +637,38 @@ HISTORY is the `completing-read' history argument."
        ((string-match "http" resource 0) "Links")
        (t "Library Files")))))
 
-(defun citar--ref-completion-table ()
+(cl-defun citar--ref-completion-table (&optional (bibs (citar--bibliographies))
+                                                 (entries (citar-cache--entries bibs)))
   "Return completion table for cite keys, as a hash table.
 In this hash table, keys are a strings with author, date, and
 title of the reference.  Values are the cite keys.
 Return nil if there are no bibliography files or no entries."
   ;; Populate bibliography cache.
-  (when-let ((bibs (citar--bibliographies)))
-    (let* ((entries (citar-cache--entries bibs))
-           (preformatted (citar-cache--preformatted bibs))
-           (fmtstr (citar--get-template 'completion))
-           (hasnotep (citar-has-note))
-           (hasfilep (citar-has-file))
+  (when bibs
+    (let* ((preformatted (citar-cache--preformatted bibs))
+           (hasnotep (citar-has-notes-for-entries entries))
+           (hasfilep (citar-has-files-for-entries entries))
            (hasnotetag (propertize " has:notes" 'invisible t))
            (hasfiletag (propertize " has:files" 'invisible t))
            (symbolswidth (string-width (citar--symbols-string t t t)))
            (width (- (frame-width) symbolswidth 2))
-           (format (citar-format--preformatted
-                    fmtstr :width width :hide-elided t :ellipsis citar-ellipsis))
-           (completions (make-hash-table :test 'equal)))
+           (completions (make-hash-table :test 'equal :size (hash-table-count entries))))
       (maphash
-       (lambda (citekey preform)
-         (let* ((entry (gethash citekey entries))
-                (starswidth (- width (car preform)))
-                (strings (cdr preform))
+       (lambda (citekey _entry)
+         (let* ((hasfile (and hasfilep (funcall hasfilep citekey)))
+                (hasnote (and hasnotep (funcall hasnotep citekey)))
+                (preform (or (gethash citekey preformatted)
+                             (error "No preformatted candidate string: %s" citekey)))
                 (display (citar-format--star-widths
-                          starswidth strings t citar-ellipsis))
-                ;; (hasfile (and hasfilep (funcall hasfilep citekey entry)))
-                (hasnote (and hasnotep (funcall hasnotep citekey entry)))
-                (hasfile t)
-                ;; (hasnote t)
-                (cand (if (not (or hasfile hasnote)) display
-                        (concat display
-                                (when hasnote hasnotetag)
-                                (when hasfile hasfiletag)))))
-           (puthash cand citekey completions)))
-       preformatted)
+                          (- width (car preform)) (cdr preform)
+                          t citar-ellipsis))
+                (tagged (if (not (or hasfile hasnote))
+                            display
+                          (concat display
+                                  (when hasnote hasnotetag)
+                                  (when hasfile hasfiletag)))))
+           (puthash tagged citekey completions)))
+       entries)
       completions)))
 
 (defun citar--extract-candidate-citekey (candidate)
@@ -756,9 +770,18 @@ personal names of the form \"family, given\"."
   (delete-dups (append (citar--fields-in-formats)
                        (when citar-file-variable
                          (list citar-file-variable))
+                       (when citar-crossref-variable
+                         (list citar-crossref-variable))
                        citar-additional-fields)))
 
-(defun citar-has-file ()
+(defun citar-has-file-field (entries)
+  "Return predicate to test if bibliography entry has a file field."
+  (when-let ((fieldname citar-file-variable))
+    (lambda (key)
+      (when-let ((entry (map-elt entries key)))
+        (citar--get-value fieldname entry)))))
+
+(defun citar-has-file-p (key &optional entry)
   "Return predicate testing whether entry has associated files.
 
 Return a function that takes arguments KEY and ENTRY and returns
@@ -769,11 +792,11 @@ non-nil when the entry has associated files, either in
 Note: for performance reasons, this function should be called
 once per command; the function it returns can be called
 repeatedly."
-  (citar-file--has-file citar-library-paths
-                        citar-library-file-extensions
-                        citar-file-variable))
+  (when-let ((entry (or entry (citar--get-entry entry)))
+             (hasfilep (citar-has-files-for-entries '((key . entry)))))
+    (funcall hasfilep key)))
 
-(defun citar-has-note ()
+(defun citar-has-note-p (key &optional entry)
   "Return predicate testing whether entry has associated notes.
 
 Return a function that takes arguments KEY and ENTRY and returns
@@ -782,13 +805,45 @@ non-nil when the entry has associated notes in `citar-notes-paths`.
 Note: for performance reasons, this function should be called
 once per command; the function it returns can be called
 repeatedly."
-  ;; Call each function in `citar-has-note-functions` to get a list of predicates
-  (let ((preds (mapcar #'funcall citar-has-note-functions)))
-    ;; Return a predicate that checks if `citekey` and `entry` have a note
-    (lambda (citekey &optional entry)
-      (let ((nentry (or entry (citar--get-entry citekey))))
-        ;; Call each predicate with `citekey` and `entry`; return the first non-nil result
-        (seq-some (lambda (pred) (funcall pred citekey nentry)) preds)))))
+  (when-let ((entry (or entry (citar--get-entry entry)))
+             (hasnotep (citar-has-notes-for-entries '((key . entry)))))
+    (funcall hasnotep key)))
+
+(defun citar-has-notes-for-entries (entries)
+  (citar--has-resources-for-entries citar-has-note-functions entries))
+
+(defun citar-has-files-for-entries (entries)
+  (citar--has-resources-for-entries citar-has-file-functions entries))
+
+(defun citar--has-resources-for-entries (functions entries)
+  "Return predicate combining results of calling FUNCTIONS.
+
+FUNCTIONS should be a list of functions, each of which returns a
+predicate function that takes KEY and ENTRY arguments. Run each
+function in the list, and return a predicate that is the logical
+or of all these predicates.
+
+The FUNCTIONS may also return nil, which is treated as an
+always-false predicate and ignored. If there is only one non-nil
+predicate, return it."
+  (when-let ((predicates (delq nil (mapcar (lambda (fn)
+                                             (funcall fn entries))
+                                           functions))))
+    (let ((hasresourcep (if (null (cdr predicates))
+                            ;; optimization for single predicate; just use it directly
+                            (car predicates)
+                          ;; otherwise, call all predicates until one returns non-nil
+                          (lambda (citekey)
+                            (seq-some (lambda (predicate)
+                                        (funcall predicate citekey))
+                                      predicates)))))
+      (if-let ((crossref citar-crossref-variable))
+          (lambda (citekey)
+            (or (funcall hasresourcep citekey)
+                (when-let ((entry (map-elt entries citekey))
+                           (crossrefkey (citar--get-value crossref entry)))
+                  (funcall hasresourcep crossrefkey))))
+        hasresourcep))))
 
 (defun citar--ref-affix (cands)
   "Add affixation prefix to CANDS."
