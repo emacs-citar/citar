@@ -43,10 +43,9 @@
 
 (make-obsolete 'citar-org-id-get-create 'citar-org--id-get-create "1.0")
 
-(declare-function citar-at-point "citar")
 (declare-function org-open-at-point "org")
-(declare-function org-element-property "org")
-(declare-function org-element-type "org")
+(declare-function org-element-property "org-element")
+(declare-function org-element-type "org-element")
 (declare-function org-cite-make-insert-processor "oc")
 (declare-function org-cite-get-references "oc")
 (declare-function embark-act "ext:embark")
