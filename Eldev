@@ -11,15 +11,17 @@
 (setf eldev-standard-excludes `(:or ,eldev-standard-excludes "./test/manual/" "./citar-capf.el"))
 
 ;; (setf eldev-test-fileset '("./test/" "!./test/manual/"))
-;; (eldev-add-extra-dependencies 'test 'embark 'consult 'marginalia 'vertico 'auctex)
+(eldev-add-extra-dependencies '(build test lint) 'embark 'auctex)
 
 ;; allow to load test helpers
 ;; (eldev-add-loading-roots 'test "test/utils")
 
+;;; Linting settings
+
 ;; Tell checkdoc not to demand two spaces after a period.
 (setq sentence-end-double-space nil)
-
-(setf eldev-lint-default '(elisp))
+(setq eldev-lint-default '(elisp))
+(setq eldev-lint-stop-mode 'linter)
 
 (with-eval-after-load 'elisp-lint
   ;; Used eldev lint package | checkdoc
@@ -28,3 +30,7 @@
   ;; Emacs 29 snapshot has new indentation convention for cl-letf
   (when (> emacs-major-version 28)
     (push "indent" elisp-lint-ignored-validators)))
+
+;; Currently, package-lint has no other way of ignoring  checks.
+;; See https://github.com/purcell/package-lint/issues/125
+(advice-add #'package-lint--check-eval-after-load :override #'ignore)
