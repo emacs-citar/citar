@@ -64,4 +64,4 @@ jobs:
     - name: Lint package metadata
       if: ${{ matrix.action == 'lint' }}
       run: |
-        eldev --color lint package || true
+        eldev --color lint package
