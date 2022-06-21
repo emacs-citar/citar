@@ -71,18 +71,7 @@
 
 ;;; Declare variables and functions for byte compiler
 
-(defvar embark-keymap-alist)
-(defvar embark-target-finders)
-(defvar embark-pre-action-hooks)
-(defvar embark-general-map)
-(defvar embark-meta-map)
-(defvar embark-transformer-alist)
-(defvar embark-multitarget-actions)
 (defvar embark-default-action-overrides)
-(defvar embark-candidate-collectors)
-
-(declare-function embark--target-buffer "ext:embark")
-(declare-function embark--metadata "ext:embark")
 
 ;;; Variables
 
@@ -485,7 +474,7 @@ the form (KEY . VAL).
 
 The returned completion table can be used with `completing-read`
 and other completion functions."
-  (let ((metadata `(metadata . ((category . citar-reference)
+  (let ((metadata `(metadata . ((category . citar-candidate)
                                 . ((affixation-function . ,#'citar--ref-affix)
                                    . ,metadata)))))
     (lambda (string predicate action)
@@ -657,6 +646,7 @@ Return nil if there are no bibliography files or no entries."
        (lambda (citekey _entry)
          (let* ((hasfile (and hasfilep (funcall hasfilep citekey)))
                 (hasnote (and hasnotep (funcall hasnotep citekey)))
+                (hasnote t)
                 (preform (or (gethash citekey preformatted)
                              (error "No preformatted candidate string: %s" citekey)))
                 (display (citar-format--star-widths
@@ -917,65 +907,9 @@ predicate, return it."
              (search (completing-read "Preset: " citar-presets)))
     (insert search)))
 
-;;; At-point functions for Embark
-
-;;;###autoload
-(defun citar-key-finder ()
-  "Return the citation key at point."
-  (when-let (key (and (not (minibufferp))
-                      (citar--major-mode-function 'key-at-point #'ignore)))
-    (cons 'citar-key key)))
-
-;;;###autoload
-(defun citar-citation-finder ()
-  "Return the keys of the citation at point."
-  (when-let (citation (and (not (minibufferp))
-                           (citar--major-mode-function 'citation-at-point #'ignore)))
-    `(citar-citation ,(citar--stringify-keys (car citation)) . ,(cdr citation))))
-
 (defun citar--stringify-keys (keys)
   "Return a list of KEYS as a crm-string for `embark'."
   (if (listp keys) (string-join keys " & ") keys))
-
-(defun citar--reference-transformer (type target)
-  "Look up key for a citar-reference TYPE and TARGET."
-  (cons type (citar--extract-candidate-citekey target)))
-
-(defun citar--embark-selected ()
-  "Return selected candidates from `citar--select-multiple' for embark."
-  (when-let (((eq minibuffer-history-variable 'citar-history))
-             (metadata (embark--metadata))
-             (group-function (completion-metadata-get metadata 'group-function))
-             (cands (all-completions
-                     "" minibuffer-completion-table
-                     (lambda (cand)
-                       (and (equal "Selected" (funcall group-function cand nil))
-                            (or (not minibuffer-completion-predicate)
-                                (funcall minibuffer-completion-predicate cand)))))))
-    (cons (completion-metadata-get metadata 'category) cands)))
-
-;;;###autoload
-(with-eval-after-load 'embark
-  (add-to-list 'embark-target-finders 'citar-citation-finder)
-  (add-to-list 'embark-transformer-alist
-               '(citar-reference . citar--reference-transformer))
-  (add-to-list 'embark-target-finders 'citar-key-finder)
-  (add-to-list 'embark-candidate-collectors #'citar--embark-selected))
-
-(with-eval-after-load 'embark
-  (set-keymap-parent citar-map embark-general-map)
-  (add-to-list 'embark-keymap-alist '(citar-reference . citar-map))
-  (add-to-list 'embark-keymap-alist '(citar-key . citar-citation-map))
-  (add-to-list 'embark-keymap-alist '(citar-citation . citar-citation-map))
-  (add-to-list (if (boundp 'embark-allow-edit-actions)
-                   'embark-pre-action-hooks
-                 'embark-target-injection-hooks)
-               '(citar-insert-edit embark--ignore-target))
-  (when (boundp 'embark-multitarget-actions)
-    (dolist (command (list #'citar-insert-bibtex #'citar-insert-citation
-                           #'citar-insert-reference #'citar-copy-reference
-                           #'citar-insert-keys #'citar-run-default-action))
-      (add-to-list 'embark-multitarget-actions command))))
 
 ;;; Commands
 
