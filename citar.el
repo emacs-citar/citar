@@ -940,46 +940,6 @@ predicate, return it."
   "Return a list of KEYS as a crm-string for `embark'."
   (if (listp keys) (string-join keys " & ") keys))
 
-(defun citar--reference-transformer (type target)
-  "Look up key for a citar-reference TYPE and TARGET."
-  (cons type (citar--extract-candidate-citekey target)))
-
-(defun citar--embark-selected ()
-  "Return selected candidates from `citar--select-multiple' for embark."
-  (when-let (((eq minibuffer-history-variable 'citar-history))
-             (metadata (embark--metadata))
-             (group-function (completion-metadata-get metadata 'group-function))
-             (cands (all-completions
-                     "" minibuffer-completion-table
-                     (lambda (cand)
-                       (and (equal "Selected" (funcall group-function cand nil))
-                            (or (not minibuffer-completion-predicate)
-                                (funcall minibuffer-completion-predicate cand)))))))
-    (cons (completion-metadata-get metadata 'category) cands)))
-
-;;;###autoload
-(with-eval-after-load 'embark
-  (add-to-list 'embark-target-finders 'citar-citation-finder)
-  (add-to-list 'embark-transformer-alist
-               '(citar-reference . citar--reference-transformer))
-  (add-to-list 'embark-target-finders 'citar-key-finder)
-  (add-to-list 'embark-candidate-collectors #'citar--embark-selected))
-
-(with-eval-after-load 'embark
-  (set-keymap-parent citar-map embark-general-map)
-  (add-to-list 'embark-keymap-alist '(citar-reference . citar-map))
-  (add-to-list 'embark-keymap-alist '(citar-key . citar-citation-map))
-  (add-to-list 'embark-keymap-alist '(citar-citation . citar-citation-map))
-  (add-to-list (if (boundp 'embark-allow-edit-actions)
-                   'embark-pre-action-hooks
-                 'embark-target-injection-hooks)
-               '(citar-insert-edit embark--ignore-target))
-  (when (boundp 'embark-multitarget-actions)
-    (dolist (command (list #'citar-insert-bibtex #'citar-insert-citation
-                           #'citar-insert-reference #'citar-copy-reference
-                           #'citar-insert-keys #'citar-run-default-action))
-      (add-to-list 'embark-multitarget-actions command))))
-
 ;;; Commands
 
 ;;;###autoload
