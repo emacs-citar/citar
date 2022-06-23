@@ -45,7 +45,6 @@
 (require 'citar-cache)
 (require 'citar-format)
 (require 'citar-file)
-(require 'crm)
 
 ;;; pre-1.0 API cleanup
 
@@ -457,7 +456,7 @@ current buffer and global bibliographies."
                    (list citar-bibliography))
                (with-current-buffer buffer
                  (citar--major-mode-function 'local-bib-files #'ignore))))
-            (or buffers (list (current-buffer) 'global)))))
+           (or buffers (list (current-buffer) 'global)))))
 
 (defun citar--bibliographies (&rest buffers)
   "Return bibliographies for BUFFERS."
@@ -991,7 +990,6 @@ predicate, return it."
           '((multi-category . citar--open-multi)
             (file . citar-file-open)
             (url . browse-url)))
-         (key-entry-alist (citar--ensure-entries keys-entries))
          (files
           (citar-file--files-for-multiple-entries
            keys
@@ -1046,8 +1044,8 @@ For use with `embark-act-all'."
       (message "No associated file"))))
 
 ;;;###autoload
-(defun citar-open-library-file (key-entry)
-  "Open library file associated with the KEY-ENTRY.
+(defun citar-open-library-file (key)
+  "Open library file associated with the KEY.
 
 With prefix, rebuild the cache before offering candidates."
   (interactive (list (citar-select-ref)))
@@ -1218,7 +1216,7 @@ With prefix, rebuild the cache before offering candidates."
     (when (and citar-library-paths
                (stringp citar-library-paths))
       (error "Make sure 'citar-library-paths' is a list of paths"))
-    (citar--library-file-action key-entry 'attach)))
+    (citar--library-file-action key 'attach)))
 
 (defun citar--add-file-to-library (key)
   "Add a file to the library for KEY.
@@ -1258,7 +1256,7 @@ The FILE can be added either from an open buffer, a file, or a
 URL."
   (interactive (list (citar-select-ref
                       :rebuild-cache current-prefix-arg)))
-  (citar--add-file-to-library (car key-entry)))
+  (citar--add-file-to-library key))
 
 ;;;###autoload
 (defun citar-run-default-action (keys)

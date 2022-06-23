@@ -96,8 +96,8 @@ accepted.")
     (setq citar-citeproc-csl-style file)))
 
 ;;;###autoload
-(defun citar-citeproc-format-reference (keys-entries)
-  "Return formatted reference(s) for KEYS-ENTRIES via `citeproc-el`.
+(defun citar-citeproc-format-reference (keys)
+  "Return formatted reference(s) for KEYS via `citeproc-el`.
 Formatting follows CSL style set in `citar-citeproc-csl-style`.
 With prefix-argument, select CSL style."
   (when (or (eq citar-citeproc-csl-style nil)
@@ -108,10 +108,7 @@ With prefix-argument, select CSL style."
   (let* ((style (if (string-match-p "/" citar-citeproc-csl-style)
                     citar-citeproc-csl-style
                   (expand-file-name citar-citeproc-csl-style citar-citeproc-csl-styles-dir)))
-         (keys (citar--extract-keys keys-entries))
-         (bibs (flatten-list
-                (list citar-bibliography
-                      (citar--major-mode-function 'local-bib-files #'ignore))))
+         (bibs (citar--bibliography-files))
          (proc (citeproc-create style
                                 (citeproc-hash-itemgetter-from-any bibs)
                                 (citeproc-locale-getter-from-dir citar-citeproc-csl-locales-dir)

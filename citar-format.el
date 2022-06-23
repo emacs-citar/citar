@@ -43,7 +43,6 @@
                                    hide-elided ellipsis)
       (apply #'concat (cdr preform)))))
 
-
 ;;; Pre-formatting bibliography entries
 
 
@@ -97,7 +96,7 @@ See `citar-format--string` for the meaning of HIDE-ELIDED and ELLIPSIS."
 
 
 (cl-defsubst citar-format--string (string
-                                &key width text-properties hide-elided ellipsis)
+                                   &key width text-properties hide-elided ellipsis)
   "Truncate STRING to WIDTH and apply TEXT-PROPERTIES.
 If HIDE-ELIDED is non-nil, the truncated part of STRING is
 covered by a display property that makes it invisible, instead of

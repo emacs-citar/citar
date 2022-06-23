@@ -29,7 +29,7 @@
 (require 'files)
 (require 'citar)
 
-(declare-function citar-refresh "citar")
+;(declare-function citar-refresh "citar")
 (declare-function citar--local-files-to-cache "citar")
 (declare-function citar-file--normalize-paths "citar-file")
 (declare-function reftex-access-scan-info "ext:reftex")
@@ -88,9 +88,7 @@ CHANGE refers to the notify argument."
     ((or 'created 'deleted 'renamed)
      (if (member
           (nth 2 change)
-          (seq-concatenate 'list
-                           (citar-file--normalize-paths citar-bibliography)
-                           (citar--local-files-to-cache)))
+          (citar--bibliography-files))
          (citar-filenotify-refresh scope)
        (funcall func scope)))))
 

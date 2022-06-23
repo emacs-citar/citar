@@ -90,7 +90,7 @@ If INVERT-PROMPT is non-nil, invert the meaning of
   "Prompt for keys and call `citar-markdown-insert-citation.
 With ARG non-nil, rebuild the cache before offering candidates."
   (citar-markdown-insert-citation
-   (citar--extract-keys (citar-select-refs :rebuild-cache arg))))
+   (citar-select-refs :rebuild-cache arg)))
 
 ;;;###autoload
 (defun citar-markdown-key-at-point ()
