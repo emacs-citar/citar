@@ -54,7 +54,6 @@
 ;; make all these private
 (make-obsolete 'citar-get-template 'citar--get-template "1.0")
 (make-obsolete 'citar-get-link 'citar--get-link "1.0")
-(make-obsolete 'citar-get-value 'citar--get-value "1.0")
 (make-obsolete 'citar-display-value 'citar--display-value "1.0")
 (make-obsolete 'citar-open-multi 'citar--open-multi "1.0")
 (make-obsolete 'citar-select-group-related-resources
@@ -495,7 +494,7 @@ and other completion functions."
                (when (or filter predicate)
                  (lambda (cand _)
                    (let* ((key (gethash cand candidates))
-                          (entry (citar--get-entry key)))
+                          (entry (citar-get-entry key)))
                      (and (or (null filter) (funcall filter key entry))
                           (or (null predicate) (funcall predicate string))))))))
           (complete-with-action action candidates string predicate))))))
@@ -700,23 +699,23 @@ If no function is found, the DEFAULT function is called."
 
 ;;; Data access functions
 
-(defun citar--get-entry (key)
+(defun citar-get-entry (key)
   "Return entry for KEY, as an association list."
   (citar-cache--entry key (citar--bibliographies)))
 
 (defun citar--get-entries ()
   (citar-cache--entries (citar--bibliographies)))
 
-(defun citar--get-value (field key-or-entry)
+(defun citar-get-value (field key-or-entry)
   "Return FIELD value for KEY-OR-ENTRY."
   (let ((entry (if (stringp key-or-entry)
-                   (citar--get-entry key-or-entry)
+                   (citar-get-entry key-or-entry)
                  key-or-entry)))
     (cdr (assoc-string field entry))))
 
 (defun citar--field-with-value (fields entry)
   "Return the first field that has a value in ENTRY among FIELDS ."
-  (seq-find (lambda (field) (citar--get-value field entry)) fields))
+  (seq-find (lambda (field) (citar-get-value field entry)) fields))
 
 (defun citar--display-value (fields entry)
   "Return the first non nil value for ENTRY among FIELDS .
@@ -730,7 +729,7 @@ The value is transformed using `citar-display-transform-functions'"
                     string))
                 citar-display-transform-functions
                 ;; Make sure we always return a string, even if empty.
-                (or (citar--get-value field entry) ""))))
+                (or (citar-get-value field entry) ""))))
 
 ;; Lifted from bibtex-completion
 (defun citar-clean-string (s)
@@ -778,7 +777,7 @@ personal names of the form \"family, given\"."
   (when-let ((fieldname citar-file-variable))
     (lambda (key)
       (when-let ((entry (map-elt entries key)))
-        (citar--get-value fieldname entry)))))
+        (citar-get-value fieldname entry)))))
 
 (defun citar-has-file-p (key &optional entry)
   "Return predicate testing whether entry has associated files.
@@ -791,7 +790,7 @@ non-nil when the entry has associated files, either in
 Note: for performance reasons, this function should be called
 once per command; the function it returns can be called
 repeatedly."
-  (when-let ((entry (or entry (citar--get-entry entry)))
+  (when-let ((entry (or entry (citar-get-entry entry)))
              (hasfilep (citar-has-files-for-entries '((key . entry)))))
     (funcall hasfilep key)))
 
@@ -804,7 +803,7 @@ non-nil when the entry has associated notes in `citar-notes-paths`.
 Note: for performance reasons, this function should be called
 once per command; the function it returns can be called
 repeatedly."
-  (when-let ((entry (or entry (citar--get-entry entry)))
+  (when-let ((entry (or entry (citar-get-entry entry)))
              (hasnotep (citar-has-notes-for-entries '((key . entry)))))
     (funcall hasnotep key)))
 
@@ -840,7 +839,7 @@ predicate, return it."
           (lambda (citekey)
             (or (funcall hasresourcep citekey)
                 (when-let ((entry (map-elt entries citekey))
-                           (crossrefkey (citar--get-value crossref entry)))
+                           (crossrefkey (citar-get-value crossref entry)))
                   (funcall hasresourcep crossrefkey))))
         hasresourcep))))
 
@@ -902,7 +901,7 @@ predicate, return it."
                      ('pmid "https://www.ncbi.nlm.nih.gov/pubmed/")
                      ('pmcid "https://www.ncbi.nlm.nih.gov/pmc/articles/"))))
     (when field
-      (concat base-url (citar--get-value field entry)))))
+      (concat base-url (citar-get-value field entry)))))
 
 ;; REVIEW I removed 'citar--ensure-entries'
 
@@ -991,7 +990,7 @@ For use with `embark-act-all'."
   (let* ((fn (pcase action
                ('open 'citar-file-open)
                ('attach 'mml-attach-file)))
-         (entry (citar--get-entry key))
+         (entry (citar-get-entry key))
          (files
           (citar-file--files-for-entry
            key
@@ -1026,7 +1025,7 @@ With prefix, rebuild the cache before offering candidates."
   ;; REVIEW KEY, or KEYS
   (interactive (list (citar-select-ref)))
   (let* ((embark-default-action-overrides '((file . find-file)))
-         (entry (citar--get-entry key)))
+         (entry (citar-get-entry key)))
     (if (listp citar-open-note-functions)
         (citar--open-notes (car key) entry)
       (error "Please change the value of 'citar-open-note-functions' to a list"))))
@@ -1092,7 +1091,7 @@ directory as current buffer."
 With prefix, rebuild the cache before offering candidates."
   (interactive (list (citar-select-ref
                       :rebuild-cache current-prefix-arg)))
-  (let* ((entry (citar--get-entry key))
+  (let* ((entry (citar-get-entry key))
          (link (citar--get-link entry)))
     (if link
         (browse-url link)
@@ -1148,7 +1147,7 @@ ARG is forwarded to the mode-specific insertion function given in
 
 (defun citar-format-reference (keys)
   "Return formatted reference(s) for the elements of KEYS."
-  (let* ((entries (mapcar #'citar--get-entry keys))
+  (let* ((entries (mapcar #'citar-get-entry keys))
          (template (citar--get-template 'preview)))
     (with-temp-buffer
       (dolist (entry entries)

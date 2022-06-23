@@ -38,8 +38,8 @@
 (make-obsolete-variable 'citar-file-extensions
                         'citar-library-file-extensions "1.0")
 
-(declare-function citar--get-entry "citar")
-(declare-function citar--get-value "citar")
+(declare-function citar-get-entry "citar")
+(declare-function citar-get-value "citar")
 (declare-function citar--get-template "citar")
 
 ;;;; File related variables
@@ -142,7 +142,7 @@ File names are expanded relative to the elements of DIRS.
 
 Filter by EXTENSIONS when present."
   (unless dirs (setq dirs (list "/")))  ; make sure DIRS is non-nil
-  (let* ((filefield (citar--get-value fieldname entry))
+  (let* ((filefield (citar-get-value fieldname entry))
          (files
           (when filefield
             (delete-dups
@@ -164,8 +164,8 @@ it in matched file names.  The returned regexp captures the key
 as group 1, the extension as group 2, and any additional text
 following the key as group 3."
   (let* ((entry (when keys
-                  (citar--get-entry (car keys))))
-         (xref (citar--get-value "crossref" entry)))
+                  (citar-get-entry (car keys))))
+         (xref (citar-get-value "crossref" entry)))
     (unless (or (null xref) (string-empty-p xref))
       (push xref keys))
     (when (and (null keys) (string-empty-p additional-sep))

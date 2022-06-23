@@ -16,16 +16,16 @@ Citar uses a cache, which stores two hash tables for each bibliography file:
 - entries ::  as returned by =parsebib-parse=, keys are citekeys, values are alists of entry fields
 - pre-formatted :: values are partially-formatted completion strings
 
-The =citar--ref-completion-table= function returns a hash table from the bibliographic cache, and ~citar--get-entry~ and ~-citar--get-value~ provide access to those data.
+The =citar--ref-completion-table= function returns a hash table from the bibliographic cache, and ~citar-get-entry~ and ~-citar-get-value~ provide access to those data.
 Most user-accessible citar functions take an argument ~key~ or ~keys~.
-Some functions also take an ~entry~ argument, and ~citar--get-value~ takes either.
-When using these functions, you should keep in mind that unless you pass an entry alist to ~citar--get-value~, and instead use a key, each call to that function will query the cache.
+Some functions also take an ~entry~ argument, and ~citar-get-value~ takes either.
+When using these functions, you should keep in mind that unless you pass an entry alist to ~citar-get-value~, and instead use a key, each call to that function will query the cache.
 This, therefore, is a better pattern to use:
 
 #+begin_src emacs-lisp
 
-(let* ((entry (citar--get-entry key))
-       (title (citar--get-value entry "title")))
+(let* ((entry (citar-get-entry key))
+       (title (citar-get-value entry "title")))
   (message title))
 
 #+end_src
@@ -45,7 +45,7 @@ An example:
   (let* ((files
           (seq-mapcat (lambda (key)
                         (citar-file--files-for-entry
-                         key (citar--get-entry key)
+                         key (citar-get-entry key)
                          '("/") '("pdf")))
                       keys ))
          (output (seq-map
