@@ -61,10 +61,7 @@
 
 (defun citar-embark--reference-transformer (type target)
   "Look up key for a citar-reference TYPE and TARGET."
-  ;; REVIEW with key-based API, this likely needs adjustment
-  (cons type (or (gethash target
-                          (with-current-buffer (embark--target-buffer)
-                            (citar--get-candidates))))))
+  (cons type target))
 
 (defun citar-embark--selected ()
   "Return selected candidates from `citar--select-multiple' for embark."

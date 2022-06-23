@@ -67,21 +67,6 @@
 (make-obsolete-variable
  'citar-format-note-function 'citar-create-note-function "1.0")
 
-;;; Declare variables and functions for byte compiler
-
-(defvar embark-keymap-alist)
-(defvar embark-target-finders)
-(defvar embark-pre-action-hooks)
-(defvar embark-general-map)
-(defvar embark-meta-map)
-(defvar embark-transformer-alist)
-(defvar embark-multitarget-actions)
-(defvar embark-default-action-overrides)
-(defvar embark-candidate-collectors)
-
-(declare-function embark--target-buffer "ext:embark")
-(declare-function embark--metadata "ext:embark")
-
 ;;; Variables
 
 (defgroup citar nil
