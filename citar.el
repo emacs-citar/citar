@@ -392,6 +392,9 @@ When nil, all citar commands will use `completing-read`."
   :type 'boolean
   :group 'citar)
 
+(defvar 'embark-default-action-overrides)
+
+
 ;;; Keymaps
 
 (defvar citar-map

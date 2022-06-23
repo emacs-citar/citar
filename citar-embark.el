@@ -22,7 +22,6 @@
 (require 'citar)
 (require 'embark)
 
-(declare-function 'citar--key-finder "citar")
 ;;; variables
 
 (defvar citar-embark-map
