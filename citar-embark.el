@@ -24,6 +24,20 @@
 
 ;;; variables
 
+(defvar citar-embark-finders
+  '(citar-citation-finder
+    citar-embark-key-finder))
+
+(defvar citar-embark-keymaps-alist
+  '((citar-reference . citar-embark-map)
+    (citar-key . citar-embark-citation-map)
+    (citar-citation . citar-embark-citation-map)))
+
+(defvar citar-embark-multi-commands
+  (list #'citar-insert-bibtex #'citar-insert-citation
+        #'citar-insert-reference #'citar-copy-reference
+        #'citar-insert-keys #'citar-run-default-action))
+
 (defvar citar-embark-map
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "c") #'citar-insert-citation)
@@ -81,31 +95,30 @@
 (defun citar-embark-setup ()
   "Setup 'citar-embark-mode'."
   (set-keymap-parent citar-embark-map embark-general-map)
-  (dolist (target-finder '(citar-citation-finder citar-embark-key-finder))
+  (dolist (target-finder citar-embark-finders)
     (add-to-list 'embark-target-finders target-finder))
-
+  (dolist (command citar-embark-multi-commands)
+    (add-to-list 'embark-multitarget-actions command))
+  (dolist (keymap-cons citar-embark-keymaps-alist)
+    (add-to-list 'embark-keymap-alist keymap-cons))
   (add-to-list 'embark-transformer-alist
                '(citar-reference . citar-embark--reference-transformer))
   (add-to-list 'embark-candidate-collectors #'citar-embark--selected)
-
-  (dolist (keymap-cons
-           '((citar-reference . citar-embark-map)
-             (citar-key . citar-embark-citation-map)
-             (citar-citation . citar-embark-citation-map)))
-    (add-to-list 'embark-keymap-alist keymap-cons))
-
   (add-to-list 'embark-target-injection-hooks
-               '(citar-insert-edit embark--ignore-target))
-
-  (dolist (command (list #'citar-insert-bibtex #'citar-insert-citation
-                         #'citar-insert-reference #'citar-copy-reference
-                         #'citar-insert-keys #'citar-run-default-action))
-    (add-to-list 'embark-multitarget-actions command)))
+               '(citar-insert-edit embark--ignore-target)))
 
 (defun citar-embark-reset ()
   "Reset 'citar-embark-mode' to default."
-  ;; TODO
-  (delete 'citar-embark-key-finder embark-target-finders))
+  (dolist (target-finder citar-embark-finders)
+    (delete target-finder embark-target-finders))
+  (dolist (command citar-embark-multi-commands)
+    (delete command embark-multitarget-actions))
+  (dolist (keymap-cons citar-embark-keymaps-alist)
+    (assq-delete-all (car keymap-cons) embark-keymap-alist))
+  (assq-delete-all 'citar-reference embark-transformer-alist)
+  (delete #'citar-embark--selected embark-candidate-collectors)
+  (dolist (hook '(citar-insert-edit embark--ignore-target))
+    (delete hook embark-target-injection-hooks)))
 
 ;;;###autoload
 (define-minor-mode citar-embark-mode

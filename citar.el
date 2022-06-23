@@ -394,38 +394,6 @@ When nil, all citar commands will use `completing-read`."
 
 (defvar 'embark-default-action-overrides)
 
-
-;;; Keymaps
-
-(defvar citar-map
-  (let ((map (make-sparse-keymap)))
-    (define-key map (kbd "c") #'citar-insert-citation)
-    (define-key map (kbd "k") #'citar-insert-keys)
-    (define-key map (kbd "r") #'citar-copy-reference)
-    (define-key map (kbd "R") #'citar-insert-reference)
-    (define-key map (kbd "b") #'citar-insert-bibtex)
-    (define-key map (kbd "o") #'citar-open)
-    (define-key map (kbd "e") #'citar-open-entry)
-    (define-key map (kbd "l") #'citar-open-link)
-    (define-key map (kbd "n") #'citar-open-notes)
-    (define-key map (kbd "f") #'citar-open-library-file)
-    (define-key map (kbd "RET") #'citar-run-default-action)
-    map)
-  "Keymap for Embark minibuffer actions.")
-
-(defvar citar-citation-map
-  (let ((map (make-sparse-keymap)))
-    (define-key map (kbd "i") #'citar-insert-edit)
-    (define-key map (kbd "o") #'citar-open)
-    (define-key map (kbd "e") #'citar-open-entry)
-    (define-key map (kbd "l") #'citar-open-link)
-    (define-key map (kbd "n") #'citar-open-notes)
-    (define-key map (kbd "f") #'citar-open-library-file)
-    (define-key map (kbd "r") #'citar-copy-reference)
-    (define-key map (kbd "RET") #'citar-run-default-action)
-    map)
-  "Keymap for Embark citation-key actions.")
-
 ;;; Bibliography cache
 
 (defun citar--bibliography-files (&rest buffers)
