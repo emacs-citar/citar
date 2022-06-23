@@ -40,7 +40,6 @@
   (require 'cl-lib)
   (require 'subr-x))
 (require 'seq)
-(require 'map)
 (require 'browse-url)
 (require 'citar-cache)
 (require 'citar-format)
@@ -75,6 +74,8 @@
 
 ;;; Variables
 
+;;;; Faces
+
 (defgroup citar nil
   "Citations and bibliography management."
   :group 'editing)
@@ -93,6 +94,8 @@
   '((t :inherit highlight :slant italic))
   "Face used for the currently selected candidates."
   :group 'citar)
+
+;;;; Bibliography, file, and note paths
 
 (defcustom citar-bibliography nil
   "A list of bibliography files."
@@ -145,6 +148,8 @@ to include."
   :group 'citar
   :type '(repeat string))
 
+;;;; Displaying completions and formatting
+
 (defcustom citar-templates
   '((main . "${author editor:30}     ${date year issued:4}     ${title:48}")
     (suffix . "          ${=key= id:15}    ${=type=:12}    ${tags keywords keywords:*}")
@@ -163,14 +168,14 @@ for the title field for new notes."
 (defcustom citar-ellipsis nil
   "Ellipsis string to mark ending of truncated display fields.
 
-If t, use the value of `truncate-string-ellipsis`.  If nil, no
+If t, use the value of `truncate-string-ellipsis'.  If nil, no
 ellipsis will be used.  Otherwise, this should be a non-empty
 string specifying the ellipsis."
   :group 'citar
-  :type '(choice (const :tag "Use 'truncate-string-ellipsis'" t)
-                 (const :tag "Disable ellipsis" nil)
-                 (const "...")
+  :type '(choice (const :tag "Use `truncate-string-ellipsis'" t)
+                 (const :tag "No ellipsis" nil)
                  (const "…")
+                 (const "...")
                  (string :tag "Ellipsis string")))
 
 (defcustom citar-format-reference-function
@@ -241,6 +246,8 @@ the same width."
   :group 'citar
   :type 'string)
 
+;;;; Citar actions and other miscellany
+
 (defcustom citar-force-refresh-hook nil
   "Hook run when user forces a (re-) building of the candidates cache.
 This hook is only called when the user explicitly requests the
@@ -272,7 +279,7 @@ If nil, single resources will open without prompting."
   :group 'citar
   :type '(boolean))
 
-;;; Note-handling setup
+;;;; File, note, and URL handling
 
 (defcustom citar-open-note-functions
   '(citar-file--open-note)
@@ -382,7 +389,7 @@ of all citations in the current buffer."
   :group 'citar
   :type 'alist)
 
-;;; History, including future history list.
+;;;; History, including future history list.
 
 (defvar citar-history nil
   "Search history for `citar'.")
@@ -398,7 +405,7 @@ When nil, all citar commands will use `completing-read`."
   :type 'boolean
   :group 'citar)
 
-;;; Keymaps
+;;;; Keymaps
 
 (defvar citar-map
   (let ((map (make-sparse-keymap)))
@@ -437,8 +444,8 @@ The elements of BUFFERS are either buffers or the symbol 'global.
 Returns the absolute file names of the bibliographies in all
 these contexts.
 
-When BUFFERS is empty, return local bibliographies for the
-current buffer and global bibliographies."
+When BUFFERS is nil, return local bibliographies for the current
+buffer and global bibliographies."
   (citar-file--normalize-paths
    (mapcan (lambda (buffer)
              (if (eq buffer 'global)
@@ -446,7 +453,7 @@ current buffer and global bibliographies."
                    (list citar-bibliography))
                (with-current-buffer buffer
                  (citar--major-mode-function 'local-bib-files #'ignore))))
-            (or buffers (list (current-buffer) 'global)))))
+           (or buffers (list (current-buffer) 'global)))))
 
 (defun citar--bibliographies (&rest buffers)
   "Return bibliographies for BUFFERS."

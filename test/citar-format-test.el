@@ -2,12 +2,9 @@
 
 ;;; Commentary:
 
-;;
-
 ;;; Code:
 
 (require 'ert)
-(require 'seq)
 (require 'citar-format)
 
 (ert-deftest citar-format-test--star-widths ()

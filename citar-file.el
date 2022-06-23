@@ -197,15 +197,25 @@ separating the key from the additional text.
 
 When KEYS is nil and ADDITIONAL-SEP is non-nil, each file name is
 stored in the hash table under two keys: the base name of the
-file and the portion of the file name preceding the first match
+file; and the portion of the file name preceding the first match
 of ADDITIONAL-SEP.
+
+When KEYS is nil, if ADDITIONAL-SEP is empty then it is treated
+as being nil. In other words, this function can only scan a
+directory for file names matching unknown keys if either
+
+1. The key is not followed by any additional text except for the
+   file extension.
+
+2. There is a non-empty ADDITIONAL-SEP between the key and any
+   following text.
 
 Note: when KEYS and EXTENSIONS are non-nil and ADDITIONAL-SEP is
 nil, this function has an optimized implementation; it checks for
 existing files named \"KEY.EXT\" in DIRS, with KEY and EXT being
 the elements of KEYS and EXTENSIONS, respectively.  It does not
 need to scan the contents of DIRS in this case."
-  (let ((files (make-hash-table :test #'equal))
+  (let ((files (make-hash-table :test 'equal))
         (filematch (unless (and keys extensions (not additional-sep))
                      (citar-file--make-filename-regexp keys extensions additional-sep))))
     (prog1 files
