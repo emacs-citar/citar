@@ -920,6 +920,10 @@ predicate, return it."
 
 ;;;###autoload
 (defun citar-key-finder ()
+  "Return ctiation key as string at point."
+  (cadr (citar--key-finder)))
+
+(defun citar--key-finder ()
   "Return the citation key at point."
   (when-let (key (and (not (minibufferp))
                       (citar--major-mode-function 'key-at-point #'ignore)))
