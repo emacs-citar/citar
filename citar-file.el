@@ -27,7 +27,6 @@
   (require 'cl-lib)
   (require 'subr-x))
 (require 'seq)
-(make-obsolete 'citar-format-note-function 'citar-create-note-function "1.0")
 
 ;;; pre-1.0 API cleanup
 
@@ -38,9 +37,9 @@
 (make-obsolete-variable 'citar-file-extensions
                         'citar-library-file-extensions "1.0")
 
-(declare-function citar--get-entry "citar")
-(declare-function citar--get-value "citar")
-(declare-function citar--get-template "citar")
+(declare-function citar-get-value "citar")
+(declare-function citar--bibliography-files "citar")
+(declare-function citar--check-configuration "citar")
 
 ;;;; File related variables
 
@@ -66,6 +65,7 @@
   :group 'citar
   :type '(function))
 
+;; TODO move this to citar.el for consistency with `citar-library-file-extensions'?
 (defcustom citar-file-note-extensions '("org" "md")
   "List of file extensions to filter for notes.
 
@@ -104,57 +104,104 @@ separator that does not otherwise occur in citation keys."
   (if (stringp file-paths)
       ;; If path is a string, return as a list.
       (list (file-truename file-paths))
-    (delete-dups
-     (mapcar
-      (lambda (p) (file-truename p)) file-paths))))
+    (delete-dups (mapcar #'file-truename file-paths))))
 
-(defun citar-file--parser-default (dirs file-field)
-  "Return a list of files from DIRS and FILE-FIELD."
-  (let ((files (split-string file-field "[:;]")))
-    (delete-dups
-     (seq-mapcat
-      (lambda (dir)
-        (mapcar
-         (lambda (file)
-           (expand-file-name file dir)) files))
-      dirs))))
+;;;; Parsing file fields
 
-(defun citar-file--parser-triplet (dirs file-field)
+(defun citar-file--parser-default (file-field)
+  "Split FILE-FIELD by both : and ;."
+  (mapcan (lambda (sepchar)
+            (mapcar #'string-trim
+                    (citar-file--split-escaped-string file-field sepchar)))
+          ";:"))
+
+(defun citar-file--parser-triplet (file-field)
   "Return a list of files from DIRS and a FILE-FIELD formatted as a triplet.
 
 This is file-field format seen in, for example, Calibre and Mendeley.
 
 Example: ':/path/to/test.pdf:PDF'."
-  (let ((parts (split-string file-field "[,;]" 'omit-nulls)))
-    (seq-mapcat
-     (lambda (part)
-       (let ((fn (car (split-string part ":" 'omit-nulls))))
-         (mapcar (apply-partially #'expand-file-name fn) dirs)))
-     parts)))
+  (let (filenames)
+    (dolist (sepchar '(?\; ?,))         ; Mendeley and Zotero use ;, Calibre uses ,
+      (dolist (substring (citar-file--split-escaped-string file-field sepchar))
+        (let* ((triplet (citar-file--split-escaped-string substring ?:))
+               (len (length triplet)))
+          (when (>= len 3)
+            ;; If there are more than three components, we probably split on unescaped : in the filename.
+            ;; Take all but the first and last components of TRIPLET and join them with :
+            (let* ((escaped (string-join (butlast (cdr triplet)) ":"))
+                   (filename (replace-regexp-in-string "\\\\\\(.\\)" "\\1" escaped)))
+              ;; Calibre doesn't escape file names in BIB files, so try both
+              ;; See https://github.com/kovidgoyal/calibre/blob/master/src/calibre/library/catalogs/bibtex.py
+              (push filename filenames)
+              (push escaped filenames))))))
+    (nreverse filenames)))
 
-(defun citar-file--extension-p (filename extensions)
-  "Return non-nil if FILENAME extension is among EXTENSIONS."
-  (member (file-name-extension filename) extensions))
+(defun citar-file--parse-file-field (file-field dirs)
+  "Return files listed in FILE-FIELD.
+Relative file names are expanded from the first directory in DIRS
+in which they are found; if they are not found in any directory,
+they are omitted. Files with absolute paths are included as-is,
+even if they don't exist."
+  (let (filenames)
+    (dolist (parser citar-file-parser-functions)
+      (dolist (filename (funcall parser file-field))
+        (if (or (null dirs) (file-name-absolute-p filename))
+            (push filename filenames)
+          (when-let ((filename (seq-some
+                                (lambda (dir)
+                                  (let ((filepath (expand-file-name filename dir)))
+                                    (when (file-exists-p filepath)
+                                      filepath)))
+                                dirs)))
+            (push filename filenames)))))
+    (nreverse filenames)))
 
-(defun citar-file--parse-file-field (entry fieldname &optional dirs extensions)
-  "Return files listed in FIELDNAME of ENTRY.
-File names are expanded relative to the elements of DIRS.
+(defun citar-file--has-file-field (entries)
+  "Return predicate to test if bibliography entry in ENTRIES has a file field.
+Note: this function is intended to be used in
+`citar-has-files-functions'. Use `citar-has-files' to test
+whether entries have associated files."
+  (when-let ((filefield citar-file-variable))
+    (lambda (key)
+      (when-let ((entry (gethash key entries)))
+        (citar-get-value filefield entry)))))
 
-Filter by EXTENSIONS when present."
-  (unless dirs (setq dirs (list "/")))  ; make sure DIRS is non-nil
-  (let* ((filefield (citar--get-value fieldname entry))
-         (files
-          (when filefield
-            (delete-dups
-             (seq-mapcat
-              (lambda (parser)
-                (funcall parser dirs filefield))
-              citar-file-parser-functions)))))
-    (if extensions
-        (seq-filter
-         (lambda (fn)
-           (citar-file--extension-p fn extensions)) files)
-      files)))
+(defun citar-file--get-from-file-field (keys entries)
+  "Return list of FILES for KEYS given in ENTRIES.
+
+Parse and return files given in the bibliography field named by
+`citar-file-variable'.
+
+Note: this function is intended to be used in
+`citar-get-files-functions'. Use `citar-get-files' to get all
+files associated with KEYS."
+  (when-let ((filefield citar-file-variable))
+    (citar--check-configuration 'citar-library-paths)
+    (let ((dirs (append citar-library-paths (mapcar #'file-name-directory (citar--bibliography-files)))))
+      (mapcan (lambda (citekey)
+                (when-let ((entry (gethash citekey entries)))
+                  (citar-file--parse-file-field (citar-get-value citar-file-variable entry) dirs)))
+              keys))))
+
+;;;; Scanning library directories
+
+(defun citar-file--has-library-files (&optional _entries)
+  "Return predicate testing whether cite key has library files."
+  (citar--check-configuration 'citar-library-paths)
+  (let ((files (citar-file--directory-files
+                citar-library-paths nil citar-library-file-extensions
+                citar-file-additional-files-separator)))
+    (lambda (key)
+      (gethash key files))))
+
+(defun citar-file--get-library-files (keys &optional _entries)
+  "Return list of files for KEYS in ENTRIES."
+  (citar--check-configuration 'citar-library-paths)
+  (let ((files (citar-file--directory-files citar-library-paths keys
+                                            citar-library-file-extensions
+                                            citar-file-additional-files-separator)))
+    (mapcan (lambda (key) (gethash key files)) keys)))
 
 (defun citar-file--make-filename-regexp (keys extensions &optional additional-sep)
   "Regexp matching file names starting with KEYS and ending with EXTENSIONS.
@@ -163,20 +210,15 @@ that separates the key from optional additional text that follows
 it in matched file names.  The returned regexp captures the key
 as group 1, the extension as group 2, and any additional text
 following the key as group 3."
-  (let* ((entry (when keys
-                  (citar--get-entry (car keys))))
-         (xref (citar--get-value "crossref" entry)))
-    (unless (or (null xref) (string-empty-p xref))
-      (push xref keys))
-    (when (and (null keys) (string-empty-p additional-sep))
-      (setq additional-sep nil))
-    (concat
-     "\\`"
-     (if keys (regexp-opt keys "\\(?1:") "\\(?1:[^z-a]*?\\)")
-     (when additional-sep (concat "\\(?3:" additional-sep "[^z-a]*\\)?"))
-     "\\."
-     (if extensions (regexp-opt extensions "\\(?2:") "\\(?2:[^.]*\\)")
-     "\\'")))
+  (when (and (null keys) (string-empty-p additional-sep))
+    (setq additional-sep nil))
+  (concat
+   "\\`"
+   (if keys (regexp-opt keys "\\(?1:") "\\(?1:[^z-a]*?\\)")
+   (when additional-sep (concat "\\(?3:" additional-sep "[^z-a]*\\)?"))
+   "\\."
+   (if extensions (regexp-opt extensions "\\(?2:") "\\(?2:[^.]*\\)")
+   "\\'"))
 
 (defun citar-file--directory-files (dirs &optional keys extensions additional-sep)
   "Return files in DIRS starting with KEYS and ending with EXTENSIONS.
@@ -224,8 +266,7 @@ need to scan the contents of DIRS in this case."
           (if filematch
               ;; Use regexp to scan directory
               (dolist (file (directory-files dir nil filematch))
-                (let ((key (if keys (car keys)
-                             (and (string-match filematch file) (match-string 1 file))))
+                (let ((key (and (string-match filematch file) (match-string 1 file)))
                       (filename (expand-file-name file dir))
                       (basename (file-name-base file)))
                   (push filename (gethash key files))
@@ -241,41 +282,6 @@ need to scan the contents of DIRS in this case."
       (maphash (lambda (key filelist)
                  (puthash key (nreverse filelist) files))
                files))))
-
-(defun citar-file--files-for-entry (key entry dirs extensions)
-  "Find files related to bibliography item KEY with metadata ENTRY.
-See `citar-file--files-for-multiple-entries` for details on DIRS,
-EXTENSIONS, and how files are found."
-  (citar-file--files-for-multiple-entries (list (cons key entry)) dirs extensions))
-
-(defun citar-file--files-for-multiple-entries (key-entry-alist dirs extensions)
-  "Find files related to bibliography items in KEYS-ENTRIES.
-
-KEY-ENTRY-ALIST is a list of (KEY . ENTRY) pairs.  Return a list
-of files found in two ways:
-
-- By scanning directories in DIRS for files starting with keys in
-  KEYS-ENTRIES and having extensions in EXTENSIONS.  The files
-  may also have additional text after the key, separated by the
-  value of `citar-file-additional-files-separator`.  The scanning
-  is performed by `citar-file--directory-files`, which see.
-
-- By parsing the field named by `citar-file-variable` of the
-  entries in KEYS-ENTRIES.  DIRS is used to resolve relative
-  paths and non-existent files are ignored; see
-  `citar-file--parse-file-field`."
-  (let* ((keys (seq-map #'car key-entry-alist))
-         (files (citar-file--directory-files dirs keys extensions
-                                             citar-file-additional-files-separator)))
-    (delete-dups
-     (seq-mapcat
-      (lambda (key-entry)
-        (append
-         (gethash (car key-entry) files)
-         (seq-filter
-          #'file-exists-p
-          (citar-file--parse-file-field (cdr key-entry) citar-file-variable dirs extensions))))
-      key-entry-alist))))
 
 ;;;; Opening and creating files functions
 
@@ -298,13 +304,7 @@ of files found in two ways:
                   nil 0 nil
                   file)))
 
-(defun citar-file-has-library-files (&optional _entries)
-  "Return predicate testing whether cite key has library files."
-  (let ((files (citar-file--directory-files
-                citar-library-paths nil citar-library-file-extensions
-                citar-file-additional-files-separator)))
-    (lambda (key)
-      (gethash key files))))
+;;;; Note files
 
 (defun citar-file-has-notes (&optional _entries)
   "Return predicate testing whether cite key has associated notes."
@@ -341,6 +341,27 @@ function that will open a new file if the note is not present."
         (when-let ((dir (car dirs))
                    (ext (car extensions)))
           (expand-file-name (concat key "." ext) dir)))))
+
+;;;; Utility functions
+
+(defun citar-file--split-escaped-string (string sepchar)
+  "Split STRING into substrings at unescaped occurrences of SEPCHAR.
+A character is escaped in STRING if it is preceded by `\\'. The
+`\\' character can also escape itself. Return a list of
+substrings of STRING delimited by unescaped occurrences of
+SEPCHAR."
+  (let ((skip (format "^\\\\%c" sepchar))
+        strings)
+    (with-temp-buffer
+      (insert string)
+      (goto-char (point-min))
+      (while (progn (skip-chars-forward skip) (< (point) (point-max)))
+        (if (= ?\\ (following-char))
+            (ignore-error 'end-of-buffer (forward-char 2))
+          (push (delete-and-extract-region (point-min) (point)) strings)
+          (delete-char 1)))
+      (push (buffer-string) strings))
+    (nreverse strings)))
 
 (provide 'citar-file)
 ;;; citar-file.el ends here

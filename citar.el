@@ -102,12 +102,6 @@
   :group 'citar
   :type '(repeat file))
 
-(defcustom citar-has-file-functions '(citar-has-file-field
-                                      citar-file-has-library-files)
-  "List of functions to test if an entry has associated files."
-  :group 'citar
-  :type '(repeat function))
-
 (defcustom citar-library-paths nil
   "A list of files paths for related PDFs, etc."
   :group 'citar
@@ -280,6 +274,18 @@ If nil, single resources will open without prompting."
   :type '(boolean))
 
 ;;;; File, note, and URL handling
+
+(defcustom citar-has-files-functions (list #'citar-file--has-file-field
+                                           #'citar-file--has-library-files)
+  "List of functions to test if an entry has associated files."
+  :group 'citar
+  :type '(repeat function))
+
+(defcustom citar-get-files-functions (list #'citar-file--get-from-file-field
+                                           #'citar-file--get-library-files)
+  "List of functions to find files associated with entries."
+  :group 'citar
+  :type '(repeat function))
 
 (defcustom citar-open-note-functions
   '(citar-file--open-note)
@@ -729,6 +735,154 @@ The value is transformed using `citar-display-transform-functions'"
                 citar-display-transform-functions
                 ;; Make sure we always return a string, even if empty.
                 (or (citar--get-value field entry) ""))))
+;;;; File, notes, and links
+
+(cl-defun citar-get-files (key-or-keys &key (entries (citar-get-entries)))
+  "Return list of files associated with KEY-OR-KEYS in ENTRIES.
+
+ENTRIES should be a hash table mapping elements of KEYS to
+bibliography entries. ENTRIES should also contain any items that
+are potentially cross-referenced from elements of KEYS.
+
+Find files using `citar-get-files-functions'."
+  (let* ((keys (citar--with-crossref-keys key-or-keys entries))
+         (files (mapcan (lambda (fn) (funcall fn keys entries)) citar-get-files-functions)))
+    (seq-filter (lambda (filename)
+                  (member (file-name-extension filename) citar-library-file-extensions))
+                (delete-dups files))))
+
+
+(cl-defun citar-get-links (key-or-keys &key (entries (citar-get-entries)))
+  "Return list of links associated with KEY-OR-KEYS in ENTRIES.
+
+ENTRIES should be a hash table mapping elements of KEYS to
+bibliography entries. ENTRIES should also contain any items that
+are potentially cross-referenced from elements of KEYS."
+  (delete-dups
+   (mapcan
+    (lambda (key)
+      (when-let ((entry (gethash key entries)))
+        (mapcan
+         (pcase-lambda (`(,fieldname . ,baseurl))
+           (when-let ((fieldvalue (citar-get-value fieldname entry)))
+             (list (concat baseurl fieldvalue))))
+         '((doi . "https://doi.org/")
+           (pmid . "https://www.ncbi.nlm.nih.gov/pubmed/")
+           (pmcid . "https://www.ncbi.nlm.nih.gov/pmc/articles/")
+           (url . nil)))))
+    (citar--with-crossref-keys key-or-keys entries))))
+
+
+(cl-defun citar-has-files (&key (entries (citar-get-entries)))
+  "Return predicate testing whether entry has associated files.
+
+Return a function that takes KEY and returns non-nil when the
+corresponding entry in ENTRIES has associated files. ENTRIES
+should be a hash table mapping citation keys to entries, as
+returned by `citar-get-entries'. The returned predicated may by
+nil if no entries have associated files.
+
+For example, to test whether KEY has associated files:
+
+  (when-let ((hasfilesp (citar-has-files)))
+    (funcall hasfilesp KEY))
+
+When testing many keys, call this function once and use the
+returned predicate repeatedly.
+
+Files are detected using `citar-has-files-functions', which see.
+Also check any bibliography entries that are cross-referenced
+from the given KEY; see `citar-crossref-variable'.
+
+Note: All the potentially cross-referenced entries should be
+present in ENTRIES. In most cases, ENTRIES should be its default
+value (the result of `citar-get-entries') rather than some
+smaller subset."
+  (citar--has-resources-for-entries
+   entries
+   (mapcar (lambda (fn) (funcall fn entries))
+           citar-has-files-functions)))
+
+
+(cl-defun citar-has-notes (&key (entries (citar-get-entries)))
+  "Return predicate testing whether entry has associated notes.
+
+Return a function that takes KEY and returns non-nil when the
+corresponding entry in ENTRIES has associated notes. ENTRIES
+should be a hash table mapping citation keys to entries, as
+returned by `citar-get-entries'. The returned predicate may be
+nil if no entries have associated notes.
+
+For example, to test whether KEY has associated notes:
+
+  (let ((hasnotesp (citar-has-notes)))
+    (funcall hasnotesp KEY))
+
+When testing many keys, call this function once and use the
+returned predicate repeatedly.
+
+Notes are detected using `citar-has-notes-functions', which see.
+Also check any bibliography entries that are cross-referenced
+from the given KEY; see `citar-crossref-variable'.
+
+Note: All the potentially cross-referenced entries should be
+present in ENTRIES. In most cases, ENTRIES should be its default
+value (the result of `citar-get-entries') rather than some
+smaller subset."
+  (citar--has-resources-for-entries
+   entries
+   (mapcar (lambda (fn) (funcall fn entries))
+           citar-has-notes-functions)))
+
+
+(cl-defun citar-has-links (&key (entries (citar-get-entries)))
+  "Return predicate testing whether entry has links.
+
+Return a function that takes KEY and returns non-nil when the
+corresponding entry in ENTRIES has associated links. See the
+documentation of `citar-has-files` and `citar-has-notes', which
+have similar usage."
+  (citar--has-resources-for-entries
+   entries
+   (lambda (key)
+     (when-let ((entry (gethash key entries)))
+       (citar-get-field-with-value '(doi pmid pmcid url) entry)))))
+
+
+(defun citar--has-resources-for-entries (entries predicates)
+  "Return predicate combining results of calling FUNCTIONS.
+
+PREDICATES should be a list of functions that take a bibliography
+KEY and return non-nil if the item has a resource. It may also be
+a single such function.
+
+Return a predicate that returns non-nil for a given KEY when any
+of the elements of PREDICATES return non-nil for that KEY. If
+PREDICATES is empty or all its elements are nil, then the
+returned predicate is nil.
+
+When `citar-crossref-variable' is the name of a crossref field,
+the returned predicate also tests if an entry cross-references
+another entry in ENTRIES that has associated resources."
+  (when-let ((hasresourcep (if (functionp predicates)
+                               predicates
+                             (let ((predicates (remq nil predicates)))
+                               (if (null (cdr predicates))
+                                   ;; optimization for single predicate; just use it directly
+                                   (car predicates)
+                                 ;; otherwise, call all predicates until one returns non-nil
+                                 (lambda (citekey)
+                                   (seq-some (lambda (predicate)
+                                               (funcall predicate citekey))
+                                             predicates)))))))
+    (if-let ((xref citar-crossref-variable))
+        (lambda (citekey)
+          (or (funcall hasresourcep citekey)
+              (when-let ((entry (gethash citekey entries))
+                         (xkey (citar-get-value xref entry)))
+                (funcall hasresourcep xkey))))
+      hasresourcep)))
+
 
 ;; Lifted from bibtex-completion
 (defun citar-clean-string (s)
@@ -771,76 +925,28 @@ personal names of the form \"family, given\"."
                          (list citar-crossref-variable))
                        citar-additional-fields)))
 
-(defun citar-has-file-field (entries)
-  "Return predicate to test if bibliography entry has a file field."
-  (when-let ((fieldname citar-file-variable))
-    (lambda (key)
-      (when-let ((entry (map-elt entries key)))
-        (citar--get-value fieldname entry)))))
+(defun citar--with-crossref-keys (key-or-keys entries)
+  "Return KEY-OR-KEYS augmented with cross-referenced items in ENTRIES.
 
-(defun citar-has-file-p (key &optional entry)
-  "Return predicate testing whether entry has associated files.
+KEY-OR-KEYS is either a list KEYS or a single key, which is
+converted into KEYS. Return a list containing the elements of
+KEYS, with each element followed by the corresponding
+cross-referenced key in ENTRIES, if any.
 
-Return a function that takes arguments KEY and ENTRY and returns
-non-nil when the entry has associated files, either in
-`citar-library-paths` or the field named in
-`citar-file-variable`.
+ENTRIES should be a hash table mapping elements of KEYS to
+bibliography entries. ENTRIES should also contain any items that
+are potentially cross-referenced from elements of KEYS."
+  (let ((xref citar-crossref-variable)
+        (keys (if (listp key-or-keys) key-or-keys (list key-or-keys))))
+    (if (not xref)
+        keys
+      (mapcan (lambda (key)
+                (cons key (if-let* ((entry (gethash key entries))
+                                    (xkey (citar-get-value xref entry)))
+                              (list xkey))))
+              keys))))
 
-Note: for performance reasons, this function should be called
-once per command; the function it returns can be called
-repeatedly."
-  (when-let ((entry (or entry (citar--get-entry entry)))
-             (hasfilep (citar-has-files-for-entries '((key . entry)))))
-    (funcall hasfilep key)))
-
-(defun citar-has-note-p (key &optional entry)
-  "Return predicate testing whether entry has associated notes.
-
-Return a function that takes arguments KEY and ENTRY and returns
-non-nil when the entry has associated notes in `citar-notes-paths`.
-
-Note: for performance reasons, this function should be called
-once per command; the function it returns can be called
-repeatedly."
-  (when-let ((entry (or entry (citar--get-entry entry)))
-             (hasnotep (citar-has-notes-for-entries '((key . entry)))))
-    (funcall hasnotep key)))
-
-(defun citar-has-notes-for-entries (entries)
-  (citar--has-resources-for-entries citar-has-note-functions entries))
-
-(defun citar-has-files-for-entries (entries)
-  (citar--has-resources-for-entries citar-has-file-functions entries))
-
-(defun citar--has-resources-for-entries (functions entries)
-  "Return predicate combining results of calling FUNCTIONS.
-
-FUNCTIONS should be a list of functions, each of which returns a
-predicate function that takes KEY and ENTRY arguments. Run each
-function in the list, and return a predicate that is the logical
-or of all these predicates.
-
-The FUNCTIONS may also return nil, which is treated as an
-always-false predicate and ignored. If there is only one non-nil
-predicate, return it."
-  (when-let ((predicates (delq nil (mapcar (lambda (fn)
-                                             (funcall fn entries))
-                                           functions))))
-    (let ((hasresourcep (if (null (cdr predicates))
-                            ;; optimization for single predicate; just use it directly
-                            (car predicates)
-                          ;; otherwise, call all predicates until one returns non-nil
-                          (lambda (citekey)
-                            (seq-some (lambda (predicate)
-                                        (funcall predicate citekey))
-                                      predicates)))))
-      (if-let ((crossref citar-crossref-variable))
-          (lambda (citekey)
-            (or (funcall hasresourcep citekey)
-                (when-let ((entry (map-elt entries citekey))
-                           (crossrefkey (citar--get-value crossref entry)))
-                  (funcall hasresourcep crossrefkey))))
-        hasresourcep))))
+;;; Affixations and annotations
 
 (defun citar--ref-affix (cands)
   "Add affixation prefix to CANDS."
@@ -1214,6 +1320,16 @@ URL."
                      (car (citar--major-mode-function 'key-at-point #'ignore)))))
       (citar-run-default-action (if (listp keys) keys (list keys)))
     (user-error "No citation keys found")))
+
+(defun citar--check-configuration (variable)
+  "Signal error if VARIABLE has a value of the wrong type.
+VARIABLE should be a Citar customization variable."
+  (pcase variable
+    ((or 'citar-library-paths 'citar-notes-paths)
+     (let ((value (symbol-value variable)))
+       (unless (and (listp value)
+                    (seq-every-p #'stringp value))
+         (error "`%S' should be a list of directories: %S" variable `',value))))))
 
 (provide 'citar)
 ;;; citar.el ends here
