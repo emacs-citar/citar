@@ -14,10 +14,8 @@
 
 (package-install 'load-relative)
 (package-install 'parsebib)
-(package-install 's)
 
-;; completion system options
-(package-install 'selectrum)
+;; completion
 (package-install 'vertico)
 
 ;; completion style
@@ -32,10 +30,11 @@
 
 ;; citar
 ;; Modify load path so that requires in citar.el are handled
-(add-to-list 'load-path "../")
+(add-to-list 'load-path "../../")
 ;; we load this locally, to facilitate development testing on branches
-(load-relative "../citar.el")
-(load-relative "../citar-org.el")
+(load-relative "../../citar.el")
+(load-relative "../../citar-org.el")
+(load-relative "../../citar-embark.el")
 
 ;; theme that supports selectrum and vertico
 (package-install 'modus-themes)
