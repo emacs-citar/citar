@@ -52,20 +52,26 @@
 ;; (make-obsolete 'citar--get-candidates 'citar-get-candidates "1.0")
 
 ;; Renamed in 1.0
+(make-obsolete 'citar-has-file #'citar-has-files "1.0")
+(make-obsolete 'citar-has-note #'citar-has-notes "1.0")
 (make-obsolete 'citar-open-library-file #'citar-open-files "1.0")
+(make-obsolete 'citar-attach-library-file #'citar-attach-files "1.0")
 (make-obsolete 'citar-open-link #'citar-open-links "1.0")
-(make-obsolete 'citar-get-link "replaced by `citar-get-links'." "1.0") ; now returns list
+(make-obsolete 'citar-get-link #'citar-get-links "1.0") ; now returns list
 
 ;; make all these private
+(make-obsolete 'citar-clean-string 'citar--clean-string "1.0")
+(make-obsolete 'citar-shorten-names 'citar--shorten-names "1.0")
 (make-obsolete 'citar-get-template 'citar--get-template "1.0")
-(make-obsolete 'citar-display-value 'citar--display-value "1.0")
+(make-obsolete 'citar-display-value 'citar-get-display-value "1.0")
 (make-obsolete 'citar-open-multi 'citar--open-multi "1.0")
 (make-obsolete 'citar-select-group-related-resources
                'citar--select-group-related-resources "1.0")
 (make-obsolete 'citar-select-resource 'citar--select-resource "1.0")
 
 ;; also rename
-(make-obsolete 'citar-has-a-value 'citar-field-with-value "1.0")
+(make-obsolete 'citar-has-a-value 'citar-get-field-with-value "0.9.5") ; now returns cons pair
+(make-obsolete 'citar-field-with-value 'citar-get-field-with-value "1.0") ; now returns cons pair
 (make-obsolete 'citar--open-note 'citar-file--open-note "1.0")
 
 (make-obsolete-variable
@@ -194,8 +200,8 @@ references as a string."
 
 (defcustom citar-display-transform-functions
   ;; TODO change this name, as it might be confusing?
-  '((t  . citar-clean-string)
-    (("author" "editor") . citar-shorten-names))
+  '((t  . citar--clean-string)
+    (("author" "editor") . citar--shorten-names))
   "Configure transformation of field display values from raw values.
 
 All functions that match a particular field are run in order."
@@ -927,12 +933,12 @@ another entry in ENTRIES that has associated resources."
 ;;; Format and display field values
 
 ;; Lifted from bibtex-completion
-(defun citar-clean-string (s)
+(defun citar--clean-string (s)
   "Remove quoting brackets and superfluous whitespace from string S."
   (replace-regexp-in-string "[\n\t ]+" " "
                             (replace-regexp-in-string "[\"{}]+" "" s)))
 
-(defun citar-shorten-names (names)
+(defun citar--shorten-names (names)
   "Return a list of family names from a list of full NAMES.
 
 To better accommodate corporate names, this will only shorten
@@ -1103,7 +1109,7 @@ For use with `embark-act-all'."
     (citar--library-file-action key-or-keys #'citar-file-open)))
 
 ;;;###autoload
-(defun citar-attach-library-file (key-or-keys)
+(defun citar-attach-files (key-or-keys)
   "Attach library file associated with KEY-OR-KEYS to outgoing MIME message.
 
 With prefix, rebuild the cache before offering candidates."
