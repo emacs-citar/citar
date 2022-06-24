@@ -73,8 +73,16 @@ This is the minimal configuration, and will work with any completing-read compli
 
 *** Embark
 
-Citar will automatically integrate with Embark if it is installed, offering contextual access to actions in the minibuffer and at-point.
+The =citar-embark= package adds contextual access actions in the minibuffer and at-point.
 When using Embark, the Citar actions are generic, and work the same across org, markdown, and latex modes.
+
+#+BEGIN_SRC emacs-lisp
+(use-package citar-embark
+  :bind (("M-;" . embark-act)
+         ("M-," . embark-dwim))
+  :custom
+  (citar-embark 1))
+#+END_SRC
 
 *** Org-Cite
 
