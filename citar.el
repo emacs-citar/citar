@@ -667,6 +667,22 @@ Return nil if there are no bibliography files or no entries."
         (read candidate)
       (substring-no-properties candidate 0 (cl-position ?\s candidate)))))
 
+(defun citar-key-at-point ()
+  "Return the citation key at point in the current buffer.
+Return nil if there is no key at point or the major mode is not
+supported."
+  (when-let ((keywithbounds (citar--major-mode-function 'key-at-point #'ignore)))
+    (if (consp keywithbounds)
+        (car keywithbounds)             ; take just key, not bounds
+      keywithbounds)))
+
+(defun citar-citation-at-point ()
+  "Return a list of keys comprising the citation at point in the current buffer.
+Return nil if there is no key at point or the major mode is not
+  supported."
+  (when-let ((citationwithbounds (citar--major-mode-function 'citation-at-point #'ignore)))
+    (car citationwithbounds)))
+
 ;;; Major-mode functions
 
 (defun citar--get-major-mode-function (key &optional default)
