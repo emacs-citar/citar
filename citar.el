@@ -624,10 +624,15 @@ HISTORY is the `completing-read' history argument."
 
 (cl-defun citar--format-candidates (&key (bibs (citar--bibliographies))
                                          (entries (citar-cache--entries bibs)))
-  "Return completion table for cite keys, as a hash table.
-In this hash table, keys are a strings with author, date, and
-title of the reference.  Values are the cite keys.
-Return nil if there are no bibliography files or no entries."
+  "Format completion candidates for ENTRIES.
+
+BIBS should be a list of `citar-cache--bibliography' objects that
+are the source of ENTRIES. Use the pre-formatted strings in BIBS
+to format candidates.
+
+Return a hash table with the keys being completion candidate
+strings and values being citation keys. Return nil if BIBS is
+nil."
   ;; Populate bibliography cache.
   (when bibs
     (let* ((preformatted (citar-cache--preformatted bibs))
@@ -1082,16 +1087,16 @@ For use with `embark-act-all'."
     (citar--library-file-action key-or-keys #'citar-file-open)))
 
 ;;;###autoload
-(defun citar-attach-library-file (key)
-  "Attach library file associated with KEY to outgoing MIME message.
+(defun citar-attach-library-file (key-or-keys)
+  "Attach library file associated with KEY-OR-KEYS to outgoing MIME message.
 
 With prefix, rebuild the cache before offering candidates."
   (interactive (list (citar-select-ref)))
   (let ((embark-default-action-overrides '((file . mml-attach-file))))
-    (citar--library-file-action key #'mml-attach-file)))
+    (citar--library-file-action key-or-keys #'mml-attach-file)))
 
 (defun citar--library-file-action (key-or-keys action)
-  "Run ACTION on file associated with KEY."
+  "Run ACTION on file associated with KEY-OR-KEYS."
   (if-let* ((files (citar-get-files key-or-keys))
             (file (if (null (cdr files))
                       (car files)
@@ -1167,7 +1172,7 @@ directory as current buffer."
 
 ;;;###autoload
 (defun citar-open-links (key-or-keys)
-  "Open URL or DOI link associated with the KEY in a browser."
+  "Open URL or DOI link associated with KEY-OR-KEYS in a browser."
   (interactive (list (citar-select-ref)))
   (if-let* ((links (citar-get-links key-or-keys))
             (link (if (null (cdr links))

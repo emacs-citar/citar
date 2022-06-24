@@ -97,7 +97,7 @@ accepted.")
 
 ;;;###autoload
 (defun citar-citeproc-format-reference (keys)
-  "Return formatted reference(s) for KEYS-ENTRIES via `citeproc-el`.
+  "Return formatted reference(s) for KEYS via `citeproc-el`.
 Formatting follows CSL style set in `citar-citeproc-csl-style`.
 With prefix-argument, select CSL style."
   (when (or (eq citar-citeproc-csl-style nil)

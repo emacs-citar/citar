@@ -102,19 +102,25 @@ element of FILENAMES."
    filenames))
 
 (defun citar-cache--entry (key bibs)
+  "Find the first entry for KEY in the bibliographies BIBS.
+BIBS should be a list of `citar-cache--bibliography' objects."
   (catch :found
-    ;; Iterate through the cached bibliography hashes and find a key.
     (dolist (bib bibs)
       (let* ((entries (citar-cache--bibliography-entries bib))
              (entry (gethash key entries)))
-        (when entry (throw :found entry))))
-    nil))
+        (when entry (throw :found entry))))))
 
 (defun citar-cache--entries (bibs)
+  "Return hash table containing merged entries of BIBS.
+BIBS should be a list of `citar-cache--bibliography' objects. If
+a key is present in multiple bibliographies in BIBS, keep the
+entry that appears first. Return a hash table mapping the keys of
+all BIBS to their entries."
   (apply #'map-merge '(hash-table :test equal)
          (nreverse (mapcar #'citar-cache--bibliography-entries bibs))))
 
 (defun citar-cache--preformatted (bibs)
+  "Return hash table containing pre-formatted strings from BIBS."
   (apply #'map-merge '(hash-table :test equal)
          (nreverse (mapcar #'citar-cache--bibliography-preformatted bibs))))
 

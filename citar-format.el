@@ -48,6 +48,10 @@
 
 
 (defun citar-format--preformat (fieldspecs entry hide-elided ellipsis)
+  "Pre-format ENTRY using parsed format string FIELDSPECS.
+FIELDSPECS should be the result of `citar-format--parse'. See the
+documentation of `citar-format--string' for the meaning of
+HIDE-ELIDED and ELLIPSIS."
   (let ((preformatted nil)
         (fields "")
         (width 0))
