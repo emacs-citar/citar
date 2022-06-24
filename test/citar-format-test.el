@@ -8,7 +8,7 @@
 (require 'citar-format)
 
 (ert-deftest citar-format-test--star-widths ()
-  "Test `citar-format--star-widths`."
+  "Test `citar-format--star-widths'."
 
   (should (string-empty-p (citar-format--star-widths 80 nil)))
 

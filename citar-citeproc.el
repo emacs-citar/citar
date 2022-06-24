@@ -65,7 +65,7 @@
   :type 'directory)
 
 (defvar citar-citeproc-csl-style nil
-  "CSL style file to be used with `citar-citeproc-format-reference`.
+  "CSL style file to be used with `citar-citeproc-format-reference'.
 
 If file is located in the directory set to
 `citar-citeproc-csl-styles-dir', only the filename itself is
@@ -82,7 +82,7 @@ accepted.")
 
 ;;;###autoload
 (defun citar-citeproc-select-csl-style ()
-  "Select CSL style to be used with `citar-citeproc-format-reference`."
+  "Select CSL style to be used with `citar-citeproc-format-reference'."
   (interactive)
   (unless citar-citeproc-csl-styles-dir
     (error "Be sure to set 'citar-citeproc-csl-styles-dir' to your CSL styles directory"))
@@ -97,8 +97,8 @@ accepted.")
 
 ;;;###autoload
 (defun citar-citeproc-format-reference (keys)
-  "Return formatted reference(s) for KEYS via `citeproc-el`.
-Formatting follows CSL style set in `citar-citeproc-csl-style`.
+  "Return formatted reference(s) for KEYS via `citeproc-el'.
+Formatting follows CSL style set in `citar-citeproc-csl-style'.
 With prefix-argument, select CSL style."
   (when (or (eq citar-citeproc-csl-style nil)
             current-prefix-arg)

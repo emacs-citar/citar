@@ -69,7 +69,7 @@
 (defcustom citar-file-note-extensions '("org" "md")
   "List of file extensions to filter for notes.
 
-These are the extensions the `citar-open-note-function`
+These are the extensions the `citar-open-note-function'
 will open, via `citar-open-notes'."
   :group 'citar
   :type '(repeat string))

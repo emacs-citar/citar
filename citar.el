@@ -393,7 +393,7 @@ of all citations in the current buffer."
 
 (defcustom citar-select-multiple t
   "Use `completing-read-multiple' for selecting citation keys.
-When nil, all citar commands will use `completing-read`."
+When nil, all citar commands will use `completing-read'."
   :type 'boolean
   :group 'citar)
 
@@ -471,7 +471,7 @@ By default the metadata of the table contains the category and
 affixation function. METADATA are extra entries for metadata of
 the form (KEY . VAL).
 
-The returned completion table can be used with `completing-read`
+The returned completion table can be used with `completing-read'
 and other completion functions."
   (let ((metadata `(metadata . ((category . citar-candidate)
                                 . ((affixation-function . ,#'citar--ref-affix)
@@ -881,7 +881,7 @@ smaller subset."
 
 Return a function that takes KEY and returns non-nil when the
 corresponding entry in ENTRIES has associated links. See the
-documentation of `citar-has-files` and `citar-has-notes', which
+documentation of `citar-has-files' and `citar-has-notes', which
 have similar usage."
   (citar--has-resources-for-entries
    entries
@@ -1217,7 +1217,7 @@ citation styles. See specific functions for more detail."
 (defun citar-insert-edit (&optional arg)
   "Edit the citation at point.
 ARG is forwarded to the mode-specific insertion function given in
-`citar-major-mode-functions`."
+`citar-major-mode-functions'."
   (interactive "P")
   (citar--major-mode-function
    'insert-edit

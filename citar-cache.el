@@ -39,12 +39,8 @@
 
 (defvar citar-cache--bibliographies (make-hash-table :test 'equal)
   "Cache for parsed bibliography files.
-This is an association list following the pattern:
-  (FILE-ID . ENTRIES)
-FILE-ID is a cons cell (FILE . HASH), with FILE being the absolute file name of
-the bibliography file, and HASH a hash of its contents.
-ENTRIES is a hash table with citation references as keys and fields alist as
-values.")
+This is a hash table with keys being file names and the values
+being `citar-cache--bibliography' objects.")
 
 
 ;;; Bibliography objects
@@ -58,11 +54,11 @@ values.")
    nil
    :read-only t
    :documentation
-   "True filename of a bibliography, as returned by `file-truename`.")
+   "True filename of a bibliography, as returned by `file-truename'.")
   (hash
    nil
    :documentation
-   "Hash of the file's contents, as returned by `buffer-hash`.")
+   "Hash of the file's contents, as returned by `buffer-hash'.")
   (buffers
    nil
    :documentation
@@ -71,12 +67,12 @@ values.")
    (make-hash-table :test 'equal)
    :documentation
    "Hash table mapping citation keys to bibliography entries,
-   as returned by `parsebib-parse`.")
+   as returned by `parsebib-parse'.")
   (preformatted
    (make-hash-table :test 'equal)
    :documentation
    "Pre-formatted strings used to display bibliography entries;
-   see `citar--preformatter`.")
+   see `citar--preformatter'.")
   (format-string
    nil
    :documentation
@@ -85,16 +81,16 @@ values.")
 
 (defun citar-cache--get-bibliographies (filenames &optional buffer)
   "Return cached bibliographies for FILENAMES and associate them with BUFFER.
-FILENAMES is a list of bibliography file names.  If BUFFER is
-nil, use the current buffer.  Otherwise, BUFFER should be a
-buffer object or name that requires these bibliographies, or a
-symbol like 'global.
+FILENAMES is a list of bibliography file names. If BUFFER is nil,
+use the current buffer. Otherwise, BUFFER should be a buffer
+object or name that requires these bibliographies, or a symbol
+like `global'.
 
 Remove any existing associations between BUFFER and cached files
-not included in FILENAMES.  Release cached files that are no
+not included in FILENAMES. Release cached files that are no
 longer needed by any other buffer.
 
-Return a list of `citar--bibliography` objects, one for each
+Return a list of `citar--bibliography' objects, one for each
 element of FILENAMES."
   (citar-cache--release-bibliographies filenames buffer)
   (mapcar
@@ -130,10 +126,10 @@ all BIBS to their entries."
 
 (defun citar-cache--get-bibliography (filename &optional buffer)
   "Return cached bibliography for FILENAME and associate it with BUFFER.
-If FILENAME is not already cached, read and cache it.  If BUFFER
-is nil, use the current buffer.  Otherwise, BUFFER should be a
+If FILENAME is not already cached, read and cache it. If BUFFER
+is nil, use the current buffer. Otherwise, BUFFER should be a
 buffer object or name that requires the bibliography FILENAME, or
-a symbol like 'global."
+a symbol like `global'."
   (let* ((cached (gethash filename citar-cache--bibliographies))
          (bib (or cached (citar-cache--make-bibliography filename)))
          (buffer (citar-cache--canonicalize-buffer buffer))
@@ -159,10 +155,10 @@ a symbol like 'global."
 
 (defun citar-cache--release-bibliographies (&optional keep-filenames buffer)
   "Dissociate BUFFER from cached bibliographies.
-If BUFFER is nil, use the current buffer.  Otherwise, BUFFER
-should be a buffer object, buffer name, or a symbol like 'global.
-KEEP-FILENAMES is a list of file names that are not dissociated
-from BUFFER.
+If BUFFER is nil, use the current buffer. Otherwise, BUFFER
+should be a buffer object, buffer name, or a symbol like
+`global'. KEEP-FILENAMES is a list of file names that are not
+dissociated from BUFFER.
 
 Remove any bibliographies from the cache that are no longer
 needed by any other buffer."
@@ -196,7 +192,7 @@ modified since the last time BIB was updated."
                     (insert-file-contents filename)
                     (buffer-hash))))
     ;; TODO Also check file size and modification time before hashing?
-    ;; See `file-has-changed-p` in emacs 29, or `org-file-has-changed-p`
+    ;; See `file-has-changed-p' in emacs 29, or `org-file-has-changed-p`
     (when (or force (not (equal newhash (citar-cache--bibliography-hash bib))))
       ;; Update entries
       (clrhash entries)
@@ -236,10 +232,10 @@ modified since the last time BIB was updated."
 
 (defun citar-cache--canonicalize-buffer (buffer)
   "Return buffer object or symbol denoted by BUFFER.
-If BUFFER is nil, return the current buffer.  Otherwise, BUFFER
-should be a buffer object or name, or a symbol like 'global.  If
-it is a buffer object or symbol, it is returned as-is.
-Otherwise, return the buffer object whose name is BUFFER."
+If BUFFER is nil, return the current buffer. Otherwise, BUFFER
+should be a buffer object or name, or a symbol like `global'. If
+it is a buffer object or symbol, it is returned as-is. Otherwise,
+return the buffer object whose name is BUFFER."
   (cond ((null buffer) (current-buffer))
         ((symbolp buffer) buffer)
         (t (get-buffer buffer))))

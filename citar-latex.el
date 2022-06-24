@@ -172,7 +172,7 @@ whether or not to prompt.
 The availiable commands and how to provide them arguments are configured
 by `citar-latex-cite-commands'.
 
-If `citar-latex-prompt-for-extra-arguments' is `nil`, every
+If `citar-latex-prompt-for-extra-arguments' is nil, every
 command is assumed to have a single argument into which keys are
 inserted."
   (when keys
@@ -217,7 +217,7 @@ With ARG non-nil, rebuild the cache before offering candidates."
                    citar-latex-default-cite-command nil))
 
 (defun citar-latex--is-a-cite-command (command)
-  "Return element of `citar-latex-cite-commands` containing COMMAND."
+  "Return element of `citar-latex-cite-commands' containing COMMAND."
   (seq-find (lambda (x) (member command (car x)))
             citar-latex-cite-commands))
 

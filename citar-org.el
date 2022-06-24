@@ -197,7 +197,7 @@ With PROC list, limit to specific processor(s)."
 
 ;;;###autoload
 (defun citar-org-insert-edit (&optional arg)
-  "Run `org-cite-insert` with citar insert processor.
+  "Run `org-cite-insert' with citar insert processor.
 ARG is used as the prefix argument."
   (let ((org-cite-insert-processor 'citar))
     (org-cite-insert arg)))
@@ -263,12 +263,12 @@ strings by style."
 ;;; Org note function
 
 (defun citar-org--id-get-create (&optional force)
-  "Call `org-id-get-create` while maintaining point.
+  "Call `org-id-get-create' while maintaining point.
 
 If point is at the beginning of the buffer and a new properties
 drawer is created, move point after the drawer.
 
-More generally, if `org-id-get-create` inserts text at point,
+More generally, if `org-id-get-create' inserts text at point,
 move point after the insertion.
 
 With optional argument FORCE, force the creation of a new ID."
