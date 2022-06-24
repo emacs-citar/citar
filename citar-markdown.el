@@ -86,11 +86,10 @@ If INVERT-PROMPT is non-nil, invert the meaning of
           (insert "; " keyconcat))))))
 
 ;;;###autoload
-(defun citar-markdown-insert-edit (&optional arg)
+(defun citar-markdown-insert-edit (&optional _arg)
   "Prompt for keys and call `citar-markdown-insert-citation.
 With ARG non-nil, rebuild the cache before offering candidates."
-  (citar-markdown-insert-citation
-   (citar--extract-keys (citar-select-refs :rebuild-cache arg))))
+  (citar-markdown-insert-citation (citar-select-refs)))
 
 ;;;###autoload
 (defun citar-markdown-key-at-point ()

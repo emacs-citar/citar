@@ -51,10 +51,13 @@
 ;; make public
 ;; (make-obsolete 'citar--get-candidates 'citar-get-candidates "1.0")
 
+;; Renamed in 1.0
+(make-obsolete 'citar-open-library-file #'citar-open-files "1.0")
+(make-obsolete 'citar-open-link #'citar-open-links "1.0")
+(make-obsolete 'citar-get-link "replaced by `citar-get-links'." "1.0") ; now returns list
+
 ;; make all these private
 (make-obsolete 'citar-get-template 'citar--get-template "1.0")
-(make-obsolete 'citar-get-link 'citar--get-link "1.0")
-(make-obsolete 'citar-get-value 'citar--get-value "1.0")
 (make-obsolete 'citar-display-value 'citar--display-value "1.0")
 (make-obsolete 'citar-open-multi 'citar--open-multi "1.0")
 (make-obsolete 'citar-select-group-related-resources
@@ -62,7 +65,7 @@
 (make-obsolete 'citar-select-resource 'citar--select-resource "1.0")
 
 ;; also rename
-(make-obsolete 'citar-has-a-value 'citar--field-with-value "1.0")
+(make-obsolete 'citar-has-a-value 'citar-field-with-value "1.0")
 (make-obsolete 'citar--open-note 'citar-file--open-note "1.0")
 
 (make-obsolete-variable
@@ -133,7 +136,7 @@ by this variable."
                  (string :tag "Field name")
                  (const :tag "Ignore cross-references" nil)))
 
-(defcustom citar-additional-fields '("doi" "url")
+(defcustom citar-additional-fields '("doi" "url" "pmcid" "pmid")
   "A list of fields to add to parsed data.
 
 By default, citar filters parsed data based on the fields
@@ -199,25 +202,6 @@ All functions that match a particular field are run in order."
   :group 'citar
   :type '(alist :key-type   (choice (const t) (repeat string))
                 :value-type function))
-
-(defcustom citar-prefilter-entries '(nil . t)
-  "When non-nil pre-filter note and library files commands.
-For commands like 'citar-open-notes', this will only show
-completion candidates that have such notes.
-
-The downside is that, if using Embark and you want to use a different
-command for the action, you will not be able to remove the
-filter.
-
-The value should be a cons of the form:
-
-(FILTER . TOGGLE)
-
-FILTER turns this on by default
-
-TOGGLE use prefix arg to toggle behavior"
-  :group 'citar
-  :type 'cons)
 
 (defcustom citar-symbols
   `((file  .  ("F" . " "))
@@ -294,7 +278,7 @@ If nil, single resources will open without prompting."
   :group 'citar
   :type '(function))
 
-(defcustom citar-has-note-functions '(citar-file-has-notes)
+(defcustom citar-has-notes-functions '(citar-file-has-notes)
   "Functions used for displaying note indicators.
 
 Such functions must take KEY and return non-nil when the
@@ -328,6 +312,8 @@ FILEPATH: the file name."
   :group 'citar
   :type 'function)
 
+;; TODO Move this to `citar-org', since it's only used there?
+;; Otherwise it seems to overlap with `citar-default-action'
 (defcustom citar-at-point-function #'citar-dwim
   "The function to run for `citar-at-point'."
   :group 'citar
@@ -422,9 +408,9 @@ When nil, all citar commands will use `completing-read`."
     (define-key map (kbd "b") #'citar-insert-bibtex)
     (define-key map (kbd "o") #'citar-open)
     (define-key map (kbd "e") #'citar-open-entry)
-    (define-key map (kbd "l") #'citar-open-link)
+    (define-key map (kbd "l") #'citar-open-links)
     (define-key map (kbd "n") #'citar-open-notes)
-    (define-key map (kbd "f") #'citar-open-library-file)
+    (define-key map (kbd "f") #'citar-open-files)
     (define-key map (kbd "RET") #'citar-run-default-action)
     map)
   "Keymap for Embark minibuffer actions.")
@@ -434,9 +420,9 @@ When nil, all citar commands will use `completing-read`."
     (define-key map (kbd "i") #'citar-insert-edit)
     (define-key map (kbd "o") #'citar-open)
     (define-key map (kbd "e") #'citar-open-entry)
-    (define-key map (kbd "l") #'citar-open-link)
+    (define-key map (kbd "l") #'citar-open-links)
     (define-key map (kbd "n") #'citar-open-notes)
-    (define-key map (kbd "f") #'citar-open-library-file)
+    (define-key map (kbd "f") #'citar-open-files)
     (define-key map (kbd "r") #'citar-copy-reference)
     (define-key map (kbd "RET") #'citar-run-default-action)
     map)
@@ -498,12 +484,12 @@ and other completion functions."
                (when (or filter predicate)
                  (lambda (cand _)
                    (let* ((key (gethash cand candidates))
-                          (entry (citar--get-entry key)))
+                          (entry (citar-get-entry key)))
                      (and (or (null filter) (funcall filter key entry))
                           (or (null predicate) (funcall predicate string))))))))
           (complete-with-action action candidates string predicate))))))
 
-(cl-defun citar-select-ref (&optional &key multiple filter)
+(cl-defun citar-select-refs (&key (multiple t) filter)
   "Select bibliographic references.
 
 A wrapper around `completing-read' that returns (KEY . ENTRY),
@@ -524,7 +510,7 @@ FILTER: if non-nil, should be a predicate function taking
   (citar-select-ref :filter (citar-has-note))
 
   (citar-select-ref :filter (citar-has-file))"
-  (let* ((candidates (or (citar--ref-completion-table)
+  (let* ((candidates (or (citar--format-candidates)
                          (user-error "No bibliography set")))
          (chosen (if (and multiple citar-select-multiple)
                      (citar--select-multiple "References: " candidates
@@ -539,13 +525,13 @@ FILTER: if non-nil, should be a predicate function taking
          (gethash choice candidates))
        chosen))))
 
-(cl-defun citar-select-refs (&optional &key filter)
+(cl-defun citar-select-ref (&key filter)
   "Select bibliographic references.
 
 Call `citar-select-ref' with argument `:multiple'; see its
 documentation for the return value and the meaning of
 REBUILD-CACHE and FILTER."
-  (citar-select-ref :multiple t :filter filter))
+  (car (citar-select-refs :multiple nil :filter filter)))
 
 (defun citar--multiple-completion-table (selected-hash candidates filter)
   "Return a completion table for multiple selection.
@@ -609,15 +595,14 @@ HISTORY is the `completing-read' history argument."
 (defun citar--select-resource (files &optional links)
   "Select resource from a list of FILES, and optionally LINKS."
   (let* ((files (mapcar
-                 (lambda (cand)
-                   (abbreviate-file-name cand))
+                 (lambda (file)
+                   (propertize (abbreviate-file-name file) 'multi-category `(file . ,file)))
                  files))
-         (resources (append files (remq nil links))))
-    (dolist (item resources)
-      (cond ((string-match "http" item 0)
-             (push (propertize item 'multi-category `(url . ,item)) resources))
-            (t
-             (push (propertize item 'multi-category `(file . ,item)) resources))))
+         (links (mapcar
+                 (lambda (link)
+                   (propertize link 'multi-category `(url . ,link)))
+                 links))
+         (resources (delete-dups (append files links))))
     (completing-read
      "Select resource: "
      (lambda (string predicate action)
@@ -625,7 +610,7 @@ HISTORY is the `completing-read' history argument."
            `(metadata
              (group-function . citar--select-group-related-resources)
              (category . multi-category))
-         (complete-with-action action (delete-dups resources) string predicate))))))
+         (complete-with-action action resources string predicate))))))
 
 (defun citar--select-group-related-resources (resource transform)
   "Group RESOURCE by type or TRANSFORM."
@@ -636,11 +621,11 @@ HISTORY is the `completing-read' history argument."
           resource)
       (cond
        ((member extension citar-file-note-extensions) "Notes")
-       ((string-match "http" resource 0) "Links")
+       ((string-prefix-p "http" resource 'ignore-case) "Links")
        (t "Library Files")))))
 
-(cl-defun citar--ref-completion-table (&optional (bibs (citar--bibliographies))
-                                                 (entries (citar-cache--entries bibs)))
+(cl-defun citar--format-candidates (&key (bibs (citar--bibliographies))
+                                         (entries (citar-cache--entries bibs)))
   "Return completion table for cite keys, as a hash table.
 In this hash table, keys are a strings with author, date, and
 title of the reference.  Values are the cite keys.
@@ -648,28 +633,31 @@ Return nil if there are no bibliography files or no entries."
   ;; Populate bibliography cache.
   (when bibs
     (let* ((preformatted (citar-cache--preformatted bibs))
-           (hasnotep (citar-has-notes-for-entries entries))
-           (hasfilep (citar-has-files-for-entries entries))
-           (hasnotetag (propertize " has:notes" 'invisible t))
-           (hasfiletag (propertize " has:files" 'invisible t))
+           (hasfilesp (citar-has-files :entries entries))
+           (hasnotesp (citar-has-notes :entries entries))
+           (haslinksp (citar-has-links :entries  entries))
+           (hasfilestag (propertize " has:files" 'invisible t))
+           (hasnotestag (propertize " has:notes" 'invisible t))
+           (haslinkstag (propertize " has:links" 'invisible t))
            (symbolswidth (string-width (citar--symbols-string t t t)))
            (width (- (frame-width) symbolswidth 2))
            (completions (make-hash-table :test 'equal :size (hash-table-count entries))))
       (maphash
        (lambda (citekey _entry)
-         (let* ((hasfile (and hasfilep (funcall hasfilep citekey)))
-                (hasnote (and hasnotep (funcall hasnotep citekey)))
-                (hasnote t)
+         (let* ((hasfiles (and hasfilesp (funcall hasfilesp citekey)))
+                (hasnotes (and hasnotesp (funcall hasnotesp citekey)))
+                (haslinks (and haslinksp (funcall haslinksp citekey)))
                 (preform (or (gethash citekey preformatted)
                              (error "No preformatted candidate string: %s" citekey)))
                 (display (citar-format--star-widths
                           (- width (car preform)) (cdr preform)
                           t citar-ellipsis))
-                (tagged (if (not (or hasfile hasnote))
+                (tagged (if (not (or hasfiles hasnotes haslinks))
                             display
                           (concat display
-                                  (when hasnote hasnotetag)
-                                  (when hasfile hasfiletag)))))
+                                  (when hasfiles hasfilestag)
+                                  (when hasnotes hasnotestag)
+                                  (when haslinks haslinkstag)))))
            (puthash tagged citekey completions)))
        entries)
       completions)))
@@ -690,10 +678,9 @@ return DEFAULT."
   (alist-get
    key
    (cdr (seq-find
-         (lambda (modefns)
-           (let ((modes (car modefns)))
-             (or (eq t modes)
-                 (apply #'derived-mode-p (if (listp modes) modes (list modes))))))
+         (pcase-lambda (`(,modes . ,_functions))
+           (or (eq t modes)
+               (apply #'derived-mode-p (if (listp modes) modes (list modes)))))
          citar-major-mode-functions))
    default))
 
@@ -704,37 +691,56 @@ If no function is found, the DEFAULT function is called."
 
 ;;; Data access functions
 
-(defun citar--get-entry (key)
-  "Return entry for KEY, as an association list."
+(defun citar-get-entry (key)
+  "Return entry for reference KEY, as an association list.
+Note: this function accesses the bibliography cache and should
+not be used for retreiving a large number of entries. Instead,
+prefer `citar--get-entries'."
   (citar-cache--entry key (citar--bibliographies)))
 
-(defun citar--get-entries ()
+(defun citar-get-entries ()
+  "Return all entries for currently active bibliographies.
+Return a hash table whose keys are citation keys and values are
+the corresponding entries."
   (citar-cache--entries (citar--bibliographies)))
 
-(defun citar--get-value (field key-or-entry)
-  "Return FIELD value for KEY-OR-ENTRY."
+(defun citar-get-value (field key-or-entry)
+  "Return value of FIELD in reference KEY-OR-ENTRY.
+KEY-OR-ENTRY should be either a string key, or an entry alist as
+returned by `citar-get-entry'. Return nil if the FIELD is not
+present in KEY-OR-ENTRY."
   (let ((entry (if (stringp key-or-entry)
-                   (citar--get-entry key-or-entry)
+                   (citar-get-entry key-or-entry)
                  key-or-entry)))
     (cdr (assoc-string field entry))))
 
-(defun citar--field-with-value (fields entry)
-  "Return the first field that has a value in ENTRY among FIELDS ."
-  (seq-find (lambda (field) (citar--get-value field entry)) fields))
+(defun citar-get-field-with-value (fields key-or-entry)
+  "Find the first field among FIELDS that has a value in KEY-OR-ENTRY.
+Return (FIELD . VALUE), where FIELD is the element of FIELDS that
+was found to have a value, and VALUE is its value."
+  (let ((entry (if (stringp key-or-entry)
+                   (citar-get-entry key-or-entry)
+                 key-or-entry)))
+    (seq-some (lambda (field)
+                (when-let ((value (citar-get-value field entry)))
+                  (cons field value)))
+              fields)))
 
-(defun citar--display-value (fields entry)
-  "Return the first non nil value for ENTRY among FIELDS .
+(defun citar-get-display-value (fields key-or-entry)
+  "Return the first non nil value for KEY-OR-ENTRY among FIELDS .
 
 The value is transformed using `citar-display-transform-functions'"
-  (let ((field (citar--field-with-value fields entry)))
+  (let ((fieldvalue (citar-get-field-with-value fields key-or-entry)))
     (seq-reduce (lambda (string fun)
                   (if (or (eq t (car fun))
-                          (member field (car fun)))
+                          (seq-contains-p (car fun) (car fieldvalue) #'string=))
                       (funcall (cdr fun) string)
                     string))
                 citar-display-transform-functions
                 ;; Make sure we always return a string, even if empty.
-                (or (citar--get-value field entry) ""))))
+                (or (cdr fieldvalue) ""))))
+
+
 ;;;; File, notes, and links
 
 (cl-defun citar-get-files (key-or-keys &key (entries (citar-get-entries)))
@@ -883,6 +889,7 @@ another entry in ENTRIES that has associated resources."
                 (funcall hasresourcep xkey))))
       hasresourcep)))
 
+;;; Format and display field values
 
 ;; Lifted from bibtex-completion
 (defun citar-clean-string (s)
@@ -918,12 +925,12 @@ personal names of the form \"family, given\"."
 
 (defun citar--fields-to-parse ()
   "Determine the fields to parse from the template."
-  (delete-dups (append (citar--fields-in-formats)
-                       (when citar-file-variable
-                         (list citar-file-variable))
-                       (when citar-crossref-variable
-                         (list citar-crossref-variable))
-                       citar-additional-fields)))
+  (delete-dups `(,@(citar--fields-in-formats)
+                 ,@(when citar-file-variable
+                     (list citar-file-variable))
+                 ,@(when citar-crossref-variable
+                     (list citar-crossref-variable))
+                 . ,citar-additional-fields)))
 
 (defun citar--with-crossref-keys (key-or-keys entries)
   "Return KEY-OR-KEYS augmented with cross-referenced items in ENTRIES.
@@ -959,9 +966,9 @@ are potentially cross-referenced from elements of KEYS."
 (defun citar--ref-make-symbols (cand)
   "Make CAND annotation or affixation string for has-symbols."
   (let ((candidate-symbols (citar--symbols-string
-                            (string-match "has:file" cand)
-                            (string-match "has:note" cand)
-                            (string-match "has:link" cand))))
+                            (string-match-p "has:files" cand)
+                            (string-match-p "has:notes" cand)
+                            (string-match-p "has:links" cand))))
     candidate-symbols))
 
 (defun citar--ref-annotate (cand)
@@ -998,18 +1005,6 @@ are potentially cross-referenced from elements of KEYS."
              (propertize (citar--get-template 'suffix) 'face 'citar)))
    (error "No template for \"%s\" - check variable 'citar-templates'" template-name)))
 
-(defun citar--get-link (entry)
-  "Return a link for an ENTRY."
-  (let* ((field (citar--field-with-value '(doi pmid pmcid url) entry))
-         (base-url (pcase field
-                     ('doi "https://doi.org/")
-                     ('pmid "https://www.ncbi.nlm.nih.gov/pubmed/")
-                     ('pmcid "https://www.ncbi.nlm.nih.gov/pmc/articles/"))))
-    (when field
-      (concat base-url (citar--get-value field entry)))))
-
-;; REVIEW I removed 'citar--ensure-entries'
-
 ;;;###autoload
 (defun citar-insert-preset ()
   "Prompt for and insert a predefined search."
@@ -1021,8 +1016,12 @@ are potentially cross-referenced from elements of KEYS."
     (insert search)))
 
 (defun citar--stringify-keys (keys)
-  "Return a list of KEYS as a crm-string for `embark'."
-  (if (listp keys) (string-join keys " & ") keys))
+  "Encode a list of KEYS as a single string."
+  (combine-and-quote-strings (if (listp keys) keys (list keys)) " & "))
+
+(defun citar--unstringify-keys (keystring)
+  "Split KEYSTRING into a list of keys."
+  (split-string-and-unquote keystring " & "))
 
 ;;; Commands
 
@@ -1031,25 +1030,13 @@ are potentially cross-referenced from elements of KEYS."
   "Open related resources (links or files) for KEYS."
   (interactive (list
                 (list (citar-select-ref))))
-  (when (and citar-library-paths
-             (stringp citar-library-paths))
-    (message "Make sure 'citar-library-paths' is a list of paths"))
   (let* ((embark-default-action-overrides
           '((multi-category . citar--open-multi)
             (file . citar-file-open)
             (url . browse-url)))
-         (key-entry-alist (citar--ensure-entries keys-entries))
-         (files
-          (citar-file--files-for-multiple-entries
-           keys
-           (append citar-library-paths citar-notes-paths)
-           ;; find files with any extension:
-           nil))
-         (links
-          (seq-map
-           (lambda (key)
-             (citar--get-link key))
-           keys))
+         (files (let ((citar-library-file-extensions nil))
+                  (citar-get-files keys)))
+         (links (citar-get-links keys))
          (resource-candidates (delete-dups (append files (remq nil links)))))
     (cond
      ((eq nil resource-candidates)
@@ -1071,38 +1058,32 @@ For use with `embark-act-all'."
          (find-file selection))
         (t (citar-file-open selection))))
 
-(defun citar--library-file-action (key action)
-  "Run ACTION on file associated with KEY."
-  (let* ((fn (pcase action
-               ('open 'citar-file-open)
-               ('attach 'mml-attach-file)))
-         (entry (citar--get-entry key))
-         (files
-          (citar-file--files-for-entry
-           key
-           entry
-           citar-library-paths
-           citar-library-file-extensions))
-         (file
-          (pcase (length files)
-            (1 (car files))
-            ((guard (> 1))
-             (citar--select-resource files)))))
-    (if file
-        (funcall fn file)
-      (message "No associated file"))))
+;; TODO Rename? This also opens files in bib field, not just library files
+;;;###autoload
+(defun citar-open-files (key-or-keys)
+  "Open library file associated with KEY-OR-KEYS."
+  (interactive (list (citar-select-refs)))
+  ;; TODO filter to refs have files?
+  (let ((embark-default-action-overrides '((file . citar-file-open))))
+    (citar--library-file-action key-or-keys #'citar-file-open)))
 
 ;;;###autoload
-(defun citar-open-library-file (key-entry)
-  "Open library file associated with the KEY-ENTRY.
+(defun citar-attach-library-file (key)
+  "Attach library file associated with KEY to outgoing MIME message.
 
 With prefix, rebuild the cache before offering candidates."
   (interactive (list (citar-select-ref)))
-  (let ((embark-default-action-overrides '((file . citar-file-open))))
-    (when (and citar-library-paths
-               (stringp citar-library-paths))
-      (error "Make sure 'citar-library-paths' is a list of paths"))
-    (citar--library-file-action key 'open)))
+  (let ((embark-default-action-overrides '((file . mml-attach-file))))
+    (citar--library-file-action key #'mml-attach-file)))
+
+(defun citar--library-file-action (key-or-keys action)
+  "Run ACTION on file associated with KEY."
+  (if-let* ((files (citar-get-files key-or-keys))
+            (file (if (null (cdr files))
+                      (car files)
+                    (citar--select-resource files))))
+      (funcall action file)
+    (message "No associated files for %s" key-or-keys)))
 
 ;;;###autoload
 (defun citar-open-notes (key)
@@ -1111,7 +1092,7 @@ With prefix, rebuild the cache before offering candidates."
   ;; REVIEW KEY, or KEYS
   (interactive (list (citar-select-ref)))
   (let* ((embark-default-action-overrides '((file . find-file)))
-         (entry (citar--get-entry key)))
+         (entry (citar-get-entry key)))
     (if (listp citar-open-note-functions)
         (citar--open-notes (car key) entry)
       (error "Please change the value of 'citar-open-note-functions' to a list"))))
@@ -1129,7 +1110,7 @@ With prefix, rebuild the cache before offering candidates."
 With prefix, rebuild the cache before offering candidates."
   (interactive (list (citar-select-ref)))
   (when-let ((bibtex-files (citar--bibliography-files)))
-    (bibtex-search-entry (car key) t nil t)))
+    (bibtex-search-entry key t nil t)))
 
 ;;;###autoload
 (defun citar-insert-bibtex (keys)
@@ -1171,17 +1152,15 @@ directory as current buffer."
         (citar--insert-bibtex key)))))
 
 ;;;###autoload
-(defun citar-open-link (key)
-  "Open URL or DOI link associated with the KEY in a browser.
-
-With prefix, rebuild the cache before offering candidates."
-  (interactive (list (citar-select-ref
-                      :rebuild-cache current-prefix-arg)))
-  (let* ((entry (citar--get-entry key))
-         (link (citar--get-link entry)))
-    (if link
-        (browse-url link)
-      (message "No link found for %s" key))))
+(defun citar-open-links (key-or-keys)
+  "Open URL or DOI link associated with the KEY in a browser."
+  (interactive (list (citar-select-ref)))
+  (if-let* ((links (citar-get-links key-or-keys))
+            (link (if (null (cdr links))
+                      (car links)
+                    (citar--select-resource nil links))))
+      (browse-url link)
+    (message "No link found for %s" key-or-keys)))
 
 ;;;###autoload
 (defun citar-insert-citation (keys &optional arg)
@@ -1191,11 +1170,8 @@ Prefix ARG is passed to the mode-specific insertion function. It
 should invert the default behaviour for that mode with respect to
 citation styles. See specific functions for more detail."
   (interactive
-   (if (member major-mode (mapcar
-                           'caar
-                           (butlast citar-major-mode-functions)))
-       (list (citar-select-refs)  ; key-entries
-             current-prefix-arg) ; arg
+   (if (citar--get-major-mode-function 'insert-citation)
+       (list (citar-select-refs) current-prefix-arg)
      (error "Citation insertion is not supported for %s" major-mode)))
   (citar--major-mode-function
    'insert-citation
@@ -1233,7 +1209,7 @@ ARG is forwarded to the mode-specific insertion function given in
 
 (defun citar-format-reference (keys)
   "Return formatted reference(s) for the elements of KEYS."
-  (let* ((entries (mapcar #'citar--get-entry keys))
+  (let* ((entries (mapcar #'citar-get-entry keys))
          (template (citar--get-template 'preview)))
     (with-temp-buffer
       (dolist (entry entries)
@@ -1244,8 +1220,7 @@ ARG is forwarded to the mode-specific insertion function given in
 (defun citar-insert-keys (keys)
   "Insert KEYS citekeys.
 With prefix, rebuild the cache before offering candidates."
-  (interactive (list (citar-select-refs
-                      :rebuild-cache current-prefix-arg)))
+  (interactive (list (citar-select-refs)))
   (citar--major-mode-function
    'insert-keys
    #'citar--insert-keys-comma-separated
@@ -1255,22 +1230,11 @@ With prefix, rebuild the cache before offering candidates."
   "Insert comma separated KEYS."
   (insert (string-join keys ", ")))
 
-;;;###autoload
-(defun citar-attach-library-file (key)
-  "Attach library file associated with KEY to outgoing MIME message.
-
-With prefix, rebuild the cache before offering candidates."
-  (interactive (list (citar-select-ref)))
-  (let ((embark-default-action-overrides '((file . mml-attach-file))))
-    (when (and citar-library-paths
-               (stringp citar-library-paths))
-      (error "Make sure 'citar-library-paths' is a list of paths"))
-    (citar--library-file-action key-entry 'attach)))
-
 (defun citar--add-file-to-library (key)
   "Add a file to the library for KEY.
 The FILE can be added from an open buffer, a file path, or a
 URL."
+  (citar--check-configuration 'citar-library-paths)
   (let* ((source
           (char-to-string
            (read-char-choice
@@ -1303,9 +1267,8 @@ URL."
   "Add a file to the library for KEY.
 The FILE can be added either from an open buffer, a file, or a
 URL."
-  (interactive (list (citar-select-ref
-                      :rebuild-cache current-prefix-arg)))
-  (citar--add-file-to-library (car key-entry)))
+  (interactive (list (citar-select-ref)))
+  (citar--add-file-to-library key))
 
 ;;;###autoload
 (defun citar-run-default-action (keys)

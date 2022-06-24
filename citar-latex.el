@@ -203,11 +203,10 @@ inserted."
     (skip-chars-forward "^}") (forward-char 1)))
 
 ;;;###autoload
-(defun citar-latex-insert-edit (&optional arg)
+(defun citar-latex-insert-edit (&optional _arg)
   "Prompt for keys and call `citar-latex-insert-citation.
 With ARG non-nil, rebuild the cache before offering candidates."
-  (citar-latex-insert-citation
-   (citar--extract-keys (citar-select-refs :rebuild-cache arg))))
+  (citar-latex-insert-citation (citar-select-refs)))
 
 (defun citar-latex--select-command ()
   "Complete a citation command for LaTeX."

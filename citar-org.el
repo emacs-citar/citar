@@ -163,8 +163,8 @@ With PROC list, limit to specific processor(s)."
 (defun citar-org-select-key (&optional multiple)
   "Return a list of keys when MULTIPLE, or else a key string."
   (if multiple
-      (citar--extract-keys (citar-select-refs))
-    (car (citar-select-ref))))
+      (citar-select-refs)
+    (citar-select-ref)))
 
 ;;;###autoload
 (defun citar-org-insert-citation (keys &optional style)

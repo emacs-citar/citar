@@ -26,7 +26,7 @@
 (eval-when-compile
   (require 'cl-lib))
 
-(declare-function citar--display-value "citar")
+(declare-function citar-get-display-value "citar")
 
 
 ;;; Formatting bibliography entries
@@ -59,7 +59,7 @@
         (`(,props . ,fieldnames)
          (let* ((fieldwidth (plist-get props :width))
                 (textprops (plist-get props :text-properties))
-                (value (citar--display-value fieldnames entry))
+                (value (citar-get-display-value fieldnames entry))
                 (display (citar-format--string value
                                                :width fieldwidth
                                                :text-properties textprops
@@ -83,21 +83,8 @@
 ;;; Internal implementation functions
 
 
-(defun citar-format--fieldspec (fieldspec entry hide-elided ellipsis)
-  "Format FIELDSPEC using information from ENTRY.
-See `citar-format--string` for the meaning of HIDE-ELIDED and ELLIPSIS."
-  (if (stringp fieldspec)
-      fieldspec
-    (let* ((fmtprops (car fieldspec))
-           (fieldnames (cdr fieldspec))
-           (displaystr (citar--display-value fieldnames entry)))
-      (apply #'citar-format--string displaystr
-             :hide-elided hide-elided :ellipsis ellipsis
-             fmtprops))))
-
-
 (cl-defsubst citar-format--string (string
-                                &key width text-properties hide-elided ellipsis)
+                                   &key width text-properties hide-elided ellipsis)
   "Truncate STRING to WIDTH and apply TEXT-PROPERTIES.
 If HIDE-ELIDED is non-nil, the truncated part of STRING is
 covered by a display property that makes it invisible, instead of
@@ -108,6 +95,7 @@ display instead of the truncated part of the text."
   (when (numberp width)
     (setq string (truncate-string-to-width string width 0 ?\s ellipsis hide-elided)))
   string)
+
 
 (defun citar-format--star-widths (alloc strings &optional hide-elided ellipsis)
   "Concatenate STRINGS and truncate every other element to fit in ALLOC.
