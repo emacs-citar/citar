@@ -672,11 +672,28 @@ nil."
         (read candidate)
       (substring-no-properties candidate 0 (cl-position ?\s candidate)))))
 
+(defun citar--key-at-point ()
+  "Return bibliography key at point in current buffer, along with its bounds.
+Return either a string KEY or a cons pair (KEY . BOUNDS), where
+BOUNDS is a (BEG . END) pair indicating the location of KEY in
+the buffer. Return nil if there is no key at point or the current
+major mode is not supported."
+  (citar--major-mode-function 'key-at-point #'ignore))
+
+(defun citar--citation-at-point ()
+  "Return citation at point in current buffer, along with its bounds.
+Return (KEYS . BOUNDS), where KEYS is a list of citation keys and
+BOUNDS is a (BEG . END) pair indicating the location of the
+citation in the buffer. BOUNDS may be nil if the location cannot
+be determined. Return nil if there is no citation at point or the
+current major mode is not supported."
+  (citar--major-mode-function 'citation-at-point #'ignore))
+
 (defun citar-key-at-point ()
   "Return the citation key at point in the current buffer.
 Return nil if there is no key at point or the major mode is not
 supported."
-  (when-let ((keywithbounds (citar--major-mode-function 'key-at-point #'ignore)))
+  (when-let ((keywithbounds (citar--key-at-point)))
     (if (consp keywithbounds)
         (car keywithbounds)             ; take just key, not bounds
       keywithbounds)))
@@ -685,8 +702,7 @@ supported."
   "Return a list of keys comprising the citation at point in the current buffer.
 Return nil if there is no key at point or the major mode is not
   supported."
-  (when-let ((citationwithbounds (citar--major-mode-function 'citation-at-point #'ignore)))
-    (car citationwithbounds)))
+  (car (citar--citation-at-point)))
 
 ;;; Major-mode functions
 

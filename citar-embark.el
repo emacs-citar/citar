@@ -1,25 +1,21 @@
-;;; citar-embark.el --- Integrate citar with embark    -*- lexical-binding: t; -*-
+;;; citar-embark.el --- Citar/Embark integration -*- lexical-binding: t; -*-
 ;;
-;; Copyright (C) 2021 Bruce D'Arcus
+;; Copyright (C) 2022 Bruce D'Arcus
+;;
+;; Author: Bruce D'Arcus <bdarcus@gmail.com>
+;; Maintainer: Bruce D'Arcus <bdarcus@gmail.com>
+;; Created: June 22, 2022
+;; Modified: June 22, 2022
+;; Version: 1.0
+;; Keywords: bib extensions
+;; Homepage: https://github.com/emacs-citar/citar-embark
+;; Package-Requires: ((emacs "27.2") (embark "0.17") (citar "0.9.5"))
 ;;
 ;; This file is not part of GNU Emacs.
 ;;
-;; This program is free software: you can redistribute it and/or modify
-;; it under the terms of the GNU General Public License as published by
-;; the Free Software Foundation, either version 3 of the License, or
-;; (at your option) any later version.
-
-;; This program is distributed in the hope that it will be useful,
-;; but WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-;; GNU General Public License for more details.
-
-;; You should have received a copy of the GNU General Public License
-;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
-;;
 ;;; Commentary:
 ;;
-;;  Add embark functionality to citar.
+;;  Description
 ;;
 ;;; Code:
 
@@ -35,18 +31,40 @@
 (defvar citar-embark-citation-map (make-composed-keymap citar-citation-map nil)
   "Keymap for Embark actions on Citar citations and keys.")
 
-;;; At-point functions for Embark
+;;;; Variables
+
+(defvar citar-embark--target-finders
+  (list #'citar-embark--key-finder
+        #'citar-embark--citation-finder))
+
+(defvar citar-embark--candidate-collectors
+  (list #'citar-embark--selected))
+
+(defvar citar-embark--transformer-alist
+  (list (cons 'citar-candidate #'citar-embark--candidate-transformer)))
+
+(defvar citar-embark--keymap-alist
+  '((citar-reference . citar-embark-map)                                ; minibuffer candidates
+    (citar-key . citar-embark-citation-map)                             ; at-point keys
+    (citar-citation . citar-embark-citation-map)))                      ; at-point citations
+
+(defvar citar-embark--multitarget-actions
+  (list #'citar-insert-bibtex #'citar-insert-citation #'citar-insert-reference
+        #'citar-copy-reference #'citar-insert-keys #'citar-run-default-action))
+
+(defvar citar-embark--target-injection-hooks
+  (list (list #'citar-insert-edit #'embark--ignore-target)))
+
+;;;; At-point functions for Embark
 
 (defun citar-embark--key-finder ()
   "Return the citation key at point."
-  (when-let (key (and (not (minibufferp))
-                      (citar--major-mode-function 'key-at-point #'ignore)))
+  (when-let ((key (and (not (minibufferp)) (citar--key-at-point))))
     (cons 'citar-key key)))
 
 (defun citar-embark--citation-finder ()
   "Return the keys of the citation at point."
-  (when-let (citation (and (not (minibufferp))
-                           (citar--major-mode-function 'citation-at-point #'ignore)))
+  (when-let ((citation (and (not (minibufferp)) (citar--citation-at-point))))
     `(citar-citation ,(citar--stringify-keys (car citation)) . ,(cdr citation))))
 
 (defun citar-embark--candidate-transformer (_type target)
@@ -66,90 +84,47 @@
                                 (funcall minibuffer-completion-predicate cand)))))))
     (cons (completion-metadata-get metadata 'category) cands)))
 
+;;;; Enable and disable Citar/Embark integration
+
+(defun citar-embark--enable ()
+  "Add Citar-specific functions and keymaps to Embark."
+  (mapc (apply-partially #'add-hook 'embark-target-finders)
+        (reverse citar-embark--target-finders))
+  (mapc (apply-partially #'add-hook 'embark-candidate-collectors)
+        (reverse citar-embark--candidate-collectors))
+  (pcase-dolist (`(,type . ,transformer) citar-embark--transformer-alist)
+    (setf (alist-get type embark-transformer-alist) transformer))
+  (pcase-dolist (`(,type . ,keymap) citar-embark--keymap-alist)
+    (setf (alist-get type embark-keymap-alist) keymap))
+  (cl-callf cl-union embark-multitarget-actions citar-embark--multitarget-actions)
+  (pcase-dolist (`(,action . ,hooks) citar-embark--target-injection-hooks)
+    (cl-callf cl-union (alist-get action embark-target-injection-hooks) hooks)))
+
+(defun citar-embark--disable ()
+  "Undo the effects of `citar-embark--enable'."
+  (mapc (apply-partially #'remove-hook 'embark-target-finders)
+        citar-embark--target-finders)
+  (mapc (apply-partially #'remove-hook 'embark-candidate-collectors)
+        citar-embark--candidate-collectors)
+  (cl-callf cl-set-difference embark-transformer-alist citar-embark--transformer-alist :test #'equal)
+  (cl-callf cl-set-difference embark-keymap-alist citar-embark--keymap-alist :test #'equal)
+  (cl-callf cl-set-difference embark-multitarget-actions citar-embark--multitarget-actions)
+  (pcase-dolist (`(,action . ,hooks) citar-embark--target-injection-hooks)
+    (when-let ((alistentry (assq action embark-target-injection-hooks)))
+      (cl-callf cl-set-difference (cdr alistentry) hooks)
+      (unless (cdr alistentry)          ; if no other hooks, remove alist entry
+        (cl-callf2 remq alistentry embark-target-injection-hooks)))))
+
 ;;;###autoload
 (define-minor-mode citar-embark-mode
-  "Toggle Citar target finders for Embark."
+  "Toggle integration between Citar and Embark."
   :group 'citar
   :global t
   :init-value nil
-  :lighter nil
-  (let ((targetfinders (list #'citar-embark--key-finder #'citar-embark--citation-finder))
-        (collectors (list #'citar-embark--selected))
-        (transformers (list (cons 'citar-candidate #'citar-embark--candidate-transformer)))
-        (keymaps '((citar-reference . citar-embark-map)            ; minibuffer candidates
-                   (citar-key . citar-embark-citation-map)         ; at-point keys
-                   (citar-citation . citar-embark-citation-map)))
-        (multitarget (list #'citar-insert-bibtex #'citar-insert-citation
-                           #'citar-insert-reference #'citar-copy-reference
-                           #'citar-insert-keys #'citar-run-default-action))
-        (ignoretarget (list #'citar-insert-edit))) ; at-point citations
-    (if citar-embark-mode
-        (progn
-          ;; Add target finders for `embark-act'
-          (dolist (targetfinder (reverse targetfinders))
-            (add-hook 'embark-target-finders targetfinder))
-
-          ;; Add collectors for `embark-collect', `embark-act-all', etc.
-          (dolist (collector (reverse collectors))
-            (add-hook 'embark-candidate-collectors collector))
-
-          ;; Add target transformers
-          (dolist (transformer transformers)
-            (setf (alist-get (car transformer) embark-transformer-alist) (cdr transformer)))
-
-          ;; Add Embark keymaps
-          (dolist (keymap keymaps)
-            (setf (alist-get (car keymap) embark-keymap-alist) (cdr keymap)))
-
-          ;; Mark commands as multitarget actions
-          (dolist (command multitarget)
-            (cl-pushnew command embark-multitarget-actions))
-
-          ;; Mark commands as ignoring target
-          (dolist (command ignoretarget)
-            (cl-pushnew #'embark--ignore-target
-                        (alist-get command (if (boundp 'embark-setup-action-hooks)
-                                               ;; TODO Remove backward compatibility for Embark < 0.15?
-                                               embark-setup-action-hooks
-                                             embark-target-injection-hooks)))))
-      ;; Disable citar-embark-mode:
-
-      ;; Remove target finders
-      (dolist (targetfinder targetfinders)
-        (remove-hook 'embark-target-finders targetfinder))
-
-      ;; Remove target collectors
-      (dolist (collector collectors)
-        (remove-hook 'embark-candidate-collectors collector))
-
-      ;; Remove target transformers
-      (dolist (transformer transformers)
-        (cl-callf2 assq-delete-all (car transformer) embark-transformer-alist))
-
-      ;; Remove Embark keymaps
-      (dolist (keymap keymaps)
-        (cl-callf2 assq-delete-all (car keymap) embark-transformer-alist))
-
-      ;; Remove commands from embark-multitarget-actions
-      (cl-callf cl-set-difference embark-multitarget-actions multitarget)
-
-      ;; Remove #'embark--ignore-target setup hook
-      (dolist (command ignoretarget)
-        ;; TODO simplfy this when we drop compatibility with Embark < 0.15
-        (cl-callf (lambda (hookalist)
-                    (when-let ((alistentry (assq command hookalist)))
-                      (cl-callf2 remq #'embark--ignore-target (cdr alistentry))
-                      (unless (cdr alistentry) ; if no other hooks, remove alist entry
-                        (cl-callf2 remq alistentry hookalist)))
-                    hookalist)
-            (if (boundp 'embark-setup-action-hooks)
-                embark-setup-action-hooks
-              embark-target-injection-hooks))))))
-
-;;;###autoload
-(with-eval-after-load 'citar
-  (with-eval-after-load 'embark
-    (citar-embark-mode)))
+  :lighter " citar-embark"
+  (if citar-embark-mode
+      (citar-embark--enable)
+    (citar-embark--disable)))
 
 (provide 'citar-embark)
 ;;; citar-embark.el ends here
