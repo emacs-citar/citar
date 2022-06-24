@@ -482,11 +482,9 @@ and other completion functions."
         ;; REVIEW this now works, but probably needs refinement
         (let ((predicate
                (when (or filter predicate)
-                 (lambda (cand _)
-                   (let* ((key (gethash cand candidates))
-                          (entry (citar-get-entry key)))
-                     (and (or (null filter) (funcall filter key entry))
-                          (or (null predicate) (funcall predicate string))))))))
+                 (lambda (_ key)
+                   (and (or (null filter) (funcall filter key))
+                        (or (null predicate) (funcall predicate string)))))))
           (complete-with-action action candidates string predicate))))))
 
 (cl-defun citar-select-refs (&key (multiple t) filter)
