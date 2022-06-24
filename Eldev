@@ -8,7 +8,8 @@
 
 (eldev-use-plugin 'autoloads)
 
-(setf eldev-standard-excludes `(:or ,eldev-standard-excludes "./test/manual/" "./citar-capf.el"))
+;; TODO what to do with these excluded files?
+(setf eldev-standard-excludes `(:or ,eldev-standard-excludes "./test/manual/" "./citar-capf.el" "./citar-filenotify.el"))
 
 ;; (setf eldev-test-fileset '("./test/" "!./test/manual/"))
 (eldev-add-extra-dependencies '(build test lint) 'embark 'auctex)
