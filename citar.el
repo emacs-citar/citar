@@ -232,6 +232,7 @@ the same width."
 
 ;;;; Citar actions and other miscellany
 
+;; TODO this is no longer used. What to do with it?
 (defcustom citar-force-refresh-hook nil
   "Hook run when user forces a (re-) building of the candidates cache.
 This hook is only called when the user explicitly requests the
