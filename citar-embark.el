@@ -49,7 +49,8 @@
     (citar-citation . citar-embark-citation-map)))                      ; at-point citations
 
 (defvar citar-embark--multitarget-actions
-  (list #'citar-insert-bibtex #'citar-insert-citation #'citar-insert-reference
+  (list #'citar-open #'citar-open-files #'citar-attach-files #'citar-open-links
+        #'citar-insert-bibtex #'citar-insert-citation #'citar-insert-reference
         #'citar-copy-reference #'citar-insert-keys #'citar-run-default-action))
 
 (defvar citar-embark--target-injection-hooks
