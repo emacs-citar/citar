@@ -57,12 +57,12 @@
 (make-obsolete 'citar-attach-library-file #'citar-attach-files "1.0")
 (make-obsolete 'citar-open-link #'citar-open-links "1.0")
 (make-obsolete 'citar-get-link #'citar-get-links "1.0") ; now returns list
+(make-obsolete 'citar-display-value 'citar-get-display-value "1.0")
 
 ;; make all these private
 (make-obsolete 'citar-clean-string 'citar--clean-string "1.0")
 (make-obsolete 'citar-shorten-names 'citar--shorten-names "1.0")
 (make-obsolete 'citar-get-template 'citar--get-template "1.0")
-(make-obsolete 'citar-display-value 'citar-get-display-value "1.0")
 (make-obsolete 'citar-open-multi 'citar--open-multi "1.0")
 (make-obsolete 'citar-select-group-related-resources
                'citar--select-group-related-resources "1.0")
@@ -679,34 +679,30 @@ nil."
 
 (defun citar--key-at-point ()
   "Return bibliography key at point in current buffer, along with its bounds.
-Return either a string KEY or a cons pair (KEY . BOUNDS), where
-BOUNDS is a (BEG . END) pair indicating the location of KEY in
-the buffer. Return nil if there is no key at point or the current
+Return (KEY . BOUNDS), where KEY is a string and BOUNDS is either
+nil or a (BEG . END) pair indicating the location of KEY in the
+buffer. Return nil if there is no key at point or the current
 major mode is not supported."
   (citar--major-mode-function 'key-at-point #'ignore))
 
 (defun citar--citation-at-point ()
   "Return citation at point in current buffer, along with its bounds.
 Return (KEYS . BOUNDS), where KEYS is a list of citation keys and
-BOUNDS is a (BEG . END) pair indicating the location of the
-citation in the buffer. BOUNDS may be nil if the location cannot
-be determined. Return nil if there is no citation at point or the
-current major mode is not supported."
+BOUNDS is either nil or a (BEG . END) pair indicating the
+location of the citation in the buffer. Return nil if there is no
+citation at point or the current major mode is not supported."
   (citar--major-mode-function 'citation-at-point #'ignore))
 
 (defun citar-key-at-point ()
   "Return the citation key at point in the current buffer.
 Return nil if there is no key at point or the major mode is not
 supported."
-  (when-let ((keywithbounds (citar--key-at-point)))
-    (if (consp keywithbounds)
-        (car keywithbounds)             ; take just key, not bounds
-      keywithbounds)))
+  (car (citar--key-at-point)))
 
 (defun citar-citation-at-point ()
   "Return a list of keys comprising the citation at point in the current buffer.
-Return nil if there is no key at point or the major mode is not
-  supported."
+Return nil if there is no citation at point or the major mode is
+not supported."
   (car (citar--citation-at-point)))
 
 ;;; Major-mode functions
@@ -1305,6 +1301,7 @@ URL."
   "Add a file to the library for KEY.
 The FILE can be added either from an open buffer, a file, or a
 URL."
+  ;; Why is there a separate citar--add-file-to-library?
   (interactive (list (citar-select-ref)))
   (citar--add-file-to-library key))
 
@@ -1317,8 +1314,7 @@ URL."
 (defun citar-dwim ()
   "Run the default action on citation keys found at point."
   (interactive)
-  (if-let ((keys (or (car (citar--major-mode-function 'citation-at-point #'ignore))
-                     (car (citar--major-mode-function 'key-at-point #'ignore)))))
+  (if-let ((keys (or (citar-key-at-point) (citar-citation-at-point))))
       (citar-run-default-action (if (listp keys) keys (list keys)))
     (user-error "No citation keys found")))
 
