@@ -115,7 +115,7 @@
   :group 'citar
   :type '(repeat directory))
 
-(defcustom citar-library-file-extensions nil
+(defcustom citar-library-file-extensions '("pdf" "html")
   "List of file extensions to filter for related files.
 
 These are the extensions the `citar-file-open-function'
