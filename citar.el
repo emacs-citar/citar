@@ -44,7 +44,6 @@
 (require 'citar-cache)
 (require 'citar-format)
 (require 'citar-file)
-(require 'crm)
 
 ;;; pre-1.0 API cleanup
 
