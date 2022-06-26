@@ -289,11 +289,15 @@ With optional argument FORCE, force the creation of a new ID."
     (ignore-errors (org-roam-ref-add (concat "@" key)))))
 
 ;;;###autoload
-(defun citar-org-format-note-default (key entry filepath)
-  "Format a note FILEPATH from KEY and ENTRY."
+(defun citar-org-format-note-default (key)
+  "Format a note from KEY."
   (let* ((template (citar--get-template 'note))
+         (entry (citar-get-entry key))
          (note-meta (when template
                       (citar-format--entry template entry)))
+         (filepath (expand-file-name
+                    (concat key ".org")
+                    (car citar-notes-paths)))
          (buffer (find-file filepath)))
     (with-current-buffer buffer
       ;; This just overrides other template insertion.
