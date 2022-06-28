@@ -289,10 +289,9 @@ With optional argument FORCE, force the creation of a new ID."
     (ignore-errors (org-roam-ref-add (concat "@" key)))))
 
 ;;;###autoload
-(defun citar-org-format-note-default (key)
-  "Format a note from KEY."
+(defun citar-org-format-note-default (key entry)
+  "Format a note from KEY and ENTRY."
   (let* ((template (citar--get-template 'note))
-         (entry (citar-get-entry key))
          (note-meta (when template
                       (citar-format--entry template entry)))
          (filepath (expand-file-name

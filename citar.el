@@ -1139,10 +1139,11 @@ With prefix, rebuild the cache before offering candidates."
 
 (defun citar--open-notes (key)
   "Open note(s) associated with KEY."
-  (or (seq-some
-       (lambda (opener)
-         (funcall opener key)) citar-open-note-functions)
-      (funcall citar-create-note-function key)))
+  (let ((entry (citar-get-entry key)))
+    (or (seq-some
+         (lambda (opener)
+           (funcall opener key)) citar-open-note-functions)
+        (funcall citar-create-note-function key entry))))
 
 ;;;###autoload
 (defun citar-open-entry (key)
