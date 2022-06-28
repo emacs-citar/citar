@@ -109,11 +109,12 @@ separator that does not otherwise occur in citation keys."
 ;;;; Parsing file fields
 
 (defun citar-file--parser-default (file-field)
-  "Split FILE-FIELD by both : and ;."
-  (mapcan (lambda (sepchar)
-            (mapcar #'string-trim
-                    (citar-file--split-escaped-string file-field sepchar)))
-          ";:"))
+  "Split FILE-FIELD by `;'."
+  (seq-remove
+   #'string-empty-p
+   (mapcar
+    #'string-trim
+    (citar-file--split-escaped-string file-field ?\;))))
 
 (defun citar-file--parser-triplet (file-field)
   "Return a list of files from DIRS and a FILE-FIELD formatted as a triplet.
@@ -137,25 +138,36 @@ Example: ':/path/to/test.pdf:PDF'."
               (push escaped filenames))))))
     (nreverse filenames)))
 
-(defun citar-file--parse-file-field (file-field dirs)
-  "Return files listed in FILE-FIELD.
+(defun citar-file--parse-file-field (entry dirs &optional citekey)
+  "Return files found in file field of ENTRY.
 Relative file names are expanded from the first directory in DIRS
-in which they are found; if they are not found in any directory,
-they are omitted. Files with absolute paths are included as-is,
-even if they don't exist."
-  (let (filenames)
-    (dolist (parser citar-file-parser-functions)
-      (dolist (filename (funcall parser file-field))
-        (if (or (null dirs) (file-name-absolute-p filename))
-            (push filename filenames)
-          (when-let ((filename (seq-some
-                                (lambda (dir)
-                                  (let ((filepath (expand-file-name filename dir)))
-                                    (when (file-exists-p filepath)
-                                      filepath)))
-                                dirs)))
-            (push filename filenames)))))
-    (nreverse filenames)))
+in which they are found. Omit non-existing absolute file names
+and relative file names not found in DIRS. On failure, print a
+message explaining the cause; CITEKEY is included in this failure
+message."
+  (when-let* ((fieldname citar-file-variable)
+              (fieldvalue (citar-get-value fieldname entry)))
+    (if-let ((files (delete-dups (mapcan (lambda (parser)
+                                           (funcall parser fieldvalue))
+                                         citar-file-parser-functions))))
+        (if-let ((foundfiles (citar-file--find-files-in-dirs files dirs)))
+            (if (null citar-library-file-extensions)
+                foundfiles
+              (or (seq-filter (lambda (file)
+                                (member (file-name-extension file) citar-library-file-extensions))
+                              foundfiles)
+                  (ignore
+                   (message "No files for `%s' with `citar-library-file-extensions': %S"
+                            citekey foundfiles))))
+          (ignore
+           (message (concat "None of the files for `%s' exist; check `citar-library-paths' and "
+                            "`citar-file-parser-functions': %S")
+                    citekey files)))
+      (ignore
+       (if (string-empty-p (string-trim fieldvalue))
+           (message "Empty `%s' field: %s" fieldname citekey)
+         (message "Could not parse `%s' field of `%s'; check `citar-file-parser-functions': %s"
+                  fieldname citekey fieldvalue))))))
 
 (defun citar-file--has-file-field (entries)
   "Return predicate to test if bibliography entry in ENTRIES has a file field.
@@ -176,19 +188,22 @@ Parse and return files given in the bibliography field named by
 Note: this function is intended to be used in
 `citar-get-files-functions'. Use `citar-get-files' to get all
 files associated with KEYS."
-  (when-let ((filefield citar-file-variable))
-    (citar--check-configuration 'citar-library-paths)
-    (let ((dirs (append citar-library-paths (mapcar #'file-name-directory (citar--bibliography-files)))))
-      (mapcan (lambda (citekey)
-                (when-let ((entry (gethash citekey entries)))
-                  (citar-file--parse-file-field (citar-get-value citar-file-variable entry) dirs)))
-              keys))))
+  (when citar-file-variable
+    (citar--check-configuration 'citar-library-paths 'citar-library-file-extensions
+                                'citar-file-parser-functions)
+    (let ((dirs (append citar-library-paths
+                        (mapcar #'file-name-directory (citar--bibliography-files)))))
+      (mapcan
+       (lambda (citekey)
+         (when-let ((entry (gethash citekey entries)))
+           (citar-file--parse-file-field entry dirs citekey)))
+       keys))))
 
 ;;;; Scanning library directories
 
 (defun citar-file--has-library-files (&optional _entries)
   "Return predicate testing whether cite key has library files."
-  (citar--check-configuration 'citar-library-paths)
+  (citar--check-configuration 'citar-library-paths 'citar-library-file-extensions)
   (let ((files (citar-file--directory-files
                 citar-library-paths nil citar-library-file-extensions
                 citar-file-additional-files-separator)))
@@ -362,6 +377,19 @@ SEPCHAR."
           (delete-char 1)))
       (push (buffer-string) strings))
     (nreverse strings)))
+
+(defun citar-file--find-files-in-dirs (files dirs)
+  "Expand file names in FILES in DIRS and keep the ones that exist."
+  (let (foundfiles)
+    (dolist (file files)
+      (if (file-name-absolute-p file)
+          (when (file-exists-p file) (push (expand-file-name file) foundfiles))
+        (when-let ((filepath (seq-some (lambda (dir)
+                                         (let ((filepath (expand-file-name file dir)))
+                                           (when (file-exists-p filepath) filepath)))
+                                       dirs)))
+          (push filepath foundfiles))))
+    (nreverse foundfiles)))
 
 (provide 'citar-file)
 ;;; citar-file.el ends here

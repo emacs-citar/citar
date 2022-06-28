@@ -6,28 +6,30 @@
 
 (require 'ert)
 (require 'seq)
-(require 'citar-file)
+(require 'citar)
 
-(ert-deftest citar-format-test--parsing ()
+(ert-deftest citar-file-test--parser-default ()
 
-  ;; Test the default parser, which splits strings by both : and ;
-  (should (equal '("") (delete-dups (citar-file--parser-default " "))))
+  (should-not (citar-file--parser-default " "))
   (should (equal '("foo") (delete-dups (citar-file--parser-default "foo"))))
-  (should (equal '("foo" "bar" "foo;bar") (delete-dups (citar-file--parser-default "foo;bar"))))
-  (should (equal '("foo" "bar" "foo ; bar") (delete-dups (citar-file--parser-default " foo ; bar "))))
-  (should (equal '("foo : bar" "foo" "bar") (delete-dups (citar-file--parser-default " foo : bar "))))
-  (should (equal '("foo:bar" "baz" "foo" "bar;baz") (delete-dups (citar-file--parser-default "foo:bar;baz"))))
+  (should (equal '("foo" "bar") (delete-dups (citar-file--parser-default "foo;bar"))))
+  (should (equal '("foo" "bar") (delete-dups (citar-file--parser-default " foo ; bar ; "))))
+  (should (equal '("foo:bar" "baz") (delete-dups (citar-file--parser-default "foo:bar;baz"))))
 
   ;; Test escaped delimiters
   (should (equal '("foo\\;bar") (delete-dups (citar-file--parser-default "foo\\;bar"))))
-  (should (equal '("foo" "bar\\" "foo;bar\\") (delete-dups (citar-file--parser-default "foo;bar\\"))))
-  (should (equal '("foo\\;bar" "baz" "foo\\;bar;baz")
-                 (delete-dups (citar-file--parser-default "foo\\;bar;baz"))))
+  (should (equal '("foo" "bar\\") (delete-dups (citar-file--parser-default "foo;bar\\"))))
+  (should (equal '("foo\\;bar" "baz")
+                 (delete-dups (citar-file--parser-default "foo\\;bar;baz")))))
 
-  ;; Test triplet parser
+(ert-deftest citar-file-test--parser-triplet ()
+
+  (should-not (citar-file--parser-triplet "foo.pdf"))
+
   (should (equal '("foo.pdf") (delete-dups (citar-file--parser-triplet ":foo.pdf:PDF"))))
   (should (equal '("foo.pdf:PDF,:bar.pdf" "foo.pdf" "bar.pdf")
                  (delete-dups (citar-file--parser-triplet ":foo.pdf:PDF,:bar.pdf:PDF"))))
+
   ;; Don't trim spaces in triplet parser since file is delimited by :
   (should (equal '(" foo.pdf :PDF, : bar.pdf " " foo.pdf " " bar.pdf ")
                  (delete-dups (citar-file--parser-triplet ": foo.pdf :PDF, : bar.pdf :PDF"))))
@@ -41,6 +43,65 @@
   ;; Calibre doesn't escape any special characters in filenames, so try that
   (should (equal '("C:title.pdf" "C:\\title.pdf")
                  (delete-dups (citar-file--parser-triplet "Title\\: Subtitle:C:\\title.pdf:PDF")))))
+
+(ert-deftest citar-file-test--parse-file-field ()
+
+  (let* ((fieldname "file")
+         (citekey "foo")
+         (entry '((file . "foo.pdf")))
+         (dirs '("/home/user/library/"))
+         (citar-file-variable fieldname)
+         (citar-file-parser-functions (list #'citar-file--parser-default))
+         lastmessage)
+
+    (cl-letf (((symbol-function 'message)
+               (lambda (format-string &rest args)
+                 (setq lastmessage (apply #'format-message format-string args))))
+              ((symbol-function 'current-message)
+               (lambda ()
+                 (prog1 lastmessage (setq lastmessage nil))))
+              ;; Pretend that all .pdf files under /home/user/library/ exist:
+              ((symbol-function 'file-exists-p)
+               (lambda (filename)
+                 (and (equal "pdf" (file-name-extension filename))
+                      (member (file-name-directory filename) dirs)))))
+
+      (should-not (citar-file--parse-file-field '((file . " ")) dirs citekey))
+      (should (string=
+               (current-message)
+               (format-message "Empty `%s' field: %s" fieldname citekey)))
+
+      (let ((citar-file-parser-functions nil))
+        (should-not (citar-file--parse-file-field entry dirs citekey))
+        (should (string=
+                 (current-message)
+                 (format-message
+                  "Could not parse `%s' field of `%s'; check `citar-file-parser-functions': %s"
+                  fieldname citekey (alist-get 'file entry)))))
+
+      (should-not (citar-file--parse-file-field '((file . "foo.html")) dirs citekey))
+      (should (string=
+               (current-message)
+               (format-message
+                (concat "None of the files for `%s' exist; check `citar-library-paths' and "
+                        "`citar-file-parser-functions': %S")
+                citekey '("foo.html"))))
+
+      (let ((citar-library-file-extensions '("html")))
+        (should-not (citar-file--parse-file-field entry dirs citekey))
+        (should (string=
+                 (current-message)
+                 (format-message
+                  "No files for `%s' with `citar-library-file-extensions': %S"
+                  citekey '("/home/user/library/foo.pdf")))))
+
+      (let ((citar-library-file-extensions nil))
+        (should (equal (citar-file--parse-file-field entry dirs citekey)
+                        '("/home/user/library/foo.pdf"))))
+
+      (let ((citar-library-file-extensions '("pdf" "html")))
+        (should (equal (citar-file--parse-file-field entry dirs citekey)
+                        '("/home/user/library/foo.pdf")))))))
 
 (provide 'citar-file-test)
 ;;; citar-file-test.el ends here

@@ -115,7 +115,7 @@
   :group 'citar
   :type '(repeat directory))
 
-(defcustom citar-library-file-extensions '("pdf" "html")
+(defcustom citar-library-file-extensions nil
   "List of file extensions to filter for related files.
 
 These are the extensions the `citar-file-open-function'
@@ -292,6 +292,7 @@ reference has associated notes."
   :group 'citar
   :type '(function))
 
+;; TODO Redundant with `citar-open-note-functions'?
 (defcustom citar-open-note-function
   'citar--open-note
   "Function to open a new or existing note.
@@ -787,11 +788,8 @@ bibliography entries. ENTRIES should also contain any items that
 are potentially cross-referenced from elements of KEYS.
 
 Find files using `citar-get-files-functions'."
-  (let* ((keys (citar--with-crossref-keys key-or-keys entries))
-         (files (mapcan (lambda (fn) (funcall fn keys entries)) citar-get-files-functions)))
-    (seq-filter (lambda (filename)
-                  (member (file-name-extension filename) citar-library-file-extensions))
-                (delete-dups files))))
+  (when-let ((keys (citar--with-crossref-keys key-or-keys entries)))
+    (delete-dups (mapcan (lambda (fn) (funcall fn keys entries)) citar-get-files-functions))))
 
 
 (cl-defun citar-get-links (key-or-keys &key (entries (citar-get-entries)))
@@ -1114,12 +1112,20 @@ With prefix, rebuild the cache before offering candidates."
 
 (defun citar--library-file-action (key-or-keys action)
   "Run ACTION on file associated with KEY-OR-KEYS."
-  (if-let* ((files (citar-get-files key-or-keys))
-            (file (if (null (cdr files))
-                      (car files)
-                    (citar--select-resource files))))
-      (funcall action file)
-    (message "No associated files for %s" key-or-keys)))
+  (let ((entries (citar-get-entries)))
+    (if-let ((files (citar-get-files key-or-keys :entries entries)))
+        (funcall action (if (null (cdr files))
+                            (car files)
+                          (citar--select-resource files)))
+      (ignore
+       ;; If some key had files according to `citar-has-files', but `citar-get-files' returned nothing, then
+       ;; don't print the following message. The appropriate function in `citar-get-files-functions' is
+       ;; responsible for telling the user why it failed, and we want that explanation to appear in the echo
+       ;; area.
+       (let ((keys (if (listp key-or-keys) key-or-keys (list key-or-keys)))
+             (hasfilep (citar-has-files :entries entries)))
+         (unless (and hasfilep (seq-some hasfilep keys))
+           (message "No associated files for %s" key-or-keys)))))))
 
 ;;;###autoload
 (defun citar-open-notes (key)
@@ -1318,15 +1324,29 @@ URL."
       (citar-run-default-action (if (listp keys) keys (list keys)))
     (user-error "No citation keys found")))
 
-(defun citar--check-configuration (variable)
-  "Signal error if VARIABLE has a value of the wrong type.
-VARIABLE should be a Citar customization variable."
-  (pcase variable
-    ((or 'citar-library-paths 'citar-notes-paths)
-     (let ((value (symbol-value variable)))
-       (unless (and (listp value)
-                    (seq-every-p #'stringp value))
-         (error "`%S' should be a list of directories: %S" variable `',value))))))
+(defun citar--check-configuration (&rest variables)
+  "Signal error if any VARIABLES have values of the wrong type.
+VARIABLES should be the names of Citar customization variables."
+  (dolist (variable variables)
+    (unless (boundp variable)
+      (error "Unbound variable in citar--check-configuration: %s" variable))
+    (let ((value (symbol-value variable)))
+      (pcase variable
+        ((or 'citar-library-paths 'citar-notes-paths)
+         (unless (and (listp value)
+                      (seq-every-p #'stringp value))
+           (error "`%s' should be a list of directories: %S" variable `',value)))
+        ((or 'citar-library-file-extensions)
+         (unless (and (listp value)
+                      (seq-every-p #'stringp value))
+           (error "`%s' should be a list of strings: %S" variable `',value)))
+        ((or 'citar-has-files-functions 'citar-get-files-functions
+             'citar-has-notes-functions 'citar-open-note-functions
+             'citar-file-parser-functions)
+         (unless (and (listp value) (seq-every-p #'functionp value))
+           (error "`%s' should be a list of functions: %S" variable `',value)))
+        (_
+         (error "Unknown variable in citar--check-configuration: %s" variable))))))
 
 (provide 'citar)
 ;;; citar.el ends here
