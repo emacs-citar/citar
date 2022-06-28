@@ -675,7 +675,7 @@ nil."
   (unless (string-empty-p candidate)
     (if (= ?\" (aref candidate 0))
         (read candidate)
-      (substring-no-properties candidate 0 (cl-position ?\s candidate)))))
+      (substring-no-properties candidate 0 (seq-position candidate ?\s #'=)))))
 
 (defun citar--key-at-point ()
   "Return bibliography key at point in current buffer, along with its bounds.

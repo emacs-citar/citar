@@ -27,6 +27,7 @@
   (require 'cl-lib))
 (require 'parsebib)
 (require 'citar-format)
+(require 'seq)
 (require 'map)
 
 (declare-function citar--get-template "citar")
@@ -216,7 +217,7 @@ modified since the last time BIB was updated."
               ;; CSL-JSOM lets citekey be an arbitrary string. Quote it if...
               (keyquoted (if (or (string-empty-p citekey) ; ... it's empty,
                                  (= ?\" (aref citekey 0)) ; ... starts with ",
-                                 (cl-find ?\s citekey))   ; ... or has a space
+                                 (seq-contains-p citekey ?\s #'=))   ; ... or has a space
                              (prin1-to-string citekey)
                            citekey))
               (prefix (propertize (concat keyquoted (when (cdr preformat) " "))
