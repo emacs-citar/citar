@@ -1142,7 +1142,7 @@ With prefix, rebuild the cache before offering candidates."
   (let ((entry (citar-get-entry key)))
     (or (seq-some
          (lambda (opener)
-           (funcall opener key)) citar-open-note-functions)
+           (funcall opener key entry)) citar-open-note-functions)
         (funcall citar-create-note-function key entry))))
 
 ;;;###autoload
