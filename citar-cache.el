@@ -32,6 +32,7 @@
 
 (declare-function citar--get-template "citar")
 (declare-function citar--fields-to-parse "citar")
+(declare-function citar--bibliography-files "citar")
 
 (defvar citar-ellipsis)
 
@@ -181,6 +182,15 @@ needed by any other buffer."
 
 ;;; Updating bibliographies
 
+(defun citar-cache-refresh (&optional force)
+  "Refresh the bibliography cache.
+
+Unless FORCE is non-nil, the cached bib files are only reread if
+modified since the last time they were updated."
+  (interactive)
+  (dolist (file (citar--bibliography-files))
+    (let ((bib (citar-cache--get-bibliography file)))
+      (citar-cache--update-bibliography bib force))))
 
 (defun citar-cache--update-bibliography (bib &optional force)
   "Update the bibliography BIB from the original file.
