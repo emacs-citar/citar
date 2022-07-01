@@ -27,6 +27,7 @@
   (require 'cl-lib)
   (require 'subr-x))
 (require 'seq)
+(require 'map)
 
 ;;; pre-1.0 API cleanup
 
@@ -321,11 +322,15 @@ need to scan the contents of DIRS in this case."
 
 ;;;; Note files
 
+(defun citar-file--get-notes-hash (&optional keys)
+  "Return hash-table with KEYS with file notes."
+  (citar-file--directory-files
+                citar-notes-paths keys citar-file-note-extensions
+                citar-file-additional-files-separator))
+
 (defun citar-file-has-notes (&optional _entries)
   "Return predicate testing whether cite key has associated notes."
-  (let ((files (citar-file--directory-files
-                citar-notes-paths nil citar-file-note-extensions
-                citar-file-additional-files-separator)))
+  (let ((files (citar-file--get-notes-hash)))
     (lambda (key)
       (gethash key files))))
 
@@ -341,6 +346,11 @@ need to scan the contents of DIRS in this case."
                     'citar-org-format-note-default))
         (error "You must set 'citar-notes-paths'")
       (funcall citar-create-note-function key entry file))))
+
+(defun citar-file--get-note-files (keys)
+  "Return list of notes associated with KEYS."
+  (let ((notehash (citar-file--get-notes-hash keys)))
+    (flatten-list (map-values notehash))))
 
 (defun citar-file--get-note-filename (key dirs extensions)
   "Return existing or new filename for KEY in DIRS with extension in EXTENSIONS.
