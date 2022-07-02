@@ -295,12 +295,40 @@ reference has associated notes."
 
 (defvar citar-notes-config-file
   `(:name "Notes"
-    :category citar-note-file
+    :category file
     :key-predicate ,#'citar-file-has-notes
     :action ,#'citar-file--open-note
-    :annotate ,#'marginalia-annotate-file
+;   :annotate ,#'marginalia-annotate-file
     :items ,#'citar-file--get-note-files)
   "Default file-per-note configuration.")
+
+;; TODO hook these up, and remove other variables
+
+(defcustom citar-notes-sources
+  '((citar-file . citar-notes-config-file))
+  "The alist of notes backends available for configuration.
+
+The format of the cons should be (NAME . PLIST), where the
+plist has the following properties:
+
+  :name the group display name
+
+  :category the completion category
+
+  :key-predicate function to test for keys with notes
+
+  :action function to open a given note candidate
+
+  :items function to return candidate strings for keys
+
+  :annotate annotation function (optional)"
+  :group 'citar
+  :type '(alist :key-type symbol :value-type plist))
+
+(defcustom citar-notes-source 'citar-file
+  "The notes backend."
+  :group 'citar
+  :type 'symbol)
 
 (defvar citar-notes-config citar-notes-config-file
 ;; FIX doesn't work as defcustom
@@ -623,6 +651,10 @@ HISTORY is the `completing-read' history argument."
                       (equal item "")))))
     (hash-table-keys selected-hash)))
 
+(defun citar--add-notep-prop (candidate)
+  "Add a note resource CANDIDATE with 'notep t'."
+  (propertize candidate 'notep t))
+
 (cl-defun citar--get-resource-candidates (keys &key files notes links)
   "Return related resource candidates for KEYS.
 
@@ -639,12 +671,13 @@ Optionally constrain to FILES, NOTES, and/or LINKS."
           (when notes
             (let* ((cat (plist-get citar-notes-config :category))
                    (items (plist-get citar-notes-config :items))
-                   (items (if (functionp items) (funcall items keys) items)))
+                   (items (if (functionp items) (funcall items keys) items))
+                   (items (mapcar #'citar--add-notep-prop items)))
               (cons cat items))))
          (sources (list filesource linksource notesource))
          (candidates (list))
-         ;; Only use multi-category if we need to.
-         (multicat (< 1 (length (delete nil sources)))))
+         ;; REVIEW initially I deleted nil sources, but I think that's overkill?
+         (multicat (< 1 (length sources))))
     (progn
       (dolist (source sources)
         (let ((cat (car source)))
@@ -688,11 +721,13 @@ Optionally constrain to FILES, NOTES, and/or LINKS."
       (if (file-regular-p resource)
           (file-name-nondirectory resource)
         resource)
-    (let ((cat (car (get-text-property 0 'multi-category resource))))
-      (pcase cat
-        ('file "Library Files") ; FIX this won't work for file notes IUC
-        ('url "Links")
-        (_ (plist-get citar-notes-config :name))))))
+    (let ((cat (car (get-text-property 0 'multi-category resource)))
+          (notep (get-text-property 0 'notep resource)))
+      ;; If note, assign to note group; otherwise use completion category.
+      (if notep (plist-get citar-notes-config :name)
+        (pcase cat
+          ('file "Library Files")
+          ('url "Links"))))))
 
 (cl-defun citar--format-candidates (&key (bibs (citar--bibliographies))
                                          (entries (citar-cache--entries bibs)))
