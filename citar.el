@@ -79,6 +79,7 @@
 ;;; Declare variables and functions for byte compiler
 
 (defvar embark-default-action-overrides)
+(declare-function marginalia-annotate-file "ext:marginalia")
 
 ;;; Variables
 
@@ -294,9 +295,10 @@ reference has associated notes."
 
 (defvar citar-notes-config-file
   `(:name "Notes"
-    :category file
+    :category citar-note-file
     :key-predicate ,#'citar-file-has-notes
     :action ,#'citar-file--open-note
+    :annotate ,#'marginalia-annotate-file
     :items ,#'citar-file--get-note-files)
   "Default file-per-note configuration.")
 
