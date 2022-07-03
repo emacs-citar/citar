@@ -1176,12 +1176,6 @@ With prefix, rebuild the cache before offering candidates."
     (funcall
      (citar--get-notes-config-property :action) key)))
 
-(defun citar--open-notes (key)
-  "Open note(s) associated with KEY."
-  (let ((entry (citar-get-entry key)))
-    (funcall
-     (citar--get-notes-config-property :action) key entry)))
-
 ;;;###autoload
 (defun citar-open-links (keys)
   "Open URL or DOI link associated with KEYS in a browser."
