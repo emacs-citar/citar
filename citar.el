@@ -277,32 +277,6 @@ If nil, single resources will open without prompting."
   :group 'citar
   :type '(repeat function))
 
-(defcustom citar-open-note-functions
-  '(citar-file--open-note)
-  "List of functions to open a note."
-  ;; REVIEW change to key only arg?
-  :group 'citar
-  :type '(function))
-
-(defcustom citar-has-notes-functions '(citar-file-has-notes)
-  "Functions used for displaying note indicators.
-
-Such functions must take KEY and return non-nil when the
-reference has associated notes."
-  ;; REVIEW change to key only arg?
-  :group 'citar
-  :type '(function))
-
-(defvar citar-notes-config-file
-  `(:name "Notes"
-    :category file
-    :key-predicate ,#'citar-file-has-notes
-    :action ,#'citar-file--open-note
-    :items ,#'citar-file--get-note-files)
-  "Default file-per-note configuration.")
-
-;; TODO hook these up, and remove other variables
-
 (defcustom citar-notes-sources
   `((citar-file .
                 ,(list :name "Notes"
@@ -333,49 +307,6 @@ plist has the following properties:
   "The notes backend."
   :group 'citar
   :type 'symbol)
-
-(defvar citar-notes-config citar-notes-config-file
-;; FIX doesn't work as defcustom
-  "Configuration plist for notes, with following properties:
-
-:name the group display name
-
-:category either 'file' or 'node-note'
-
-:key-predicate function to test for keys with notes
-
-:action function to open a given note candidate
-
-:items function to return candidate strings for keys
-
-:annotate annotation function")
-
-
-;; TODO Redundant with `citar-open-note-functions'?
-(defcustom citar-open-note-function
-  'citar--open-note
-  "Function to open a new or existing note.
-
-A note function must take two arguments:
-
-KEY: a string to represent the citekey
-ENTRY: an alist with the structured data (title, author, etc.)"
-  ;; REVIEW change to key only arg?
-  :group 'citar
-  :type 'function)
-
-(defcustom citar-create-note-function
-  'citar-org-format-note-default
-  "Function to create a new note.
-
-A note function must take three arguments:
-
-KEY: a string to represent the citekey
-ENTRY: an alist with the structured data (title, author, etc.)
-FILEPATH: the file name."
-  ;; REVIEW change to key only arg?
-  :group 'citar
-  :type 'function)
 
 ;; TODO Move this to `citar-org', since it's only used there?
 ;; Otherwise it seems to overlap with `citar-default-action'
