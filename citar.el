@@ -1182,6 +1182,15 @@ With prefix, rebuild the cache before offering candidates."
      (citar--get-notes-config-property :action) key entry)))
 
 ;;;###autoload
+(defun citar-open-links (keys)
+  "Open URL or DOI link associated with KEYS in a browser."
+  (interactive (list (citar-select-refs)))
+  ;; REVIEW this works, but should check for nil on select-resource
+  (if-let ((link (citar--select-resource keys :links t)))
+      (browse-url link)
+    (message "No link found for %s" keys)))
+
+;;;###autoload
 (defun citar-open-entry (key)
   "Open bibliographic entry associated with the KEY.
 With prefix, rebuild the cache before offering candidates."
@@ -1227,15 +1236,6 @@ directory as current buffer."
     (with-temp-file file
       (dolist (key keys)
         (citar--insert-bibtex key)))))
-
-;;;###autoload
-(defun citar-open-links (keys)
-  "Open URL or DOI link associated with KEYS in a browser."
-  (interactive (list (citar-select-refs)))
-  ;; REVIEW this works, but should check for nil on select-resource
-  (if-let ((link (citar--select-resource keys :links t)))
-      (browse-url link)
-    (message "No link found for %s" keys)))
 
 ;;;###autoload
 (defun citar-insert-citation (keys &optional arg)
