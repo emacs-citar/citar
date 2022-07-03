@@ -17,8 +17,6 @@
    :CUSTOM_ID: features
    :END:
 
-Note: this package was formerly called "bibtex-actions."
-
 This package provides a completing-read front-end to browse and act on BibTeX, BibLaTeX, and CSL JSON bibliographic data, and LaTeX, markdown, and org-cite editing support.
 
 When used with vertico, embark, and marginalia, it provides similar functionality to helm-bibtex and ivy-bibtex: quick filtering and selecting of bibliographic entries from the minibuffer, and the option to run different commands against them.
@@ -50,6 +48,8 @@ In addition, the following packages are strongly recommended for the best experi
 3. [[https://github.com/oantolin/embark][Embark]] (contextual actions)
 4. [[https://github.com/minad/marginalia][Marginalia]] (annotations, and also candidate classification for Embark)
 
+We also recommend Emacs 28, as this package relies on two of its features, that greatly enhance the UI.
+
 ** Configuration
    :PROPERTIES:
    :CUSTOM_ID: configuration
@@ -73,15 +73,14 @@ This is the minimal configuration, and will work with any completing-read compli
 
 *** Embark
 
-The =citar-embark= package adds contextual access actions in the minibuffer and at-point.
+The =citar-embark= package adds contextual access actions in the minibuffer and at-point via the ~citar-embark-mode~ minor mode`.
 When using Embark, the Citar actions are generic, and work the same across org, markdown, and latex modes.
 
 #+BEGIN_SRC emacs-lisp
 (use-package citar-embark
-  :bind (("M-;" . embark-act)
-         ("M-," . embark-dwim))
-  :custom
-  (citar-embark 1))
+  :after citar embark
+  :no-require
+  :config (citar-embark-mode))
 #+END_SRC
 
 *** Org-Cite
