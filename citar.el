@@ -1173,7 +1173,8 @@ With prefix, rebuild the cache before offering candidates."
   "Open notes associated with the KEYS."
   (interactive (list (citar-select-refs)))
   (dolist (key keys)
-    (funcall 'citar--open-notes key)))
+    (funcall
+     (citar--get-notes-config-property :action) key)))
 
 (defun citar--open-notes (key)
   "Open note(s) associated with KEY."
