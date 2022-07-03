@@ -1169,22 +1169,17 @@ With prefix, rebuild the cache before offering candidates."
            (message "No associated files for %s" key-or-keys)))))))
 
 ;;;###autoload
-(defun citar-open-notes (key)
-  "Open notes associated with the KEY."
-  ;; REVIEW KEY, or KEYS
-  (interactive (list (citar-select-ref)))
-  (let ((embark-default-action-overrides '((file . find-file))))
-    (if (listp citar-open-note-functions)
-        (citar--open-notes key)
-      (error "Please change the value of 'citar-open-note-functions' to a list"))))
+(defun citar-open-notes (keys)
+  "Open notes associated with the KEYS."
+  (interactive (list (citar-select-refs)))
+  (dolist (key keys)
+    (funcall 'citar--open-notes key)))
 
 (defun citar--open-notes (key)
   "Open note(s) associated with KEY."
   (let ((entry (citar-get-entry key)))
-    (or (seq-some
-         (lambda (opener)
-           (funcall opener key entry)) citar-open-note-functions)
-        (funcall citar-create-note-function key entry))))
+    (funcall
+     (citar--get-notes-config-property :action) key entry)))
 
 ;;;###autoload
 (defun citar-open-entry (key)
