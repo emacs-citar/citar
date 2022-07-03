@@ -41,6 +41,7 @@
 (declare-function citar-get-value "citar")
 (declare-function citar--bibliography-files "citar")
 (declare-function citar--check-configuration "citar")
+(declare-function citar--get-notes-config-property "citar")
 
 ;;;; File related variables
 
@@ -342,10 +343,11 @@ need to scan the contents of DIRS in this case."
             (file-exists (file-exists-p file)))
       (find-file file)
     (if (and (null citar-notes-paths)
-             (equal citar-create-note-function
+             (equal (citar--get-notes-config-property :action)
                     'citar-org-format-note-default))
         (error "You must set 'citar-notes-paths'")
-      (funcall citar-create-note-function key entry file))))
+      (funcall
+       (citar--get-notes-config-property :create) key entry))))
 
 (defun citar-file--get-note-files (keys)
   "Return list of notes associated with KEYS."

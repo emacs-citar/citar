@@ -73,13 +73,13 @@
 (make-obsolete 'citar-field-with-value 'citar-get-field-with-value "1.0") ; now returns cons pair
 (make-obsolete 'citar--open-note 'citar-file--open-note "1.0")
 
-(make-obsolete-variable
- 'citar-format-note-function 'citar-create-note-function "1.0")
+;(make-obsolete-variable
+; 'citar-format-note-function "1.0")
 
 ;;; Declare variables and functions for byte compiler
 
 (defvar embark-default-action-overrides)
-(declare-function marginalia-annotate-file "ext:marginalia")
+(declare-function citar-org-format-note-default "citar-org")
 
 ;;; Variables
 
@@ -281,8 +281,9 @@ If nil, single resources will open without prompting."
   `((citar-file .
                 ,(list :name "Notes"
                        :category 'file
-                       :key-predicate #'citar-file-has-notes
+                       :hasnote #'citar-file-has-notes
                        :action #'citar-file--open-note
+                       :create #'citar-org-format-note-default ; TODO remove?
                        :items #'citar-file--get-note-files)))
   "The alist of notes backends available for configuration.
 
@@ -293,7 +294,7 @@ plist has the following properties:
 
   :category the completion category
 
-  :key-predicate function to test for keys with notes
+  :hasnote function to test for keys with notes
 
   :action function to open a given note candidate
 
@@ -916,8 +917,8 @@ value (the result of `citar-get-entries') rather than some
 smaller subset."
   (citar--has-resources-for-entries
    entries
-   (mapcar (lambda (fn) (funcall fn entries))
-           citar-has-notes-functions)))
+   (funcall
+    (citar--get-notes-config-property :hasnote) entries)))
 
 
 (cl-defun citar-has-links (&key (entries (citar-get-entries)))
@@ -1173,8 +1174,9 @@ With prefix, rebuild the cache before offering candidates."
   "Open notes associated with the KEYS."
   (interactive (list (citar-select-refs)))
   (dolist (key keys)
-    (funcall
-     (citar--get-notes-config-property :action) key)))
+    (let ((entry (citar-get-entry key)))
+      (funcall
+       (citar--get-notes-config-property :action) key entry))))
 
 ;;;###autoload
 (defun citar-open-links (keys)
@@ -1371,7 +1373,8 @@ VARIABLES should be the names of Citar customization variables."
                       (seq-every-p #'stringp value))
            (error "`%s' should be a list of strings: %S" variable `',value)))
         ((or 'citar-has-files-functions 'citar-get-files-functions
-             'citar-has-notes-functions 'citar-open-note-functions
+           ;  (citar--get-notes-config-property :hasnote)
+           ;  (citar--get-notes-config-property :action)
              'citar-file-parser-functions)
          (unless (and (listp value) (seq-every-p #'functionp value))
            (error "`%s' should be a list of functions: %S" variable `',value)))
