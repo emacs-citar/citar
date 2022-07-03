@@ -305,7 +305,7 @@ reference has associated notes."
 ;; TODO hook these up, and remove other variables
 
 (defcustom citar-notes-sources
-  '((citar-file . citar-notes-config-file))
+  `((citar-file . ,citar-notes-config-file))
   "The alist of notes backends available for configuration.
 
 The format of the cons should be (NAME . PLIST), where the
