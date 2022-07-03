@@ -223,45 +223,10 @@ You can save this history across sessions by adding =citar-history= to =savehist
     :CUSTOM_ID: refreshing-the-library-display
     :END:
 
-=citar= uses two caches to speed up library display; one for the global bibliography, and another for local files specific to a buffer.
-This is great for performance, but means the data can become stale if you modify it.
+=citar= uses a cache to speed up library display.
+If a bib file changes, the cache should automatically update the next time you run a citar command.
 
-The =citar-refresh= command will reload the caches, and you can call this manually.
-You can also call any of the =citar= commands with a prefix argument: =C-u M-x citar-insert-key=.
-
-Although not default, =citar= also provides convenience functions for auto-refreshing cache when bib files change using filenotify.
-The simplest use of this functionality is
-
-#+BEGIN_SRC emacs-lisp
-(citar-filenotify-setup '(LaTeX-mode-hook org-mode-hook))
-#+END_SRC
-
-This will add watches for the global bib files and in addition add a hook to =LaTeX-mode-hook= and =org-mode-hook= to add watches for local bibliographic files.
-By default this will invalidate the cache if a bib file changes. If the bib files change rarely, a more suitable option is to refresh the cache.
-This can be achieved by
-
-#+BEGIN_SRC emacs-lisp
-(setq citar-filenotify-callback 'refresh-cache)
-#+END_SRC
-
-The behavior can be tweaked more thoroughly by setting ~citar-filenotify-callback~ to a function.
-See its documentation for details.
-Watches can be also placed on additional files.
-This is controlled by the variable ~citar-filenotify-files~.
-
-Another option to make the completion interface more seamless is to add a hook which generates the cache after a buffer is opened.
-This can be done when emacs has been idle (half a second in the example below) with something like this:
-
-#+BEGIN_SRC emacs-lisp
-(defun gen-bib-cache-idle ()
-  "Generate bib item caches with idle timer"
-  (run-with-idle-timer 0.5 nil #'citar-refresh))
-
-(add-hook 'LaTeX-mode-hook #'gen-bib-cache-idle)
-(add-hook 'org-mode-hook #'gen-bib-cache-idle)
-#+END_SRC
-
-For additional configuration options on this, see [[https://github.com/bdarcus/citar/wiki/Configuration#automating-path-watches][the wiki]].
+The =citar-cache-refresh= command will reload the caches.
 
 ** Notes
 
