@@ -298,14 +298,18 @@ reference has associated notes."
     :category file
     :key-predicate ,#'citar-file-has-notes
     :action ,#'citar-file--open-note
-;   :annotate ,#'marginalia-annotate-file
     :items ,#'citar-file--get-note-files)
   "Default file-per-note configuration.")
 
 ;; TODO hook these up, and remove other variables
 
 (defcustom citar-notes-sources
-  `((citar-file . ,citar-notes-config-file))
+  `((citar-file .
+                ,(list :name "Notes"
+                       :category 'file
+                       :key-predicate #'citar-file-has-notes
+                       :action #'citar-file--open-note
+                       :items #'citar-file--get-note-files)))
   "The alist of notes backends available for configuration.
 
 The format of the cons should be (NAME . PLIST), where the
@@ -651,6 +655,7 @@ HISTORY is the `completing-read' history argument."
                       (equal item "")))))
     (hash-table-keys selected-hash)))
 
+
 (defun citar--add-notep-prop (candidate)
   "Add a note resource CANDIDATE with 'notep t'."
   (propertize candidate 'notep t))
@@ -669,8 +674,8 @@ Optionally constrain to FILES, NOTES, and/or LINKS."
             (cons 'url (citar-get-links keys))))
          (notesource
           (when notes
-            (let* ((cat (plist-get citar-notes-config :category))
-                   (items (plist-get citar-notes-config :items))
+            (let* ((cat (citar--get-notes-config-property :category))
+                   (items (citar--get-notes-config-property :items))
                    (items (if (functionp items) (funcall items keys) items))
                    (items (mapcar #'citar--add-notep-prop items)))
               (cons cat items))))
@@ -692,8 +697,8 @@ Optionally constrain to FILES, NOTES, and/or LINKS."
   "Annotate candidate CAND with `consult--multi' type."
   ;; Adapted from 'consult'
   (let* ((nodecat (car (get-text-property 0 'multi-category cand)))
-         (notecat (plist-get citar-notes-config :category))
-         (annotate (plist-get citar-notes-config :annotate))
+         (notecat (citar--get-notes-config-property :category))
+         (annotate (citar--get-notes-config-property :annotate))
          (ann (when (and annotate (string= nodecat notecat))
                 (funcall annotate (cdr (get-text-property 0 'multi-category cand))))))
     ann))
@@ -724,7 +729,7 @@ Optionally constrain to FILES, NOTES, and/or LINKS."
     (let ((cat (car (get-text-property 0 'multi-category resource)))
           (notep (get-text-property 0 'notep resource)))
       ;; If note, assign to note group; otherwise use completion category.
-      (if notep (plist-get citar-notes-config :name)
+      (if notep (citar--get-notes-config-property :name)
         (pcase cat
           ('file "Library Files")
           ('url "Links"))))))
@@ -880,9 +885,14 @@ The value is transformed using `citar-display-transform-functions'"
 
 ;;;; File, notes, and links
 
+(defun citar--get-notes-config-property (property)
+  "Return PROPERTY value for configured notes backend."
+  (plist-get
+   (alist-get citar-notes-source citar-notes-sources) property))
+
 (defun citar-get-notes (keys)
   "Return list of notes associated with KEYS."
-  (funcall (plist-get citar-notes-config :items) keys))
+  (funcall (citar--get-notes-config-property :items) keys))
 
 (cl-defun citar-get-files (key-or-keys &key (entries (citar-get-entries)))
   "Return list of files associated with KEY-OR-KEYS in ENTRIES.
