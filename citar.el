@@ -73,8 +73,7 @@
 (make-obsolete 'citar-field-with-value 'citar-get-field-with-value "1.0") ; now returns cons pair
 (make-obsolete 'citar--open-note 'citar-file--open-note "1.0")
 
-;(make-obsolete-variable
-; 'citar-format-note-function "1.0")
+;;(make-obsolete-variable 'citar-format-note-function "1.0")
 
 ;;; Declare variables and functions for byte compiler
 
@@ -642,16 +641,16 @@ Optionally constrain to FILES, NOTES, and/or LINKS."
   (if-let ((resources
             (citar--get-resource-candidates
              keys :files files :notes notes :links links)))
-    (completing-read
-     "Select resource: "
-     (lambda (string predicate action)
-       ;; REVIEW how to hook in annotation functions here by category?
-       (if (eq action 'metadata)
-           `(metadata
-             (group-function . citar--select-group-related-resources)
-             (annotation-function . citar--multi-annotate)
-             (category . multi-category))
-         (complete-with-action action resources string predicate))))))
+      (completing-read
+       "Select resource: "
+       (lambda (string predicate action)
+         ;; REVIEW how to hook in annotation functions here by category?
+         (if (eq action 'metadata)
+             `(metadata
+               (group-function . citar--select-group-related-resources)
+               (annotation-function . citar--multi-annotate)
+               (category . multi-category))
+           (complete-with-action action resources string predicate))))))
 
 (defun citar--select-group-related-resources (resource transform)
   "Group RESOURCE by type or TRANSFORM."
@@ -1374,8 +1373,8 @@ VARIABLES should be the names of Citar customization variables."
                       (seq-every-p #'stringp value))
            (error "`%s' should be a list of strings: %S" variable `',value)))
         ((or 'citar-has-files-functions 'citar-get-files-functions
-           ;  (citar--get-notes-config-property :hasnote)
-           ;  (citar--get-notes-config-property :action)
+                                        ;  (citar--get-notes-config-property :hasnote)
+                                        ;  (citar--get-notes-config-property :action)
              'citar-file-parser-functions)
          (unless (and (listp value) (seq-every-p #'functionp value))
            (error "`%s' should be a list of functions: %S" variable `',value)))

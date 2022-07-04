@@ -326,8 +326,8 @@ need to scan the contents of DIRS in this case."
 (defun citar-file--get-notes-hash (&optional keys)
   "Return hash-table with KEYS with file notes."
   (citar-file--directory-files
-                citar-notes-paths keys citar-file-note-extensions
-                citar-file-additional-files-separator))
+   citar-notes-paths keys citar-file-note-extensions
+   citar-file-additional-files-separator))
 
 (defun citar-file-has-notes (&optional _entries)
   "Return predicate testing whether cite key has associated notes."
