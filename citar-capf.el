@@ -25,10 +25,10 @@
 (declare-function org-element-type "ext:org-element")
 (declare-function org-element-context "ext:org-element")
 ;; Declare function from citar
-;; (declare-function citar--ref-completion-table "citar") ;; pending cache revisions
+(declare-function citar--ref-completion-table "citar") ;; pending cache revisions
 
 ;; Define vars for capf
-(defvar citar-capf--candidates (or (citar--get-candidates)
+(defvar citar-capf--candidates (or (citar--ref-completion-table)
                                    (user-error "No bibliography set"))
   "Completion candidates for `citar-capf'.")
 
@@ -41,12 +41,12 @@
 (defun citar-capf--exit (str _status)
   "Return key for STR from CANDIDATES hash."
   (delete-char (- (length str)))
-  (insert (cadr (assoc str citar-capf--candidates))))
+  (insert (gethash str citar-capf--candidates)))
 
 ;;;; Citar-Capf
 ;;;###autoload
 (defun citar-capf ()
-  "Citation key `completion-at-point` for org, markdown, or latex."
+  "Citation key `completion-at-point' for org, markdown, or latex."
   (let ((citar-capf-latex-regexp
          "\\(?:cite\\(?:\\(?:[pt]\\*\\|[pt]\\)?{\\)\\)\\([[:alnum:]_-]*,\\)*\\([[:alnum:]_-]*\\)")
         (citar-capf-markdown-regexp

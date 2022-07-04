@@ -10,7 +10,9 @@
 ;; activate additional packages we need, including bibtex-actions
 (require 'embark)
 (require 'citar)
-(require 'consult)
+(require 'citar-embark)
+
+(citar-embark-mode 1)
 
 ;; set binding for Embark context menu
 (global-set-key (kbd "M-;") #'embark-act)
@@ -25,7 +27,7 @@
         org-cite-activate-processor 'citar))
 
 ;; load the test bib file
-(setq citar-bibliography '("test.bib"))
+(setq citar-bibliography '("../test.bib"))
 
 (setq vertico-count 20)
 

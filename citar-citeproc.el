@@ -65,7 +65,7 @@
   :type 'directory)
 
 (defvar citar-citeproc-csl-style nil
-  "CSL style file to be used with `citar-citeproc-format-reference`.
+  "CSL style file to be used with `citar-citeproc-format-reference'.
 
 If file is located in the directory set to
 `citar-citeproc-csl-styles-dir', only the filename itself is
@@ -82,7 +82,7 @@ accepted.")
 
 ;;;###autoload
 (defun citar-citeproc-select-csl-style ()
-  "Select CSL style to be used with `citar-citeproc-format-reference`."
+  "Select CSL style to be used with `citar-citeproc-format-reference'."
   (interactive)
   (unless citar-citeproc-csl-styles-dir
     (error "Be sure to set 'citar-citeproc-csl-styles-dir' to your CSL styles directory"))
@@ -96,9 +96,9 @@ accepted.")
     (setq citar-citeproc-csl-style file)))
 
 ;;;###autoload
-(defun citar-citeproc-format-reference (keys-entries)
-  "Return formatted reference(s) for KEYS-ENTRIES via `citeproc-el`.
-Formatting follows CSL style set in `citar-citeproc-csl-style`.
+(defun citar-citeproc-format-reference (keys)
+  "Return formatted reference(s) for KEYS via `citeproc-el'.
+Formatting follows CSL style set in `citar-citeproc-csl-style'.
 With prefix-argument, select CSL style."
   (when (or (eq citar-citeproc-csl-style nil)
             current-prefix-arg)
@@ -108,10 +108,7 @@ With prefix-argument, select CSL style."
   (let* ((style (if (string-match-p "/" citar-citeproc-csl-style)
                     citar-citeproc-csl-style
                   (expand-file-name citar-citeproc-csl-style citar-citeproc-csl-styles-dir)))
-         (keys (citar--extract-keys keys-entries))
-         (bibs (flatten-list
-                (list citar-bibliography
-                      (citar--major-mode-function 'local-bib-files #'ignore))))
+         (bibs (citar--bibliography-files))
          (proc (citeproc-create style
                                 (citeproc-hash-itemgetter-from-any bibs)
                                 (citeproc-locale-getter-from-dir citar-citeproc-csl-locales-dir)

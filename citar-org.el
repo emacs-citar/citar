@@ -163,8 +163,8 @@ With PROC list, limit to specific processor(s)."
 (defun citar-org-select-key (&optional multiple)
   "Return a list of keys when MULTIPLE, or else a key string."
   (if multiple
-      (citar--extract-keys (citar-select-refs))
-    (car (citar-select-ref))))
+      (citar-select-refs)
+    (citar-select-ref)))
 
 ;;;###autoload
 (defun citar-org-insert-citation (keys &optional style)
@@ -197,7 +197,7 @@ With PROC list, limit to specific processor(s)."
 
 ;;;###autoload
 (defun citar-org-insert-edit (&optional arg)
-  "Run `org-cite-insert` with citar insert processor.
+  "Run `org-cite-insert' with citar insert processor.
 ARG is used as the prefix argument."
   (let ((org-cite-insert-processor 'citar))
     (org-cite-insert arg)))
@@ -263,12 +263,12 @@ strings by style."
 ;;; Org note function
 
 (defun citar-org--id-get-create (&optional force)
-  "Call `org-id-get-create` while maintaining point.
+  "Call `org-id-get-create' while maintaining point.
 
 If point is at the beginning of the buffer and a new properties
 drawer is created, move point after the drawer.
 
-More generally, if `org-id-get-create` inserts text at point,
+More generally, if `org-id-get-create' inserts text at point,
 move point after the insertion.
 
 With optional argument FORCE, force the creation of a new ID."
@@ -289,14 +289,14 @@ With optional argument FORCE, force the creation of a new ID."
     (ignore-errors (org-roam-ref-add (concat "@" key)))))
 
 ;;;###autoload
-(defun citar-org-format-note-default (key entry filepath)
-  "Format a note FILEPATH from KEY and ENTRY."
+(defun citar-org-format-note-default (key entry)
+  "Format a note from KEY and ENTRY."
   (let* ((template (citar--get-template 'note))
-         (note-meta
-          (when template
-            (citar--format-entry-no-widths
-             entry
-             template)))
+         (note-meta (when template
+                      (citar-format--entry template entry)))
+         (filepath (expand-file-name
+                    (concat key ".org")
+                    (car citar-notes-paths)))
          (buffer (find-file filepath)))
     (with-current-buffer buffer
       ;; This just overrides other template insertion.

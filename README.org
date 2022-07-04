@@ -17,8 +17,6 @@
    :CUSTOM_ID: features
    :END:
 
-Note: this package was formerly called "bibtex-actions."
-
 This package provides a completing-read front-end to browse and act on BibTeX, BibLaTeX, and CSL JSON bibliographic data, and LaTeX, markdown, and org-cite editing support.
 
 When used with vertico, embark, and marginalia, it provides similar functionality to helm-bibtex and ivy-bibtex: quick filtering and selecting of bibliographic entries from the minibuffer, and the option to run different commands against them.
@@ -50,6 +48,8 @@ In addition, the following packages are strongly recommended for the best experi
 3. [[https://github.com/oantolin/embark][Embark]] (contextual actions)
 4. [[https://github.com/minad/marginalia][Marginalia]] (annotations, and also candidate classification for Embark)
 
+We also recommend Emacs 28, as this package relies on two of its features, that greatly enhance the UI.
+
 ** Configuration
    :PROPERTIES:
    :CUSTOM_ID: configuration
@@ -73,8 +73,15 @@ This is the minimal configuration, and will work with any completing-read compli
 
 *** Embark
 
-Citar will automatically integrate with Embark if it is installed, offering contextual access to actions in the minibuffer and at-point.
+The =citar-embark= package adds contextual access actions in the minibuffer and at-point via the ~citar-embark-mode~ minor mode.
 When using Embark, the Citar actions are generic, and work the same across org, markdown, and latex modes.
+
+#+BEGIN_SRC emacs-lisp
+(use-package citar-embark
+  :after citar embark
+  :no-require
+  :config (citar-embark-mode))
+#+END_SRC
 
 *** Org-Cite
 
@@ -216,65 +223,17 @@ You can save this history across sessions by adding =citar-history= to =savehist
     :CUSTOM_ID: refreshing-the-library-display
     :END:
 
-=citar= uses two caches to speed up library display; one for the global bibliography, and another for local files specific to a buffer.
-This is great for performance, but means the data can become stale if you modify it.
-
-The =citar-refresh= command will reload the caches, and you can call this manually.
-You can also call any of the =citar= commands with a prefix argument: =C-u M-x citar-insert-key=.
-
-Although not default, =citar= also provides convenience functions for auto-refreshing cache when bib files change using filenotify.
-The simplest use of this functionality is
-
-#+BEGIN_SRC emacs-lisp
-(citar-filenotify-setup '(LaTeX-mode-hook org-mode-hook))
-#+END_SRC
-
-This will add watches for the global bib files and in addition add a hook to =LaTeX-mode-hook= and =org-mode-hook= to add watches for local bibliographic files.
-By default this will invalidate the cache if a bib file changes. If the bib files change rarely, a more suitable option is to refresh the cache.
-This can be achieved by
-
-#+BEGIN_SRC emacs-lisp
-(setq citar-filenotify-callback 'refresh-cache)
-#+END_SRC
-
-The behavior can be tweaked more thoroughly by setting ~citar-filenotify-callback~ to a function.
-See its documentation for details.
-Watches can be also placed on additional files.
-This is controlled by the variable ~citar-filenotify-files~.
-
-Another option to make the completion interface more seamless is to add a hook which generates the cache after a buffer is opened.
-This can be done when emacs has been idle (half a second in the example below) with something like this:
-
-#+BEGIN_SRC emacs-lisp
-(defun gen-bib-cache-idle ()
-  "Generate bib item caches with idle timer"
-  (run-with-idle-timer 0.5 nil #'citar-refresh))
-
-(add-hook 'LaTeX-mode-hook #'gen-bib-cache-idle)
-(add-hook 'org-mode-hook #'gen-bib-cache-idle)
-#+END_SRC
-
-For additional configuration options on this, see [[https://github.com/bdarcus/citar/wiki/Configuration#automating-path-watches][the wiki]].
+Citar uses a cache to speed up library display.
+If a bib file changes, the cache will automatically update the next time you run a Citar command.
+Note that cached data preformatted completion candidates are independently tracked by file.
+So, for example, if you have one very large bibliography file that changes a lot, you might consider splitting into one large file that is more stable, and one-or-more smaller ones that change more frequently.
 
 ** Notes
 
-Citar provides a ~citar-create-note-function~ variable, and a default function for org, which also works well with org-roam (v2 now supports org-cite).
-You can configure the title display using the "note" template.
-
-You can also use the ~citar-open-note-functions~ variable to replace or augment the default with another; for example from org-roam-bibtex:
-
-#+BEGIN_SRC emacs-lisp
-(setq citar-open-note-functions '(orb-citar-edit-note))
-#+END_SRC
-
-Since ~citar-open-note-functions~ is a list, you can also include multiple functions, to handle different note scenarios.
-
-Please note that if you choose to use org-roam-bibtex using the above configuration, you will need to set ~:immediate-finish t~ in the template that you use for bibliography notes in ~org-roam-capture-templates~.
-Since ~citar-open-note-functions~ attempts multiple functions one after the other, this is needed to ensure the ~org-capture~ returns immediately without waiting for further user input.
-
-Citar also includes a ~citar-has-notes-functions~ variable, which specifies a list of functions, each of which returns a predicate function to test whether a reference has associated notes.
-This function allows Citar to correctly format the completion UI candidates.
-The default function only supports one-file-per-key notes.
+Citar offers configurable note-taking and access integration.
+The ~citar-notes-sources~ variable configures note backends, and ~citar-notes-source~ activates your chosen backend.
+A backend primarily specifies functions to update the Citar display, to create the completion candidates, and to open existing and new notes.
+See the ~citar-notes-sources~ docstring for details, and the =citar-register-note-source= and =citar-remove-note-source= convenience functions.
 
 ** Files, file association and file-field parsing
 

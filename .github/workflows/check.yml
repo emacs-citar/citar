@@ -17,6 +17,7 @@ on:
 jobs:
   check:
     runs-on: ubuntu-latest
+    continue-on-error: ${{ matrix.emacs_version == 'snapshot' }}
     strategy:
       fail-fast: false
       matrix:
@@ -28,6 +29,9 @@ jobs:
           - compile
           - test
           - lint
+        exclude:
+          - emacs_version: snapshot
+            action: compile
     steps:
     - name: Set up Emacs ${{matrix.emacs_version}}
       uses: purcell/setup-emacs@master
@@ -63,5 +67,6 @@ jobs:
         eldev --color lint re
     - name: Lint package metadata
       if: ${{ matrix.action == 'lint' }}
+      continue-on-error: true
       run: |
-        eldev --color lint package || true
+        eldev --color lint package

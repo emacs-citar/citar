@@ -66,7 +66,7 @@ If point is immediately after the opening \[, add new keys
 to the beginning of the citation.
 
 If INVERT-PROMPT is non-nil, invert the meaning of
-`citar-markdown-prompt-for-extra-arguments`."
+`citar-markdown-prompt-for-extra-arguments'."
   (let* ((citation (citar-markdown-citation-at-point))
          (keys (if citation (seq-difference keys (car citation)) keys))
          (keyconcat (mapconcat (lambda (k) (concat "@" k)) keys "; "))
@@ -86,18 +86,17 @@ If INVERT-PROMPT is non-nil, invert the meaning of
           (insert "; " keyconcat))))))
 
 ;;;###autoload
-(defun citar-markdown-insert-edit (&optional arg)
+(defun citar-markdown-insert-edit (&optional _arg)
   "Prompt for keys and call `citar-markdown-insert-citation.
 With ARG non-nil, rebuild the cache before offering candidates."
-  (citar-markdown-insert-citation
-   (citar--extract-keys (citar-select-refs :rebuild-cache arg))))
+  (citar-markdown-insert-citation (citar-select-refs)))
 
 ;;;###autoload
 (defun citar-markdown-key-at-point ()
   "Return citation key at point (with its bounds) for pandoc markdown citations.
 Returns (KEY . BOUNDS), where KEY is the citation key at point
 and BOUNDS is a pair of buffer positions.  Citation keys are
-found using `citar-markdown-citation-key-regexp`.  Returns nil if
+found using `citar-markdown-citation-key-regexp'.  Returns nil if
 there is no key at point."
   (interactive)
   (when (thing-at-point-looking-at citar-markdown-citation-key-regexp)
@@ -109,7 +108,7 @@ there is no key at point."
   "Return keys of citation at point.
 Find balanced expressions starting and ending with square
 brackets and containing at least one citation key (matching
-`citar-markdown-citation-key-regexp`).  Return (KEYS . BOUNDS),
+`citar-markdown-citation-key-regexp').  Return (KEYS . BOUNDS),
 where KEYS is a list of the found citation keys and BOUNDS is a
 pair of buffer positions indicating the start and end of the
 citation."
