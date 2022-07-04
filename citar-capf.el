@@ -1,13 +1,11 @@
 ;;; citar-capf.el --- citar completion-at-point -*- lexical-binding: t; -*-
 ;;
 ;; Copyright (C) 2022 Bruce D'Arcus, Colin McLear
-;;
+;; License: GPL-3.0-or-later
 ;;
 ;; This file is not part of GNU Emacs.
 ;;
 ;;; Commentary:
-;;
-;;  Description
 ;;
 ;;  Citation key 'completion-at-point' for org, markdown, or latex.
 ;;
@@ -28,8 +26,9 @@
 (declare-function citar--ref-completion-table "citar") ;; pending cache revisions
 
 ;; Define vars for capf
-(defvar citar-capf--candidates (or (citar--ref-completion-table)
-                                   (user-error "No bibliography set"))
+(defvar citar-capf--candidates
+  (or (citar--completion-table (citar--format-candidates))
+      (user-error "No bibliography set"))
   "Completion candidates for `citar-capf'.")
 
 (defvar citar-capf--properties
