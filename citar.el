@@ -513,8 +513,8 @@ FILTER: if non-nil, should be a predicate function taking
 (cl-defun citar-select-ref (&key filter)
   "Select bibliographic references.
 
-Call `citar-select-ref' with argument `:multiple'; see its
-documentation for the return value."
+Call 'citar-select-ref' with argument ':multiple, and optional
+FILTER; see its documentation for the return value."
   (car (citar-select-refs :multiple nil :filter filter)))
 
 (defun citar--multiple-completion-table (selected-hash candidates filter)
@@ -632,7 +632,6 @@ Optionally constrain to FILES, NOTES, and/or LINKS."
       (completing-read
        "Select resource: "
        (lambda (string predicate action)
-         ;; REVIEW how to hook in annotation functions here by category?
          (if (eq action 'metadata)
              `(metadata
                (group-function . citar--select-group-related-resources)

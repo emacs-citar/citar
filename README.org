@@ -225,15 +225,15 @@ You can save this history across sessions by adding =citar-history= to =savehist
 
 Citar uses a cache to speed up library display.
 If a bib file changes, the cache will automatically update the next time you run a Citar command.
-
-The =citar-cache-refresh= command will also reload the caches manually.
+Note that cached data preformatted completion candidates are independently tracked by file.
+So, for example, if you have one very large bibliography file that changes a lot, you might consider splitting into one large file that is more stable, and one-or-more smaller ones that change more frequently.
 
 ** Notes
 
 Citar offers configurable note-taking and access integration.
 The ~citar-notes-sources~ variable configures note backends, and ~citar-notes-source~ activates your chosen backend.
 A backend primarily specifies functions to update the Citar display, to create the completion candidates, and to open existing and new notes.
-See the docstrings for details.
+See the ~citar-notes-sources~ docstring for details, and the =citar-register-note-source= and =citar-remove-note-source= convenience functions.
 
 ** Files, file association and file-field parsing
 

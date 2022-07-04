@@ -331,6 +331,7 @@ need to scan the contents of DIRS in this case."
 
 (defun citar-file-has-notes (&optional _entries)
   "Return predicate testing whether cite key has associated notes."
+  ;; REVIEW why this optional arg when not needed?
   (let ((files (citar-file--get-notes-hash)))
     (lambda (key)
       (gethash key files))))
