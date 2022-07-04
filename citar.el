@@ -576,7 +576,6 @@ HISTORY is the `completing-read' history argument."
                       (equal item "")))))
     (hash-table-keys selected-hash)))
 
-
 (defun citar--add-notep-prop (candidate)
   "Add a note resource CANDIDATE with 'notep t'."
   (propertize candidate 'notep t))
@@ -595,8 +594,8 @@ Optionally constrain to FILES, NOTES, and/or LINKS."
             (cons 'url (citar-get-links keys))))
          (notesource
           (when notes
-            (let* ((cat (citar--get-notes-config-property :category))
-                   (items (citar--get-notes-config-property :items))
+            (let* ((cat (citar--get-notes-config :category))
+                   (items (citar--get-notes-config :items))
                    (items (if (functionp items) (funcall items keys) items))
                    (items (mapcar #'citar--add-notep-prop items)))
               (cons cat items))))
@@ -618,8 +617,8 @@ Optionally constrain to FILES, NOTES, and/or LINKS."
   "Annotate candidate CAND with `consult--multi' type."
   ;; Adapted from 'consult'
   (let* ((nodecat (car (get-text-property 0 'multi-category cand)))
-         (notecat (citar--get-notes-config-property :category))
-         (annotate (citar--get-notes-config-property :annotate))
+         (notecat (citar--get-notes-config :category))
+         (annotate (citar--get-notes-config :annotate))
          (ann (when (and annotate (string= nodecat notecat))
                 (funcall annotate (cdr (get-text-property 0 'multi-category cand))))))
     ann))
@@ -650,7 +649,7 @@ Optionally constrain to FILES, NOTES, and/or LINKS."
     (let ((cat (car (get-text-property 0 'multi-category resource)))
           (notep (get-text-property 0 'notep resource)))
       ;; If note, assign to note group; otherwise use completion category.
-      (if notep (citar--get-notes-config-property :name)
+      (if notep (citar--get-notes-config :name)
         (pcase cat
           ('file "Library Files")
           ('url "Links"))))))
@@ -806,14 +805,24 @@ The value is transformed using `citar-display-transform-functions'"
 
 ;;;; File, notes, and links
 
-(defun citar--get-notes-config-property (property)
+(defun citar--get-notes-config (property)
   "Return PROPERTY value for configured notes backend."
   (plist-get
    (alist-get citar-notes-source citar-notes-sources) property))
 
+(defun citar-register-notes-source (name config)
+  "Register note backend.
+
+NAME is a symbol, and CONFIG is a plist."
+  (add-to-list 'citar-notes-sources (cons name config)))
+
+(defun citar-remove-notes-source (name)
+  "Remove note backend NAME."
+  (assoc-delete-all name citar-notes-sources))
+
 (defun citar-get-notes (keys)
   "Return list of notes associated with KEYS."
-  (funcall (citar--get-notes-config-property :items) keys))
+  (funcall (citar--get-notes-config :items) keys))
 
 (cl-defun citar-get-files (key-or-keys &key (entries (citar-get-entries)))
   "Return list of files associated with KEY-OR-KEYS in ENTRIES.
@@ -907,7 +916,7 @@ smaller subset."
   (citar--has-resources-for-entries
    entries
    (funcall
-    (citar--get-notes-config-property :hasnote) entries)))
+    (citar--get-notes-config :hasnote) entries)))
 
 
 (cl-defun citar-has-links (&key (entries (citar-get-entries)))
@@ -1163,7 +1172,7 @@ For use with `embark-act-all'."
   (dolist (key keys)
     (let ((entry (citar-get-entry key)))
       (funcall
-       (citar--get-notes-config-property :action) key entry))))
+       (citar--get-notes-config :action) key entry))))
 
 ;;;###autoload
 (defun citar-open-links (keys)
@@ -1357,8 +1366,8 @@ VARIABLES should be the names of Citar customization variables."
                       (seq-every-p #'stringp value))
            (error "`%s' should be a list of strings: %S" variable `',value)))
         ((or 'citar-has-files-functions 'citar-get-files-functions
-                                        ;  (citar--get-notes-config-property :hasnote)
-                                        ;  (citar--get-notes-config-property :action)
+                                        ;  (citar--get-notes-config :hasnote)
+                                        ;  (citar--get-notes-config :action)
              'citar-file-parser-functions)
          (unless (and (listp value) (seq-every-p #'functionp value))
            (error "`%s' should be a list of functions: %S" variable `',value)))
