@@ -231,16 +231,6 @@ the same width."
 
 ;;;; Citar actions and other miscellany
 
-;; TODO this is no longer used. What to do with it?
-(defcustom citar-force-refresh-hook nil
-  "Hook run when user forces a (re-) building of the candidates cache.
-This hook is only called when the user explicitly requests the
-cache to be rebuilt.  It is intended for \"heavy\" operations
-which recreate entire bibliography files using an external
-reference manager like Zotero or JabRef."
-  :group 'citar
-  :type 'hook)
-
 (defcustom citar-default-action #'citar-open
   "The default action for the `citar-at-point' command.
 Should be a function that takes one argument, a list with each
@@ -524,8 +514,7 @@ FILTER: if non-nil, should be a predicate function taking
   "Select bibliographic references.
 
 Call `citar-select-ref' with argument `:multiple'; see its
-documentation for the return value and the meaning of
-REBUILD-CACHE and FILTER."
+documentation for the return value."
   (car (citar-select-refs :multiple nil :filter filter)))
 
 (defun citar--multiple-completion-table (selected-hash candidates filter)
@@ -1143,9 +1132,7 @@ For use with `embark-act-all'."
 
 ;;;###autoload
 (defun citar-attach-files (key-or-keys)
-  "Attach library file associated with KEY-OR-KEYS to outgoing MIME message.
-
-With prefix, rebuild the cache before offering candidates."
+  "Attach library file associated with KEY-OR-KEYS to outgoing MIME message."
   (interactive (list (citar-select-ref)))
   (let ((embark-default-action-overrides '((file . mml-attach-file))))
     (citar--library-file-action key-or-keys #'mml-attach-file)))
@@ -1189,16 +1176,14 @@ With prefix, rebuild the cache before offering candidates."
 
 ;;;###autoload
 (defun citar-open-entry (key)
-  "Open bibliographic entry associated with the KEY.
-With prefix, rebuild the cache before offering candidates."
+  "Open bibliographic entry associated with the KEY."
   (interactive (list (citar-select-ref)))
   (when-let ((bibtex-files (citar--bibliography-files)))
     (bibtex-search-entry key t nil t)))
 
 ;;;###autoload
 (defun citar-insert-bibtex (keys)
-  "Insert bibliographic entry associated with the KEYS.
-With prefix, rebuild the cache before offering candidates."
+  "Insert bibliographic entry associated with the KEYS."
   (interactive (list (citar-select-refs)))
   (dolist (key keys)
     (citar--insert-bibtex key)))
@@ -1290,8 +1275,7 @@ ARG is forwarded to the mode-specific insertion function given in
 
 ;;;###autoload
 (defun citar-insert-keys (keys)
-  "Insert KEYS citekeys.
-With prefix, rebuild the cache before offering candidates."
+  "Insert KEYS citekeys."
   (interactive (list (citar-select-refs)))
   (citar--major-mode-function
    'insert-keys
