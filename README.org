@@ -73,7 +73,7 @@ This is the minimal configuration, and will work with any completing-read compli
 
 *** Embark
 
-The =citar-embark= package adds contextual access actions in the minibuffer and at-point via the ~citar-embark-mode~ minor mode`.
+The =citar-embark= package adds contextual access actions in the minibuffer and at-point via the ~citar-embark-mode~ minor mode.
 When using Embark, the Citar actions are generic, and work the same across org, markdown, and latex modes.
 
 #+BEGIN_SRC emacs-lisp
@@ -223,30 +223,17 @@ You can save this history across sessions by adding =citar-history= to =savehist
     :CUSTOM_ID: refreshing-the-library-display
     :END:
 
-=citar= uses a cache to speed up library display.
-If a bib file changes, the cache should automatically update the next time you run a citar command.
+Citar uses a cache to speed up library display.
+If a bib file changes, the cache will automatically update the next time you run a Citar command.
 
-The =citar-cache-refresh= command will reload the caches.
+The =citar-cache-refresh= command will also reload the caches manually.
 
 ** Notes
 
-Citar provides a ~citar-create-note-function~ variable, and a default function for org, which also works well with org-roam (v2 now supports org-cite).
-You can configure the title display using the "note" template.
-
-You can also use the ~citar-open-note-functions~ variable to replace or augment the default with another; for example from org-roam-bibtex:
-
-#+BEGIN_SRC emacs-lisp
-(setq citar-open-note-functions '(orb-citar-edit-note))
-#+END_SRC
-
-Since ~citar-open-note-functions~ is a list, you can also include multiple functions, to handle different note scenarios.
-
-Please note that if you choose to use org-roam-bibtex using the above configuration, you will need to set ~:immediate-finish t~ in the template that you use for bibliography notes in ~org-roam-capture-templates~.
-Since ~citar-open-note-functions~ attempts multiple functions one after the other, this is needed to ensure the ~org-capture~ returns immediately without waiting for further user input.
-
-Citar also includes a ~citar-has-notes-functions~ variable, which specifies a list of functions, each of which returns a predicate function to test whether a reference has associated notes.
-This function allows Citar to correctly format the completion UI candidates.
-The default function only supports one-file-per-key notes.
+Citar offers configurable note-taking and access integration.
+The ~citar-notes-sources~ variable configures note backends, and ~citar-notes-source~ activates your chosen backend.
+A backend primarily specifies functions to update the Citar display, to create the completion candidates, and to open existing and new notes.
+See the docstrings for details.
 
 ** Files, file association and file-field parsing
 
