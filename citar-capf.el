@@ -1,10 +1,9 @@
 ;;; citar-capf.el --- citar completion-at-point -*- lexical-binding: t; -*-
 ;;
-;; Copyright (C) 2022 Bruce D'Arcus, Colin McLear
+;; SPDX-FileCopyrightText: 2022 Bruce D'Arcus, Colin McLear
+;; SPDX-License-Identifier: GPL-3.0-or-later
 ;;
 ;; This file is not part of GNU Emacs.
-;;
-;; SPDX-License-Identifier: GPL-3.0-or-later
 ;;
 ;;; Commentary:
 ;;

@@ -1,12 +1,13 @@
 ;;; citar-embark.el --- Citar/Embark integration -*- lexical-binding: t; -*-
 ;;
-;; Copyright (C) 2022 Bruce D'Arcus
-;;
 ;; Author: Bruce D'Arcus <bdarcus@gmail.com>
 ;; Maintainer: Bruce D'Arcus <bdarcus@gmail.com>
 ;; Created: June 22, 2022
 ;; Modified: June 22, 2022
+;;
+;; SPDX-FileCopyrightText: 2021-2022 Bruce D'Arcus
 ;; SPDX-License-Identifier: GPL-3.0-or-later
+;;
 ;; Version: 1.0
 ;; Keywords: bib extensions
 ;; Homepage: https://github.com/emacs-citar/citar-embark
