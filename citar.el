@@ -614,15 +614,13 @@ Optionally constrain to FILES, NOTES, and/or LINKS."
       candidates)))
 
 (defun citar--annotate-note (candidate)
-  "Annotate note candidate CANDIDATE."
-  (let* ((notep (get-text-property 0 'notep candidate))
-         (annotate (citar--get-notes-config :annotate))
-         (ann (when (and notep annotate)
-                (funcall
-                 annotate
-                 (substring-no-properties
-                  (cdr (get-text-property 0 'multi-category candidate)))))))
-    ann))
+  "Annotate note CANDIDATE."
+  (when-let* ((notep (get-text-property 0 'notep candidate))
+              (annotate (citar--get-notes-config :annotate)))
+    (funcall
+     annotate
+     (substring-no-properties
+      (cdr (get-text-property 0 'multi-category candidate))))))
 
 (cl-defun citar--select-resource (keys &optional &key files notes links)
   ;; FIX the arg list above is not smart
