@@ -24,7 +24,7 @@
 (declare-function org-element-type "ext:org-element")
 (declare-function org-element-context "ext:org-element")
 ;; Declare function from citar
-(declare-function citar--ref-completion-table "citar") ;; pending cache revisions
+(declare-function citar--completion-table "citar") ;; pending cache revisions
 
 ;; Define vars for capf
 (defvar citar-capf--candidates
