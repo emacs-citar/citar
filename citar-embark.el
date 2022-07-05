@@ -6,16 +6,17 @@
 ;; Maintainer: Bruce D'Arcus <bdarcus@gmail.com>
 ;; Created: June 22, 2022
 ;; Modified: June 22, 2022
+;; SPDX-License-Identifier: GPL-3.0-or-later
 ;; Version: 1.0
 ;; Keywords: bib extensions
 ;; Homepage: https://github.com/emacs-citar/citar-embark
-;; Package-Requires: ((emacs "27.2") (embark "0.17") (citar "0.9.5"))
+;; Package-Requires: ((emacs "27.1") (embark "0.17") (citar "0.9.5"))
 ;;
 ;; This file is not part of GNU Emacs.
 ;;
 ;;; Commentary:
 ;;
-;;  Description
+;;  Provides a minor-mode to integrate Citar and Embark.
 ;;
 ;;; Code:
 

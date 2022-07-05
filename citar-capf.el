@@ -1,7 +1,6 @@
 ;;; citar-capf.el --- citar completion-at-point -*- lexical-binding: t; -*-
 ;;
 ;; Copyright (C) 2022 Bruce D'Arcus, Colin McLear
-;; License: GPL-3.0-or-later
 ;;
 ;; This file is not part of GNU Emacs.
 ;;
