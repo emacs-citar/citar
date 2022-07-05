@@ -7,3 +7,7 @@ clean:
 lint:
 	eldev -C --unstable -T lint
 
+.PHONY: test
+test:
+	eldev -C --unstable -T test
+
