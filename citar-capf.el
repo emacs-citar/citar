@@ -4,6 +4,8 @@
 ;;
 ;; This file is not part of GNU Emacs.
 ;;
+;; SPDX-License-Identifier: GPL-3.0-or-later
+;;
 ;;; Commentary:
 ;;
 ;;  Citation key 'completion-at-point' for org, markdown, or latex.
