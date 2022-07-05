@@ -7,33 +7,17 @@
 ;; Created: February 27, 2021
 ;; SPDX-License-Identifier: GPL-3.0-or-later
 ;; Version: 0.9.7
-;; Homepage: https://github.com/bdarcus/citar
+;; Homepage: https://github.com/emacs-citar/citar
 ;; Package-Requires: ((emacs "27.1") (parsebib "3.0") (org "9.5") (citeproc "0.9"))
 
 ;; This file is not part of GNU Emacs.
-
-;; This program is free software: you can redistribute it and/or modify
-;; it under the terms of the GNU General Public License as published by
-;; the Free Software Foundation, either version 3 of the License, or
-;; (at your option) any later version.
-
-;; This program is distributed in the hope that it will be useful,
-;; but WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-;; GNU General Public License for more details.
-
-;; You should have received a copy of the GNU General Public License
-;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
+;;
 ;;; Commentary:
 
 ;;  A completing-read front-end to browse, filter and act on BibTeX, BibLaTeX,
 ;;  and CSL JSON bibliographic data, including LaTeX, markdown, and org-cite
 ;;  citation editing support.
 ;;
-;;  With embark, it also provides access to contextual actions, both in the
-;;  minibuffer, and in the buffer at-point.
-
 ;;; Code:
 
 (eval-when-compile
