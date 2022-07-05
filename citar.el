@@ -613,14 +613,15 @@ Optionally constrain to FILES, NOTES, and/or LINKS."
              candidates))))
       candidates)))
 
-(defun citar--multi-annotate (cand)
-  "Annotate candidate CAND with `consult--multi' type."
-  ;; Adapted from 'consult'
-  (let* ((nodecat (car (get-text-property 0 'multi-category cand)))
-         (notecat (citar--get-notes-config :category))
+(defun citar--annotate-note (candidate)
+  "Annotate note candidate CANDIDATE."
+  (let* ((notep (get-text-property 0 'notep candidate))
          (annotate (citar--get-notes-config :annotate))
-         (ann (when (and annotate (string= nodecat notecat))
-                (funcall annotate (cdr (get-text-property 0 'multi-category cand))))))
+         (ann (when (and notep annotate)
+                (funcall
+                 annotate
+                 (substring-no-properties
+                  (cdr (get-text-property 0 'multi-category candidate)))))))
     ann))
 
 (cl-defun citar--select-resource (keys &optional &key files notes links)
@@ -635,7 +636,7 @@ Optionally constrain to FILES, NOTES, and/or LINKS."
          (if (eq action 'metadata)
              `(metadata
                (group-function . citar--select-group-related-resources)
-               (annotation-function . citar--multi-annotate)
+               (annotation-function . citar--annotate-note)
                (category . multi-category))
            (complete-with-action action resources string predicate))))))
 
