@@ -332,7 +332,7 @@ need to scan the contents of DIRS in this case."
             (file-exists (file-exists-p file)))
       (find-file file)
     (if (and (null citar-notes-paths)
-             (equal (citar--get-notes-config :action)
+             (equal (citar--get-notes-config :open)
                     'citar-org-format-note-default))
         (error "You must set 'citar-notes-paths'")
       (funcall
