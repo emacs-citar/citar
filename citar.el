@@ -256,7 +256,7 @@ If nil, single resources will open without prompting."
                 ,(list :name "Notes"
                        :category 'file
                        :hasnote #'citar-file-has-notes
-                       :action #'citar-file--open-note
+                       :open #'citar-file--open-note
                        :create #'citar-org-format-note-default ; TODO remove?
                        :items #'citar-file--get-note-files)))
   "The alist of notes backends available for configuration.
@@ -270,7 +270,7 @@ plist has the following properties:
 
   :hasnote function to test for keys with notes
 
-  :action function to open a given note candidate
+  :open function to open a given note candidate
 
   :items function to return candidate strings for keys
 
@@ -1154,7 +1154,7 @@ For use with `embark-act-all'."
   (dolist (key keys)
     (let ((entry (citar-get-entry key)))
       (funcall
-       (citar--get-notes-config :action) key entry))))
+       (citar--get-notes-config :open) key entry))))
 
 ;;;###autoload
 (defun citar-open-links (keys)
@@ -1349,7 +1349,7 @@ VARIABLES should be the names of Citar customization variables."
            (error "`%s' should be a list of strings: %S" variable `',value)))
         ((or 'citar-has-files-functions 'citar-get-files-functions
                                         ;  (citar--get-notes-config :hasnote)
-                                        ;  (citar--get-notes-config :action)
+                                        ;  (citar--get-notes-config :open)
              'citar-file-parser-functions)
          (unless (and (listp value) (seq-every-p #'functionp value))
            (error "`%s' should be a list of functions: %S" variable `',value)))
