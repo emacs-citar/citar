@@ -930,7 +930,7 @@ have similar usage."
 
 
 (defun citar--has-resources (predicates)
-  "Combine PREDICATES into a single function that checks cross-refs.
+  "Combine PREDICATES into a single resource predicate.
 
 PREDICATES should be a list of functions that take a bibliography
 KEY and return non-nil if the item has a resource. It may also be
@@ -1103,17 +1103,16 @@ cross-referenced keys, if any."
                                                         (open (citar--get-notes-config :open)))
                                                (list (cons notecat open)))
                                            . ,embark-default-action-overrides)))
-      (if-let ((resource (citar--select-resource keys
-                                                 :files t :links t :notes t
-                                                 :always-prompt citar-open-prompt)))
-          ;; TODO Does this work for non-file notes?
-          (citar--open-multi resource)
-        (error "No associated resources: %s" keys))))
+    (if-let ((resource (citar--select-resource keys :files t :links t :notes t
+                                               :always-prompt citar-open-prompt)))
+        ;; TODO Does this work for non-file notes?
+        (citar--open-multi resource)
+      (error "No associated resources: %s" keys))))
 
 (defun citar--open-multi (selection)
   "Act appropriately on SELECTION when type is `multi-category'.
 For use with `embark-act-all'."
-;; TODO Fix this so that `citar-open' can open non-file notes
+  ;; TODO Fix this so that `citar-open' can open non-file notes
   (cond ((string-match "http" selection 0)
          (browse-url selection))
         ((member t (mapcar (lambda (x)
