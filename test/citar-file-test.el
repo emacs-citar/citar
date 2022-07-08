@@ -46,11 +46,10 @@
 
 (ert-deftest citar-file-test--parse-file-field ()
 
-  (let* ((fieldname "file")
+  (let* ((citar-file-variable "file")
          (citekey "foo")
-         (entry '((file . "foo.pdf")))
+         (fieldvalue "foo.pdf")
          (dirs '("/home/user/library/"))
-         (citar-file-variable fieldname)
          (citar-file-parser-functions (list #'citar-file--parser-default))
          lastmessage)
 
@@ -66,20 +65,20 @@
                  (and (equal "pdf" (file-name-extension filename))
                       (member (file-name-directory filename) dirs)))))
 
-      (should-not (citar-file--parse-file-field '((file . " ")) dirs citekey))
+      (should-not (citar-file--parse-file-field " " dirs citekey))
       (should (string=
                (current-message)
-               (format-message "Empty `%s' field: %s" fieldname citekey)))
+               (format-message "Empty `%s' field: %s" citar-file-variable citekey)))
 
       (let ((citar-file-parser-functions nil))
-        (should-not (citar-file--parse-file-field entry dirs citekey))
+        (should-not (citar-file--parse-file-field fieldvalue dirs citekey))
         (should (string=
                  (current-message)
                  (format-message
                   "Could not parse `%s' field of `%s'; check `citar-file-parser-functions': %s"
-                  fieldname citekey (alist-get 'file entry)))))
+                  citar-file-variable citekey fieldvalue))))
 
-      (should-not (citar-file--parse-file-field '((file . "foo.html")) dirs citekey))
+      (should-not (citar-file--parse-file-field "foo.html" dirs citekey))
       (should (string=
                (current-message)
                (format-message
@@ -88,7 +87,7 @@
                 citekey '("foo.html"))))
 
       (let ((citar-library-file-extensions '("html")))
-        (should-not (citar-file--parse-file-field entry dirs citekey))
+        (should-not (citar-file--parse-file-field fieldvalue dirs citekey))
         (should (string=
                  (current-message)
                  (format-message
@@ -96,11 +95,11 @@
                   citekey '("/home/user/library/foo.pdf")))))
 
       (let ((citar-library-file-extensions nil))
-        (should (equal (citar-file--parse-file-field entry dirs citekey)
+        (should (equal (citar-file--parse-file-field fieldvalue dirs citekey)
                         '("/home/user/library/foo.pdf"))))
 
       (let ((citar-library-file-extensions '("pdf" "html")))
-        (should (equal (citar-file--parse-file-field entry dirs citekey)
+        (should (equal (citar-file--parse-file-field fieldvalue dirs citekey)
                         '("/home/user/library/foo.pdf")))))))
 
 (provide 'citar-file-test)
