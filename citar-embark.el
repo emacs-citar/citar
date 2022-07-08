@@ -53,7 +53,8 @@
 (defvar citar-embark--multitarget-actions
   (list #'citar-open #'citar-open-files #'citar-attach-files #'citar-open-links
         #'citar-insert-bibtex #'citar-insert-citation #'citar-insert-reference
-        #'citar-copy-reference #'citar-insert-keys #'citar-run-default-action))
+        #'citar-copy-reference #'citar-insert-keys #'citar-run-default-action
+        #'citar-open-notes))
 
 (defvar citar-embark--target-injection-hooks
   (list (list #'citar-insert-edit #'embark--ignore-target)))
