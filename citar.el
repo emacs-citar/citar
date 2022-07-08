@@ -611,7 +611,7 @@ CANDIDATES."
          (links (if (listp links) links (citar-get-links key-or-keys)))
          (notes
           (when-let* ((notes)
-                      (keys (if (listp key-or-keys) key-or-keys (list key-or-keys)))
+                      (keys (citar--with-crossref-keys key-or-keys))
                       (getitems (citar--get-notes-config :items))
                       (items (funcall getitems keys)))
             (mapcar (lambda (item) (propertize item 'citar--note t)) items)))
