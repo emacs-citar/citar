@@ -1102,7 +1102,7 @@ cross-referenced keys, if any."
                                            ,@(when-let ((notecat (citar--get-notes-config :category))
                                                         (open (citar--get-notes-config :open)))
                                                (list (cons notecat open)))
-                                           . ,embark-default-action-overrides)))
+                                           . ,(bound-and-true-p embark-default-action-overrides))))
     (if-let ((resource (citar--select-resource keys :files t :links t :notes t
                                                :always-prompt citar-open-prompt)))
         ;; TODO Does this work for non-file notes?
@@ -1139,8 +1139,9 @@ For use with `embark-act-all'."
   "Run ACTION on file associated with KEY-OR-KEYS.
 If KEY-OR-KEYS have multiple files, use `completing-read' to
 select a single file."
-  (let* ((citar--entries (citar-get-entries))
-         (embark-default-action-overrides `((file . ,action) . ,embark-default-action-overrides)))
+  (let ((citar--entries (citar-get-entries))
+        (embark-default-action-overrides `((file . ,action)
+                                           . ,(bound-and-true-p embark-default-action-overrides))))
     (if-let ((file (citar--select-resource key-or-keys :files t)))
         (funcall action file)
       (ignore
