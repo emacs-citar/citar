@@ -128,49 +128,45 @@ Example: ':/path/to/test.pdf:PDF'."
               (push escaped filenames))))))
     (nreverse filenames)))
 
-(defun citar-file--parse-file-field (entry dirs &optional citekey)
-  "Return files found in file field of ENTRY.
+(defun citar-file--parse-file-field (fieldvalue dirs &optional citekey)
+  "Return files found in file field FIELDVALUE.
 Relative file names are expanded from the first directory in DIRS
 in which they are found. Omit non-existing absolute file names
 and relative file names not found in DIRS. On failure, print a
 message explaining the cause; CITEKEY is included in this failure
 message."
-  (when-let* ((fieldname citar-file-variable)
-              (fieldvalue (citar-get-value fieldname entry)))
-    (if-let ((files (delete-dups (mapcan (lambda (parser)
-                                           (funcall parser fieldvalue))
-                                         citar-file-parser-functions))))
-        (if-let ((foundfiles (citar-file--find-files-in-dirs files dirs)))
-            (if (null citar-library-file-extensions)
-                foundfiles
-              (or (seq-filter (lambda (file)
-                                (member (file-name-extension file) citar-library-file-extensions))
-                              foundfiles)
-                  (ignore
-                   (message "No files for `%s' with `citar-library-file-extensions': %S"
-                            citekey foundfiles))))
-          (ignore
-           (message (concat "None of the files for `%s' exist; check `citar-library-paths' and "
-                            "`citar-file-parser-functions': %S")
-                    citekey files)))
-      (ignore
-       (if (string-empty-p (string-trim fieldvalue))
-           (message "Empty `%s' field: %s" fieldname citekey)
-         (message "Could not parse `%s' field of `%s'; check `citar-file-parser-functions': %s"
-                  fieldname citekey fieldvalue))))))
+  (if-let ((files (delete-dups (mapcan (lambda (parser)
+                                         (funcall parser fieldvalue))
+                                       citar-file-parser-functions))))
+      (if-let ((foundfiles (citar-file--find-files-in-dirs files dirs)))
+          (if (null citar-library-file-extensions)
+              foundfiles
+            (or (seq-filter (lambda (file)
+                              (member (file-name-extension file) citar-library-file-extensions))
+                            foundfiles)
+                (ignore
+                 (message "No files for `%s' with `citar-library-file-extensions': %S"
+                          citekey foundfiles))))
+        (ignore
+         (message (concat "None of the files for `%s' exist; check `citar-library-paths' and "
+                          "`citar-file-parser-functions': %S")
+                  citekey files)))
+    (ignore
+     (if (string-empty-p (string-trim fieldvalue))
+         (message "Empty `%s' field: %s" citar-file-variable citekey)
+       (message "Could not parse `%s' field of `%s'; check `citar-file-parser-functions': %s"
+                citar-file-variable citekey fieldvalue)))))
 
-(defun citar-file--has-file-field (entries)
+(defun citar-file--has-file-field ()
   "Return predicate to test if bibliography entry in ENTRIES has a file field.
 Note: this function is intended to be used in
 `citar-has-files-functions'. Use `citar-has-files' to test
 whether entries have associated files."
-  (when-let ((filefield citar-file-variable))
-    (lambda (key)
-      (when-let ((entry (gethash key entries)))
-        (citar-get-value filefield entry)))))
+  (when citar-file-variable
+    (apply-partially #'citar-get-value citar-file-variable)))
 
-(defun citar-file--get-from-file-field (keys entries)
-  "Return list of FILES for KEYS given in ENTRIES.
+(defun citar-file--get-from-file-field (keys)
+  "Return list of files for KEYS.
 
 Parse and return files given in the bibliography field named by
 `citar-file-variable'.
@@ -178,20 +174,20 @@ Parse and return files given in the bibliography field named by
 Note: this function is intended to be used in
 `citar-get-files-functions'. Use `citar-get-files' to get all
 files associated with KEYS."
-  (when citar-file-variable
+  (when-let ((filefield citar-file-variable))
     (citar--check-configuration 'citar-library-paths 'citar-library-file-extensions
                                 'citar-file-parser-functions)
     (let ((dirs (append citar-library-paths
                         (mapcar #'file-name-directory (citar--bibliography-files)))))
       (mapcan
        (lambda (citekey)
-         (when-let ((entry (gethash citekey entries)))
-           (citar-file--parse-file-field entry dirs citekey)))
+         (when-let ((fieldvalue (citar-get-value filefield citekey)))
+           (citar-file--parse-file-field fieldvalue dirs citekey)))
        keys))))
 
 ;;;; Scanning library directories
 
-(defun citar-file--has-library-files (&optional _entries)
+(defun citar-file--has-library-files ()
   "Return predicate testing whether cite key has library files."
   (citar--check-configuration 'citar-library-paths 'citar-library-file-extensions)
   (let ((files (citar-file--directory-files
@@ -200,7 +196,7 @@ files associated with KEYS."
     (lambda (key)
       (gethash key files))))
 
-(defun citar-file--get-library-files (keys &optional _entries)
+(defun citar-file--get-library-files (keys)
   "Return list of files for KEYS in ENTRIES."
   (citar--check-configuration 'citar-library-paths)
   (let ((files (citar-file--directory-files citar-library-paths keys
@@ -311,18 +307,21 @@ need to scan the contents of DIRS in this case."
 
 ;;;; Note files
 
-(defun citar-file--get-notes-hash (&optional keys)
-  "Return hash-table with KEYS with file notes."
+(defun citar-file--note-directory-files (&optional keys)
+  "Return note files associated with KEYS.
+Return hash table whose keys are elements of KEYS and values are
+lists of note file names found in `citar-notes-paths' having
+extensions in `citar-file-note-extensions'."
+  (citar--check-configuration 'citar-notes-paths 'citar-file-note-extensions)
   (citar-file--directory-files
    citar-notes-paths keys citar-file-note-extensions
    citar-file-additional-files-separator))
 
-(defun citar-file-has-notes (&optional _entries)
+(defun citar-file-has-notes ()
   "Return predicate testing whether cite key has associated notes."
   ;; REVIEW why this optional arg when not needed?
-  (let ((files (citar-file--get-notes-hash)))
-    (lambda (key)
-      (gethash key files))))
+  (let ((files (citar-file--note-directory-files)))
+    (lambda (key) (gethash key files))))
 
 (defun citar-file--open-note (key entry)
   "Open a note file from KEY and ENTRY."
@@ -340,8 +339,8 @@ need to scan the contents of DIRS in this case."
 
 (defun citar-file--get-note-files (keys)
   "Return list of notes associated with KEYS."
-  (let ((notehash (citar-file--get-notes-hash keys)))
-    (flatten-list (map-values notehash))))
+  (let ((notes (citar-file--note-directory-files keys)))
+    (apply #'append (map-values notes))))
 
 (defun citar-file--get-note-filename (key dirs extensions)
   "Return existing or new filename for KEY in DIRS with extension in EXTENSIONS.
