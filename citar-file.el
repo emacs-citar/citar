@@ -83,9 +83,9 @@ separator that does not otherwise occur in citation keys."
                  (regexp :tag "Filename separator")))
 
 (defvar citar-notes-paths)
-(defvar citar-create-note-function)
 (defvar citar-library-paths)
 (defvar citar-library-file-extensions)
+(defvar citar-note-format-function)
 
 ;;;; Convenience functions for files and paths
 
@@ -317,44 +317,40 @@ extensions in `citar-file-note-extensions'."
    citar-notes-paths keys citar-file-note-extensions
    citar-file-additional-files-separator))
 
-(defun citar-file-has-notes ()
+(defun citar-file--has-notes ()
   "Return predicate testing whether cite key has associated notes."
-  ;; REVIEW why this optional arg when not needed?
   (let ((files (citar-file--note-directory-files)))
     (lambda (key) (gethash key files))))
 
-(defun citar-file--open-note (key entry)
-  "Open a note file from KEY and ENTRY."
-  (if-let* ((file (citar-file--get-note-filename key
-                                                 citar-notes-paths
-                                                 citar-file-note-extensions))
-            (file-exists (file-exists-p file)))
-      (find-file file)
-    (if (and (null citar-notes-paths)
-             (equal (citar--get-notes-config :open)
-                    'citar-org-format-note-default))
-        (error "You must set 'citar-notes-paths'")
-      (funcall
-       (citar--get-notes-config :create) key entry))))
+(defun citar-file--create-note (key entry)
+  "Create a note file from KEY and ENTRY."
+  (if-let ((filename (citar-file--get-note-filename key)))
+      (prog1 (find-file filename)
+        (unless (file-exists-p filename)
+          (citar--check-configuration 'citar-note-format-function)
+          (funcall citar-note-format-function key entry)))
+    (user-error "Make sure `citar-notes-paths' and `citar-file-note-extensions' are non-nil")))
 
-(defun citar-file--get-note-files (keys)
+(defun citar-file--get-notes (keys)
   "Return list of notes associated with KEYS."
   (let ((notes (citar-file--note-directory-files keys)))
     (apply #'append (map-values notes))))
 
-(defun citar-file--get-note-filename (key dirs extensions)
-  "Return existing or new filename for KEY in DIRS with extension in EXTENSIONS.
+(defun citar-file--get-note-filename (key)
+  "Return existing or new note filename for KEY.
 
 This is for use in a note function where notes are one-per-file,
 with citekey as filename.
 
 Returns the filename whether or not the file exists, to support a
 function that will open a new file if the note is not present."
-  (let ((files (citar-file--directory-files dirs (list key) extensions
-                                            citar-file-additional-files-separator)))
+  (citar--check-configuration 'citar-notes-paths 'citar-file-note-extensions)
+  (let* ((dirs citar-notes-paths)
+         (exts citar-file-note-extensions)
+         (files (citar-file--directory-files dirs (list key) exts citar-file-additional-files-separator)))
     (or (car (gethash key files))
         (when-let ((dir (car dirs))
-                   (ext (car extensions)))
+                   (ext (car exts)))
           (expand-file-name (concat key "." ext) dir)))))
 
 ;;;; Utility functions
