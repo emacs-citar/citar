@@ -24,6 +24,7 @@
   (require 'cl-lib)
   (require 'subr-x))
 (require 'seq)
+(require 'map)
 (require 'browse-url)
 (require 'citar-cache)
 (require 'citar-format)
@@ -843,7 +844,8 @@ The value is transformed using `citar-display-transform-functions'"
   "Register note backend.
 
 NAME is a symbol, and CONFIG is a plist."
-  (setf (alist-get name citar-notes-source) config))
+  (citar--check-notes-source name config)
+  (setf (alist-get name citar-notes-sources) config))
 
 (defun citar-remove-notes-source (name)
   "Remove note backend NAME."
@@ -1392,6 +1394,28 @@ VARIABLES should be the names of Citar customization variables."
            (error "`%s' should be a function: %S" variable `',value)))
         (_
          (error "Unknown variable in citar--check-configuration: %s" variable))))))
+
+(defun citar--check-notes-source (name config)
+  "Signal error if notes source plist CONFIG has incorrect keys or values.
+SOURCE must be a plist representing a notes source with NAME. See
+`citar-notes-sources' for the list of valid keys and types."
+
+  (let ((required '(:items :hasitems :open))
+        (optional '(:name :category :create :transform :annotate))
+        (keys (map-keys config)))
+    (when-let ((missing (cl-set-difference required keys)))
+      (error "Note source `%s' missing required keys: %s" name missing))
+    (when-let ((extra (cl-set-difference keys (append required optional))))
+      (warn "Note source `%s' has unknown keys: %s" name extra)))
+
+  (pcase-dolist (`(,type . ,props)
+                 '((functionp :items :hasitems :open :create :transform :annotate)
+                   (stringp :name)
+                   (symbolp :category)))
+    (when-let ((wrongtype (seq-filter (lambda (prop)
+                                        (when-let ((value (plist-get config prop)))
+                                          (not (funcall type value)))) props)))
+      (error "Note source `%s' keys must be of type %s: %s" name type wrongtype))))
 
 (provide 'citar)
 ;;; citar.el ends here
