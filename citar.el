@@ -656,16 +656,15 @@ user declined to choose."
       (when-let ((selected
                   (if (and (not always-prompt) (null (cdr cands)))
                       (car cands)
-                    (let* ((selected (completing-read
-                                      "Select resource: "
-                                      (lambda (string predicate action)
-                                        (if (eq action 'metadata)
-                                            `(metadata
-                                              (group-function . ,#'citar--select-group-related-resources)
-                                              (annotation-function . ,#'citar--annotate-note)
-                                              ,@(when category `((category . ,category))))
-                                          (complete-with-action action cands string predicate)))
-                                      nil t)))
+                    (let* ((metadata `(metadata
+                                       (group-function . ,#'citar--select-group-related-resources)
+                                       (annotation-function . ,#'citar--annotate-note)
+                                       ,@(when category `((category . ,category)))))
+                           (table (lambda (string predicate action)
+                                    (if (eq action 'metadata)
+                                        metadata
+                                      (complete-with-action action cands string predicate))))
+                           (selected (completing-read "Select resource: " table nil t)))
                       (car (member selected cands))))))
         (cons (get-text-property 0 'citar--resource selected) (substring-no-properties selected))))))
 
