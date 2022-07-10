@@ -276,10 +276,10 @@ If nil, single resources will open without prompting."
   `((citar-file .
                 ,(list :name "Notes"
                        :category 'file
-                       :hasnote #'citar-file-has-notes
-                       :open #'citar-file--open-note
-                       :create #'citar-org-format-note-default ; TODO remove?
-                       :items #'citar-file--get-note-files
+                       :items #'citar-file--get-notes
+                       :hasitems #'citar-file--has-notes
+                       :open #'find-file
+                       :create #'citar-file--create-note
                        :transform #'file-name-nondirectory)))
   "The alist of notes backends available for configuration.
 
@@ -290,7 +290,7 @@ plist has the following properties:
 
   :category the completion category
 
-  :hasnote function to test for keys with notes
+  :hasitems function to test for keys with notes
 
   :open function to open a given note candidate
 
@@ -306,6 +306,14 @@ plist has the following properties:
   "The notes backend."
   :group 'citar
   :type 'symbol)
+
+;; TODO should this be a major mode function?
+(defcustom citar-note-format-function #'citar-org-format-note-default
+  "Function used by `citar-file' note source to format new notes."
+  :group 'citar
+  :type 'function)
+
+;;;; Major mode functions
 
 ;; TODO Move this to `citar-org', since it's only used there?
 ;; Otherwise it seems to overlap with `citar-default-action'
@@ -595,7 +603,7 @@ associated resources.
 The resources include:
  * FILES: a list of files or t to use `citar-get-files'.
  * LINKS: a list of links or t to use `citar-get-links'.
- * NOTES: when non-nil, notes produced by `citar-notes-source'.
+ * NOTES: a list of notes or t to use `citar-get-notes'.
 
 If any of FILES, LINKS, or NOTES is nil, that resource type is
 omitted from CANDIDATES.
@@ -606,74 +614,75 @@ returning only links, or the category specified by
 resources of multiple types, CATEGORY is `multi-category' and the
 `multi-category' text property is applied to each element of
 CANDIDATES."
-  (let* ((citar--entries (citar-get-entries))
-         (files (if (listp files) files (citar-get-files key-or-keys)))
-         (links (if (listp links) links (citar-get-links key-or-keys)))
-         (notes
-          (when-let* ((notes)
-                      (keys (citar--with-crossref-keys key-or-keys))
-                      (getitems (citar--get-notes-config :items))
-                      (items (funcall getitems keys)))
-            (mapcar (lambda (item) (propertize item 'citar--note t)) items)))
-         (sources (nconc (when files (list (cons 'file files)))
-                         (when links (list (cons 'url links)))
-                         (when notes (list (cons (citar--get-notes-config :category) notes))))))
-    (if (null (cdr sources))            ; if sources is nil or singleton list,
-        (car sources)                   ; return either nil or the only source.
-      (cons 'multi-category             ; otherwise, combine all sources
-            (mapcan
-             (pcase-lambda (`(,cat . ,cands))
-               (if (not cat)
-                   cands
-                 (mapcar (lambda (cand) (propertize cand 'multi-category (cons cat cand))) cands)))
-             sources)))))
+  (cl-flet ((withtype (type cands) (mapcar (lambda (cand) (propertize cand 'citar--resource type)) cands)))
+    (let* ((citar--entries (citar-get-entries))
+           (files (if (listp files) files (citar-get-files key-or-keys)))
+           (links (if (listp links) links (citar-get-links key-or-keys)))
+           (notes (if (listp notes) notes (citar-get-notes key-or-keys)))
+           (notecat (citar--get-notes-config :category))
+           (sources (nconc (when files (list (cons 'file (withtype 'file files))))
+                           (when links (list (cons 'url (withtype 'url links))))
+                           (when notes (list (cons notecat (withtype 'note notes)))))))
+      (if (null (cdr sources))        ; if sources is nil or singleton list,
+          (car sources)               ; return either nil or the only source.
+        (cons 'multi-category         ; otherwise, combine all sources
+              (mapcan
+               (pcase-lambda (`(,cat . ,cands))
+                 (if (not cat)
+                     cands
+                   (mapcar (lambda (cand) (propertize cand 'multi-category (cons cat cand))) cands)))
+               sources))))))
 
 (defun citar--annotate-note (candidate)
   "Annotate note CANDIDATE."
-  (when-let* ((notep (get-text-property 0 'citar--note candidate))
-              (annotate (citar--get-notes-config :annotate)))
-    (funcall
-     annotate
-     (substring-no-properties
-      (cdr (get-text-property 0 'multi-category candidate))))))
+  (when-let (((eq 'note (get-text-property 0 'citar--resource candidate)))
+             (annotate (citar--get-notes-config :annotate)))
+    (funcall annotate (substring-no-properties candidate))))
 
 (cl-defun citar--select-resource (keys &key files notes links (always-prompt t))
   ;; FIX the arg list above is not smart
-  "Select related FILES, NOTES, or LINKS resource for KEYS."
-  (when-let* ((resources
-               (citar--get-resource-candidates
-                keys :files files :notes notes :links links))
-              (candidates (cdr resources)))
-    (if (and (not always-prompt) (null (cdr candidates)))
-        (car candidates)
-      (completing-read
-       "Select resource: "
-       (lambda (string predicate action)
-         (if (eq action 'metadata)
-             `(metadata
-               (group-function . ,#'citar--select-group-related-resources)
-               (annotation-function . ,#'citar--annotate-note)
-               ,@(when-let ((cat (car resources))) `((category . ,cat))))
-           (complete-with-action action candidates string predicate)))))))
+  "Select related FILES, NOTES, or LINKS resource for KEYS.
+
+Return (TYPE . RESOURCE), where TYPE is `file', `link', or `note'
+and RESOURCE is the selected resource string. Return nil if there
+are no resources.
+
+Use `completing-read' to prompt for a resource, unless there is
+only one resource and ALWAYS-PROMPT is nil. Return nil if the
+user declined to choose."
+  (when-let ((resources (citar--get-resource-candidates keys :files files :notes notes :links links)))
+    (pcase-let ((`(,category . ,cands) resources))
+      (when-let ((selected
+                  (if (and (not always-prompt) (null (cdr cands)))
+                      (car cands)
+                    (let* ((selected (completing-read
+                                      "Select resource: "
+                                      (lambda (string predicate action)
+                                        (if (eq action 'metadata)
+                                            `(metadata
+                                              (group-function . ,#'citar--select-group-related-resources)
+                                              (annotation-function . ,#'citar--annotate-note)
+                                              ,@(when category `((category . ,category))))
+                                          (complete-with-action action cands string predicate)))
+                                      nil t)))
+                      (car (member selected cands))))))
+        (cons (get-text-property 0 'citar--resource selected) (substring-no-properties selected))))))
 
 (defun citar--select-group-related-resources (resource transform)
   "Group RESOURCE by type or TRANSFORM."
-  (if (get-text-property 0 'citar--note resource)
-      (if transform
-          (funcall (or (citar--get-notes-config :transform) #'identity) resource)
-        (or (citar--get-notes-config :name) "Notes"))
-    (pcase (or (car (get-text-property 0 'multi-category resource))
-               (cond ((file-regular-p resource) 'file)
-                     ((string-match-p "^https?://" resource) 'url)))
-      ('file (if transform
-                 (file-name-nondirectory resource)
-               "Library Files"))
-      ('url (if transform
-                resource
-              "Links"))
-      (_ (if transform
-             resource
-           nil)))))
+  (pcase (get-text-property 0 'citar--resource resource)
+    ('file (if transform
+               (file-name-nondirectory resource)
+             "Library Files"))
+    ('url (if transform
+              resource
+            "Links"))
+    ('note (if transform
+               (funcall (or (citar--get-notes-config :transform) #'identity) resource)
+             (or (citar--get-notes-config :name) "Notes")))
+    (_ (if transform
+           resource
+         nil))))
 
 (defun citar--format-candidates ()
   "Format completion candidates for bibliography entries.
@@ -834,15 +843,25 @@ The value is transformed using `citar-display-transform-functions'"
   "Register note backend.
 
 NAME is a symbol, and CONFIG is a plist."
-  (add-to-list 'citar-notes-sources (cons name config)))
+  (setf (alist-get name citar-notes-source) config))
 
 (defun citar-remove-notes-source (name)
   "Remove note backend NAME."
-  (assoc-delete-all name citar-notes-sources))
+  (cl-callf2 assq-delete-all name citar-notes-sources))
 
-(defun citar-get-notes (keys)
-  "Return list of notes associated with KEYS."
-  (funcall (citar--get-notes-config :items) keys))
+(cl-defun citar-get-notes (&optional (key-or-keys nil filter-p))
+  "Return list of notes associated with KEY-OR-KEYS.
+If KEY-OR-KEYS is omitted, return all notes."
+  (let* ((citar--entries (citar-get-entries))
+         (keys (citar--with-crossref-keys key-or-keys)))
+    (unless (and filter-p (null keys))    ; return nil if KEY-OR-KEYS was given, but is nil
+      (delete-dups (funcall (citar--get-notes-config :items) keys)))))
+
+(defun citar-create-note (key &optional entry)
+  "Create a note for KEY and ENTRY.
+If ENTRY is nil, use `citar-get-entry' with KEY."
+  (interactive (list (citar-select-ref)))
+  (funcall (citar--get-notes-config :create) key (or entry (citar-get-entry key))))
 
 (defun citar-get-files (key-or-keys)
   "Return list of files associated with KEY-OR-KEYS.
@@ -856,7 +875,8 @@ associated with cross-referenced keys."
 (defun citar-get-links (key-or-keys)
   "Return list of links associated with KEY-OR-KEYS.
 Include files associated with cross-referenced keys."
-  (let ((citar--entries (citar-get-entries)))
+  (let* ((citar--entries (citar-get-entries))
+         (keys (citar--with-crossref-keys key-or-keys)))
     (delete-dups
      (mapcan
       (lambda (key)
@@ -869,7 +889,7 @@ Include files associated with cross-referenced keys."
              (pmid . "https://www.ncbi.nlm.nih.gov/pubmed/%s")
              (pmcid . "https://www.ncbi.nlm.nih.gov/pmc/articles/%s")
              (url . "%s")))))
-      (citar--with-crossref-keys key-or-keys)))))
+      keys))))
 
 
 (defun citar-has-files ()
@@ -915,7 +935,7 @@ Notes are detected using `citar-has-notes-functions', which see.
 Also check any bibliography entries that are cross-referenced
 from the given KEY; see `citar-crossref-variable'."
   (citar--has-resources
-   (funcall (citar--get-notes-config :hasnote))))
+   (funcall (citar--get-notes-config :hasitems))))
 
 
 (defun citar-has-links ()
@@ -1011,15 +1031,18 @@ personal names of the form \"family, given\"."
 KEY-OR-KEYS is either a list KEYS or a single key, which is
 converted into KEYS. Return a list containing the elements of
 KEYS, with each element followed by the corresponding
-cross-referenced keys, if any."
+cross-referenced keys, if any.
+
+Duplicate keys are removed from the returned list."
   (let ((xref citar-crossref-variable)
         (keys (if (listp key-or-keys) key-or-keys (list key-or-keys))))
-    (if (not xref)
-        keys
-      (mapcan (lambda (key)
-                (cons key (when-let ((xkey (citar-get-value xref key)))
-                            (list xkey))))
-              keys))))
+    (delete-dups
+     (if (not xref)
+         keys
+       (mapcan (lambda (key)
+                 (cons key (when-let ((xkey (citar-get-value xref key)))
+                             (list xkey))))
+               keys)))))
 
 ;;; Affixations and annotations
 
@@ -1097,29 +1120,24 @@ cross-referenced keys, if any."
 (defun citar-open (keys)
   "Open related resources (links or files) for KEYS."
   (interactive (list (citar-select-refs)))
-  (let ((embark-default-action-overrides `((file . ,#'citar-file-open)
-                                           (url . ,#'browse-url)
-                                           ,@(when-let ((notecat (citar--get-notes-config :category))
-                                                        (open (citar--get-notes-config :open)))
-                                               (list (cons notecat open)))
-                                           . ,(bound-and-true-p embark-default-action-overrides))))
-    (if-let ((resource (citar--select-resource keys :files t :links t :notes t
-                                               :always-prompt citar-open-prompt)))
-        ;; TODO Does this work for non-file notes?
-        (citar--open-multi resource)
-      (error "No associated resources: %s" keys))))
+  (if-let ((selected (let* ((actions (bound-and-true-p embark-default-action-overrides))
+                            (embark-default-action-overrides `((t . ,#'citar--open-resource) . ,actions)))
+                       (citar--select-resource keys :files t :links t :notes t
+                                               :always-prompt citar-open-prompt))))
+      (citar--open-resource (cdr selected) (car selected))
+    (error "No associated resources: %s" keys)))
 
-(defun citar--open-multi (selection)
-  "Act appropriately on SELECTION when type is `multi-category'.
-For use with `embark-act-all'."
-  ;; TODO Fix this so that `citar-open' can open non-file notes
-  (cond ((string-match "http" selection 0)
-         (browse-url selection))
-        ((member t (mapcar (lambda (x)
-                             (file-in-directory-p selection x))
-                           citar-notes-paths))
-         (find-file selection))
-        (t (citar-file-open selection))))
+(defun citar--open-resource (resource &optional type)
+  "Open RESOURCE of TYPE, which should be `file', `url', or `note'.
+If TYPE is nil, then RESOURCE must have a `citar--resource' text
+property specifying TYPE."
+  (if-let* ((type (or type (get-text-property 0 'citar--resource resource)))
+            (open (pcase type
+                    ('file #'citar-file-open)
+                    ('url #'browse-url)
+                    ('note (citar--get-notes-config :open)))))
+      (funcall open (substring-no-properties resource))
+    (error "Could not open resource of type `%s': %S" type resource)))
 
 ;; TODO Rename? This also opens files in bib field, not just library files
 ;;;###autoload
@@ -1139,11 +1157,14 @@ For use with `embark-act-all'."
   "Run ACTION on file associated with KEY-OR-KEYS.
 If KEY-OR-KEYS have multiple files, use `completing-read' to
 select a single file."
-  (let ((citar--entries (citar-get-entries))
-        (embark-default-action-overrides `((file . ,action)
-                                           . ,(bound-and-true-p embark-default-action-overrides))))
-    (if-let ((file (citar--select-resource key-or-keys :files t)))
-        (funcall action file)
+  (let ((citar--entries (citar-get-entries)))
+    (if-let ((resource (let* ((actions (bound-and-true-p embark-default-action-overrides))
+                              (embark-default-action-overrides `(((file . ,this-command) . ,action)
+                                                                 . ,actions)))
+                         (citar--select-resource key-or-keys :files t))))
+        (if (eq 'file (car resource))
+            (funcall action (cdr resource))
+          (error "Expected resource of type `file', got `%s': %S" (car resource) (cdr resource)))
       (ignore
        ;; If some key had files according to `citar-has-files', but `citar-get-files' returned nothing, then
        ;; don't print the following message. The appropriate function in `citar-get-files-functions' is
@@ -1158,19 +1179,28 @@ select a single file."
 (defun citar-open-notes (keys)
   "Open notes associated with the KEYS."
   (interactive (list (citar-select-refs)))
-  (dolist (key keys)
-    (let ((entry (citar-get-entry key)))
-      (funcall
-       (citar--get-notes-config :open) key entry))))
+  (if-let ((notes (citar-get-notes keys)))
+      (progn (mapc (citar--get-notes-config :open) notes)
+             (let ((count (length notes)))
+               (when (> count 1)
+                 (message "Opened %d notes" count))))
+    (when keys
+      (if (null (cdr keys))
+          (citar-create-note (car keys))
+        (message "No notes found. Select one key to create note: %s" keys)))))
 
 ;;;###autoload
-(defun citar-open-links (keys)
-  "Open URL or DOI link associated with KEYS in a browser."
+(defun citar-open-links (key-or-keys)
+  "Open URL or DOI link associated with KEY-OR-KEYS in a browser."
   (interactive (list (citar-select-refs)))
-  ;; REVIEW this works, but should check for nil on select-resource
-  (if-let ((link (citar--select-resource keys :links t)))
-      (browse-url link)
-    (message "No link found for %s" keys)))
+  (if-let ((resource (let* ((actions (bound-and-true-p embark-default-action-overrides))
+                            (embark-default-action-overrides `(((url . ,this-command) . ,#'browse-url)
+                                                               . ,actions)))
+                       (citar--select-resource key-or-keys :links t))))
+      (if (eq 'url (car resource))
+          (browse-url (cdr resource))
+        (error "Expected resource of type `url', got `%s': %S" (car resource) (cdr resource)))
+    (message "No link found for %s" key-or-keys)))
 
 ;;;###autoload
 (defun citar-open-entry (key)
@@ -1354,12 +1384,12 @@ VARIABLES should be the names of Citar customization variables."
          (unless (and (listp value)
                       (seq-every-p #'stringp value))
            (error "`%s' should be a list of strings: %S" variable `',value)))
-        ((or 'citar-has-files-functions 'citar-get-files-functions
-                                        ;  (citar--get-notes-config :hasnote)
-                                        ;  (citar--get-notes-config :open)
-             'citar-file-parser-functions)
+        ((or 'citar-has-files-functions 'citar-get-files-functions 'citar-file-parser-functions)
          (unless (and (listp value) (seq-every-p #'functionp value))
            (error "`%s' should be a list of functions: %S" variable `',value)))
+        ((or 'citar-note-format-function)
+         (unless (functionp value)
+           (error "`%s' should be a function: %S" variable `',value)))
         (_
          (error "Unknown variable in citar--check-configuration: %s" variable))))))
 
