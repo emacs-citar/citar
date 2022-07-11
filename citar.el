@@ -1189,12 +1189,10 @@ For use with `embark-act-all'."
     (bibtex-search-entry key t nil t)))
 
 ;;;###autoload
-(defun citar-open-gscholar (key-entry)
-  "Open Google Scholar query result associated with the KEY-ENTRY.
-With prefix, rebuild the cache before offering candidates."
-  (interactive (list (citar-select-ref
-                      :rebuild-cache current-prefix-arg)))
-  (let* ((entry (cdr key-entry))
+(defun citar-open-gscholar (key)
+  "Open Google Scholar query result associated with the KEY-ENTRY."
+  (interactive (list (citar-select-ref)))
+  (let* ((entry (citar-get-entry key))
          (title (alist-get "title" entry nil nil #'equal))
          (url (url-encode-url (format "https://scholar.google.com/scholar?q=%s" title) )))
     (browse-url-xdg-open url)))
