@@ -640,7 +640,7 @@ CANDIDATES."
              (annotate (citar--get-notes-config :annotate)))
     (funcall annotate (substring-no-properties candidate))))
 
-(cl-defun citar--select-resource (keys &key files notes links (always-prompt t))
+(cl-defun citar--select-resource (keys &key files notes links (always-prompt citar-always-prompt))
   ;; FIX the arg list above is not smart
   "Select related FILES, NOTES, or LINKS resource for KEYS.
 
