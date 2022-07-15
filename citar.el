@@ -519,13 +519,12 @@ FILTER: if non-nil, should be a predicate function taking
                                              filter 'citar-history citar-presets)
                    (completing-read "Reference: " (citar--completion-table candidates filter)
                                     nil nil nil 'citar-history citar-presets nil))))
-    ;; Return a list of keys regardless of 1 or many
-    (if (stringp chosen)
-        (list (gethash chosen candidates))
-      (seq-map
-       (lambda (choice)
-         (gethash choice candidates))
-       chosen))))
+    ;; If CAND is not in CANDIDATES, treat it as a citekey (e.g. inserted into the minibuffer by `embark-act')
+    (cl-flet ((candkey (cand) (or (gethash cand candidates) cand)))
+      ;; Return a list of keys regardless of 1 or many
+      (if (listp chosen)
+          (mapcar #'candkey chosen)
+        (list (candkey chosen))))))
 
 (cl-defun citar-select-ref (&key filter)
   "Select bibliographic references.
@@ -536,7 +535,7 @@ FILTER; see its documentation for the return value."
 
 (defun citar--multiple-completion-table (selected-hash candidates filter)
   "Return a completion table for multiple selection.
-SELECTED-HASH is the hash-table containining selected-candidates.
+SELECTED-HASH is the hash-table containing selected candidates.
 CANDIDATES is the list of completion candidates, FILTER is the function
 to filter them."
   (citar--completion-table
@@ -548,7 +547,7 @@ to filter them."
                           ('(nil t)   "Selected")
                           ('(t nil) cand)
                           ('(t t)
-                           (add-face-text-property 0 (length cand) 'citar-selection nil cand)
+                           (add-face-text-property 0 (length cand) 'citar-selection nil (copy-sequence cand))
                            cand))))))
 
 (defvar citar--multiple-setup '("TAB" . "RET")
@@ -575,7 +574,7 @@ is used for exiting the minibuffer during completing read.")
 HISTORY is the `completing-read' history argument."
   ;; Because completing-read-multiple just does not work for long candidate
   ;; strings, and IMO is a poor UI.
-  (let* ((selected-hash (make-hash-table :test #'equal)))
+  (let* ((selected-hash (make-hash-table :test 'equal)))
     (while (let ((item (minibuffer-with-setup-hook #'citar--setup-multiple-keymap
                          (completing-read
                           (format "%s (%s/%s): " prompt
@@ -583,14 +582,13 @@ HISTORY is the `completing-read' history argument."
                                   (hash-table-count candidates))
                           (citar--multiple-completion-table selected-hash candidates filter)
                           nil t nil history `("" . ,def)))))
-             (unless (equal item "")
-               (cond ((gethash item selected-hash)
-                      (remhash item selected-hash)
-                      (cl-callf cdr (symbol-value history)))
-                     (t
-                      (puthash item t selected-hash))))
+             (unless (string-empty-p item)
+               (if (not (gethash item selected-hash))
+                   (puthash item t selected-hash)
+                 (remhash item selected-hash)
+                 (pop (symbol-value history))))
              (not (or (eq last-command #'citar--multiple-exit)
-                      (equal item "")))))
+                      (string-empty-p item)))))
     (hash-table-keys selected-hash)))
 
 (cl-defun citar--get-resource-candidates (key-or-keys &key files links notes)
