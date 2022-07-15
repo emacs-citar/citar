@@ -1475,46 +1475,39 @@ ARG is forwarded to the mode-specific insertion function given in
   "Insert comma separated KEYS."
   (insert (string-join keys ", ")))
 
-(defun citar--add-file-to-library (key)
-  "Add a file to the library for KEY.
-The FILE can be added from an open buffer, a file path, or a
-URL."
-  (citar--check-configuration 'citar-library-paths)
-  (let* ((source
-          (char-to-string
-           (read-char-choice
-            "Add file from [b]uffer, [f]ile, or [u]rl? " '(?b ?f ?u))))
-         (directory (if (cdr citar-library-paths)
-                        (completing-read "Directory: " citar-library-paths)
-                      (car citar-library-paths)))
-         (file-path
-          ;; Create the path without extension here.
-          (expand-file-name key directory)))
-    (pcase source
-      ("b"
-       (with-current-buffer (read-buffer-to-switch "Add file buffer: ")
-         (let ((extension (file-name-extension (buffer-file-name))))
-           (write-file (concat file-path "." extension) t))))
-      ("f"
-       (let* ((file (read-file-name "Add file: " nil nil t))
-              (extension (file-name-extension file)))
-         (copy-file file
-                    (concat file-path "." extension) 1)))
-      ("u"
-       (let* ((url (read-string "Add file URL: "))
-              (extension (url-file-extension url)))
-         (when (< 1 extension)
-           ;; TODO what if there is no extension?
-           (url-copy-file url (concat file-path extension) 1)))))))
-
 ;;;###autoload
 (defun citar-add-file-to-library (key)
   "Add a file to the library for KEY.
-The FILE can be added either from an open buffer, a file, or a
+The FILE can be added from an open buffer, a file path, or a
 URL."
-  ;; Why is there a separate citar--add-file-to-library?
   (interactive (list (citar-select-ref)))
-  (citar--add-file-to-library key))
+  (citar--check-configuration 'citar-library-paths)
+  (unless citar-library-paths
+    (user-error "Make sure `citar-library-paths' is non-nil"))
+  (let* ((directory (if (cdr citar-library-paths)
+                        (completing-read "Directory: " citar-library-paths)
+                      (car citar-library-paths)))
+         (filepath (expand-file-name key directory))
+         (withext (lambda (extension)
+                    (let* ((extension (or extension (read-string "File extension: "))))
+                      (if (string-empty-p extension)
+                          filepath
+                        (concat filepath "." extension))))))
+    (pcase (read-char-choice "Add file from [b]uffer, [f]ile, or [u]rl? " '(?b ?f ?u))
+      (?b
+       (with-current-buffer (read-buffer "Add file buffer: " (current-buffer))
+         (let ((destfile (funcall withext (and buffer-file-name (file-name-extension buffer-file-name)))))
+           (write-file destfile 'confirm))))
+      (?f
+       (let* ((file (read-file-name "Add file: " nil nil t))
+              (destfile (funcall withext (file-name-extension file))))
+         (copy-file file destfile 1)))  ; last arg integer means to confirm before overwriting
+      (?u
+       (let* ((url (read-string "Add file URL: "))
+              ;; TODO: Use Content-Type HTTP response header to guess file extension
+              (ext (url-file-extension url))
+              (destfile (funcall withext (when (> (length ext) 1) (substring ext 1)))))
+         (url-copy-file url destfile 1))))))
 
 ;;;###autoload
 (defun citar-run-default-action (keys)
