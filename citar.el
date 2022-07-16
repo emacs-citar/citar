@@ -1178,18 +1178,36 @@ select a single file."
 (defun citar-open-notes (keys)
   "Open notes associated with the KEYS."
   (interactive (list (citar-select-refs)))
-  (if (citar-get-notes keys)
-      (funcall (citar--get-notes-config :open)
-               (cdr (citar--select-resource keys
-                                            :notes t
-                                            :always-prompt citar-open-prompt)))
-    (when keys
-      (if (null (cdr keys))
-          (citar-create-note (car keys))
-        (citar-create-note
-         (completing-read
-          "No notes found. Select one key to create note: "
-          keys))))))
+  (let* (candidates selection)
+    (mapc
+     (lambda (key)
+       (if-let (notes (citar-get-notes key))
+           (mapcar (lambda (note)
+                     (push (propertize (file-name-nondirectory note) 'multi-category
+                                       `(note . ,note))
+                           candidates))
+                   notes)
+         (push (propertize key 'multi-category `(key . ,key)) candidates)))
+     keys)
+    (setq selection (completing-read
+                     "Select resource: "
+                     (lambda (string predicate action)
+                       (if (eq action 'metadata)
+                           '(metadata
+                             (category . multi-category)
+                             (group-function . (lambda (cand transform)
+                                                 (if transform
+                                                     cand
+                                                   (if (equal 'note
+                                                              (car (get-text-property
+                                                                    0 'multi-category cand)))
+                                                       "Open Notes:"
+                                                     "Create Notes:")))))
+                         (complete-with-action action candidates string predicate)))
+                     nil t))
+    (pcase (get-text-property 0 'multi-category (car (member selection candidates)))
+      (`(note . ,note) (funcall (citar--get-notes-config :open) note))
+      (`(key . ,key)  (funcall (citar--get-notes-config :create) key (citar-get-entry key))))))
 
 ;;;###autoload
 (defun citar-open-links (key-or-keys)
