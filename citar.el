@@ -1178,11 +1178,11 @@ select a single file."
 (defun citar-open-notes (keys)
   "Open notes associated with the KEYS."
   (interactive (list (citar-select-refs)))
-  (if-let ((notes (citar-get-notes keys)))
-      (progn (mapc (citar--get-notes-config :open) notes)
-             (let ((count (length notes)))
-               (when (> count 1)
-                 (message "Opened %d notes" count))))
+  (if (citar-get-notes keys)
+      (funcall (citar--get-notes-config :open)
+               (cdr (citar--select-resource keys
+                                            :notes t
+                                            :always-prompt citar-open-prompt)))
     (when keys
       (if (null (cdr keys))
           (citar-create-note (car keys))
