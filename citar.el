@@ -1186,7 +1186,10 @@ select a single file."
     (when keys
       (if (null (cdr keys))
           (citar-create-note (car keys))
-        (message "No notes found. Select one key to create note: %s" keys)))))
+        (citar-create-note
+         (completing-read
+          "No notes found. Select one key to create note: "
+          keys))))))
 
 ;;;###autoload
 (defun citar-open-links (key-or-keys)
