@@ -147,12 +147,13 @@ by this variable."
                  (string :tag "Field name")
                  (const :tag "Ignore cross-references" nil)))
 
-(defcustom citar-additional-fields '("doi" "url" "pmcid" "pmid")
+(defcustom citar-additional-fields nil
   "A list of fields to add to parsed data.
 
 By default, citar filters parsed data based on the fields
-specified in `citar-templates'. This specifies additional fields
-to include."
+specified in `citar-templates', `citar-file-variable'
+`citar-crossref-variable', and `citar-link-fields'. This
+specifies additional fields to include."
   :group 'citar
   :type '(repeat string))
 
@@ -261,17 +262,21 @@ If nil, single resources will open without prompting."
 
 ;;;; File, note, and URL handling
 
-(defcustom citar-has-files-functions (list #'citar-file--has-file-field
-                                           #'citar-file--has-library-files)
-  "List of functions to test if an entry has associated files."
-  :group 'citar
-  :type '(repeat function))
+(defcustom citar-file-sources (list (list :items #'citar-file--get-from-file-field
+                                          :hasitems #'citar-file--has-file-field)
+                                    (list :items #'citar-file--get-library-files
+                                          :hasitems #'citar-file--has-library-files))
+  "List of backends used to get library files for bibliography references.
 
-(defcustom citar-get-files-functions (list #'citar-file--get-from-file-field
-                                           #'citar-file--get-library-files)
-  "List of functions to find files associated with entries."
+Should be a list of plists, where each plist has the following properties:
+
+  :items Function that takes a list of citation keys and returns
+    a hash table mapping each of those keys to a list of files.
+
+  :hasitems Function that takes a citation key and returns
+    non-nil if it has associated files."
   :group 'citar
-  :type '(repeat function))
+  :type '(repeat (plist :value-type function :options (:items :hasitems))))
 
 (defcustom citar-notes-sources
   `((citar-file .
@@ -313,6 +318,19 @@ plist has the following properties:
   "Function used by `citar-file' note source to format new notes."
   :group 'citar
   :type 'function)
+
+(defcustom citar-link-fields '((doi . "https://doi.org/%s")
+                               (pmid . "https://www.ncbi.nlm.nih.gov/pubmed/%s")
+                               (pmcid . "https://www.ncbi.nlm.nih.gov/pmc/articles/%s")
+                               (url . "%s"))
+  "Bibliography fields to parse into links.
+
+Association list whose keys are symbols naming bibliography
+fields and values are URL strings. In each URL, \"%s\" is
+replaced by the contents of the corresponding field."
+  :group 'citar
+  :type '(alist :key-type symbol :value-type string))
+
 
 ;;;; Major mode functions
 
@@ -613,11 +631,12 @@ returning only links, or the category specified by
 resources of multiple types, CATEGORY is `multi-category' and the
 `multi-category' text property is applied to each element of
 CANDIDATES."
-  (cl-flet ((withtype (type cands) (mapcar (lambda (cand) (propertize cand 'citar--resource type)) cands)))
+  (cl-flet ((withtype (type cands) (mapcar (lambda (cand) (propertize cand 'citar--resource type)) cands))
+            (getresources (table) (when table (delete-dups (apply #'append (hash-table-values table))))))
     (let* ((citar--entries (citar-get-entries))
-           (files (if (listp files) files (citar-get-files key-or-keys)))
-           (links (if (listp links) links (citar-get-links key-or-keys)))
-           (notes (if (listp notes) notes (citar-get-notes key-or-keys)))
+           (files (if (listp files) files (getresources (citar-get-files key-or-keys))))
+           (links (if (listp links) links (getresources (citar-get-links key-or-keys))))
+           (notes (if (listp notes) notes (getresources (citar-get-notes key-or-keys))))
            (notecat (citar--get-notes-config :category))
            (sources (nconc (when files (list (cons 'file (withtype 'file files))))
                            (when links (list (cons 'url (withtype 'url links))))
@@ -849,12 +868,18 @@ NAME is a symbol, and CONFIG is a plist."
   (cl-callf2 assq-delete-all name citar-notes-sources))
 
 (cl-defun citar-get-notes (&optional (key-or-keys nil filter-p))
-  "Return list of notes associated with KEY-OR-KEYS.
-If KEY-OR-KEYS is omitted, return all notes."
-  (let* ((citar--entries (citar-get-entries))
-         (keys (citar--with-crossref-keys key-or-keys)))
-    (unless (and filter-p (null keys))    ; return nil if KEY-OR-KEYS was given, but is nil
-      (delete-dups (funcall (citar--get-notes-config :items) keys)))))
+  "Return notes associated with KEY-OR-KEYS.
+
+KEY-OR-KEYS should be either a list KEYS or a single key. Return
+a hash table mapping elements of KEYS to lists of associated
+notes found using `citar-notes-source'. Include notes associated
+with cross-referenced keys.
+
+If KEY-OR-KEYS is omitted, return notes for all entries. If it is
+nil, return nil."
+  (when (or key-or-keys (not filter-p))
+    (citar--get-resources key-or-keys
+                          (citar--get-notes-config :items))))
 
 (defun citar-create-note (key &optional entry)
   "Create a note for KEY and ENTRY.
@@ -862,34 +887,43 @@ If ENTRY is nil, use `citar-get-entry' with KEY."
   (interactive (list (citar-select-ref)))
   (funcall (citar--get-notes-config :create) key (or entry (citar-get-entry key))))
 
-(defun citar-get-files (key-or-keys)
-  "Return list of files associated with KEY-OR-KEYS.
-Find files using `citar-get-files-functions'. Include files
-associated with cross-referenced keys."
-  (let ((citar--entries (citar-get-entries)))
-    (when-let ((keys (citar--with-crossref-keys key-or-keys)))
-      (delete-dups (mapcan (lambda (func) (funcall func keys)) citar-get-files-functions)))))
+(cl-defun citar-get-files (&optional (key-or-keys nil filter-p))
+  "Return files associated with KEY-OR-KEYS.
 
+KEY-OR-KEYS should be either a list KEYS or a single key. Return
+a hash table mapping elements of KEYS to lists of associated
+files found using `citar-file-sources'. Include files associated
+with cross-referenced keys.
 
-(defun citar-get-links (key-or-keys)
-  "Return list of links associated with KEY-OR-KEYS.
-Include files associated with cross-referenced keys."
-  (let* ((citar--entries (citar-get-entries))
-         (keys (citar--with-crossref-keys key-or-keys)))
-    (delete-dups
-     (mapcan
-      (lambda (key)
-        (when-let ((entry (citar-get-entry key)))
-          (mapcan
-           (pcase-lambda (`(,fieldname . ,urlformat))
-             (when-let ((fieldvalue (citar-get-value fieldname entry)))
-               (list (format urlformat fieldvalue))))
-           '((doi . "https://doi.org/%s")
-             (pmid . "https://www.ncbi.nlm.nih.gov/pubmed/%s")
-             (pmcid . "https://www.ncbi.nlm.nih.gov/pmc/articles/%s")
-             (url . "%s")))))
-      keys))))
+If KEY-OR-KEYS is omitted, return files for all entries. If it is
+nil, return nil."
+  (when (or key-or-keys (not filter-p))
+    (citar--get-resources key-or-keys
+                          (mapcar (lambda (source)
+                                    (plist-get source :items))
+                                  citar-file-sources))))
 
+(cl-defun citar-get-links (&optional (key-or-keys nil filter-p))
+  "Return links associated with KEY-OR-KEYS.
+
+KEY-OR-KEYS should be either a list KEYS or a single key. Return
+a hash table mapping elements of KEYS to lists of associated
+links found using `citar-link-fields'. Include links associated
+with cross-referenced keys.
+
+If KEY-OR-KEYS is omitted, return notes for all entries. If it is
+nil, return nil."
+  (when (or key-or-keys (not filter-p))
+    (citar--get-resources key-or-keys
+                          (apply-partially
+                           #'citar--get-resources-using-function
+                           (lambda (_citekey entry)
+                             (let (keylinks)
+                               (when entry
+                                 (pcase-dolist (`(,fieldname . ,urlformat) citar-link-fields)
+                                   (when-let ((fieldvalue (citar-get-value fieldname entry)))
+                                     (push (format urlformat fieldvalue) keylinks))))
+                               (nreverse keylinks)))))))
 
 (defun citar-has-files ()
   "Return predicate testing whether entry has associated files.
@@ -907,11 +941,14 @@ For example, to test whether KEY has associated files:
 When testing many keys, call this function once and use the
 returned predicate repeatedly.
 
-Files are detected using `citar-has-files-functions', which see.
-Also check any bibliography entries that are cross-referenced
-from the given KEY; see `citar-crossref-variable'."
+Files are detected using `citar-file-sources', which see. Also
+check any bibliography entries that are cross-referenced from the
+given KEY; see `citar-crossref-variable'."
   (citar--has-resources
-   (mapcar #'funcall citar-has-files-functions)))
+   (mapcar (lambda (source)
+             (when-let ((hasitems (plist-get source :hasitems)))
+               (funcall hasitems)))
+           citar-file-sources)))
 
 
 (defun citar-has-notes ()
@@ -944,8 +981,9 @@ Return a function that takes KEY and returns non-nil when the
 corresponding bibliography entry has associated links. See the
 documentation of `citar-has-files' and `citar-has-notes', which
 have similar usage."
-  (citar--has-resources
-   (apply-partially #'citar-get-field-with-value '(doi pmid pmcid url))))
+  (let ((linkfields (mapcar (lambda (field) (symbol-name (car field))) citar-link-fields)))
+   (citar--has-resources
+    (apply-partially #'citar-get-field-with-value linkfields))))
 
 
 (defun citar--has-resources (predicates)
@@ -980,6 +1018,55 @@ another entry in ENTRIES that has associated resources."
               (when-let ((xkey (citar-get-value xref citekey)))
                 (funcall hasresourcep xkey))))
       hasresourcep)))
+
+(defun citar--get-resources (key-or-keys functions)
+  "Return hash table mapping each element of KEY-OR-KEYS to a list of resources.
+
+KEY-OR-KEYS should be either a list KEYS or a single key.
+FUNCTIONS should be a list of functions, each of which takes a
+list of bibliography keys and returns a hash table mapping each
+of those keys to a list of resources. FUNCTIONS may also be a
+single such function.
+
+Return a hash table mapping each element of KEYS to the
+concatenated list of resources returned by all the FUNCTIONS.
+Also include resources associated with cross-references from
+KEYS."
+  (let* ((citar--entries (citar-get-entries))
+         (keys (if (listp key-or-keys) (delete-dups key-or-keys) (list key-or-keys)))
+         (functions (if (functionp functions) (list functions) (remq nil functions)))
+         (xref citar-crossref-variable)
+         (getxref (apply-partially #'citar-get-value xref))
+         (xkeys (if (not xref)
+                    keys
+                  (delete-dups (append keys (delq nil (mapcar getxref keys))))))
+         (resources (delq nil (mapcar (lambda (func) (funcall func xkeys)) functions))))
+    (cl-flet* ((getreslists (citekey) (delq nil (mapcar (apply-partially #'gethash citekey) resources)))
+               (xresources (citekey entry) (apply #'append
+                                                  (nconc (getreslists citekey)
+                                                         (when-let ((xkey (and xref
+                                                                               (citar-get-value xref entry))))
+                                                           (getreslists xkey))))))
+      (citar--get-resources-using-function #'xresources keys))))
+
+(defun citar--get-resources-using-function (func &optional keys)
+  "Collect resources for KEYS returned by FUNC.
+
+Return a hash table mapping each element of KEYS to the result of
+calling FUNC on that key and corresponding bibliography entry. If
+KEYS is nil, call FUNC on every key and entry returned by
+`citar-get-entries'.
+
+Note: This is a helper function to make it easier to write
+getters for file, note, and link resources."
+  (let ((resources (make-hash-table :test 'equal)))
+    (prog1 resources
+      (cl-flet ((putresult (citekey entry) (when-let ((result (funcall func citekey entry)))
+                                             (puthash citekey result resources))))
+        (if (null keys)
+            (maphash #'putresult (citar-get-entries))
+          (dolist (citekey keys)
+            (putresult citekey (citar-get-entry citekey))))))))
 
 ;;; Format and display field values
 
@@ -1022,26 +1109,8 @@ personal names of the form \"family, given\"."
                      (list citar-file-variable))
                  ,@(when citar-crossref-variable
                      (list citar-crossref-variable))
+                 ,@(mapcar (lambda (field) (symbol-name (car field))) citar-link-fields)
                  . ,citar-additional-fields)))
-
-(defun citar--with-crossref-keys (key-or-keys)
-  "Return KEY-OR-KEYS augmented with cross-referenced items.
-
-KEY-OR-KEYS is either a list KEYS or a single key, which is
-converted into KEYS. Return a list containing the elements of
-KEYS, with each element followed by the corresponding
-cross-referenced keys, if any.
-
-Duplicate keys are removed from the returned list."
-  (let ((xref citar-crossref-variable)
-        (keys (if (listp key-or-keys) key-or-keys (list key-or-keys))))
-    (delete-dups
-     (if (not xref)
-         keys
-       (mapcan (lambda (key)
-                 (cons key (when-let ((xkey (citar-get-value xref key)))
-                             (list xkey))))
-               keys)))))
 
 ;;; Affixations and annotations
 
@@ -1165,10 +1234,9 @@ select a single file."
             (funcall action (cdr resource))
           (error "Expected resource of type `file', got `%s': %S" (car resource) (cdr resource)))
       (ignore
-       ;; If some key had files according to `citar-has-files', but `citar-get-files' returned nothing, then
-       ;; don't print the following message. The appropriate function in `citar-get-files-functions' is
-       ;; responsible for telling the user why it failed, and we want that explanation to appear in the echo
-       ;; area.
+       ;; If some key had files according to the `:hasitems' function, but `:items' returned nothing, then
+       ;; don't print the following message. The `:items' function is responsible for telling the user why it
+       ;; failed, and we want that explanation to appear in the echo area.
        (let ((keys (if (listp key-or-keys) key-or-keys (list key-or-keys)))
              (hasfilep (citar-has-files)))
          (unless (and hasfilep (seq-some hasfilep keys))
@@ -1178,9 +1246,10 @@ select a single file."
 (defun citar-open-notes (keys)
   "Open notes associated with the KEYS."
   (interactive (list (citar-select-refs)))
-  (if-let ((notes (citar-get-notes keys)))
-      (progn (mapc (citar--get-notes-config :open) notes)
-             (let ((count (length notes)))
+  (if-let* ((notes (citar-get-notes keys))
+            (noteslist (delete-dups (apply #'append (hash-table-values notes)))))
+      (progn (mapc (citar--get-notes-config :open) noteslist)
+             (let ((count (length noteslist)))
                (when (> count 1)
                  (message "Opened %d notes" count))))
     (when keys

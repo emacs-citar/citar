@@ -26,10 +26,10 @@
 (make-obsolete-variable 'citar-file-extensions
                         'citar-library-file-extensions "1.0")
 
-(declare-function citar-get-value "citar")
-(declare-function citar--bibliography-files "citar")
-(declare-function citar--check-configuration "citar")
-(declare-function citar--get-notes-config "citar")
+(declare-function citar-get-value "citar" (field key-or-entry))
+(declare-function citar--bibliography-files "citar" (&rest buffers))
+(declare-function citar--check-configuration "citar" (&rest variables))
+(declare-function citar--get-resources-using-function "citar" (func &optional keys))
 
 ;;;; File related variables
 
@@ -163,13 +163,15 @@ Note: this function is intended to be used in
 `citar-has-files-functions'. Use `citar-has-files' to test
 whether entries have associated files."
   (when citar-file-variable
-    (apply-partially #'citar-get-value citar-file-variable)))
+    (lambda (citekey) (and (citar-get-value citar-file-variable citekey) t))))
 
-(defun citar-file--get-from-file-field (keys)
-  "Return list of files for KEYS.
+(defun citar-file--get-from-file-field (&optional keys)
+  "Return files for KEYS by parsing the `citar-file-variable' field.
 
-Parse and return files given in the bibliography field named by
-`citar-file-variable'.
+Return a hash table mapping each element of KEYS to a list of
+files given in the bibliography entry named by
+`citar-file-variable'. If KEYS is nil, return files for all
+entries.
 
 Note: this function is intended to be used in
 `citar-get-files-functions'. Use `citar-get-files' to get all
@@ -179,9 +181,9 @@ files associated with KEYS."
                                 'citar-file-parser-functions)
     (let ((dirs (append citar-library-paths
                         (mapcar #'file-name-directory (citar--bibliography-files)))))
-      (mapcan
-       (lambda (citekey)
-         (when-let ((fieldvalue (citar-get-value filefield citekey)))
+      (citar--get-resources-using-function
+       (lambda (citekey entry)
+         (when-let ((fieldvalue (citar-get-value filefield entry)))
            (citar-file--parse-file-field fieldvalue dirs citekey)))
        keys))))
 
@@ -189,20 +191,17 @@ files associated with KEYS."
 
 (defun citar-file--has-library-files ()
   "Return predicate testing whether cite key has library files."
-  (citar--check-configuration 'citar-library-paths 'citar-library-file-extensions)
-  (let ((files (citar-file--directory-files
-                citar-library-paths nil citar-library-file-extensions
-                citar-file-additional-files-separator)))
-    (lambda (key)
-      (gethash key files))))
+  (let ((files (citar-file--get-library-files)))
+    (unless (hash-table-empty-p files)
+      (lambda (citekey)
+        (and (gethash citekey files) t)))))
 
-(defun citar-file--get-library-files (keys)
+(defun citar-file--get-library-files (&optional keys)
   "Return list of files for KEYS in ENTRIES."
-  (citar--check-configuration 'citar-library-paths)
-  (let ((files (citar-file--directory-files citar-library-paths keys
-                                            citar-library-file-extensions
-                                            citar-file-additional-files-separator)))
-    (mapcan (lambda (key) (gethash key files)) keys)))
+  (citar--check-configuration 'citar-library-paths 'citar-library-file-extensions)
+  (citar-file--directory-files
+   citar-library-paths keys citar-library-file-extensions
+   citar-file-additional-files-separator))
 
 (defun citar-file--make-filename-regexp (keys extensions &optional additional-sep)
   "Regexp matching file names starting with KEYS and ending with EXTENSIONS.
@@ -307,7 +306,7 @@ need to scan the contents of DIRS in this case."
 
 ;;;; Note files
 
-(defun citar-file--note-directory-files (&optional keys)
+(defun citar-file--get-notes (&optional keys)
   "Return note files associated with KEYS.
 Return hash table whose keys are elements of KEYS and values are
 lists of note file names found in `citar-notes-paths' having
@@ -319,8 +318,9 @@ extensions in `citar-file-note-extensions'."
 
 (defun citar-file--has-notes ()
   "Return predicate testing whether cite key has associated notes."
-  (let ((files (citar-file--note-directory-files)))
-    (lambda (key) (gethash key files))))
+  (let ((notes (citar-file--get-notes)))
+    (unless (hash-table-empty-p notes)
+      (lambda (citekey) (and (gethash citekey notes) t)))))
 
 (defun citar-file--create-note (key entry)
   "Create a note file from KEY and ENTRY."
@@ -330,11 +330,6 @@ extensions in `citar-file-note-extensions'."
           (citar--check-configuration 'citar-note-format-function)
           (funcall citar-note-format-function key entry)))
     (user-error "Make sure `citar-notes-paths' and `citar-file-note-extensions' are non-nil")))
-
-(defun citar-file--get-notes (keys)
-  "Return list of notes associated with KEYS."
-  (let ((notes (citar-file--note-directory-files keys)))
-    (apply #'append (map-values notes))))
 
 (defun citar-file--get-note-filename (key)
   "Return existing or new note filename for KEY.
