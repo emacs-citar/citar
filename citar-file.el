@@ -325,12 +325,12 @@ extensions in `citar-file-note-extensions'."
 (defun citar-file--create-note (key)
   "Create a note file from KEY and ENTRY."
   (let ((entry (citar-get-entry key)))
-  (if-let ((filename (citar-file--get-note-filename key)))
-      (prog1 (find-file filename)
-        (unless (file-exists-p filename)
-          (citar--check-configuration 'citar-note-format-function)
-          (funcall citar-note-format-function key entry)))
-    (user-error "Make sure `citar-notes-paths' and `citar-file-note-extensions' are non-nil"))))
+    (if-let ((filename (citar-file--get-note-filename key)))
+        (prog1 (find-file filename)
+          (unless (file-exists-p filename)
+            (citar--check-configuration 'citar-note-format-function)
+            (funcall citar-note-format-function key entry)))
+      (user-error "Make sure `citar-notes-paths' and `citar-file-note-extensions' are non-nil"))))
 
 (defun citar-file--get-notes (keys)
   "Return list of notes associated with KEYS."

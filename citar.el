@@ -1135,7 +1135,8 @@ property specifying TYPE."
             (open (pcase type
                     ('file #'citar-file-open)
                     ('url #'browse-url)
-                    ('note (citar--get-notes-config :open)))))
+                    ('note (citar--get-notes-config :open))
+                    ('key (citar--get-notes-config :create)))))
       (funcall open (substring-no-properties resource))
     (error "Could not open resource of type `%s': %S" type resource)))
 
