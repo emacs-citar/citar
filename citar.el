@@ -622,7 +622,7 @@ CANDIDATES."
            (sources (nconc (when files (list (cons 'file (withtype 'file files))))
                            (when links (list (cons 'url (withtype 'url links))))
                            (when notes (list (cons notecat (withtype 'note notes))))
-                           (when notes (list (cons 'key (withtype 'key key-or-keys)))))))
+                           (list (cons 'key (withtype 'key key-or-keys))))))
       (if (null (cdr sources))        ; if sources is nil or singleton list,
           (car sources)               ; return either nil or the only source.
         (cons 'multi-category         ; otherwise, combine all sources
