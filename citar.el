@@ -621,7 +621,8 @@ CANDIDATES."
            (notecat (citar--get-notes-config :category))
            (sources (nconc (when files (list (cons 'file (withtype 'file files))))
                            (when links (list (cons 'url (withtype 'url links))))
-                           (when notes (list (cons notecat (withtype 'note notes)))))))
+                           (when notes (list (cons notecat (withtype 'note notes))))
+                           (when notes (list (cons 'key (withtype 'key key-or-keys)))))))
       (if (null (cdr sources))        ; if sources is nil or singleton list,
           (car sources)               ; return either nil or the only source.
         (cons 'multi-category         ; otherwise, combine all sources
@@ -677,10 +678,10 @@ user declined to choose."
             "Links"))
     ('note (if transform
                (funcall (or (citar--get-notes-config :transform) #'identity) resource)
-             (or (citar--get-notes-config :name) "Notes")))
+             "Open Notes:"))
     (_ (if transform
            resource
-         nil))))
+         "Create Notes:"))))
 
 (defun citar--format-candidates ()
   "Format completion candidates for bibliography entries.
@@ -1175,39 +1176,14 @@ select a single file."
            (message "No associated files for %s" key-or-keys)))))))
 
 ;;;###autoload
-(defun citar-open-notes (keys)
-  "Open notes associated with the KEYS."
+(defun citar-open-notes (key-or-keys)
+  "Open notes associated with the KEY-OR-KEYS."
   (interactive (list (citar-select-refs)))
-  (let* (candidates selection)
-    (mapc
-     (lambda (key)
-       (if-let (notes (citar-get-notes key))
-           (mapcar (lambda (note)
-                     (push (propertize (file-name-nondirectory note) 'multi-category
-                                       `(note . ,note))
-                           candidates))
-                   notes)
-         (push (propertize key 'multi-category `(key . ,key)) candidates)))
-     keys)
-    (setq selection (completing-read
-                     "Select resource: "
-                     (lambda (string predicate action)
-                       (if (eq action 'metadata)
-                           '(metadata
-                             (category . multi-category)
-                             (group-function . (lambda (cand transform)
-                                                 (if transform
-                                                     cand
-                                                   (if (equal 'note
-                                                              (car (get-text-property
-                                                                    0 'multi-category cand)))
-                                                       "Open Notes:"
-                                                     "Create Notes:")))))
-                         (complete-with-action action candidates string predicate)))
-                     nil t))
-    (pcase (get-text-property 0 'multi-category (car (member selection candidates)))
-      (`(note . ,note) (funcall (citar--get-notes-config :open) note))
-      (`(key . ,key)  (funcall (citar--get-notes-config :create) key (citar-get-entry key))))))
+  (let* ((resource (citar--select-resource key-or-keys :notes t))
+         (key (cdr resource)))
+    (if (eq 'note (car resource))
+        (funcall (citar--get-notes-config :open) key)
+      (funcall (citar--get-notes-config :create) key (citar-get-entry key)))))
 
 ;;;###autoload
 (defun citar-open-links (key-or-keys)
