@@ -27,7 +27,7 @@
 
 ;; Define vars for capf
 (defvar citar-capf--candidates
-  (or (citar--completion-table (citar--format-candidates))
+  (or (citar--format-candidates)
       (user-error "No bibliography set"))
   "Completion candidates for `citar-capf'.")
 
