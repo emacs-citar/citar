@@ -861,7 +861,7 @@ If KEY-OR-KEYS is omitted, return all notes."
   "Create a note for KEY and ENTRY.
 If ENTRY is nil, use `citar-get-entry' with KEY."
   (interactive (list (citar-select-ref)))
-  (funcall (citar--get-notes-config :create) key (or entry (citar-get-entry key))))
+  (funcall (citar--get-notes-config :create) key))
 
 (defun citar-get-files (key-or-keys)
   "Return list of files associated with KEY-OR-KEYS.
@@ -1183,7 +1183,7 @@ select a single file."
          (key (cdr resource)))
     (if (eq 'note (car resource))
         (funcall (citar--get-notes-config :open) key)
-      (funcall (citar--get-notes-config :create) key (citar-get-entry key)))))
+      (funcall (citar--get-notes-config :create) key))))
 
 ;;;###autoload
 (defun citar-open-links (key-or-keys)
