@@ -679,9 +679,12 @@ user declined to choose."
     ('note (if transform
                (funcall (or (citar--get-notes-config :transform) #'identity) resource)
              "Open Notes:"))
+    ('key (if transform
+              resource
+            "Create Notes:"))
     (_ (if transform
            resource
-         "Create Notes:"))))
+         nil))))
 
 (defun citar--format-candidates ()
   "Format completion candidates for bibliography entries.
