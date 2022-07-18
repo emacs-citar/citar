@@ -16,8 +16,9 @@
 (require 'seq)
 (require 'map)
 
-(declare-function citar--get-template "citar")
-(declare-function citar--fields-to-parse "citar")
+(declare-function citar--get-template "citar" (template-name))
+(declare-function citar--fields-to-parse "citar" ())
+(declare-function citar--prepend-candidate-citekey "citar" (citekey candidate))
 
 (defvar citar-ellipsis)
 
@@ -254,16 +255,8 @@ PROPS."
      (lambda (citekey entry)
        (let* ((preformat (citar-format--preformat fieldspecs entry
                                                   t citar-ellipsis))
-              ;; CSL-JSON lets citekey be an arbitrary string. Quote it if...
-              (keyquoted (if (or (string-empty-p citekey) ; ... it's empty,
-                                 (= ?\" (aref citekey 0)) ; ... starts with ",
-                                 (seq-contains-p citekey ?\s #'=))   ; ... or has a space
-                             (prin1-to-string citekey)
-                           citekey))
-              (prefix (propertize (concat keyquoted (when (cdr preformat) " "))
-                                  'invisible t)))
-         (setcdr preformat (cons (concat prefix (cadr preformat))
-                                 (cddr preformat)))
+              (withkey (citar--prepend-candidate-citekey citekey (cadr preformat))))
+         (setcdr preformat (cons withkey (cddr preformat)))
          (puthash citekey preformat preformatted)))
      entries)))
 

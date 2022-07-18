@@ -73,7 +73,8 @@
 
 (defun citar-embark--candidate-transformer (_type target)
   "Look up key for a citar-reference TYPE and TARGET."
-  (cons 'citar-reference (citar--extract-candidate-citekey target)))
+  (or (get-text-property 0 'multi-category target)
+      (cons 'citar-reference (citar--extract-candidate-citekey target))))
 
 (defun citar-embark--selected ()
   "Return selected candidates from `citar--select-multiple' for embark."

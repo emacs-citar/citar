@@ -18,10 +18,12 @@
 ;;; Formatting bibliography entries
 
 
-(cl-defun citar-format--entry (format-string entry &optional width
-                                             &key hide-elided ellipsis)
-  "Format ENTRY according to FORMAT-STRING."
-  (let* ((fieldspecs (citar-format--parse format-string))
+(cl-defun citar-format--entry (format entry &optional width
+                                      &key hide-elided ellipsis)
+  "Format ENTRY according to FORMAT.
+FORMAT may be either a format string or a parsed format string as
+returned by `citar-format--parse'."
+  (let* ((fieldspecs (if (stringp format) (citar-format--parse format) format))
          (preform (citar-format--preformat fieldspecs entry
                                            hide-elided ellipsis)))
     (if width
