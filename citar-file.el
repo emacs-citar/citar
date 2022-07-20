@@ -85,8 +85,8 @@ separator that does not otherwise occur in citation keys."
 (defcustom citar-file-open-external-extensions '("html")
   "List of file extensions to be opened with external application.
 
-These are the extensions the `citar-file-open-external'
-will open, via `citar-file-open'."
+These are the extensions that `citar-file-open' will open via
+`citar-file-open-external'."
   :group 'citar
   :type '(repeat string))
 
