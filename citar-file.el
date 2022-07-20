@@ -82,6 +82,14 @@ separator that does not otherwise occur in citation keys."
                  (const :tag "Find files with space after key" "[[:space:]]")
                  (regexp :tag "Filename separator")))
 
+(defcustom citar-file-open-external-extension '("html")
+  "List of file extensions to be opened with external application.
+
+These are the extensions the `citar-file-open-external'
+will open, via `citar-file-open'."
+  :group 'citar
+  :type '(repeat string))
+
 (defvar citar-notes-paths)
 (defvar citar-library-paths)
 (defvar citar-library-file-extensions)
@@ -288,7 +296,9 @@ need to scan the contents of DIRS in this case."
 
 (defun citar-file-open (file)
   "Open FILE."
-  (if (equal (file-name-extension file) "html")
+  (if (cl-member (downcase (file-name-extension file))
+                 citar-file-open-external-extension
+                 :test #'equal)
       (citar-file-open-external (expand-file-name file))
     (funcall citar-file-open-function (expand-file-name file))))
 
