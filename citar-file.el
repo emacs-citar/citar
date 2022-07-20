@@ -82,7 +82,7 @@ separator that does not otherwise occur in citation keys."
                  (const :tag "Find files with space after key" "[[:space:]]")
                  (regexp :tag "Filename separator")))
 
-(defcustom citar-file-open-external-extension '("html")
+(defcustom citar-file-open-external-extensions '("html")
   "List of file extensions to be opened with external application.
 
 These are the extensions the `citar-file-open-external'
