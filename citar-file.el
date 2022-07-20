@@ -296,9 +296,7 @@ need to scan the contents of DIRS in this case."
 
 (defun citar-file-open (file)
   "Open FILE."
-  (if (cl-member (downcase (file-name-extension file))
-                 citar-file-open-external-extension
-                 :test #'equal)
+  (if (member-ignore-case (file-name-extension file) citar-file-open-external-extensions)
       (citar-file-open-external (expand-file-name file))
     (funcall citar-file-open-function (expand-file-name file))))
 
