@@ -393,7 +393,7 @@ replaced by the contents of the corresponding field."
       (insert-edit . citar-latex-insert-edit)
       (key-at-point . citar-latex-key-at-point)
       (citation-at-point . citar-latex-citation-at-point)
-      (list-keys . reftex-all-used-citation-keys)))
+      (list-keys . citar-latex-list-keys)))
     ((markdown-mode) .
      ((insert-keys . citar-markdown-insert-keys)
       (insert-citation . citar-markdown-insert-citation)
@@ -631,7 +631,8 @@ HISTORY is the `completing-read' history argument."
   ;; Because completing-read-multiple just does not work for long candidate
   ;; strings, and IMO is a poor UI.
   (let* ((selected-hash (make-hash-table :test 'equal)))
-    (while (let ((item (minibuffer-with-setup-hook #'citar--setup-multiple-keymap
+    (while (let ((initial-history (symbol-value history))
+                 (item (minibuffer-with-setup-hook #'citar--setup-multiple-keymap
                          (completing-read
                           (format "%s (%s/%s): " prompt
                                   (hash-table-count selected-hash)
@@ -642,7 +643,7 @@ HISTORY is the `completing-read' history argument."
                (if (not (gethash item selected-hash))
                    (puthash item t selected-hash)
                  (remhash item selected-hash)
-                 (pop (symbol-value history))))
+                 (set history initial-history)))
              (not (or (eq last-command #'citar--multiple-exit)
                       (string-empty-p item)))))
     (hash-table-keys selected-hash)))

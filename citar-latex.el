@@ -207,5 +207,8 @@ With ARG non-nil, rebuild the cache before offering candidates."
   (seq-find (lambda (x) (member command (car x)))
             citar-latex-cite-commands))
 
+;;;###autoload
+(defalias 'citar-latex-list-keys #'reftex-all-used-citation-keys)
+
 (provide 'citar-latex)
 ;;; citar-latex.el ends here
