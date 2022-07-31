@@ -45,7 +45,6 @@
 (make-obsolete 'citar-display-value 'citar-get-display-value "1.0")
 
 ;; make all these private
-(make-obsolete 'citar-clean-string 'citar--clean-string "1.0")
 (make-obsolete 'citar-shorten-names 'citar--shorten-names "1.0")
 (make-obsolete 'citar-get-template 'citar--get-template "1.0")
 (make-obsolete 'citar-open-multi 'citar--open-multi "1.0")
@@ -206,8 +205,7 @@ references as a string."
 
 (defcustom citar-display-transform-functions
   ;; TODO change this name, as it might be confusing?
-  '((t  . citar--clean-string)
-    (("author" "editor") . citar--shorten-names))
+  '((("author" "editor") . citar--shorten-names))
   "Configure transformation of field display values from raw values.
 
 All functions that match a particular field are run in order."
@@ -1159,12 +1157,6 @@ getters for file, note, and link resources."
             (putresult citekey (citar-get-entry citekey))))))))
 
 ;;; Format and display field values
-
-;; Lifted from bibtex-completion
-(defun citar--clean-string (s)
-  "Remove quoting brackets and superfluous whitespace from string S."
-  (replace-regexp-in-string "[\n\t ]+" " "
-                            (replace-regexp-in-string "[\"{}]+" "" s)))
 
 (defun citar--shorten-names (names)
   "Return a list of family names from a list of full NAMES.
