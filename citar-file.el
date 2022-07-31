@@ -82,13 +82,21 @@ separator that does not otherwise occur in citation keys."
                  (const :tag "Find files with space after key" "[[:space:]]")
                  (regexp :tag "Filename separator")))
 
-(defcustom citar-file-open-external-extensions '("html")
+(defcustom citar-file-open-external-extension-alist '(("html" . system))
   "List of file extensions to be opened with external application.
 
 These are the extensions that `citar-file-open' will open via
 `citar-file-open-external'."
   :group 'citar
-  :type '(repeat string))
+  :type '(repeat (cons string
+                       (choice
+                        (function :tag "Open with function")
+                        (symbol :tag "Open with sytem default application"
+                                system)
+                        (symbol :tag "Open with Emacs"
+                                default)
+                        (string :tag "Open with customized application")))))
+
 
 (defvar citar-notes-paths)
 (defvar citar-library-paths)
@@ -296,22 +304,34 @@ need to scan the contents of DIRS in this case."
 
 (defun citar-file-open (file)
   "Open FILE."
-  (if (member-ignore-case (file-name-extension file) citar-file-open-external-extensions)
-      (citar-file-open-external (expand-file-name file))
+  (if (assoc (file-name-extension file) citar-file-open-external-extension-alist)
+      (let* ((fnext (file-name-extension file))
+             (fnact (cdr (assoc fnext citar-file-open-external-extension-alist)))
+             (fnfull (expand-file-name file)))
+        (cond
+         ((and (symbolp fnact) (eq fnact 'system))
+          ;; Adapted from consult-file-externally.
+          (if (and (eq system-type 'windows-nt)
+                   (fboundp 'w32-shell-execute))
+              (w32-shell-execute "open" file)
+            (call-process (pcase system-type
+                            ('darwin "open")
+                            ('cygwin "cygstart")
+                            (_ "xdg-open"))
+                          nil 0 nil
+                          file)))
+         ((and (symbolp fnact) (eq fnact 'default))
+          (funcall citar-file-open-function fnfull))
+         ((and (symbolp fnact) (fboundp fnact))
+          (funcall fnact fnfull))
+         ((stringp fnact)
+          ;; if using `%s' for file name in the command
+          (if (string-match-p (regexp-quote "%s") fnact)
+              (let* ((args (split-string-and-unquote (format fnact fnfull))))
+                (apply 'start-process (concat fnext " viewer process") nil args))
+            (start-process (concat fnext " viewer process") nil fnact fnfull)))
+         (t (funcall citar-file-open-function fnfull))))
     (funcall citar-file-open-function (expand-file-name file))))
-
-(defun citar-file-open-external (file)
-  "Open FILE with external application."
-  ;; Adapted from consult-file-externally.
-  (if (and (eq system-type 'windows-nt)
-           (fboundp 'w32-shell-execute))
-      (w32-shell-execute "open" file)
-    (call-process (pcase system-type
-                    ('darwin "open")
-                    ('cygwin "cygstart")
-                    (_ "xdg-open"))
-                  nil 0 nil
-                  file)))
 
 ;;;; Note files
 
