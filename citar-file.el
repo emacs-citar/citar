@@ -91,10 +91,9 @@ These are the extensions that `citar-file-open' will open via
   :type '(repeat (cons string
                        (choice
                         (function :tag "Open with function")
-                        (symbol :tag "Open with sytem default application"
+                        (symbol :tag "Open with system default application"
                                 system)
-                        (symbol :tag "Open with Emacs"
-                                default)
+                        (symbol :tag "Open with Emacs" default)
                         (string :tag "Open with customized application")))))
 
 
@@ -307,13 +306,13 @@ need to scan the contents of DIRS in this case."
   (if (assoc (file-name-extension file) citar-file-open-external-extension-alist)
       (let* ((fnext (file-name-extension file))
              (fnact (cdr (assoc fnext citar-file-open-external-extension-alist)))
-             (fnfull (expand-file-name file)))
+             (fnfull (expand-file-name file))
+             (w32p (and (eq system-type 'windows-nt)
+                        (fboundp 'w32-shell-execute))))
         (cond
          ((and (symbolp fnact) (eq fnact 'system))
           ;; Adapted from consult-file-externally.
-          (if (and (eq system-type 'windows-nt)
-                   (fboundp 'w32-shell-execute))
-              (w32-shell-execute "open" file)
+          (if w32p (w32-shell-execute "open" file)
             (call-process (pcase system-type
                             ('darwin "open")
                             ('cygwin "cygstart")
@@ -328,8 +327,10 @@ need to scan the contents of DIRS in this case."
           ;; if using `%s' for file name in the command
           (if (string-match-p (regexp-quote "%s") fnact)
               (let* ((args (split-string-and-unquote (format fnact fnfull))))
-                (apply 'start-process (concat fnext " viewer process") nil args))
-            (start-process (concat fnext " viewer process") nil fnact fnfull)))
+                (if w32p (apply 'w32-shell-execute "open" (append args '(0)))
+                  (apply 'start-process (concat fnext " viewer process") nil args)))
+            (if w32p (w32-shell-execute "open" fnact fnfull 0)
+              (start-process (concat fnext " viewer process") nil fnact fnfull))))
          (t (funcall citar-file-open-function fnfull))))
     (funcall citar-file-open-function (expand-file-name file))))
 
