@@ -910,7 +910,7 @@ present in KEY-OR-ENTRY."
   (let ((entry (if (stringp key-or-entry)
                    (citar-get-entry key-or-entry)
                  key-or-entry)))
-    (cdr (assoc-string field entry))))
+    (cdr (assoc-string field entry 'case-fold))))
 
 (defun citar-get-field-with-value (fields key-or-entry)
   "Find the first field among FIELDS that has a value in KEY-OR-ENTRY.
