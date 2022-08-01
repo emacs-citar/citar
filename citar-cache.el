@@ -79,7 +79,7 @@ Remove any existing associations between BUFFER and cached files
 not included in FILENAMES. Release cached files that are no
 longer needed by any other buffer.
 
-Return a list of `citar--bibliography' objects, one for each
+Return a list of `citar-cache--bibliography' objects, one for each
 element of FILENAMES."
   (citar-cache--release-bibliographies filenames buffer)
   (let ((buffer (citar-cache--canonicalize-buffer buffer)))

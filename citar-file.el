@@ -38,11 +38,6 @@
   :group 'citar
   :type '(string))
 
-(defcustom citar-file-open-prompt t
-  "Prompt for selection of related files to open."
-  :group 'citar
-  :type '(boolean))
-
 (defcustom citar-file-parser-functions
   '(citar-file--parser-default
     citar-file--parser-triplet)
@@ -50,10 +45,20 @@
   :group 'citar
   :type '(repeat function))
 
-(defcustom citar-file-open-function 'find-file
-  "Function to use to open files."
+(defcustom citar-file-open-functions (list (cons "html" #'citar-file-open-external)
+                                           (cons t #'find-file))
+  "Functions used by `citar-file-open` to open files.
+
+Should be an alist where each entry is of the form (EXTENSION .
+FUNCTION). A file whose name ends with EXTENSION will be opened
+using FUNCTION. If no entries are found with a matching
+extension, FUNCTION associated with key t will be used as the
+default."
   :group 'citar
-  :type '(function))
+  :type '(repeat (cons
+                  (choice (string :tag "Extension")
+                          (symbol :tag "Default" t))
+                  (function :tag "Function"))))
 
 ;; TODO move this to citar.el for consistency with `citar-library-file-extensions'?
 (defcustom citar-file-note-extensions '("org" "md")
@@ -287,9 +292,11 @@ need to scan the contents of DIRS in this case."
 
 (defun citar-file-open (file)
   "Open FILE."
-  (if (equal (file-name-extension file) "html")
-      (citar-file-open-external (expand-file-name file))
-    (funcall citar-file-open-function (expand-file-name file))))
+  (if-let* ((ext (file-name-extension file))
+            (func (cdr (or (assoc-string ext citar-file-open-functions 'case-fold)
+                           (assq t citar-file-open-functions)))))
+      (funcall func (expand-file-name file))
+    (user-error "Could not find extension in `citar-file-open-functions': %s" ext)))
 
 (defun citar-file-open-external (file)
   "Open FILE with external application."
@@ -303,6 +310,7 @@ need to scan the contents of DIRS in this case."
                     (_ "xdg-open"))
                   nil 0 nil
                   file)))
+
 
 ;;;; Note files
 
