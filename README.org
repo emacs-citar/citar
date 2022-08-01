@@ -236,7 +236,7 @@ Citar offers configurable note-taking and access integration.
 The ~citar-notes-sources~ variable configures note backends, and ~citar-notes-source~ activates your chosen backend.
 
 A backend primarily specifies functions to update the Citar display, to create the completion candidates, and to open existing and new notes.
-See the ~citar-notes-sources~ docstring for details, and the =citar-register-note-source= and =citar-remove-note-source= convenience functions.
+See the ~citar-notes-sources~ docstring for details, and the =citar-register-notes-source= and =citar-remove-notes-source= convenience functions.
 
 ** Files, file association and file-field parsing
 
