@@ -38,11 +38,6 @@
   :group 'citar
   :type '(string))
 
-(defcustom citar-file-open-prompt t
-  "Prompt for selection of related files to open."
-  :group 'citar
-  :type '(boolean))
-
 (defcustom citar-file-parser-functions
   '(citar-file--parser-default
     citar-file--parser-triplet)
@@ -50,18 +45,15 @@
   :group 'citar
   :type '(repeat function))
 
-(defcustom citar-file-open-function 'find-file
-  "Function to use to open files."
-  :group 'citar
-  :type '(function))
+(defcustom citar-file-open-functions (list (cons "html" #'citar-file-open-external)
+                                           (cons t #'find-file))
+  "Functions used by `citar-file-open` to open files.
 
-(defcustom citar-file-open-functions-alist
-  '(("html" . citar-file-open-external) ; what about pdf?
-    ("org" . citar-open-note)  ; do we need this here?
-    (t . find-file))
-  "Function to use to open files.
-
-Each cons should be of the form (EXTENSION . FUNCTION)."
+Should be an alist where each entry is of the form (EXTENSION .
+FUNCTION). A file whose name ends with EXTENSION will be opened
+using FUNCTION. If no entries are found with a matching
+extension, FUNCTION associated with key t will be used as the
+default."
   :group 'citar
   :type '(repeat (cons
                   (choice (string :tag "Extension")
@@ -301,14 +293,11 @@ need to scan the contents of DIRS in this case."
 
 (defun citar-file-open (file)
   "Open FILE."
-  (if (assoc (file-name-extension file) citar-file-open-functions-alist)
-      (funcall (cdr (assoc (file-name-extension file)
-                           citar-file-open-functions-alist))
-               (expand-file-name file))
-    (if (assoc t citar-file-open-functions-alist)
-        (funcall (cdr (assoc t citar-file-open-functions-alist))
-                 (expand-file-name file))
-      (find-file (expand-file-name file)))))
+  (if-let* ((ext (file-name-extension file))
+            (func (cdr (or (assoc-string ext citar-file-open-functions 'case-fold)
+                           (assq t citar-file-open-functions)))))
+      (funcall func (expand-file-name file))
+    (user-error "Could not find extension in `citar-file-open-functions': %s" ext)))
 
 (defun citar-file-open-external (file)
   "Open FILE with external application."
