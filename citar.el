@@ -1,12 +1,12 @@
 ;;; citar.el --- Citation-related commands for org, latex, markdown -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2021 Bruce D'Arcus
+;; Copyright (C) 2021-2022 Bruce D'Arcus
 
 ;; Author: Bruce D'Arcus <https://github.com/bdarcus>
 ;; Maintainer: Bruce D'Arcus <https://github.com/bdarcus>
 ;; Created: February 27, 2021
 ;; SPDX-License-Identifier: GPL-3.0-or-later
-;; Version: 0.9.7
+;; Version: 1.0
 ;; Homepage: https://github.com/emacs-citar/citar
 ;; Package-Requires: ((emacs "27.1") (parsebib "4.2") (org "9.5") (citeproc "0.9"))
 
