@@ -492,7 +492,7 @@ When nil, all citar commands will use `completing-read'."
 
 (defun citar--bibliography-files (&rest buffers)
   "Bibliography file names for BUFFERS.
-The elements of BUFFERS are either buffers or the symbol 'global.
+The elements of BUFFERS are either buffers or the symbol global.
 Returns the absolute file names of the bibliographies in all
 these contexts.
 
@@ -585,8 +585,8 @@ FILTER: if non-nil, should be a predicate function taking
 (cl-defun citar-select-ref (&key filter)
   "Select bibliographic references.
 
-Call 'citar-select-ref' with argument ':multiple, and optional
-FILTER; see its documentation for the return value."
+Call `citar-select-ref' with optional FILTER; see its
+documentation for the return value."
   (car (citar-select-refs :multiple nil :filter filter)))
 
 (defun citar--multiple-completion-table (selected-hash candidates filter)
@@ -1367,8 +1367,26 @@ of all notes."
 (defun citar-open-entry (key)
   "Open bibliographic entry associated with the KEY."
   (interactive (list (citar-select-ref)))
-  (when-let ((bibtex-files (citar--bibliography-files)))
-    (bibtex-search-entry key t nil t)))
+  (when-let ((bib-files (citar--bibliography-files)))
+    (citar--open-entry key bib-files)))
+
+(defun citar--open-entry (key bib-files)
+  "Open entry for KEY in the relevant BIB-FILES."
+  ;; Adapted from 'bibtex-completion-show-entry'.
+  (catch 'break
+    (dolist (bib-file bib-files)
+      (let ((buf (or (get-file-buffer bib-file)
+                     (find-buffer-visiting bib-file))))
+        (find-file bib-file)
+        (widen)
+        (goto-char (point-min))
+        (when (re-search-forward
+               (concat "^@\\(" parsebib--bibtex-identifier
+                       "\\)[[:space:]]*[\\(\\{][[:space:]]*"
+                       (regexp-quote key) "[[:space:]]*,") nil t)
+          (throw 'break t))
+        (unless buf
+          (kill-buffer))))))
 
 ;;;###autoload
 (defun citar-insert-bibtex (keys)
