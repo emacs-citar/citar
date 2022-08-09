@@ -17,15 +17,6 @@
 (require 'seq)
 (require 'map)
 
-;;; pre-1.0 API cleanup
-
-;; make all these private
-
-(make-obsolete 'citar-file-parser-default 'citar-file--parser-default "1.0")
-(make-obsolete 'citar-file-parser-triplet 'citar-file--parser-triplet "1.0")
-(make-obsolete-variable 'citar-file-extensions
-                        'citar-library-file-extensions "1.0")
-
 (declare-function citar-get-value "citar" (field key-or-entry))
 (declare-function citar--bibliography-files "citar" (&rest buffers))
 (declare-function citar--check-configuration "citar" (&rest variables))

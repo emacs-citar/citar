@@ -27,10 +27,6 @@
 (require 'oc-basic)
 (require 'oc-csl)
 
-;; Pre-1.0 API cleanup
-
-(make-obsolete 'citar-org-id-get-create 'citar-org--id-get-create "1.0")
-
 (declare-function org-open-at-point "org")
 (declare-function org-element-property "org-element")
 (declare-function org-element-type "org-element")

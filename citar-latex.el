@@ -23,13 +23,6 @@
 (declare-function TeX-find-macro-boundaries "ext:tex")
 (declare-function TeX-parse-macro "ext:tex")
 
-;;; pre-1.0 API cleanup
-
-;; make all these private
-
-(make-obsolete 'citar-latex-select-command 'citar-latex--select-command "1.0")
-(make-obsolete 'citar-latex-is-a-cite-command 'citar-latex--is-a-cite-command "1.0")
-
 (defvar citar-major-mode-functions)
 
 (defcustom citar-latex-cite-commands

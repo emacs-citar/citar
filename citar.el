@@ -30,35 +30,6 @@
 (require 'citar-format)
 (require 'citar-file)
 
-;;; pre-1.0 API cleanup
-
-;; make public
-;; (make-obsolete 'citar--get-candidates 'citar-get-candidates "1.0")
-
-;; Renamed in 1.0
-(make-obsolete 'citar-has-file #'citar-has-files "1.0")
-(make-obsolete 'citar-has-note #'citar-has-notes "1.0")
-(make-obsolete 'citar-open-library-file #'citar-open-files "1.0")
-(make-obsolete 'citar-attach-library-file #'citar-attach-files "1.0")
-(make-obsolete 'citar-open-link #'citar-open-links "1.0")
-(make-obsolete 'citar-get-link #'citar-get-links "1.0") ; now returns list
-(make-obsolete 'citar-display-value 'citar-get-display-value "1.0")
-
-;; make all these private
-(make-obsolete 'citar-shorten-names 'citar--shorten-names "1.0")
-(make-obsolete 'citar-get-template 'citar--get-template "1.0")
-(make-obsolete 'citar-open-multi 'citar--open-multi "1.0")
-(make-obsolete 'citar-select-group-related-resources
-               'citar--select-group-related-resources "1.0")
-(make-obsolete 'citar-select-resource 'citar--select-resource "1.0")
-
-;; also rename
-(make-obsolete 'citar-has-a-value 'citar-get-field-with-value "0.9.5") ; now returns cons pair
-(make-obsolete 'citar-field-with-value 'citar-get-field-with-value "1.0") ; now returns cons pair
-(make-obsolete 'citar--open-note 'citar-file--open-note "1.0")
-
-;;(make-obsolete-variable 'citar-format-note-function "1.0")
-
 ;;; Declare variables and functions for byte compiler
 
 (defvar embark-default-action-overrides)
