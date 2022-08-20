@@ -70,7 +70,7 @@ buffer.")
   :group 'citar)
 
 (defface citar-highlight
-  '((t :weight bold))
+  '((t))
   "Face used to highlight content in `citar' candidates."
   :group 'citar)
 
