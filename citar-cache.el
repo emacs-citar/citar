@@ -15,6 +15,7 @@
 (require 'citar-format)
 (require 'seq)
 (require 'map)
+(require 'files)
 
 (declare-function citar--get-template "citar" (template-name))
 (declare-function citar--fields-to-parse "citar" ())
@@ -142,13 +143,14 @@ need them."
          (cachedfmtstr (and cached (citar-cache--bibliography-format-string cached)))
          (props (citar-cache--get-bibliography-props filename cachedprops))
          (fmtstr (citar--get-template 'completion))
+         (ext (file-name-extension filename))
          (bib (or cached (citar-cache--make-bibliography filename))))
     (prog1 bib
       ;; Set the format string so it's correct when updating bibliography
       (setf (citar-cache--bibliography-format-string bib) fmtstr)
       ;; Update bibliography if needed or forced
       (if (or force-update
-              (citar-cache--update-bibliography-p cachedprops props))
+              (funcall (citar-cache--get-update-p ext) cachedprops props))
           (citar-cache--update-bibliography bib props)
         ;; Otherwise, update props anyway in case mtime has changed:
         (setf (citar-cache--bibliography-props bib) props)
@@ -209,7 +211,7 @@ re-hashing the file contents."
                    (buffer-hash)))))
     `(:size ,size :mtime ,mtime :hash ,hash :fields ,fields)))
 
-(defun citar-cache--update-bibliography-p (oldprops newprops)
+(defun citar-cache--update-default-bibliography-p (oldprops newprops)
   "Return whether bibliography needs to be updated.
 Compare NEWPROPS with OLDPROPS and decide whether the file
 contents have changed or the list of bibliography fields to be
@@ -217,6 +219,38 @@ parsed is different."
   (not (and (equal (plist-get oldprops :size) (plist-get newprops :size))
             (equal (plist-get oldprops :hash) (plist-get newprops :hash))
             (equal (plist-get oldprops :fields) (plist-get newprops :fields)))))
+
+;; Parsers
+
+(defconst citar-cache--parsers
+  (list
+   (cons t (cons #'parsebib-parse #'citar-cache--update-default-bibliography-p)))
+  "An alist of file extensions and update-related function symbols.
+
+Form should be (EXT . (PARSER . UPDATEP)), where:
+
+EXT is the file extension
+
+PARSER is the file parser function, which takes three arguments
+from `parsebib-parse': a list of FILES to parse, an ENTRIES
+hash-table, and a list of FIELDS.
+
+UPDATEP is a predicate function; when non-nil, PARSER should be
+run. Takes two arguments for comparison.")
+
+(defun citar-cache--get-parser (filename)
+  "Return parser function name for FILENAME."
+  (let ((ext (file-name-extension filename)))
+    (cadr (or (assoc ext citar-cache--parsers)
+              (assoc t citar-cache--parsers)))))
+
+(defun citar-cache--get-update-p (filename)
+  "Return update predicate function name for FILENAME."
+  (let ((ext (file-name-extension filename)))
+    (cddr (or (assoc ext citar-cache--parsers)
+              (assoc t citar-cache--parsers)))))
+
+;; Update functions
 
 (defun citar-cache--update-bibliography (bib &optional props)
   "Update the bibliography BIB from the original file.
@@ -238,7 +272,7 @@ PROPS."
     (message "%s..." messagestr)
     (redisplay)                         ; Make sure message is displayed before Emacs gets busy parsing
     (clrhash entries)
-    (parsebib-parse filename :entries entries :fields (plist-get props :fields))
+    (funcall (citar-cache--get-parser filename) filename :entries entries :fields (plist-get props :fields))
     (setf (citar-cache--bibliography-props bib) props)
     (citar-cache--preformat-bibliography bib)
     (message "%s...done (%.3f seconds)" messagestr (float-time (time-since starttime)))))
