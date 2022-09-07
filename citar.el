@@ -570,7 +570,10 @@ to filter them."
    `(group-function . (lambda (cand transform)
                         (pcase (list (not (not transform))
                                      (gethash (substring-no-properties cand) ,selected-hash))
-                          ('(nil nil) "Select Multiple")
+                          ('(nil nil) (concat "Select Multiple ["
+                                              (propertize (car citar--multiple-setup)
+                                                          'font-lock-face 'help-key-binding
+                                                          'face 'help-key-binding) "]"))
                           ('(nil t)   "Selected")
                           ('(t nil) cand)
                           ('(t t)
