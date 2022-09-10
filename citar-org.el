@@ -298,11 +298,26 @@ With optional argument FORCE, force the creation of a new ID."
 
 ;;;###autoload
 (defun citar-org-key-at-point ()
+  "Return key at point for org-cite citation-reference or property."
+  (or (citar-org--key-at-point)
+      (citar-org--prop-key-at-point)))
+
+(defun citar-org--key-at-point ()
   "Return key at point for org-cite citation-reference."
   (when-let ((reference (citar-org--reference-at-point)))
     (cons (org-element-property :key reference)
           (cons (org-element-property :begin reference)
                 (org-element-property :end reference)))))
+
+(defun citar-org--prop-key-at-point ()
+  "Return citekey at point, when in org property drawer.
+
+Citkey must be formatted as `@key'."
+  (when (and (equal (org-element-type (org-element-at-point)) 'node-property)
+             (org-in-regexp (concat "[[:space:]]" org-element-citation-key-re)))
+    (cons (substring (match-string 0) 2)
+          (cons (match-beginning 0)
+                (match-end 0)))))
 
 ;;;###autoload
 (defun citar-org-citation-at-point ()
