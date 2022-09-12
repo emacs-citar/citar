@@ -255,9 +255,16 @@ If you have a mix of entries created with Zotero and Calibre, you can set it lik
     citar-file-parser-triplet))
 #+END_SRC
 
-The ~citar-file-extensions~ variable governs which file extensions the open commands will recognize.
+The ~citar-library-file-extensions~ variable governs which file extensions the open commands will recognize; when `nil`, it will recognize all extensions.
+The ~citar-file-additional-files-separator~ variable defines what patterns citar should identify for multiple library files for the same reference key.
+Here's an example to only recognize pdf and jpg extensions, but additional file names of the form ~test-1.jpg~:
 
-To change how files with given extensions are opened, customize the ~citar-file-open-functions~ variable defined in =citar-file.el=.
+#+BEGIN_SRC emacs-lisp
+(setq citar-library-file-extensions (list "pdf" "jpg")
+      citar-file-additional-files-separator "-")
+#+END_SRC
+
+To change how citar opens files with given extensions, customize the ~citar-file-open-functions~ variable defined in =citar-file.el=.
 
 When used with embark and consult, you will have a range of alternate actions available for the candidates.
 
