@@ -1305,9 +1305,10 @@ Use `citar--select-resource' to choose a file."
 
 ;;;###autoload
 (defun citar-open-note (note)
-  "Open NOTE, which should be a string returned by `citar-get-notes'.
-When called interactively, prompt for a note to open from a list
-of all notes."
+  "Open a single NOTE directly.
+The note should be represented as a string returned by
+`citar-get-notes'. When called interactively, prompt for a note
+to open from a list of all notes."
   (interactive (list (when-let* ((notes (citar-get-notes))
                                  (allnotes (delete-dups (apply #'append (hash-table-values notes)))))
                        (cdr (citar--select-resource nil :notes allnotes)))))
