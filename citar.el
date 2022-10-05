@@ -647,17 +647,18 @@ CATEGORY is one of:
    element of CANDIDATES."
   (cl-flet ((getresources (table) (when table
                                     (delete-dups (apply #'append (hash-table-values table)))))
-            (keycands (type citekeys) (let ((format (citar-format--parse (citar--get-template 'completion)))
-                                            (width (- (frame-width) 2)))
-                                        (mapcar (lambda (key)
-                                                  (let* ((entry (citar-get-entry key))
-                                                         (cand (citar-format--entry format entry width
-                                                                                    :ellipsis citar-ellipsis))
-                                                         (keycand (citar--prepend-candidate-citekey key cand))
-                                                         (target (cons 'citar-reference
-                                                                       (propertize key 'citar--resource type))))
-                                                    (propertize keycand 'multi-category target)))
-                                                citekeys)))
+            (keycands (type citekeys)
+                      (let ((format (citar-format--parse (citar--get-template 'completion)))
+                            (width (- (frame-width) 2)))
+                        (mapcar (lambda (key)
+                                  (let* ((entry (citar-get-entry key))
+                                         (cand (citar-format--entry format entry width
+                                                                    :ellipsis citar-ellipsis))
+                                         (keycand (citar--prepend-candidate-citekey key cand))
+                                         (target (cons 'citar-reference
+                                                       (propertize key 'citar--resource type))))
+                                    (propertize keycand 'multi-category target)))
+                                citekeys)))
             (withtype (type cat cands) (when cands
                                          (cons cat (mapcar (lambda (cand)
                                                              (propertize cand 'citar--resource type))
@@ -667,13 +668,14 @@ CATEGORY is one of:
            (links (if (listp links) links (getresources (citar-get-links citekeys))))
            (keynotes (unless (and (listp notes) (listp create-notes)) (citar-get-notes citekeys)))
            (notes (if (listp notes) notes (getresources keynotes)))
-           (create-notes (keycands 'create-note
-                                   (cond ((listp create-notes) create-notes)
-                                         ((or (eq t citar-open-always-create-notes)
-                                              (memq this-command citar-open-always-create-notes)
-                                              (not keynotes))
-                                          citekeys)
-                                         (t (seq-remove (lambda (citekey) (gethash citekey keynotes)) citekeys)))))
+           (create-notes
+            (keycands 'create-note
+                      (cond ((listp create-notes) create-notes)
+                            ((or (eq t citar-open-always-create-notes)
+                                 (memq this-command citar-open-always-create-notes)
+                                 (not keynotes))
+                             citekeys)
+                            (t (seq-remove (lambda (citekey) (gethash citekey keynotes)) citekeys)))))
            (notecat (citar--get-notes-config :category))
            (sources (delq nil (list (withtype 'file 'file files)
                                     (withtype 'url 'url links)
