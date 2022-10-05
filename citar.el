@@ -114,8 +114,8 @@ original entry, but also in entries specified in the field named
 by this variable."
   :group 'citar
   :type '(choice (const "crossref")
-                 (string :tag "Field name")
-                 (const :tag "Ignore cross-references" nil)))
+          (string :tag "Field name")
+          (const :tag "Ignore cross-references" nil)))
 
 (defcustom citar-additional-fields nil
   "A list of fields to add to parsed data.
@@ -141,8 +141,8 @@ The main and suffix templates are for candidate display, and note
 for the title field for new notes."
   :group 'citar
   :type  '(alist :key-type symbol
-                 :value-type string
-                 :options (main suffix preview note)))
+           :value-type string
+           :options (main suffix preview note)))
 
 (defcustom citar-ellipsis nil
   "Ellipsis string to mark ending of truncated display fields.
@@ -152,10 +152,10 @@ ellipsis will be used.  Otherwise, this should be a non-empty
 string specifying the ellipsis."
   :group 'citar
   :type '(choice (const :tag "Use `truncate-string-ellipsis'" t)
-                 (const :tag "No ellipsis" nil)
-                 (const "…")
-                 (const "...")
-                 (string :tag "Ellipsis string")))
+          (const :tag "No ellipsis" nil)
+          (const "…")
+          (const "...")
+          (string :tag "Ellipsis string")))
 
 (defcustom citar-format-reference-function
   #'citar-format-reference
@@ -171,8 +171,8 @@ function that takes a list of CITEKEYS and returns formatted
 references as a string."
   :group 'citar
   :type '(choice (function-item :tag "Use 'citar-template'" citar-format-reference)
-                 (function-item :tag "Use 'citeproc-el'" citar-citeproc-format-reference)
-                 (function :tag "Other")))
+          (function-item :tag "Use 'citeproc-el'" citar-citeproc-format-reference)
+          (function :tag "Other")))
 
 (defcustom citar-display-transform-functions
   ;; TODO change this name, as it might be confusing?
@@ -182,7 +182,7 @@ references as a string."
 All functions that match a particular field are run in order."
   :group 'citar
   :type '(alist :key-type   (choice (const t) (repeat string))
-                :value-type function))
+          :value-type function))
 
 (defcustom citar-symbols
   `((file  .  ("F" . " "))
@@ -196,9 +196,9 @@ To avoid alignment issues make sure that both the car and cdr of a symbol have
 the same width."
   :group 'citar
   :type '(alist :key-type symbol
-                :value-type (cons (string :tag "Present")
-                                  (string :tag "Absent"))
-                :options (file note link)))
+          :value-type (cons (string :tag "Present")
+                            (string :tag "Absent"))
+          :options (file note link)))
 
 (defcustom citar-symbol-separator " "
   "The padding between prefix symbols."
@@ -221,7 +221,7 @@ The action is used when no citation key is found at point.
 and nil means no action."
   :group 'citar
   :type '(radio (const :tag "Prompt" prompt)
-                (const :tag "Ignore" nil)))
+          (const :tag "Ignore" nil)))
 
 (defcustom citar-open-prompt (list #'citar-open #'citar-attach-files #'citar-open-note)
   "Always prompt to open files, notes, or links.
@@ -236,14 +236,14 @@ Otherwise, the value should be a list of command names that will
 always prompt to select."
   :group 'citar
   :type '(choice (const :tag "Always prompt" t)
-                 (const :tag "Prompt only for multiple resources" nil)
-                 (set :tag "Commands that prompt for multiple resources"
-                      (function-item citar-open)
-                      (function-item citar-open-files)
-                      (function-item citar-attach-files)
-                      (function-item citar-open-links)
-                      (function-item citar-open-notes)
-                      (function-item citar-open-note))))
+          (const :tag "Prompt only for multiple resources" nil)
+          (set :tag "Commands that prompt for multiple resources"
+               (function-item citar-open)
+               (function-item citar-open-files)
+               (function-item citar-attach-files)
+               (function-item citar-open-links)
+               (function-item citar-open-notes)
+               (function-item citar-open-note))))
 
 ;;;; File, note, and URL handling
 
@@ -251,9 +251,9 @@ always prompt to select."
   "Types of resources that `citar-open' offers to open."
   :group 'citar
   :type '(set (const :tag "Library files" :files)
-              (const :tag "Links" :links)
-              (const :tag "Notes" :notes)
-              (const :tag "Create notes" :create-notes)))
+          (const :tag "Links" :links)
+          (const :tag "Notes" :notes)
+          (const :tag "Create notes" :create-notes)))
 
 (defcustom citar-open-always-create-notes nil
   "Offer to create notes even for keys that already have notes.
@@ -266,10 +266,10 @@ Otherwise, the value should be a list of command names that will
 offer to create new notes unconditionally."
   :group 'citar
   :type '(choice (const :tag "Always offer to create notes" t)
-                 (const :tag "Create notes only if none exist" nil)
-                 (set :tag "Create notes for commands"
-                      (function-item citar-open)
-                      (function-item citar-open-notes))))
+          (const :tag "Create notes only if none exist" nil)
+          (set :tag "Create notes for commands"
+               (function-item citar-open)
+               (function-item citar-open-notes))))
 
 (defcustom citar-file-sources (list (list :items #'citar-file--get-from-file-field
                                           :hasitems #'citar-file--has-file-field)
@@ -289,13 +289,13 @@ Should be a list of plists, where each plist has the following properties:
 
 (defcustom citar-notes-sources
   `((citar-file .
-                ,(list :name "Notes"
-                       :category 'file
-                       :items #'citar-file--get-notes
-                       :hasitems #'citar-file--has-notes
-                       :open #'find-file
-                       :create #'citar-file--create-note
-                       :transform #'file-name-nondirectory)))
+     ,(list :name "Notes"
+            :category 'file
+            :items #'citar-file--get-notes
+            :hasitems #'citar-file--has-notes
+            :open #'find-file
+            :create #'citar-file--create-note
+            :transform #'file-name-nondirectory)))
   "The alist of notes backends available for configuration.
 
 The format of the cons should be (NAME . PLIST), where the
@@ -648,16 +648,16 @@ CATEGORY is one of:
   (cl-flet ((getresources (table) (when table
                                     (delete-dups (apply #'append (hash-table-values table)))))
             (keycands (type citekeys) (let ((format (citar-format--parse (citar--get-template 'completion)))
-                                        (width (- (frame-width) 2)))
-                                    (mapcar (lambda (key)
-                                              (let* ((entry (citar-get-entry key))
-                                                     (cand (citar-format--entry format entry width
-                                                                                :ellipsis citar-ellipsis))
-                                                     (keycand (citar--prepend-candidate-citekey key cand))
-                                                     (target (cons 'citar-reference
-                                                                   (propertize key 'citar--resource type))))
-                                                (propertize keycand 'multi-category target)))
-                                            citekeys)))
+                                            (width (- (frame-width) 2)))
+                                        (mapcar (lambda (key)
+                                                  (let* ((entry (citar-get-entry key))
+                                                         (cand (citar-format--entry format entry width
+                                                                                    :ellipsis citar-ellipsis))
+                                                         (keycand (citar--prepend-candidate-citekey key cand))
+                                                         (target (cons 'citar-reference
+                                                                       (propertize key 'citar--resource type))))
+                                                    (propertize keycand 'multi-category target)))
+                                                citekeys)))
             (withtype (type cat cands) (when cands
                                          (cons cat (mapcar (lambda (cand)
                                                              (propertize cand 'citar--resource type))
@@ -1093,7 +1093,7 @@ Also include resources associated with cross-references from
 CITEKEYS."
   (let* ((citar--entries (citar-get-entries))
          (citekeys (if (listp citekey-or-citekeys) (delete-dups citekey-or-citekeys)
-                 (list citekey-or-citekeys)))
+                     (list citekey-or-citekeys)))
          (functions (if (functionp functions) (list functions) (remq nil functions)))
          (xref citar-crossref-variable)
          (getxref (apply-partially #'citar-get-value xref))
