@@ -167,7 +167,7 @@ This function is called by `citar-insert-reference' and
 template set in `citar-template'. To use `citeproc-el' to format
 references according to CSL styles, set the value to
 `citar-citeproc-format-reference'. Alternatively, set to a custom
-function that takes a list of (KEY . ENTRY) and returns formatted
+function that takes a list of CITEKEYS and returns formatted
 references as a string."
   :group 'citar
   :type '(choice (function-item :tag "Use 'citar-template'" citar-format-reference)
@@ -209,8 +209,8 @@ the same width."
 
 (defcustom citar-default-action #'citar-open
   "The default action for the `citar-at-point' command.
-Should be a function that takes one argument, a list with each
-entry being either a citation KEY or a (KEY . ENTRY) pair."
+Should be a function that takes one argument, a list of
+CITEKEYS."
   :group 'citar
   :type 'function)
 
@@ -495,8 +495,8 @@ CANDIDATES is a hash with references CAND as key and CITEKEY as value,
   where CAND is a display string for the bibliography item.
 
 FILTER, if non-nil, should be a predicate function taking
-  argument KEY. Only candidates for which this function returns
-  non-nil will be offered for completion.
+  argument CITEKEY. Only candidates for which this function
+  returns non-nil will be offered for completion.
 
 By default the metadata of the table contains the category and
 affixation function. METADATA are extra entries for metadata of
@@ -521,20 +521,16 @@ and other completion functions."
 (cl-defun citar-select-refs (&key (multiple t) filter)
   "Select bibliographic references.
 
-A wrapper around `completing-read' that returns (KEY . ENTRY),
-where ENTRY is a field-value alist.  Therefore `car' of the
-return value is the cite key, and `cdr' is an alist of structured
-data.
+A wrapper around `completing-read' that returns a CITEKEY,
 
 Takes the following optional keyword arguments:
 
-MULTIPLE: if t, calls `completing-read-multiple' and returns an
-  alist of (KEY . ENTRY) pairs.
+MULTIPLE: if t, calls `completing-read-multiple' and returns a
+list of CITEKEYS.
 
-FILTER: if non-nil, should be a predicate function taking
-  arguments KEY and ENTRY.  Only candidates for which this
-  function returns non-nil will be offered for completion.  For
-  example:
+FILTER: if non-nil, should be a predicate function taking a
+  CITEKEY. Only candidates for which this function returns
+  non-nil will be offered for completion. For example:
 
   (citar-select-ref :filter (citar-has-note))
 
@@ -622,12 +618,12 @@ HISTORY is the `completing-read' history argument."
                       (string-empty-p item)))))
     (hash-table-keys selected-hash)))
 
-(cl-defun citar--get-resource-candidates (keys &key files links notes create-notes)
-  "Return related resource candidates for KEYS.
+(cl-defun citar--get-resource-candidates (citekeys &key files links notes create-notes)
+  "Return related resource candidates for CITEKEYS.
 
 Return a list (CATEGORY . CANDIDATES), where CATEGORY is a
 completion category and CANDIDATES is a list of resources
-associated with KEYS. Return nil if there are no associated
+associated with CITEKEYS. Return nil if there are no associated
 resources.
 
 The resources include:
@@ -635,7 +631,7 @@ The resources include:
  * LINKS: a list of links or t to use `citar-get-links'.
  * NOTES: a list of notes or t to use `citar-get-notes'.
  * CREATE-NOTES: a list of cite keys for which to create notes,
-     or t to use KEYS. See `citar-open-always-create-notes'.
+     or t to use CITEKEYS. See `citar-open-always-create-notes'.
 
 If any of FILES, LINKS, NOTES, or CREATE-NOTES is nil, that
 resource type is omitted from CANDIDATES.
@@ -651,7 +647,7 @@ CATEGORY is one of:
    element of CANDIDATES."
   (cl-flet ((getresources (table) (when table
                                     (delete-dups (apply #'append (hash-table-values table)))))
-            (keycands (type keys) (let ((format (citar-format--parse (citar--get-template 'completion)))
+            (keycands (type citekeys) (let ((format (citar-format--parse (citar--get-template 'completion)))
                                         (width (- (frame-width) 2)))
                                     (mapcar (lambda (key)
                                               (let* ((entry (citar-get-entry key))
@@ -661,23 +657,23 @@ CATEGORY is one of:
                                                      (target (cons 'citar-reference
                                                                    (propertize key 'citar--resource type))))
                                                 (propertize keycand 'multi-category target)))
-                                            keys)))
+                                            citekeys)))
             (withtype (type cat cands) (when cands
                                          (cons cat (mapcar (lambda (cand)
                                                              (propertize cand 'citar--resource type))
                                                            cands)))))
     (let* ((citar--entries (citar-get-entries))
-           (files (if (listp files) files (getresources (citar-get-files keys))))
-           (links (if (listp links) links (getresources (citar-get-links keys))))
-           (keynotes (unless (and (listp notes) (listp create-notes)) (citar-get-notes keys)))
+           (files (if (listp files) files (getresources (citar-get-files citekeys))))
+           (links (if (listp links) links (getresources (citar-get-links citekeys))))
+           (keynotes (unless (and (listp notes) (listp create-notes)) (citar-get-notes citekeys)))
            (notes (if (listp notes) notes (getresources keynotes)))
            (create-notes (keycands 'create-note
                                    (cond ((listp create-notes) create-notes)
                                          ((or (eq t citar-open-always-create-notes)
                                               (memq this-command citar-open-always-create-notes)
                                               (not keynotes))
-                                          keys)
-                                         (t (seq-remove (lambda (key) (gethash key keynotes)) keys)))))
+                                          citekeys)
+                                         (t (seq-remove (lambda (citekey) (gethash citekey keynotes)) citekeys)))))
            (notecat (citar--get-notes-config :category))
            (sources (delq nil (list (withtype 'file 'file files)
                                     (withtype 'url 'url links)
@@ -703,8 +699,8 @@ CATEGORY is one of:
              (annotate (citar--get-notes-config :annotate)))
     (funcall annotate (substring-no-properties candidate))))
 
-(cl-defun citar--select-resource (keys &key files links notes create-notes)
-  "Select related FILES, NOTES, or LINKS resource for KEYS.
+(cl-defun citar--select-resource (citekeys &key files links notes create-notes)
+  "Select related FILES, NOTES, or LINKS resource for CITEKEYS.
 
 Return (TYPE . RESOURCE), where TYPE is `file', `link', `note',
 or `create-note' and RESOURCE is the selected resource string.
@@ -713,7 +709,7 @@ Return nil if there are no resources.
 Use `completing-read' to prompt for a resource, unless there is
 only one resource and `citar-open-prompt' is t or contains
 `this-command'. Return nil if the user declined to choose."
-  (when-let ((resources (citar--get-resource-candidates keys :files files :links links
+  (when-let ((resources (citar--get-resource-candidates citekeys :files files :links links
                                                         :notes notes :create-notes create-notes)))
     (pcase-let ((`(,category . ,cands) resources))
       (when-let ((selected
@@ -861,14 +857,14 @@ If no function is found, the DEFAULT function is called."
 
 ;;; Data access functions
 
-(defun citar-get-entry (key)
-  "Return entry for reference KEY, as an association list.
+(defun citar-get-entry (citekey)
+  "Return entry for reference CITEKEY, as an association list.
 Note: this function accesses the bibliography cache and should
 not be used for retreiving a large number of entries. Instead,
 prefer `citar--get-entries'."
   (if citar--entries
-      (gethash key citar--entries)
-    (citar-cache--entry key (citar--bibliographies))))
+      (gethash citekey citar--entries)
+    (citar-cache--entry citekey (citar--bibliographies))))
 
 (defun citar-get-entries ()
   "Return all entries for currently active bibliographies.
@@ -876,33 +872,33 @@ Return a hash table whose keys are citation keys and values are
 the corresponding entries."
   (or citar--entries (citar-cache--entries (citar--bibliographies))))
 
-(defun citar-get-value (field key-or-entry)
-  "Return value of FIELD in reference KEY-OR-ENTRY.
+(defun citar-get-value (field citekey-or-entry)
+  "Return value of FIELD in reference CITEKEY-OR-ENTRY.
 KEY-OR-ENTRY should be either a string key, or an entry alist as
 returned by `citar-get-entry'. Return nil if the FIELD is not
-present in KEY-OR-ENTRY."
-  (let ((entry (if (stringp key-or-entry)
-                   (citar-get-entry key-or-entry)
-                 key-or-entry)))
+present in CITEKEY-OR-ENTRY."
+  (let ((entry (if (stringp citekey-or-entry)
+                   (citar-get-entry citekey-or-entry)
+                 citekey-or-entry)))
     (cdr (assoc-string field entry 'case-fold))))
 
-(defun citar-get-field-with-value (fields key-or-entry)
-  "Find the first field among FIELDS that has a value in KEY-OR-ENTRY.
+(defun citar-get-field-with-value (fields citekey-or-entry)
+  "Find the first field among FIELDS that has a value in CITEKEY-OR-ENTRY.
 Return (FIELD . VALUE), where FIELD is the element of FIELDS that
 was found to have a value, and VALUE is its value."
-  (let ((entry (if (stringp key-or-entry)
-                   (citar-get-entry key-or-entry)
-                 key-or-entry)))
+  (let ((entry (if (stringp citekey-or-entry)
+                   (citar-get-entry citekey-or-entry)
+                 citekey-or-entry)))
     (seq-some (lambda (field)
                 (when-let ((value (citar-get-value field entry)))
                   (cons field value)))
               fields)))
 
-(defun citar-get-display-value (fields key-or-entry)
-  "Return the first non nil value for KEY-OR-ENTRY among FIELDS .
+(defun citar-get-display-value (fields citekey-or-entry)
+  "Return the first non nil value for CITEKEY-OR-ENTRY among FIELDS .
 
 The value is transformed using `citar-display-transform-functions'"
-  (let ((fieldvalue (citar-get-field-with-value fields key-or-entry)))
+  (let ((fieldvalue (citar-get-field-with-value fields citekey-or-entry)))
     (seq-reduce (lambda (string fun)
                   (if (or (eq t (car fun))
                           (seq-contains-p (car fun) (car fieldvalue) #'string=))
@@ -930,18 +926,18 @@ NAME is a symbol, and CONFIG is a plist."
   "Remove note backend NAME."
   (cl-callf2 assq-delete-all name citar-notes-sources))
 
-(cl-defun citar-get-notes (&optional (key-or-keys nil filter-p))
-  "Return notes associated with KEY-OR-KEYS.
+(cl-defun citar-get-notes (&optional (citekey-or-citekeys nil filter-p))
+  "Return notes associated with CITEKEY-OR-CITEKEYS.
 
-KEY-OR-KEYS should be either a list KEYS or a single key. Return
-a hash table mapping elements of KEYS to lists of associated
-notes found using `citar-notes-source'. Include notes associated
-with cross-referenced keys.
+CITEKEY-OR-CITEKEYS should be either a list CITEKEYS or a single
+CITEKEY. Return a hash table mapping elements of CITEKEYS to
+lists of associated notes found using `citar-notes-source'.
+Include notes associated with cross-referenced keys.
 
-If KEY-OR-KEYS is omitted, return notes for all entries. If it is
-nil, return nil."
-  (when (or key-or-keys (not filter-p))
-    (citar--get-resources key-or-keys
+If CITEKEY-OR-CITEKEYS is omitted, return notes for all entries.
+If it is nil, return nil."
+  (when (or citekey-or-citekeys (not filter-p))
+    (citar--get-resources citekey-or-citekeys
                           (citar--get-notes-config :items))))
 
 (defun citar-create-note (key &optional entry)
@@ -950,18 +946,18 @@ If ENTRY is nil, use `citar-get-entry' with KEY."
   (interactive (list (citar-select-ref)))
   (funcall (citar--get-notes-config :create) key (or entry (citar-get-entry key))))
 
-(cl-defun citar-get-files (&optional (key-or-keys nil filter-p))
-  "Return files associated with KEY-OR-KEYS.
+(cl-defun citar-get-files (&optional (citekey-or-citekeys nil filter-p))
+  "Return files associated with CITEKEY-OR-CITEKEYS.
 
-KEY-OR-KEYS should be either a list KEYS or a single key. Return
-a hash table mapping elements of KEYS to lists of associated
-files found using `citar-file-sources'. Include files associated
-with cross-referenced keys.
+CITEKEY-OR-CITEKEYS should be either a list CITEKEYS or a single
+KEY. Return a hash table mapping elements of CITEKEYS to lists of
+associated files found using `citar-file-sources'. Include files
+associated with cross-referenced citekeys.
 
 If KEY-OR-KEYS is omitted, return files for all entries. If it is
 nil, return nil."
-  (when (or key-or-keys (not filter-p))
-    (citar--get-resources key-or-keys
+  (when (or citekey-or-citekeys (not filter-p))
+    (citar--get-resources citekey-or-citekeys
                           (mapcar (lambda (source)
                                     (plist-get source :items))
                                   citar-file-sources))))
@@ -991,22 +987,22 @@ nil, return nil."
 (defun citar-has-files ()
   "Return predicate testing whether entry has associated files.
 
-Return a function that takes KEY and returns non-nil when the
+Return a function that takes CITEKEY and returns non-nil when the
 corresponding bibliography entry has associated files. The
 returned predicated may by nil if no entries have associated
 files.
 
-For example, to test whether KEY has associated files:
+For example, to test whether CITEKEY has associated files:
 
   (when-let ((hasfilesp (citar-has-files)))
-    (funcall hasfilesp KEY))
+    (funcall hasfilesp CITEKEY))
 
-When testing many keys, call this function once and use the
+When testing many citekeys, call this function once and use the
 returned predicate repeatedly.
 
 Files are detected using `citar-file-sources', which see. Also
 check any bibliography entries that are cross-referenced from the
-given KEY; see `citar-crossref-variable'."
+given CITEKEY; see `citar-crossref-variable'."
   (citar--has-resources
    (mapcar (lambda (source)
              (when-let ((hasitems (plist-get source :hasitems)))
@@ -1017,22 +1013,22 @@ given KEY; see `citar-crossref-variable'."
 (defun citar-has-notes ()
   "Return predicate testing whether entry has associated notes.
 
-Return a function that takes KEY and returns non-nil when the
+Return a function that takes CITEKEY and returns non-nil when the
 corresponding bibliography entry has associated notes. The
 returned predicate may be nil if no entries have associated
 notes.
 
-For example, to test whether KEY has associated notes:
+For example, to test whether CITEKEY has associated notes:
 
   (let ((hasnotesp (citar-has-notes)))
-    (funcall hasnotesp KEY))
+    (funcall hasnotesp CITEKEY))
 
-When testing many keys, call this function once and use the
+When testing many citekeys, call this function once and use the
 returned predicate repeatedly.
 
 Notes are detected using `citar-has-notes-functions', which see.
 Also check any bibliography entries that are cross-referenced
-from the given KEY; see `citar-crossref-variable'."
+from the given CITEKEY; see `citar-crossref-variable'."
   (citar--has-resources
    (funcall (citar--get-notes-config :hasitems))))
 
@@ -1040,7 +1036,7 @@ from the given KEY; see `citar-crossref-variable'."
 (defun citar-has-links ()
   "Return predicate testing whether entry has links.
 
-Return a function that takes KEY and returns non-nil when the
+Return a function that takes CITEKEY and returns non-nil when the
 corresponding bibliography entry has associated links. See the
 documentation of `citar-has-files' and `citar-has-notes', which
 have similar usage."
@@ -1056,10 +1052,10 @@ PREDICATES should be a list of functions that take a bibliography
 KEY and return non-nil if the item has a resource. It may also be
 a single such function.
 
-Return a predicate that returns non-nil for a given KEY when any
-of the elements of PREDICATES return non-nil for that KEY. If
-PREDICATES is empty or all its elements are nil, then the
-returned predicate is nil.
+Return a predicate that returns non-nil for a given CITEKEY when
+any of the elements of PREDICATES return non-nil for that
+CITEKEY. If PREDICATES is empty or all its elements are nil, then
+the returned predicate is nil.
 
 When `citar-crossref-variable' is the name of a crossref field,
 the returned predicate also tests if an entry cross-references
@@ -1082,27 +1078,28 @@ another entry in ENTRIES that has associated resources."
                 (funcall hasresourcep xkey))))
       hasresourcep)))
 
-(defun citar--get-resources (key-or-keys functions)
-  "Return hash table mapping each element of KEY-OR-KEYS to a list of resources.
+(defun citar--get-resources (citekey-or-citekeys functions)
+  "Return hash table mapping each element of CITEKEY-OR-CITEKEYS to a list of resources.
 
-KEY-OR-KEYS should be either a list KEYS or a single key.
-FUNCTIONS should be a list of functions, each of which takes a
-list of bibliography keys and returns a hash table mapping each
-of those keys to a list of resources. FUNCTIONS may also be a
-single such function.
+CITEKEY-OR-CITEKEYS should be either a list CITEKEYS or a single
+citekey. FUNCTIONS should be a list of functions, each of which
+takes a list of citekeys and returns a hash table mapping each of
+those citekeys to a list of resources. FUNCTIONS may also be a single
+such function.
 
-Return a hash table mapping each element of KEYS to the
+Return a hash table mapping each element of CITEKEYS to the
 concatenated list of resources returned by all the FUNCTIONS.
 Also include resources associated with cross-references from
-KEYS."
+CITEKEYS."
   (let* ((citar--entries (citar-get-entries))
-         (keys (if (listp key-or-keys) (delete-dups key-or-keys) (list key-or-keys)))
+         (citekeys (if (listp citekey-or-citekeys) (delete-dups citekey-or-citekeys)
+                 (list citekey-or-citekeys)))
          (functions (if (functionp functions) (list functions) (remq nil functions)))
          (xref citar-crossref-variable)
          (getxref (apply-partially #'citar-get-value xref))
          (xkeys (if (not xref)
-                    keys
-                  (delete-dups (append keys (delq nil (mapcar getxref keys))))))
+                    citekeys
+                  (delete-dups (append citekeys (delq nil (mapcar getxref citekeys))))))
          (resources (delq nil (mapcar (lambda (func) (funcall func xkeys)) functions))))
     (cl-flet* ((getreslists (citekey) (delq nil (mapcar (apply-partially #'gethash citekey) resources)))
                (xresources (citekey entry) (apply #'append
@@ -1110,15 +1107,15 @@ KEYS."
                                                          (when-let ((xkey (and xref
                                                                                (citar-get-value xref entry))))
                                                            (getreslists xkey))))))
-      (citar--get-resources-using-function #'xresources keys))))
+      (citar--get-resources-using-function #'xresources citekeys))))
 
-(defun citar--get-resources-using-function (func &optional keys)
-  "Collect resources for KEYS returned by FUNC.
+(defun citar--get-resources-using-function (func &optional citekeys)
+  "Collect resources for CITEKEYS returned by FUNC.
 
-Return a hash table mapping each element of KEYS to the result of
-calling FUNC on that key and corresponding bibliography entry. If
-KEYS is nil, call FUNC on every key and entry returned by
-`citar-get-entries'.
+Return a hash table mapping each element of CITEKEYS to the
+result of calling FUNC on that key and corresponding bibliography
+entry. If CITEKEYS is nil, call FUNC on every key and entry
+returned by `citar-get-entries'.
 
 Note: This is a helper function to make it easier to write
 getters for file, note, and link resources."
@@ -1126,9 +1123,9 @@ getters for file, note, and link resources."
     (prog1 resources
       (cl-flet ((putresult (citekey entry) (when-let ((result (funcall func citekey entry)))
                                              (puthash citekey result resources))))
-        (if (null keys)
+        (if (null citekeys)
             (maphash #'putresult (citar-get-entries))
-          (dolist (citekey keys)
+          (dolist (citekey citekeys)
             (putresult citekey (citar-get-entry citekey))))))))
 
 ;;; Format and display field values
@@ -1231,27 +1228,27 @@ personal names of the form \"family, given\"."
              (search (completing-read "Preset: " citar-presets)))
     (insert search)))
 
-(defun citar--stringify-keys (keys)
-  "Encode a list of KEYS as a single string."
-  (combine-and-quote-strings (if (listp keys) keys (list keys)) " & "))
+(defun citar--stringify-keys (citekeys)
+  "Encode a list of CITEKEYS as a single string."
+  (combine-and-quote-strings (if (listp citekeys) citekeys (list citekeys)) " & "))
 
-(defun citar--unstringify-keys (keystring)
-  "Split KEYSTRING into a list of keys."
-  (split-string-and-unquote keystring " & "))
+(defun citar--unstringify-keys (citekeystring)
+  "Split CITEKEYSTRING into a list of keys."
+  (split-string-and-unquote citekeystring " & "))
 
 ;;; Commands
 
 ;;;###autoload
-(defun citar-open (keys)
-  "Open related resources (links, files, or notes) for KEYS."
+(defun citar-open (citekeys)
+  "Open related resources (links, files, or notes) for CITEKEYS."
   (interactive (list (citar-select-refs)))
   (pcase (let ((embark-default-action-overrides
                 (cons (cons t #'citar--open-resource)
                       (bound-and-true-p embark-default-action-overrides))))
-           (apply #'citar--select-resource keys
+           (apply #'citar--select-resource citekeys
                   (mapcan (lambda (type) (list type t)) citar-open-resources)))
     (`(,type . ,resource) (citar--open-resource resource type))
-    (_ (error "No associated resources: %s" keys))))
+    (_ (error "No associated resources: %s" citekeys))))
 
 (defun citar--open-resource (resource &optional type)
   "Open RESOURCE of TYPE.
@@ -1271,26 +1268,26 @@ specifying TYPE."
     (error "Could not open resource of type `%s': %S" type resource)))
 
 ;;;###autoload
-(defun citar-open-files (key-or-keys)
-  "Open library file associated with KEY-OR-KEYS."
+(defun citar-open-files (citekey-or-citekeys)
+  "Open library file associated with CITEKEY-OR-CITEKEYS."
   (interactive (list (citar-select-refs)))
   ;; TODO filter to refs have files?
-  (citar--library-file-action key-or-keys #'citar-file-open))
+  (citar--library-file-action citekey-or-citekeys #'citar-file-open))
 
 ;;;###autoload
-(defun citar-attach-files (key-or-keys)
-  "Attach library file associated with KEY-OR-KEYS to outgoing MIME message."
+(defun citar-attach-files (citekey-or-citekeys)
+  "Attach library file associated with CITEKEY-OR-CITEKEYS to outgoing MIME message."
   (interactive (list (citar-select-ref)))
-  (citar--library-file-action key-or-keys #'mml-attach-file))
+  (citar--library-file-action citekey-or-citekeys #'mml-attach-file))
 
-(defun citar--library-file-action (key-or-keys action)
+(defun citar--library-file-action (citekey-or-citekeys action)
   "Run ACTION on file associated with KEY-OR-KEYS.
 Use `citar--select-resource' to choose a file."
   (let ((citar--entries (citar-get-entries)))
     (pcase (let ((embark-default-action-overrides
                   (cons (cons `(file . ,this-command) action)
                         (bound-and-true-p embark-default-action-overrides))))
-             (citar--select-resource key-or-keys :files t))
+             (citar--select-resource citekey-or-citekeys :files t))
       (`(file . ,file) (funcall action file))
       (`(,type . ,resource) (error "Expected resource of type `file', got `%s': %S" type resource))
       ('nil
@@ -1298,10 +1295,10 @@ Use `citar--select-resource' to choose a file."
         ;; If some key had files according to the `:hasitems' function, but `:items' returned nothing, then
         ;; don't print the following message. The `:items' function is responsible for telling the user why it
         ;; failed, and we want that explanation to appear in the echo area.
-        (let ((keys (if (listp key-or-keys) key-or-keys (list key-or-keys)))
+        (let ((keys (if (listp citekey-or-citekeys) citekey-or-citekeys (list citekey-or-citekeys)))
               (hasfilep (citar-has-files)))
           (unless (and hasfilep (seq-some hasfilep keys))
-            (message "No associated files for %s" key-or-keys))))))))
+            (message "No associated files for %s" citekey-or-citekeys))))))))
 
 ;;;###autoload
 (defun citar-open-note (note)
@@ -1316,37 +1313,37 @@ to open from a list of all notes."
     (funcall (citar--get-notes-config :open) note)))
 
 ;;;###autoload
-(defun citar-open-notes (keys)
-  "Open notes associated with the KEYS."
+(defun citar-open-notes (citekeys)
+  "Open notes associated with the CITEKEYS."
   (interactive (list (citar-select-refs)))
   (pcase (let ((embark-default-action-overrides
                 (cons (cons t #'citar--open-resource)
                       (bound-and-true-p embark-default-action-overrides))))
-           (citar--select-resource keys :notes t :create-notes t))
+           (citar--select-resource citekeys :notes t :create-notes t))
     (`(note . ,note) (citar-open-note note))
-    (`(create-note . ,key) (citar-create-note key))))
+    (`(create-note . ,citekey) (citar-create-note citekey))))
 
 ;;;###autoload
-(defun citar-open-links (key-or-keys)
-  "Open URL or DOI link associated with KEY-OR-KEYS in a browser."
+(defun citar-open-links (citekey-or-citekeys)
+  "Open URL or DOI link associated with CITEKEY-OR-CITEKEYS in a browser."
   (interactive (list (citar-select-refs)))
   (pcase (let ((embark-default-action-overrides
                 (cons (cons `(url . ,this-command) #'browse-url)
                       (bound-and-true-p embark-default-action-overrides))))
-           (citar--select-resource key-or-keys :links t))
+           (citar--select-resource citekey-or-citekeys :links t))
     (`(url . ,url) (browse-url url))
     (`(,type . ,resource) (error "Expected resource of type `url', got `%s': %S" type resource))
-    ('nil (message "No link found for %s" key-or-keys))))
+    ('nil (message "No link found for %s" citekey-or-citekeys))))
 
 ;;;###autoload
-(defun citar-open-entry (key)
-  "Open bibliographic entry associated with the KEY."
+(defun citar-open-entry (citekey)
+  "Open bibliographic entry associated with the CITEKEY."
   (interactive (list (citar-select-ref)))
   (when-let ((bib-files (citar--bibliography-files)))
-    (citar--open-entry key bib-files)))
+    (citar--open-entry citekey bib-files)))
 
-(defun citar--open-entry (key bib-files)
-  "Open entry for KEY in the relevant BIB-FILES."
+(defun citar--open-entry (citekey bib-files)
+  "Open entry for CITEKEY in the relevant BIB-FILES."
   ;; Adapted from 'bibtex-completion-show-entry'.
   (catch 'break
     (dolist (bib-file bib-files)
@@ -1358,20 +1355,20 @@ to open from a list of all notes."
         (when (re-search-forward
                (concat "^@\\(" parsebib--bibtex-identifier
                        "\\)[[:space:]]*[\\(\\{][[:space:]]*"
-                       (regexp-quote key) "[[:space:]]*,") nil t)
+                       (regexp-quote citekey) "[[:space:]]*,") nil t)
           (throw 'break t))
         (unless buf
           (kill-buffer))))))
 
 ;;;###autoload
-(defun citar-insert-bibtex (keys)
-  "Insert bibliographic entry associated with the KEYS."
+(defun citar-insert-bibtex (citekeys)
+  "Insert bibliographic entry associated with the CITEKEYS."
   (interactive (list (citar-select-refs)))
-  (dolist (key keys)
-    (citar--insert-bibtex key)))
+  (dolist (citekey citekeys)
+    (citar--insert-bibtex citekey)))
 
-(defun citar--insert-bibtex (key)
-  "Insert the bibtex entry for KEY at point."
+(defun citar--insert-bibtex (citekey)
+  "Insert the bibtex entry for CITEKEY at point."
   (let* ((bibtex-files
           (citar--bibliography-files))
          (entry
@@ -1379,7 +1376,7 @@ to open from a list of all notes."
             (bibtex-set-dialect)
             (dolist (bib-file bibtex-files)
               (insert-file-contents bib-file))
-            (bibtex-search-entry key)
+            (bibtex-search-entry citekey)
             (let ((beg (bibtex-beginning-of-entry))
                   (end (bibtex-end-of-entry)))
               (buffer-substring-no-properties beg end)))))
@@ -1394,16 +1391,16 @@ The file is titled \"local-bib\", given the same extention as
 the first entry in `citar-bibliography', and created in the same
 directory as current buffer."
   (interactive)
-  (let* ((keys (citar--major-mode-function 'list-keys #'ignore))
+  (let* ((citekeys (citar--major-mode-function 'list-keys #'ignore))
          (ext (file-name-extension (car citar-bibliography)))
          (file (format "%slocal-bib.%s" (file-name-directory buffer-file-name) ext)))
     (with-temp-file file
-      (dolist (key keys)
-        (citar--insert-bibtex key)))))
+      (dolist (citekey citekeys)
+        (citar--insert-bibtex citekey)))))
 
 ;;;###autoload
-(defun citar-insert-citation (keys &optional arg)
-  "Insert citation for the KEYS.
+(defun citar-insert-citation (citekeys &optional arg)
+  "Insert citation for the CITEKEYS.
 
 Prefix ARG is passed to the mode-specific insertion function. It
 should invert the default behaviour for that mode with respect to
@@ -1415,7 +1412,7 @@ citation styles. See specific functions for more detail."
   (citar--major-mode-function
    'insert-citation
    #'ignore
-   keys
+   citekeys
    arg))
 
 (defun citar-insert-edit (&optional arg)
@@ -1430,25 +1427,25 @@ ARG is forwarded to the mode-specific insertion function given in
    arg))
 
 ;;;###autoload
-(defun citar-insert-reference (keys)
-  "Insert formatted reference(s) associated with the KEYS."
+(defun citar-insert-reference (citekeys)
+  "Insert formatted reference(s) associated with the CITEKEYS."
   (interactive (list (citar-select-refs)))
-  (insert (funcall citar-format-reference-function keys)))
+  (insert (funcall citar-format-reference-function citekeys)))
 
 ;;;###autoload
-(defun citar-copy-reference (keys)
-  "Copy formatted reference(s) associated with the KEYS."
+(defun citar-copy-reference (citekeys)
+  "Copy formatted reference(s) associated with the CITEKEYS."
   (interactive (list (citar-select-refs)))
-  (let ((references (funcall citar-format-reference-function keys)))
+  (let ((references (funcall citar-format-reference-function citekeys)))
     (if (not (equal "" references))
         (progn
           (kill-new references)
           (message (format "Copied:\n%s" references)))
       (message "Key not found."))))
 
-(defun citar-format-reference (keys)
-  "Return formatted reference(s) for the elements of KEYS."
-  (let* ((entries (mapcar #'citar-get-entry keys))
+(defun citar-format-reference (citekeys)
+  "Return formatted reference(s) for the elements of CITEKEYS."
+  (let* ((entries (mapcar #'citar-get-entry citekeys))
          (template (citar--get-template 'preview)))
     (with-temp-buffer
       (dolist (entry entries)
@@ -1456,21 +1453,21 @@ ARG is forwarded to the mode-specific insertion function given in
       (buffer-string))))
 
 ;;;###autoload
-(defun citar-insert-keys (keys)
-  "Insert KEYS citekeys."
+(defun citar-insert-keys (citekeys)
+  "Insert CITEKEYS."
   (interactive (list (citar-select-refs)))
   (citar--major-mode-function
    'insert-keys
    #'citar--insert-keys-comma-separated
-   keys))
+   citekeys))
 
-(defun citar--insert-keys-comma-separated (keys)
-  "Insert comma separated KEYS."
-  (insert (string-join keys ", ")))
+(defun citar--insert-keys-comma-separated (citekeys)
+  "Insert comma separated CITEKEYS."
+  (insert (string-join citekeys ", ")))
 
 ;;;###autoload
-(defun citar-add-file-to-library (key)
-  "Add a file to the library for KEY.
+(defun citar-add-file-to-library (citekey)
+  "Add a file to the library for CITEKEY.
 The FILE can be added from an open buffer, a file path, or a
 URL."
   (interactive (list (citar-select-ref)))
@@ -1480,7 +1477,7 @@ URL."
   (let* ((directory (if (cdr citar-library-paths)
                         (completing-read "Directory: " citar-library-paths)
                       (car citar-library-paths)))
-         (filepath (expand-file-name key directory))
+         (filepath (expand-file-name citekey directory))
          (withext (lambda (extension)
                     (let* ((extension (or extension (read-string "File extension: "))))
                       (if (string-empty-p extension)
@@ -1503,16 +1500,16 @@ URL."
          (url-copy-file url destfile 1))))))
 
 ;;;###autoload
-(defun citar-run-default-action (keys)
-  "Run the default action `citar-default-action' on KEYS."
-  (funcall citar-default-action keys))
+(defun citar-run-default-action (citekeys)
+  "Run the default action `citar-default-action' on CITEKEYS."
+  (funcall citar-default-action citekeys))
 
 ;;;###autoload
 (defun citar-dwim ()
   "Run the default action on citation keys found at point."
   (interactive)
-  (if-let ((keys (or (citar-key-at-point) (citar-citation-at-point))))
-      (citar-run-default-action (if (listp keys) keys (list keys)))
+  (if-let ((citekeys (or (citar-key-at-point) (citar-citation-at-point))))
+      (citar-run-default-action (if (listp citekeys) citekeys (list citekeys)))
     (user-error "No citation keys found")))
 
 (defun citar--check-configuration (&rest variables)
