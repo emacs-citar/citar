@@ -305,13 +305,16 @@ plist has the following properties:
 
   :category the completion category
 
-  :hasitems function to test for keys with notes
+  :hasitems a function that takes a CITEKEY and returns non-nil
+  if it has associated notes
 
-  :open function to open a given note candidate
+  :open function that, when given a note ID, opens the note
 
-  :items function to return candidate strings for keys
+  :create function that, when given a note ID, creates new note if not present
 
-  :annotate annotation function (optional)
+  :items function to return completion candidate strings for list of CITEKEYS
+
+  :annotate annotation function that returns a string for a note ID (optional)
 
   :transform transformation function (optional)"
   :group 'citar
@@ -729,6 +732,7 @@ only one resource and `citar-open-prompt' is t or contains
                       (car (member selected cands))))))
         (pcase (get-text-property 0 'citar--resource selected)
           ('create-note (cons 'create-note (citar--extract-candidate-citekey selected)))
+          ;; Embark expects the plain string here.
           (type (cons type (substring-no-properties selected))))))))
 
 (defun citar--select-group-related-resources (resource transform)
