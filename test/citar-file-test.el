@@ -15,11 +15,12 @@
   (should (equal '("foo" "bar") (delete-dups (citar-file--parser-default "foo;bar"))))
   (should (equal '("foo" "bar") (delete-dups (citar-file--parser-default " foo ; bar ; "))))
   (should (equal '("foo:bar" "baz") (delete-dups (citar-file--parser-default "foo:bar;baz"))))
+  (should (equal '("foo:bar" "baz") (delete-dups (citar-file--parser-default "foo:bar;;baz"))))
 
   ;; Test escaped delimiters
-  (should (equal '("foo\\;bar") (delete-dups (citar-file--parser-default "foo\\;bar"))))
+  (should (equal '("foo;bar" "foo\\;bar") (delete-dups (citar-file--parser-default "foo\\;bar"))))
   (should (equal '("foo" "bar\\") (delete-dups (citar-file--parser-default "foo;bar\\"))))
-  (should (equal '("foo\\;bar" "baz")
+  (should (equal '("foo;bar" "foo\\;bar" "baz")
                  (delete-dups (citar-file--parser-default "foo\\;bar;baz")))))
 
 (ert-deftest citar-file-test--parser-triplet ()
