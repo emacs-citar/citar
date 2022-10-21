@@ -95,12 +95,20 @@ separator that does not otherwise occur in citation keys."
 ;;;; Parsing file fields
 
 (defun citar-file--parser-default (file-field)
-  "Split FILE-FIELD by `;'."
-  (seq-remove
-   #'string-empty-p
-   (mapcar
-    #'string-trim
-    (citar-file--split-escaped-string file-field ?\;))))
+  "Split FILE-FIELD by `;'.
+If resulting filenames might be backslash-escaped, return both
+escaped and unescaped versions. Zotero escapes special characters
+like backslashes and colons, both of which commonly appear in
+Windows filenames."
+  (mapcan
+   (lambda (filename)
+     (let* ((trimmed (string-trim filename))
+            (unescaped (replace-regexp-in-string "\\\\\\(.\\)" "\\1" trimmed)))
+       (unless (string-empty-p trimmed)
+         (if (string= trimmed unescaped)
+             (list trimmed)
+           (list unescaped trimmed)))))
+   (citar-file--split-escaped-string file-field ?\;)))
 
 (defun citar-file--parser-triplet (file-field)
   "Return a list of files from DIRS and a FILE-FIELD formatted as a triplet.
@@ -360,7 +368,7 @@ SEPCHAR."
     (with-temp-buffer
       (insert string)
       (goto-char (point-min))
-      (while (progn (skip-chars-forward skip) (< (point) (point-max)))
+      (while (progn (skip-chars-forward skip) (not (eobp)))
         (if (= ?\\ (following-char))
             (ignore-error 'end-of-buffer (forward-char 2))
           (push (delete-and-extract-region (point-min) (point)) strings)
