@@ -513,9 +513,9 @@ and other completion functions."
         ;; REVIEW this now works, but probably needs refinement
         (let ((predicate
                (when (or filter predicate)
-                 (lambda (_ key)
+                 (lambda (cand key)
                    (and (or (null filter) (funcall filter key))
-                        (or (null predicate) (funcall predicate string)))))))
+                        (or (null predicate) (funcall predicate cand)))))))
           (complete-with-action action candidates string predicate))))))
 
 (cl-defun citar-select-refs (&key (multiple t) filter)
