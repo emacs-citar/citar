@@ -98,13 +98,44 @@ With prefix-argument, select CSL style."
                   (expand-file-name citar-citeproc-csl-style citar-citeproc-csl-styles-dir)))
          (bibs (citar--bibliography-files))
          (proc (citeproc-create style
-                                (citeproc-hash-itemgetter-from-any bibs)
+                                (citar-citeproc--limited-itemgetter-by-keys bibs keys)
                                 (citeproc-locale-getter-from-dir citar-citeproc-csl-locales-dir)
                                 "en-US"))
          (references (car (progn
                             (citeproc-add-uncited keys proc)
                             (citeproc-render-bib proc 'plain)))))
     references))
+
+(defun citar-citeproc--limited-itemgetter-by-keys (file-or-files keys)
+  "Return a getter for FILE-OR-FILES in any supported format, limited to KEYS."
+  (let ((files (if (listp file-or-files)
+                   file-or-files
+                 (list file-or-files)))
+        (cache (make-hash-table :test #'equal)))
+    (dolist (file files)
+      (pcase (file-name-extension file)
+        ("json"
+         (let ((json-array-type 'list)
+               (json-key-type 'symbol))
+           (with-temp-buffer
+             (insert-file-contents file)
+             (dolist (key keys)
+               (goto-char (point-min))
+               (when (search-forward key nil t)
+                 (beginning-of-line)
+                 (let ((item
+                        (if (json-available-p)
+                            (json-parse-buffer :array-type 'list :object-type 'alist)
+                          (json-read))))
+                   (puthash (cdr (assq 'id item)) item cache)))))))))
+    (lambda (x)
+      (pcase x
+        ('itemids
+         (hash-table-keys cache))
+        ((pred listp) (mapcar (lambda (id)
+                                (cons id (gethash id cache)))
+                              x))
+        (_ (error "Unsupported citeproc itemgetter retrieval method"))))))
 
 (provide 'citar-citeproc)
 ;;; citar-citeproc.el ends here
