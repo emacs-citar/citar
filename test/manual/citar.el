@@ -1,5 +1,5 @@
 ;; -*- lexical-binding: t -*-
-;; adapted from https://github.com/raxod502/selectrum/tree/master/test
+;; SPDX-License-Identifier: GPL-3.0-or-later
 ;; Setup completion style which is responsible for candidate filtering
 (setq completion-styles '(orderless))
 

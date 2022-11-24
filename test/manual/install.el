@@ -1,5 +1,6 @@
 ;; -*- lexical-binding: t -*-
-;; adapted from https://github.com/raxod502/selectrum/tree/master/test
+;; SPDX-License-Identifier: GPL-3.0-or-later
+
 ;; Use a temporary emacs.d directory for testing
 (setq citar--tmp-install-dir "/tmp/ba-test-emacs.d/")
 (setq user-emacs-directory citar--tmp-install-dir)
