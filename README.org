@@ -369,6 +369,18 @@ If you have =embark= installed, you use can =embark-dwim= instead for the same b
 If no citation key is found, the minibuffer will open for selection.
 You can disable this behavior by setting =citar-at-point-fallback= to nil.
 
+** Related Packages
+
+The following packages extend or otherwise enhance citar.
+
+*** Notes Sources
+
+These small packages provide citar notes sources, and so tighter integration with the respective notes management packages.
+
+- [[https://github.com/emacs-citar/citar-org-roam][citar-org-roam]]
+- [[https://github.com/pprevos/citar-denote][citar-denote]]
+- [[https://github.com/localauthor/zk][zk-citar]]
+
 ** Comparisons
    :PROPERTIES:
    :CUSTOM_ID: comparisons
