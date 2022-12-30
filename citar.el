@@ -587,7 +587,7 @@ is used for exiting the minibuffer during completing read.")
 (defun citar--multiple-exit ()
   "Exit with the currently selected candidates."
   (interactive)
-  (setq unread-command-events (listify-key-sequence (kbd (car citar--multiple-setup)))))
+  (funcall-interactively (key-binding (kbd (car citar--multiple-setup)))))
 
 (defun citar--setup-multiple-keymap ()
   "Make a keymap suitable for `citar--select-multiple'."
@@ -617,7 +617,7 @@ HISTORY is the `completing-read' history argument."
                    (puthash item t selected-hash)
                  (remhash item selected-hash)
                  (set history initial-history)))
-             (not (or (eq last-command #'citar--multiple-exit)
+             (not (or (eq this-command #'citar--multiple-exit)
                       (string-empty-p item)))))
     (hash-table-keys selected-hash)))
 
