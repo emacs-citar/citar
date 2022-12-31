@@ -611,7 +611,8 @@ is used for exiting the minibuffer during completing read.")
 HISTORY is the `completing-read' history argument."
   ;; Because completing-read-multiple just does not work for long candidate
   ;; strings, and IMO is a poor UI.
-  (let* ((selected-hash (make-hash-table :test 'equal)))
+  (let* ((selected-hash (make-hash-table :test 'equal))
+         (command this-command))
     (push (setq citar--multiple-last-input "") def)
     (while (let* ((initial-history (symbol-value history))
                   (item (minibuffer-with-setup-hook #'citar--setup-multiple-keymap
@@ -628,7 +629,8 @@ HISTORY is the `completing-read' history argument."
                  (remhash item selected-hash)
                  (set history initial-history)))
              (not (or (eq this-command #'citar--multiple-exit)
-                      (string-blank-p item)))))
+                      (string-blank-p item))))
+      (setq this-command command))
     (hash-table-keys selected-hash)))
 
 (cl-defun citar--get-resource-candidates (citekeys &key files links notes create-notes)
