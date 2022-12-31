@@ -43,7 +43,7 @@ jobs:
       uses: actions/checkout@v2
     - name: Install dependencies
       run: |
-        eldev --color --trace prepare
+        eldev --color --trace prepare build
     - name: Byte-compile
       if: ${{ matrix.action == 'compile' }}
       run: |

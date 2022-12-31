@@ -1,10 +1,10 @@
-; -*- mode: emacs-lisp; lexical-binding: t; no-byte-compile: t -*-
+; -*- mode: emacs-lisp; lexical-binding: t -*-
 ;; this and related files adapted from org-roam
 ;; explicitly set main file
 (setf eldev-project-main-file "citar.el")
 
-(eldev-use-package-archive 'gnu)
-(eldev-use-package-archive 'melpa-unstable)
+(eldev-use-package-archive 'gnu-elpa)
+(eldev-use-package-archive 'melpa)
 
 (eldev-use-plugin 'autoloads)
 
