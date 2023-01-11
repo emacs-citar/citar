@@ -754,7 +754,7 @@ is used for exiting the minibuffer during completing read.")
 (defun citar--multiple-exit ()
   "Exit with the currently selected candidates."
   (interactive)
-  (funcall-interactively (key-binding (kbd (car citar--multiple-setup)))))
+  (call-interactively (key-binding (kbd (car citar--multiple-setup)))))
 
 (defun citar--multiple-record-input ()
   "Record the current minibuffer input."
@@ -776,8 +776,9 @@ HISTORY is the `completing-read' history argument."
   ;; Because completing-read-multiple just does not work for long candidate
   ;; strings, and IMO is a poor UI.
   (let* ((selected-hash (make-hash-table :test 'equal))
-         (command this-command))
-    (push (setq citar--multiple-last-input "") def)
+         (command this-command)
+         (inputp nil)
+         (validate-input (lambda (input) (setq inputp t) input)))
     (while (let* ((initial-history (symbol-value history))
                   (item (minibuffer-with-setup-hook #'citar--setup-multiple-keymap
                           (completing-read
@@ -785,16 +786,18 @@ HISTORY is the `completing-read' history argument."
                                    (hash-table-count selected-hash)
                                    (hash-table-count candidates))
                            (citar--multiple-completion-table selected-hash candidates filter)
-                           nil t nil history def))))
+                           nil validate-input nil history def))))
              (push citar--multiple-last-input def)
-             (unless (string-blank-p citar--multiple-last-input)
+             (when inputp
                (if (not (gethash item selected-hash))
                    (puthash item t selected-hash)
                  (remhash item selected-hash)
                  (set history initial-history)))
              (not (or (eq this-command #'citar--multiple-exit)
-                      (string-blank-p citar--multiple-last-input))))
-      (setq this-command command))
+                      (not inputp))))
+      (setq this-command command
+            citar--multiple-last-input nil
+            inputp nil))
     (hash-table-keys selected-hash)))
 
 (cl-defun citar--get-resource-candidates (citekeys &key files links notes create-notes)
