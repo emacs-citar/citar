@@ -584,17 +584,10 @@ to filter them."
 SEL is the key which should be used for selection. EXIT is the key which
 is used for exiting the minibuffer during completing read.")
 
-(defvar citar--multiple-last-input nil
-  "Variable used to track the input so that it can be restored subsequently.")
-
 (defun citar--multiple-exit ()
   "Exit with the currently selected candidates."
   (interactive)
-  (funcall-interactively (key-binding (kbd (car citar--multiple-setup)))))
-
-(defun citar--multiple-record-input ()
-  "Record the current minibuffer input."
-  (setq citar--multiple-last-input (minibuffer-contents-no-properties)))
+  (setq unread-command-events (listify-key-sequence (kbd (car citar--multiple-setup)))))
 
 (defun citar--setup-multiple-keymap ()
   "Make a keymap suitable for `citar--select-multiple'."
@@ -603,34 +596,29 @@ is used for exiting the minibuffer during completing read.")
         (kbdexit (kbd (cdr citar--multiple-setup))))
     (define-key keymap kbdselect (lookup-key keymap kbdexit))
     (define-key keymap kbdexit #'citar--multiple-exit)
-    (use-local-map keymap))
-  (add-hook 'post-command-hook #'citar--multiple-record-input nil t))
+    (use-local-map keymap)))
 
 (defun citar--select-multiple (prompt candidates &optional filter history def)
   "Select multiple CANDIDATES with PROMPT.
 HISTORY is the `completing-read' history argument."
   ;; Because completing-read-multiple just does not work for long candidate
   ;; strings, and IMO is a poor UI.
-  (let* ((selected-hash (make-hash-table :test 'equal))
-         (command this-command))
-    (push (setq citar--multiple-last-input "") def)
-    (while (let* ((initial-history (symbol-value history))
-                  (item (minibuffer-with-setup-hook #'citar--setup-multiple-keymap
-                          (completing-read
-                           (format "%s (%s/%s): " prompt
-                                   (hash-table-count selected-hash)
-                                   (hash-table-count candidates))
-                           (citar--multiple-completion-table selected-hash candidates filter)
-                           nil t nil history def))))
-             (push citar--multiple-last-input def)
-             (unless (string-blank-p citar--multiple-last-input)
+  (let* ((selected-hash (make-hash-table :test 'equal)))
+    (while (let ((initial-history (symbol-value history))
+                 (item (minibuffer-with-setup-hook #'citar--setup-multiple-keymap
+                         (completing-read
+                          (format "%s (%s/%s): " prompt
+                                  (hash-table-count selected-hash)
+                                  (hash-table-count candidates))
+                          (citar--multiple-completion-table selected-hash candidates filter)
+                          nil t nil history `("" . ,def)))))
+             (unless (string-empty-p item)
                (if (not (gethash item selected-hash))
                    (puthash item t selected-hash)
                  (remhash item selected-hash)
                  (set history initial-history)))
-             (not (or (eq this-command #'citar--multiple-exit)
-                      (string-blank-p citar--multiple-last-input))))
-      (setq this-command command))
+             (not (or (eq last-command #'citar--multiple-exit)
+                      (string-empty-p item)))))
     (hash-table-keys selected-hash)))
 
 (cl-defun citar--get-resource-candidates (citekeys &key files links notes create-notes)

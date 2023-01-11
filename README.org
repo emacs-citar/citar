@@ -216,8 +216,6 @@ You then have two ways to access these strings from the completion prompt:
 1. by using =M-n= from the prompt, which will cycle through the strings
 2. by calling =citar-insert-preset= with a keybinding, and then selecting the string
 
-If you want to select multiple candidates using the same search term =M-n= also recalls the previous input, so you can use =TAB= to select one candidate then press =M-n= to quickly insert the previous search term again (see notes below for some caveats).
-
 =citar= also preserves the history of your selections (see caveat below about multiple candidate selection though), which are also accessible in your completion UI, but by using =M-p=.
 You can save this history across sessions by adding =citar-history= to =savehist-additional-variables=.
 
@@ -239,14 +237,6 @@ The ~citar-notes-sources~ variable configures note backends, and ~citar-notes-so
 
 A backend primarily specifies functions to update the Citar display, to create the completion candidates, and to open existing and new notes.
 See the ~citar-notes-sources~ docstring for details, and the =citar-register-notes-source= and =citar-remove-notes-source= convenience functions.
-
-Using =M-n= to recall the previous input only works when selecting multiple candidates during a single =citar-command=. If you use =vertico=, =vertico-repeat= provides similar functionality for rerunning the commands with the last input.
-
-By default =Emacs= leaves the point at the beginning of input if you press =M-n= with minibuffer empty. If you want to change this behavior and instead leave the point at the end of input use,
-
-#+BEGIN_SRC emacs-lisp
-(advice-add 'goto-history-element :after (defun my-end-of-buffer (&rest _) (goto-char (point-max))))
-#+END_SRC
 
 ** Files, file association and file-field parsing
 
