@@ -376,7 +376,7 @@ replaced by the contents of the corresponding field."
       (citation-at-point . citar-markdown-citation-at-point)
       (list-keys . citar-markdown-list-keys)))
     (t .
-       ((insert-keys . citar--insert-keys-comma-separated))))
+       ((insert-keys . citar--insert-keys-comma-space-separated))))
   "The variable determining the major mode specific functionality.
 
 It is alist with keys being a list of major modes.
@@ -1464,13 +1464,16 @@ ARG is forwarded to the mode-specific insertion function given in
   (interactive (list (citar-select-refs)))
   (citar--major-mode-function
    'insert-keys
-   #'citar--insert-keys-comma-separated
-   citekeys t))
+   #'citar--insert-keys-comma-space-separated
+   citekeys))
 
-(defun citar--insert-keys-comma-separated (citekeys include-space)
-  "Insert comma separated CITEKEYS.
-When INCLUDE-SPACE is non-nil, add a space after comma."
-  (insert (string-join citekeys (concat "," (when include-space " ")))))
+(defun citar--insert-keys-comma-separated (citekeys)
+  "Insert comma separated CITEKEYS."
+  (insert (string-join citekeys ",")))
+
+(defun citar--insert-keys-comma-space-separated (citekeys)
+  "Insert comma, space separated CITEKEYS."
+  (insert (string-join citekeys ", ")))
 
 ;;;###autoload
 (defun citar-add-file-to-library (citekey)
