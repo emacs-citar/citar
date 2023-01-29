@@ -1465,11 +1465,12 @@ ARG is forwarded to the mode-specific insertion function given in
   (citar--major-mode-function
    'insert-keys
    #'citar--insert-keys-comma-separated
-   citekeys))
+   citekeys t))
 
-(defun citar--insert-keys-comma-separated (citekeys)
-  "Insert comma separated CITEKEYS."
-  (insert (string-join citekeys ", ")))
+(defun citar--insert-keys-comma-separated (citekeys include-space)
+  "Insert comma separated CITEKEYS.
+When INCLUDE-SPACE is non-nil, add a space after comma."
+  (insert (string-join citekeys (concat "," (when include-space " ")))))
 
 ;;;###autoload
 (defun citar-add-file-to-library (citekey)
