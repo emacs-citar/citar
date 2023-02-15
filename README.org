@@ -25,7 +25,7 @@ With embark, it also makes available at-point actions in org, markdown, and LaTe
 
 Here's a screenshot with [[https://github.com/minad/vertico][vertico]] and symbol customization [[https://github.com/bdarcus/citar#icons][noted below]].
 
-#+CAPTION: vertico with citar
+#+caption: vertico with citar
 [[file:images/vertico.png]]
 
 To see citar in action with org-cite, you can watch [[https://emacsconf.org/2021/talks/research/][this Emacs Conf 2021 presentation]] by [[https://github.com/rka97][Ahmed Khaled]].
@@ -62,14 +62,14 @@ We also recommend Emacs 28, as this package relies on two of its features, that 
 
 This is the minimal configuration, and will work with any completing-read compliant vertical completion UI, like Vertico, or the built-in icomplete-vertical, with actions available via =M-x= commands.
 
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 (use-package citar
   :bind (("C-c b" . citar-insert-citation)
          :map minibuffer-local-map
          ("M-b" . citar-insert-preset))
   :custom
   (citar-bibliography '("~/bib/references.bib")))
-#+END_SRC
+#+end_src
 
 *** Embark
 
@@ -84,6 +84,16 @@ When using Embark, the Citar actions are generic, and work the same across org, 
   :config (citar-embark-mode))
 #+END_SRC
 
+*** =citar-capf=
+
+While currently subject to some limitations (see [[https://github.com/emacs-citar/citar/issues/660][issue 660]]), this package includes a completion-at-point function, which you can configure like so:
+
+#+begin_src emacs-lisp
+(use-package citar-capf
+  :init
+  (add-to-list 'completion-at-point-functions #'citar-capf -90))
+#+end_src
+
 *** Org-Cite
 
 #+CAPTION: org-cite at-point integration with =embark-act=
@@ -91,7 +101,7 @@ When using Embark, the Citar actions are generic, and work the same across org, 
 
 If you want to use Citar only in Org-Mode, this is the best option.
 
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 (use-package citar
   :no-require
   :custom
@@ -103,16 +113,16 @@ If you want to use Citar only in Org-Mode, this is the best option.
   ;; optional: org-cite-insert is also bound to C-c C-x C-@
   :bind
   (:map org-mode-map :package org ("C-c b" . #'org-cite-insert)))
-#+END_SRC
+#+end_src
 
 You can insert citations with the =org-cite-insert= command, which is bound to =C-c C-x C-@= in Org-Mode buffers.  The
 optional ~:bind~ command above also gives it the shorter =C-c b= binding.
 
 If you prefer to have the Embark menu open with =org-open-at-point=, you should set this variable.
 
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 (setq citar-at-point-function 'embark-act)
-#+END_SRC
+#+end_src
 
 You can invoke both =embark-act= and =embark-dwim=, however, independently of =org-at-point=, and in other modes such as =latex-mode=.
 
@@ -161,13 +171,13 @@ For the prefix, you can filter for associated files or notes using =has:file= or
 The =citar-templates= variable configures formatting for these sections, as well as the default note function.
 Here's the default value:
 
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 (setq citar-templates
       '((main . "${author editor:30}     ${date year issued:4}     ${title:48}")
         (suffix . "          ${=key= id:15}    ${=type=:12}    ${tags keywords:*}")
         (preview . "${author editor} (${year issued date}) ${title}, ${journal journaltitle publisher container-title collection-title}.\n")
         (note . "Notes on ${author editor}, ${title}")))
-#+END_SRC
+#+end_src
 
 Note:
 
@@ -181,13 +191,13 @@ Note:
 By default, this UI is plain text, but you can configure it to use icons instead.
 Here's how to configure it to use =all-the-icons= as in the screenshot at the top:
 
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 (setq citar-symbols
       `((file ,(all-the-icons-faicon "file-o" :face 'all-the-icons-green :v-adjust -0.1) . " ")
         (note ,(all-the-icons-material "speaker_notes" :face 'all-the-icons-blue :v-adjust -0.3) . " ")
         (link ,(all-the-icons-octicon "link" :face 'all-the-icons-orange :v-adjust 0.01) . " ")))
 (setq citar-symbol-separator "  ")
-#+END_SRC
+#+end_src
 
 ** Test Script
     :PROPERTIES:
@@ -249,20 +259,20 @@ The ~citar-file-parser-functions~ variable governs which parsers to use, and the
 
 If you have a mix of entries created with Zotero and Calibre, you can set it like so and it will parse both:
 
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 (setq citar-file-parser-functions
   '(citar-file-parser-default
     citar-file-parser-triplet))
-#+END_SRC
+#+end_src
 
 The ~citar-library-file-extensions~ variable governs which file extensions the open commands will recognize; when `nil`, it will recognize all extensions.
 The ~citar-file-additional-files-separator~ variable defines what patterns citar should identify for multiple library files for the same reference key.
 Here's an example to only recognize pdf and jpg extensions, but additional file names of the form ~test-1.jpg~:
 
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 (setq citar-library-file-extensions (list "pdf" "jpg")
       citar-file-additional-files-separator "-")
-#+END_SRC
+#+end_src
 
 To change how citar opens files with given extensions, customize the ~citar-file-open-functions~ variable defined in =citar-file.el=.
 
