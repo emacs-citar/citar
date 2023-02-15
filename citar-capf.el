@@ -25,27 +25,10 @@
 ;; Declare function from citar
 (declare-function citar--completion-table "citar") ;; pending cache revisions
 
-;; Define vars for capf
-(defvar citar-capf--candidates
-  (or (citar--format-candidates)
-      (user-error "No bibliography set"))
-  "Completion candidates for `citar-capf'.")
-
-(defvar citar-capf--properties
-  (list :exit-function #'citar-capf--exit
-        :exclusive 'no)
-  "Completion extra properties for `citar-capf'.")
-
-;; Define exit function
-(defun citar-capf--exit (str _status)
-  "Return key for STR from CANDIDATES hash."
-  (delete-char (- (length str)))
-  (insert (gethash str citar-capf--candidates)))
-
 ;;;; Citar-Capf
 ;;;###autoload
 (defun citar-capf ()
-  "Citation key `completion-at-point' for org, markdown, or latex."
+  "Complete citation key at point for org, markdown, or latex."
   (let ((citar-capf-latex-regexp
          "\\(?:cite\\(?:\\(?:[pt]\\*\\|[pt]\\)?{\\)\\)\\([[:alnum:]_-]*,\\)*\\([[:alnum:]_-]*\\)")
         (citar-capf-markdown-regexp
@@ -82,10 +65,29 @@
                    (looking-back citar-capf-markdown-regexp
                                  (line-beginning-position))))))
       ;; Get and insert candidate
-      (let ((begin (save-excursion (backward-word) (point)))
-            (end (point)))
-        (append (list begin end citar-capf--candidates)
-                citar-capf--properties)))))
+      (let* ((candidates (citar-get-entries))
+             (bounds (bounds-of-thing-at-point 'word)))
+    (when bounds
+      (list (car bounds)
+            (cdr bounds)
+            candidates
+            :annotation-function #'citar-capf-annotate
+            :exit-function
+            (lambda (_str _status)
+              (insert))))))))
+
+  (defun citar-capf-annotate (citekey)
+    "Annotate a CITEKEY."
+    (let* ((author (citar-get-value "author" citekey))
+           (editor (citar-get-value "editor" citekey))
+           (title (citar-get-value "title" citekey)))
+      (concat
+       "   "
+       (truncate-string-to-width
+        (citar--shorten-names
+         (or author editor "")) 20 nil 32 t)
+       "  "
+       (truncate-string-to-width (or title "") 40 nil 32))))
 
 (provide 'citar-capf)
 ;;; citar-capf.el ends here
