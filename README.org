@@ -77,12 +77,12 @@ The =citar-embark= package adds contextual access actions in the minibuffer and 
 
 When using Embark, the Citar actions are generic, and work the same across org, markdown, and latex modes.
 
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 (use-package citar-embark
   :after citar embark
   :no-require
   :config (citar-embark-mode))
-#+END_SRC
+#+end_src
 
 *** =citar-capf=
 
@@ -91,7 +91,7 @@ While currently subject to some limitations (see [[https://github.com/emacs-cita
 #+begin_src emacs-lisp
 (use-package citar-capf
   :init
-  (add-to-list 'completion-at-point-functions #'citar-capf -90))
+  (add-to-list 'completion-at-point-functions #'citar-capf))
 #+end_src
 
 *** Org-Cite
