@@ -86,7 +86,7 @@ When using Embark, the Citar actions are generic, and work the same across org, 
 
 *** =citar-capf=
 
-While currently subject to some limitations (see [[https://github.com/emacs-citar/citar/issues/660][issue 660]]), this package includes a completion-at-point function, which you can configure like so:
+This package includes a ~completion-at-point~ function to complete citation keys in the buffer, which you can configure like so:
 
 #+begin_src emacs-lisp
 (use-package citar-capf
