@@ -404,12 +404,17 @@ or citation-reference."
       (error "You only have one reference; you cannot shift this"))
     (when (null index)
       (error "Nothing to shift here"))
-    (setf (buffer-substring (org-element-property :contents-begin current-citation)
-                            (org-element-property :contents-end current-citation))
-          (org-element-interpret-data
-           (citar-org-cite-swap
-            index
-            (if (eq 'left direction) (- index 1) (+ index 1)) refs)))
+    (let*
+        ((v1
+          (org-element-property :contents-begin current-citation))
+         (v2
+          (org-element-property :contents-end current-citation)))
+      (cl--set-buffer-substring v1 v2
+                                (org-element-interpret-data
+                                 (org-element-interpret-data
+                                  (citar-org-cite-swap
+                                   index
+                                   (if (eq 'left direction) (- index 1) (+ index 1)) refs)))))
     ;; Now get on the original ref.
     (let* ((newrefs (org-cite-get-references current-citation))
            (index
@@ -441,12 +446,15 @@ or citation-reference."
          (key (org-element-property :key ref))
          ;; TODO handle space delimiter elegantly.
          (pre (read-string "Prefix text: " (org-element-property :prefix ref)))
-         (post (read-string "Suffix text: " (org-element-property :suffix ref))))
-    (setf (buffer-substring (org-element-property :begin ref)
-                            (org-element-property :end ref))
-          (org-element-interpret-data
-           `(citation-reference
-             (:key ,key :prefix ,pre :suffix ,post))))))
+         (post (read-string "Suffix text: " (org-element-property :suffix ref)))
+         (v1
+          (org-element-property :begin ref))
+         (v2
+          (org-element-property :end ref)))
+    (cl--set-buffer-substring v1 v2
+                              (org-element-interpret-data
+                               `(citation-reference
+                                 (:key ,key :prefix ,pre :suffix ,post))))))
 
 ;; Load this last.
 
