@@ -76,18 +76,23 @@
             (lambda (_str _status)
               (insert))))))))
 
-  (defun citar-capf-annotate (citekey)
-    "Annotate a CITEKEY."
-    (let* ((author (citar-get-value "author" citekey))
-           (editor (citar-get-value "editor" citekey))
-           (title (citar-get-value "title" citekey)))
-      (concat
-       "   "
-       (truncate-string-to-width
-        (citar--shorten-names
-         (or author editor "")) 20 nil 32 t)
-       "  "
-       (truncate-string-to-width (or title "") 40 nil 32))))
+(defun citar-capf-annotate (citekey)
+  "Annotate a CITEKEY."
+  (let* ((author (citar-get-value "author" citekey))
+         (editor (citar-get-value "editor" citekey))
+         (title (citar-get-value "title" citekey)))
+    (concat
+     "   "
+     (truncate-string-to-width
+      (citar--shorten-names
+       (or author editor "")) 20 nil 32 t)
+     "  "
+     (truncate-string-to-width (or title "") 40 nil 32))))
+
+;;;###autoload
+(defun citar-capf-setup ()
+  "Add `citar-capf' to `completion-at-point-functions'."
+  (add-to-list 'completion-at-point-functions 'citar-capf))
 
 (provide 'citar-capf)
 ;;; citar-capf.el ends here
