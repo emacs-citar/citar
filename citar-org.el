@@ -402,6 +402,12 @@ or citation-reference."
 
     (when (= 1 (length refs))
       (error "You only have one reference; you cannot shift this"))
+    ;; TODO remove this when the shifting is updated to move to front or end of the list.
+    (when (or (and (equal index 0)
+                   (equal direction 'left))
+              (and (equal (+ 1 index) (length refs))
+                   (equal direction 'right)))
+      (error "You cannot shift the reference in this direction"))
     (when (null index)
       (error "Nothing to shift here"))
     (let*
