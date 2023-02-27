@@ -67,14 +67,14 @@
       ;; Get and insert candidate
       (let* ((candidates (citar-get-entries))
              (bounds (bounds-of-thing-at-point 'word)))
-    (when bounds
-      (list (car bounds)
-            (cdr bounds)
-            candidates
-            :annotation-function #'citar-capf-annotate
-            :exit-function
-            (lambda (_str _status)
-              (insert))))))))
+        (when bounds
+          (list (car bounds)
+                (cdr bounds)
+                candidates
+                :annotation-function #'citar-capf-annotate
+                :exit-function
+                (lambda (_str _status)
+                  (insert))))))))
 
 (defun citar-capf-annotate (citekey)
   "Annotate a CITEKEY."
