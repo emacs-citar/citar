@@ -101,6 +101,8 @@ When using Embark, the Citar actions are generic, and work the same across org, 
 
 *** Org-Cite
 
+This shows the buffer actions made available by =citar-embark=:
+
 #+CAPTION: org-cite at-point integration with =embark-act=
 [[file:images/org-cite-embark-point.png]]
 
