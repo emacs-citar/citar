@@ -28,6 +28,11 @@ Here's a screenshot with [[https://github.com/minad/vertico][vertico]] and symbo
 #+caption: vertico with citar
 [[file:images/vertico.png]]
 
+And here's =citar-capf= in a markdown buffer.
+
+#+caption completion-at-point in a markdown buffer
+file:images/capf-md.png
+
 To see citar in action with org-cite, you can watch [[https://emacsconf.org/2021/talks/research/][this Emacs Conf 2021 presentation]] by [[https://github.com/rka97][Ahmed Khaled]].
 
 ** Installation
