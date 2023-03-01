@@ -335,7 +335,7 @@ Changing this value to =embark-act= with embark installed and configured will pr
 
 Org-cite citations include optional "styles" and "variants" to locally modify the citation rendering.
 When inserting a new citation, calling =org-cite-insert= with a prefix arg will prompt to select a style.
-To edit an existing citation's style, just make sure point is on the citation prefix before running =org-cite-insert=, and you will get a list of available styles.
+To edit an existing citation's style, just make sure *point is on the citation prefix* before running =org-cite-insert=, and you will get a list of available styles.
 That list is based on your configuration; if you have the =oc-natbib= and =oc-csl= processors configured, for example, the list will include the styles and variants available in those two processors.
 The variants included in the bundled processors include the following, with the shortcuts in parentheses:
 
@@ -347,6 +347,8 @@ Generally, you shouldn't need these, but they can be useful in certain circumsta
 If an export processor doesn't support a specific variant for a specific style, it should just fallback to the base style.
 For example, if you specify =text/f=, and the export processor you use doesn't support the =f= variant there, it should just output as if you specified =text=.
 
+#+CAPTION: citation styles
+[[file:images/oc-styles.png]]
 *** =M-x=
     :PROPERTIES:
     :CUSTOM_ID: m-x
