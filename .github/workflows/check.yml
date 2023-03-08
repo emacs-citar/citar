@@ -23,7 +23,7 @@ jobs:
       matrix:
         emacs_version:
           - 27.2
-          - 28.1
+          - 28.2
           - snapshot
         action:
           - compile
