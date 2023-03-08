@@ -1157,29 +1157,22 @@ replace last comma."
          (namelength (length namelist))
          (tnamelist (seq-take namelist (or truncate namelength)))
          (tnamelength (length tnamelist)))
-    (cond ((equal tnamelength 1)
-           (citar--shorten-name (car tnamelist)))
-          ((equal tnamelength 2)
-           (concat (citar--shorten-name (car tnamelist))
-                   (if andstr (concat " " andstr) ",") " "
-                   (citar--shorten-name (cadr tnamelist))))
-          (t
-           (mapconcat
-            (lambda (n)
-              (let* ((shortname (citar--shorten-name n))
-                     (pos (citar--shorten-name-position tnamelist n))
-                     (suffix
-                      (cond
-                       ;; if last name in the list, no suffix
-                       ((equal pos tnamelength)
-                        (if (< tnamelength namelength) " et al" ""))
-                       ;; if second to last in the list, and ANDSTR, use that
-                       ((and andstr (equal pos (- tnamelength 1)))
-                        (concat " " andstr " "))
-                       ;; otherwise, use a comma
-                       (t ", "))))
-                (concat shortname suffix)))
-            tnamelist "")))))
+    (mapconcat
+     (lambda (n)
+       (let* ((shortname (citar--shorten-name n))
+              (pos (citar--shorten-name-position tnamelist n))
+              (suffix
+               (cond
+                ;; if last name in the list, no suffix
+                ((equal pos tnamelength)
+                 (if (< tnamelength namelength) " et al." ""))
+                ;; if second to last in the list, and ANDSTR, use that
+                ((and andstr (equal pos (- tnamelength 1)))
+                 (concat " " andstr " "))
+                ;; otherwise, use a comma
+                (t ", "))))
+         (concat shortname suffix)))
+     tnamelist "")))
 
 (defun citar--fields-for-format (template)
   "Return list of fields for TEMPLATE."
