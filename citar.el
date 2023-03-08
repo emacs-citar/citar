@@ -1160,9 +1160,9 @@ replace last comma."
     (cond ((equal namelength 1)
            (citar--shorten-name (car tnamelist)))
           ((equal namelength 2)
-           (concat (citar--shorten-name (car tnamelist))
+           (concat (citar--shorten-name (car namelist))
                    (if andstr (concat " " andstr) ",") " "
-                   (citar--shorten-name (cadr tnamelist))))
+                   (citar--shorten-name (cadr namelist))))
           (t
            (mapconcat
             (lambda (n)
