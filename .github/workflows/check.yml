@@ -23,7 +23,7 @@ jobs:
       matrix:
         emacs_version:
           - 27.2
-          - 28.1
+          - 28.2
           - snapshot
         action:
           - compile
@@ -40,7 +40,7 @@ jobs:
     - name: Install Eldev
       run: curl -fsSL https://raw.github.com/doublep/eldev/master/webinstall/github-eldev | sh
     - name: Check out project
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
     - name: Install dependencies
       run: |
         eldev --color --trace prepare build
