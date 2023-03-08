@@ -1157,9 +1157,9 @@ replace last comma."
          (namelength (length namelist))
          (tnamelist (seq-take namelist (or truncate namelength)))
          (tnamelength (length tnamelist)))
-    (cond ((equal tnamelength 1)
+    (cond ((equal namelength 1)
            (citar--shorten-name (car tnamelist)))
-          ((equal tnamelength 2)
+          ((equal namelength 2)
            (concat (citar--shorten-name (car tnamelist))
                    (if andstr (concat " " andstr) ",") " "
                    (citar--shorten-name (cadr tnamelist))))
@@ -1172,7 +1172,7 @@ replace last comma."
                       (cond
                        ;; if last name in the list, no suffix
                        ((equal pos tnamelength)
-                        (if (< tnamelength namelength) " et al" ""))
+                        (if (< tnamelength namelength) " et al." ""))
                        ;; if second to last in the list, and ANDSTR, use that
                        ((and andstr (equal pos (- tnamelength 1)))
                         (concat " " andstr " "))
