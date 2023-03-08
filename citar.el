@@ -1164,7 +1164,7 @@ replace last comma."
               (pos (citar--shorten-name-position tnamelist n))
               (suffix
                (cond
-                ;; if last name in the list, no suffix
+                ;; if last name in the list and we're truncating add et al.; otherwise, no suffix
                 ((equal pos tnamelength)
                  (if (< tnamelength namelength) " et al." ""))
                 ;; if second to last in the list, and ANDSTR, use that
