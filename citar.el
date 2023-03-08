@@ -271,10 +271,11 @@ offer to create new notes unconditionally."
                (function-item citar-open)
                (function-item citar-open-notes))))
 
-(defcustom citar-file-sources (list (list :items #'citar-file--get-from-file-field
-                                          :hasitems #'citar-file--has-file-field)
-                                    (list :items #'citar-file--get-library-files
-                                          :hasitems #'citar-file--has-library-files))
+(defcustom citar-file-sources
+  (list (list :items #'citar-file--get-from-file-field
+              :hasitems #'citar-file--has-file-field)
+        (list :items #'citar-file--get-library-files
+              :hasitems #'citar-file--has-library-files))
   "List of backends used to get library files for bibliography references.
 
 Should be a list of plists, where each plist has the following properties:
