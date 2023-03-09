@@ -32,6 +32,10 @@ jobs:
         exclude:
           - emacs_version: snapshot
             action: compile
+          - emacs_version: 27.2
+            action: lint
+          - emacs_version: 28.2
+            action: lint
     steps:
     - name: Set up Emacs ${{matrix.emacs_version}}
       uses: purcell/setup-emacs@master
