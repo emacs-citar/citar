@@ -1,6 +1,6 @@
 ;;; citar.el --- Citation-related commands for org, latex, markdown -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2021-2022 Bruce D'Arcus
+;; Copyright (C) 2021-2023 Bruce D'Arcus
 
 ;; Author: Bruce D'Arcus <https://github.com/bdarcus>
 ;; Maintainer: Bruce D'Arcus <https://github.com/bdarcus>
@@ -147,7 +147,7 @@ for the title field for new notes."
 (defcustom citar-ellipsis nil
   "Ellipsis string to mark ending of truncated display fields.
 
-If t, use the value of `truncate-string-ellipsis'.  If nil, no
+If t, use the value of variable `truncate-string-ellipsis'.  If nil, no
 ellipsis will be used.  Otherwise, this should be a non-empty
 string specifying the ellipsis."
   :group 'citar
@@ -176,18 +176,19 @@ references as a string."
 
 (defcustom citar-display-transform-functions
   ;; TODO change this name, as it might be confusing?
-  '((("author" "editor") . citar--shorten-names))
+  '((t . ((("author" "editor") . (citar--shorten-names))))
+    (notes . ((("author" "editor") . (citar--shorten-names 3 "&")))))
   "Configure transformation of field display values from raw values.
 
 All functions that match a particular field are run in order."
   :group 'citar
-  :type '(alist :key-type   (choice (const t) (repeat string))
-          :value-type function))
+  :type '(alist :key-type symbol
+          :value-type (cons list list)))
 
 (defcustom citar-symbols
-  `((file  .  ("F" . " "))
-    (note .   ("N" . " "))
-    (link .   ("L" . " ")))
+  `((file . ("F" . " "))
+    (note . ("N" . " "))
+    (link . ("L" . " ")))
   "Configuration alist specifying which symbol or icon to pick for a bib entry.
 This leaves room for configurations where the absense of an item
 may be indicated with the same icon but a different face.
@@ -649,8 +650,8 @@ CATEGORY is one of:
  * `multi-category' when CANDIDATES has resources of multiple
    types. The `multi-category' text property is applied to each
    element of CANDIDATES."
-  (cl-flet ((getresources (table) (when table
-                                    (delete-dups (apply #'append (hash-table-values table)))))
+  (cl-flet ((getresources (table)
+              (when table (delete-dups (apply #'append (hash-table-values table)))))
             (keycands (type citekeys)
               (let ((format (citar-format--parse (citar--get-template 'completion)))
                     (width (- (frame-width) 2)))
@@ -901,17 +902,18 @@ was found to have a value, and VALUE is its value."
                   (cons field value)))
               fields)))
 
-(defun citar-get-display-value (fields citekey-or-entry)
+(defun citar-get-display-value (fields citekey-or-entry &optional template)
   "Return the first non nil value for CITEKEY-OR-ENTRY among FIELDS .
 
-The value is transformed using `citar-display-transform-functions'"
+The value is transformed using `citar-display-transform-functions' for TEMPLATE."
   (let ((fieldvalue (citar-get-field-with-value fields citekey-or-entry)))
     (seq-reduce (lambda (string fun)
+                  ;; FIX: can't get this to work, and don't understand this line.
                   (if (or (eq t (car fun))
                           (seq-contains-p (car fun) (car fieldvalue) #'string=))
-                      (funcall (cdr fun) string)
+                      (apply (cadr fun) (append (list string) (cddr fun)))
                     string))
-                citar-display-transform-functions
+                (cdr (assoc (or template t) citar-display-transform-functions))
                 ;; Make sure we always return a string, even if empty.
                 (or (cdr fieldvalue) ""))))
 
