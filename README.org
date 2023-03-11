@@ -180,10 +180,10 @@ Here's the default value:
 
 #+begin_src emacs-lisp
 (setq citar-templates
-      '((main . "${author editor:30}     ${date year issued:4}     ${title:48}")
+      '((main . "${author editor:30%sn}     ${date year issued:4}     ${title:48}")
         (suffix . "          ${=key= id:15}    ${=type=:12}    ${tags keywords:*}")
-        (preview . "${author editor} (${year issued date}) ${title}, ${journal journaltitle publisher container-title collection-title}.\n")
-        (note . "Notes on ${author editor}, ${title}")))
+        (preview . "${author editor%etal} (${year issued date}) ${title}, ${journal journaltitle publisher container-title collection-title}.\n")
+        (note . "Notes on ${author editor:%etal}, ${title}")))
 #+end_src
 
 Note:
@@ -192,6 +192,8 @@ Note:
 2. If you plan to use CSL JSON at all, you can and should include CSL JSON variables names where appropriate as such options. The default main template dates field demonstrates this.
 3. The asterisk signals to the formatter to use available space for the column.
 4. The note template does not take widths, as formatting is inline there rather than columnar.
+5. The ~%~ character preceeds a token defined as a key in ~citar-display-transform-functions~, whose value is a list of functions and optional arguments.
+   Note that if you include this, if you include this and a width specification, it must come after the width.
 
 *** Icons
 

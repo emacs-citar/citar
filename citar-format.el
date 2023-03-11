@@ -12,6 +12,7 @@
 (eval-when-compile
   (require 'cl-lib))
 
+(defvar citar-display-transform-functions)
 (declare-function citar-get-display-value "citar")
 
 
@@ -51,7 +52,8 @@ HIDE-ELIDED and ELLIPSIS."
         (`(,props . ,fieldnames)
          (let* ((fieldwidth (plist-get props :width))
                 (textprops (plist-get props :text-properties))
-                (value (citar-get-display-value fieldnames entry))
+                (transform (plist-get props :transform))
+                (value (citar-get-display-value fieldnames entry transform))
                 (display (citar-format--string value
                                                :width fieldwidth
                                                :text-properties textprops
@@ -125,6 +127,9 @@ for the meaning of HIDE-ELIDED and ELLIPSIS."
 
 ;;; Parsing format strings
 
+(defun citar-format--get-transform (key)
+  "Return transform spec for KEY."
+  (cdr (assoc key citar-display-transform-functions)))
 
 (defun citar-format--parse (format-string)
   "Parse FORMAT-STRING."
@@ -141,14 +146,22 @@ for the meaning of HIDE-ELIDED and ELLIPSIS."
              (textprops (text-properties-at begin format-string))
              (fieldnames (match-string-no-properties 1 format-string))
              (spec (match-string-no-properties 2 format-string))
+             (transform
+              (let ((tsym
+                     (when spec
+                       (cadr (split-string spec "%")))))
+                (when tsym
+                  (citar-format--get-transform (intern tsym)))))
              (width (cond
-                     ((or (null spec) (string-empty-p spec)) nil)
+                     ((or (null spec) (string-empty-p spec)
+                          (= 0 (string-to-number spec))) nil)
                      ((string-equal spec "*") '*)
                      (t (string-to-number spec)))))
         (when (< position begin)
           (push (substring format-string position begin) fieldspecs))
         (push (cons (nconc (when width `(:width ,width))
-                           (when textprops `(:text-properties ,textprops)))
+                           (when textprops `(:text-properties ,textprops))
+                           (when transform `(:transform ,transform)))
                     (split-string-and-unquote fieldnames))
               fieldspecs)
         (setq position end)))

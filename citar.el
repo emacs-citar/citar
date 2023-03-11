@@ -130,11 +130,11 @@ specifies additional fields to include."
 ;;;; Displaying completions and formatting
 
 (defcustom citar-templates
-  '((main . "${author editor:30}     ${date year issued:4}     ${title:48}")
+  '((main . "${author editor:30%sn}     ${date year issued:4}     ${title:48}")
     (suffix . "          ${=key= id:15}    ${=type=:12}    ${tags keywords keywords:*}")
-    (preview . "${author editor} (${year issued date}) ${title}, \
+    (preview . "${author editor%etal} (${year issued date}) ${title}, \
 ${journal journaltitle publisher container-title collection-title}.\n")
-    (note . "Notes on ${author editor}, ${title}"))
+    (note . "Notes on ${author editor%etal}, ${title}"))
   "Configures formatting for the bibliographic entry.
 
 The main and suffix templates are for candidate display, and note
@@ -176,13 +176,16 @@ references as a string."
 
 (defcustom citar-display-transform-functions
   ;; TODO change this name, as it might be confusing?
-  '((("author" "editor") . citar--shorten-names))
+  `((sn . (citar--shorten-names))
+    (etal . (citar--shorten-names 3 "&")))
   "Configure transformation of field display values from raw values.
 
-All functions that match a particular field are run in order."
+When the car symbol is associated with a field, run the cdr function
+and optional arguments on the string value."
   :group 'citar
-  :type '(alist :key-type   (choice (const t) (repeat string))
-          :value-type function))
+  :type '(alist :key-type symbol
+          ;; REVIEW is this OK for now?
+          :value-type list))
 
 (defcustom citar-symbols
   `((file  .  ("F" . " "))
@@ -901,19 +904,19 @@ was found to have a value, and VALUE is its value."
                   (cons field value)))
               fields)))
 
-(defun citar-get-display-value (fields citekey-or-entry)
+(defun citar-get-display-value (fields citekey-or-entry &optional transform)
   "Return the first non nil value for CITEKEY-OR-ENTRY among FIELDS .
 
-The value is transformed using `citar-display-transform-functions'"
-  (let ((fieldvalue (citar-get-field-with-value fields citekey-or-entry)))
-    (seq-reduce (lambda (string fun)
-                  (if (or (eq t (car fun))
-                          (seq-contains-p (car fun) (car fieldvalue) #'string=))
-                      (funcall (cdr fun) string)
-                    string))
-                citar-display-transform-functions
-                ;; Make sure we always return a string, even if empty.
-                (or (cdr fieldvalue) ""))))
+When TRANSFORM, use the list of function symbol and optional
+arguments to transform the string."
+  (let* ((fieldvalue (citar-get-field-with-value fields citekey-or-entry))
+         (fnsymbol (car transform))
+         (fnargs (cdr transform))
+         (tvalue (if transform
+                     (apply fnsymbol (cdr fieldvalue) fnargs)
+                   (cdr fieldvalue))))
+    ;; Make sure we always return a string, even if empty.
+    (or tvalue "")))
 
 ;;;; File, notes, and links
 
@@ -1154,7 +1157,7 @@ personal names of the form \"family, given\".
 
 With an integer TRUNCATE, will shorten the list, and ANDSTR will
 replace last comma."
-  (let* ((namelist (split-string namestr " and "))
+  (let* ((namelist (split-string (or namestr "") " and "))
          (namelength (length namelist))
          (tnamelist (seq-take namelist (or truncate namelength)))
          (tnamelength (length tnamelist)))
