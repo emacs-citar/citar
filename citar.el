@@ -1402,6 +1402,14 @@ to open from a list of all notes."
           (unless buf
             (kill-buffer)))))))
 
+(defun citar-open-entry-in-zotero (citekey)
+  "Open a reference item for CITEKEY in Zotero/Better BibTeX.
+
+This function assumes a setup where the bibliography files are
+maintained in Zotero, including the citekeys."
+  (citar-file-open-external
+   (concat "zotero://select/items/@" citekey)))
+
 ;;;###autoload
 (defun citar-insert-bibtex (citekeys)
   "Insert bibliographic entry associated with the CITEKEYS."
