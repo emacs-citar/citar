@@ -357,6 +357,13 @@ replaced by the contents of the corresponding field."
   :group 'citar
   :type 'function)
 
+(defcustom citar-open-entry-function #'citar-open-entry-in-file
+  "The function to run for `citar-open-entry'.
+
+This function must accept one argument; the citekey."
+  :group 'citar
+  :type 'function)
+
 (defcustom citar-major-mode-functions
   '(((org-mode) .
      ((local-bib-files . citar-org-local-bib-files)
@@ -1374,26 +1381,26 @@ to open from a list of all notes."
 (defun citar-open-entry (citekey)
   "Open bibliographic entry associated with the CITEKEY."
   (interactive (list (citar-select-ref)))
-  (when-let ((bib-files (citar--bibliography-files)))
-    (citar--open-entry citekey bib-files)))
+  (funcall citar-open-entry-function citekey))
 
-(defun citar--open-entry (citekey bib-files)
-  "Open entry for CITEKEY in the relevant BIB-FILES."
+(defun citar-open-entry-in-file (citekey)
+  "Open entry for CITEKEY."
   ;; Adapted from 'bibtex-completion-show-entry'.
-  (catch 'break
-    (dolist (bib-file bib-files)
-      (let ((buf (or (get-file-buffer bib-file)
-                     (find-buffer-visiting bib-file))))
-        (find-file bib-file)
-        (widen)
-        (goto-char (point-min))
-        (when (re-search-forward
-               (concat "^@\\(" parsebib--bibtex-identifier
-                       "\\)[[:space:]]*[\\(\\{][[:space:]]*"
-                       (regexp-quote citekey) "[[:space:]]*,") nil t)
-          (throw 'break t))
-        (unless buf
-          (kill-buffer))))))
+  (when-let ((bib-files (citar--bibliography-files)))
+    (catch 'break
+      (dolist (bib-file bib-files)
+        (let ((buf (or (get-file-buffer bib-file)
+                       (find-buffer-visiting bib-file))))
+          (find-file bib-file)
+          (widen)
+          (goto-char (point-min))
+          (when (re-search-forward
+                 (concat "^@\\(" parsebib--bibtex-identifier
+                         "\\)[[:space:]]*[\\(\\{][[:space:]]*"
+                         (regexp-quote citekey) "[[:space:]]*,") nil t)
+            (throw 'break t))
+          (unless buf
+            (kill-buffer)))))))
 
 ;;;###autoload
 (defun citar-insert-bibtex (citekeys)
