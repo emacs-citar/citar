@@ -100,15 +100,44 @@ STYLE is a CSL style as a path or a string."
                         citar-citeproc-csl-style
                       (expand-file-name
                        citar-citeproc-csl-style citar-citeproc-csl-styles-dir))))
-         (bibs (citar--bibliography-files))
          (proc (citeproc-create style
-                                (citeproc-hash-itemgetter-from-any bibs)
+                                #'citar-citeproc--itemgetter
                                 (citeproc-locale-getter-from-dir citar-citeproc-csl-locales-dir)
                                 "en-US"))
          (references (car (progn
                             (citeproc-add-uncited keys proc)
                             (citeproc-render-bib proc 'plain)))))
     references))
+
+;; from org-cite-csl-activate; András Simonyi
+(defun citar-citeproc--cslize-special-vars (entry)
+  "Convert bibtex format name and date field values in ENTRY to CSL."
+  (mapcar
+   (pcase-lambda (`(,var . ,value))
+     (cons var
+           (cond ((memq var citeproc--date-vars) (citeproc-bt--to-csl-date value nil))
+                 ((memq var citeproc--name-vars) (citeproc-bt--to-csl-names value))
+                 (t value))))
+   entry))
+
+(defun citar-citeproc--csl-from-entry (entry)
+  "Return a CSL version of ENTRY."
+  (pcase (caar entry)
+    ('nil nil)
+    ;; If keys are strings then it is a bib(la)tex entry, which has to be converted
+    ;; to CSL.
+    ((pred stringp) (citeproc-blt-entry-to-csl entry))
+    ;; Symbol keys indicate CSL entries, only special vars are converted.
+    ((pred symbolp) (citar-citeproc--cslize-special-vars entry))
+    (_ (error "Bib entry with unknown format: %s" entry))))
+
+(defun citar-citeproc--itemgetter (keys)
+  "Return itemdata for KEYS from the citar cache."
+  (mapcar
+   (lambda (key)
+     (let ((citar-entry (citar-get-entry key)))
+       (cons key (citar-citeproc--csl-from-entry citar-entry))))
+   keys))
 
 (provide 'citar-citeproc)
 ;;; citar-citeproc.el ends here
