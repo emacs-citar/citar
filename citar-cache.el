@@ -227,9 +227,7 @@ use the value returned by that function. This argument is
 provided in case that function has already been called so that
 its return value can be reused.
 
-Only the bibliography fields listed in the :fields value of PROPS
-are parsed. After updating, the `props' slot of BIB is set to
-PROPS."
+After updating, the `props' slot of BIB is set to PROPS."
   (let* ((filename (citar-cache--bibliography-filename bib))
          (props (or props (citar-cache--get-bibliography-props filename)))
          (entries (citar-cache--bibliography-entries bib))
@@ -238,7 +236,7 @@ PROPS."
     (message "%s..." messagestr)
     (redisplay)                         ; Make sure message is displayed before Emacs gets busy parsing
     (clrhash entries)
-    (parsebib-parse filename :entries entries :fields (plist-get props :fields))
+    (parsebib-parse filename :entries entries)
     (setf (citar-cache--bibliography-props bib) props)
     (citar-cache--preformat-bibliography bib)
     (message "%s...done (%.3f seconds)" messagestr (float-time (time-since starttime)))))
