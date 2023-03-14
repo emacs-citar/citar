@@ -84,18 +84,22 @@ accepted.")
     (setq citar-citeproc-csl-style file)))
 
 ;;;###autoload
-(defun citar-citeproc-format-reference (keys)
+(defun citar-citeproc-format-reference (keys &optional style)
   "Return formatted reference(s) for KEYS via `citeproc-el'.
 Formatting follows CSL style set in `citar-citeproc-csl-style'.
-With prefix-argument, select CSL style."
+With prefix-argument, select CSL style.
+STYLE is a CSL style as a path or a string."
   (when (or (eq citar-citeproc-csl-style nil)
             current-prefix-arg)
     (citar-citeproc-select-csl-style))
   (unless citar-citeproc-csl-locales-dir
+    ;; TODO add a CSL directory with a few styles?
     (error "Be sure to set 'citar-citeproc-csl-locales-dir' to your CSL locales directory"))
-  (let* ((style (if (string-match-p "/" citar-citeproc-csl-style)
-                    citar-citeproc-csl-style
-                  (expand-file-name citar-citeproc-csl-style citar-citeproc-csl-styles-dir)))
+  (let* ((style (or style
+                    (if (string-match-p "/" citar-citeproc-csl-style)
+                        citar-citeproc-csl-style
+                      (expand-file-name
+                       citar-citeproc-csl-style citar-citeproc-csl-styles-dir))))
          (bibs (citar--bibliography-files))
          (proc (citeproc-create style
                                 (citeproc-hash-itemgetter-from-any bibs)
