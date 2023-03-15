@@ -156,6 +156,14 @@ Citar currently includes the following such adapters:
 
 None of these should require any configuration, and should load as needed.
 
+*** Opening reference entries
+
+The =citar-open-entry= command will open the source data entry.
+You may configure this using ~citar-open-entry-function~.
+By default, this uses ~citar-open-entry-in-file~, which will open the relevant bibliographic file and move point ot the entry.
+The other included option is ~citar-open-entry-in-zotero~, which will select the item in Zotero.
+Note that functionality depends on [[https://retorque.re/zotero-better-bibtex/][Better BibTeX]] (which you should be using anyway!).
+
 ** Rich UI
 :PROPERTIES:
 :CUSTOM_ID: rich-ui
