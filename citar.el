@@ -132,9 +132,9 @@ specifies additional fields to include."
 (defcustom citar-templates
   '((main . "${author editor:30%sn}     ${date year issued:4}     ${title:48}")
     (suffix . "          ${=key= id:15}    ${=type=:12}    ${tags keywords keywords:*}")
-    (preview . "${author editor%etal} (${year issued date}) ${title}, \
+    (preview . "${author editor:%etal} (${year issued date}) ${title}, \
 ${journal journaltitle publisher container-title collection-title}.\n")
-    (note . "Notes on ${author editor%etal}, ${title}"))
+    (note . "Notes on ${author editor:%etal}, ${title}"))
   "Configures formatting for the bibliographic entry.
 
 The main and suffix templates are for candidate display, and note
