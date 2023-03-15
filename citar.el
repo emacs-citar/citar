@@ -157,6 +157,15 @@ string specifying the ellipsis."
           (const "...")
           (string :tag "Ellipsis string")))
 
+(defcustom citar-open-entry-function #'citar-open-entry-in-file
+  "The function to run for `citar-open-entry'.
+
+This function must accept one argument; the citekey."
+  :group 'citar
+  :type '(choice (function-item :tag "Open in BibTeX/BibLaTeX/CSL JSON file" citar-open-entry-in-file)
+          (function-item :tag "Open in Zotero/Better BibTeX" citar-open-entry-in-zotero)
+          (function :tag "Other")))
+
 (defcustom citar-format-reference-function
   #'citar-format-reference
   "Function used to render formatted references.
@@ -354,13 +363,6 @@ replaced by the contents of the corresponding field."
 ;; Otherwise it seems to overlap with `citar-default-action'
 (defcustom citar-at-point-function #'citar-dwim
   "The function to run for `citar-at-point'."
-  :group 'citar
-  :type 'function)
-
-(defcustom citar-open-entry-function #'citar-open-entry-in-file
-  "The function to run for `citar-open-entry'.
-
-This function must accept one argument; the citekey."
   :group 'citar
   :type 'function)
 
