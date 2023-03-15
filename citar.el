@@ -162,8 +162,13 @@ string specifying the ellipsis."
 
 This function must accept one argument; the citekey."
   :group 'citar
-  :type '(choice (function-item :tag "Open in BibTeX/BibLaTeX/CSL JSON file" citar-open-entry-in-file)
-          (function-item :tag "Open in Zotero/Better BibTeX" citar-open-entry-in-zotero)
+  :type '(choice
+          (function-item
+           :tag "Open in BibTeX/BibLaTeX/CSL JSON file"
+           citar-open-entry-in-file)
+          (function-item
+           :tag "Open in Zotero/Better BibTeX"
+           citar-open-entry-in-zotero)
           (function :tag "Other")))
 
 (defcustom citar-format-reference-function
