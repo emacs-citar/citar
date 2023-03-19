@@ -42,6 +42,8 @@
 (require 'citar)
 (require 'citeproc)
 
+(defvar org-cite-csl--fallback-locales-dir)
+
 (defcustom citar-citeproc-csl-styles-dir nil
   "Path to CSL style directory."
   :group 'citar
@@ -72,7 +74,7 @@ accepted.")
 (defun citar-citeproc-select-csl-style ()
   "Select CSL style to be used with `citar-citeproc-format-reference'."
   (interactive)
-  (unless citar-citeproc-csl-styles-dir
+  (unless (or citar-citeproc-csl-styles-dir org-cite-csl--fallback-locales-dir)
     (error "Be sure to set 'citar-citeproc-csl-styles-dir' to your CSL styles directory"))
   (let* ((files (directory-files citar-citeproc-csl-styles-dir t "csl"))
          (list (mapcar
@@ -92,21 +94,24 @@ STYLE is a CSL style as a path or a string."
   (when (or (eq citar-citeproc-csl-style nil)
             current-prefix-arg)
     (citar-citeproc-select-csl-style))
-  (unless citar-citeproc-csl-locales-dir
-    ;; TODO add a CSL directory with a few styles?
-    (error "Be sure to set 'citar-citeproc-csl-locales-dir' to your CSL locales directory"))
-  (let* ((style (or style
-                    (if (string-match-p "/" citar-citeproc-csl-style)
-                        citar-citeproc-csl-style
-                      (expand-file-name
-                       citar-citeproc-csl-style citar-citeproc-csl-styles-dir))))
-         (proc (citeproc-create style
-                                #'citar-citeproc--itemgetter
-                                (citeproc-locale-getter-from-dir citar-citeproc-csl-locales-dir)
-                                "en-US"))
-         (references (car (progn
-                            (citeproc-add-uncited keys proc)
-                            (citeproc-render-bib proc 'plain)))))
+  (when-let* ((localesdir
+               ; since org ships with default files, use those as fallback
+               (or citar-citeproc-csl-locales-dir org-cite-csl--fallback-locales-dir))
+              (stylesdir (or citar-citeproc-csl-styles-dir
+                            ; this dir currently holds default locale and style file
+                            org-cite-csl--fallback-locales-dir))
+              (style (or style
+                         (if (string-match-p "/" citar-citeproc-csl-style)
+                             citar-citeproc-csl-style
+                           (expand-file-name
+                            citar-citeproc-csl-style stylesdir))))
+              (proc (citeproc-create style
+                                     #'citar-citeproc--itemgetter
+                                     (citeproc-locale-getter-from-dir localesdir)
+                                     "en-US"))
+              (references (car (progn
+                                 (citeproc-add-uncited keys proc)
+                                 (citeproc-render-bib proc 'plain)))))
     references))
 
 ;; from org-cite-csl-activate; András Simonyi
