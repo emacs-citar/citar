@@ -203,18 +203,33 @@ Note:
 5. The ~%~ character preceeds a token defined as a key in ~citar-display-transform-functions~, whose value is a list of functions and optional arguments.
    Note that if you include this, if you include this and a width specification, it must come after the width.
 
-*** Icons
+*** Indicators
 
-By default, this UI is plain text, but you can configure it to use icons instead.
-Here's how to configure it to use =all-the-icons= as in the screenshot at the top:
+The UI includes configurable indicators.
+By default, it includes plain text indicators for:
+
+- Notes ::
+  Indicates presence of notes related to the reference.
+- Files ::
+  Indicates presence of library files related to the reference.
+- Links ::
+  Indicates present of links associated to the reference.
+
+For other indicators, see the [[https://github.com/emacs-citar/citar/wiki/Indicators][wiki]].
+
+Here's a screenshot using this configuration, which remove the links indicator, and mixes plain text and an icon indicator using ~all-the-icons~.
 
 #+begin_src emacs-lisp
-(setq citar-symbols
-      `((file ,(all-the-icons-faicon "file-o" :face 'all-the-icons-green :v-adjust -0.1) . " ")
-        (note ,(all-the-icons-material "speaker_notes" :face 'all-the-icons-blue :v-adjust -0.3) . " ")
-        (link ,(all-the-icons-octicon "link" :face 'all-the-icons-orange :v-adjust 0.01) . " ")))
-(setq citar-symbol-separator "  ")
+(setq citar-indicators
+  (list citar-indicator-files ; plain text
+        citar-indicator-notes-icons)) ; icon
 #+end_src
+
+#+caption: UI with customized indicators.
+#+name: fig-indicators
+[[images/indicators.png]]
+
+You can create your own indicators, of course, though important to keep in mind the included predicate functions must be performance optimized, since the completion UI runs them on your entire library every time to use it.
 
 ** Test Script
     :PROPERTIES:

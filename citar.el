@@ -201,10 +201,70 @@ and optional arguments on the string value."
           ;; REVIEW is this OK for now?
           :value-type list))
 
+;; Indicator defstruct
+
+(cl-defstruct
+ (citar-indicator (:constructor citar-indicator-create)
+                  (:copier nil))
+ "A citar indicator specification."
+ (tag
+  nil
+  :documentation
+  "The string to include as hidden candidate text, and to then determine whether a
+candidate predicate function will return non-nil.")
+ (symbol
+  nil
+  :type string
+  :documentation
+  "The symbol string to use in the UI when predicate function returns non-nil.")
+ (emptysymbol
+  " "
+  :documentation
+  "The symbol to use in the UI when predicate function returns nil. Can be useful
+in some cases when using icons.")
+ (function
+  nil
+  :type function
+  :documentation
+  "A predicate function that takes a single CITEKEY argument.")
+ (compiledfunction
+  nil
+  :type compiled-function
+  :documentation
+  "A compiled version of `function' used during processing."))
+
+;; Indicator specs
+
+(defvar citar-indicator-files
+   (citar-indicator-create
+    :symbol "F"
+    :function #'citar-has-files
+    :tag "has:files"))
+
+(defvar citar-indicator-links
+   (citar-indicator-create
+    :symbol "L"
+    :function #'citar-has-links
+    :tag "has:links"))
+
+(defvar citar-indicator-notes
+  (citar-indicator-create
+   :symbol "N"
+   :function #'citar-has-notes
+   :tag "has:notes"))
+
+;; Indicator config
+
+(defvar citar-indicators
+  (list citar-indicator-links
+        citar-indicator-files
+        citar-indicator-notes))
+
 (defcustom citar-symbols
   `((file  .  ("F" . " "))
     (note .   ("N" . " "))
     (link .   ("L" . " ")))
+  ;; DEPRECATED
   "Configuration alist specifying which symbol or icon to pick for a bib entry.
 This leaves room for configurations where the absense of an item
 may be indicated with the same icon but a different face.
@@ -221,6 +281,8 @@ the same width."
   "The padding between prefix symbols."
   :group 'citar
   :type 'string)
+
+(make-obsolete 'citar-symbols nil "1.4")
 
 ;;;; Citar actions and other miscellany
 
@@ -770,6 +832,51 @@ only one resource and `citar-open-prompt' is t or contains
            resource
          nil))))
 
+;; Indicator functions
+
+(defun citar--make-indicator-processors (ispecs)
+  "Return a list of indicator processors from ISPECS."
+  (mapc
+   (lambda (ispec)
+     (let ((fnsym (citar-indicator-function ispec)))
+       (setf (citar-indicator-compiledfunction ispec)
+             (funcall fnsym))))
+   ispecs))
+
+(defun citar--make-indicator-tags (citekey iprocs)
+  "Return indicator tags string for CITEKEY, using IPROCS.
+
+This string is incorporated in the candidates as hidden text, so
+it can be searched against, and to contruct the indicator symbols
+visible in the completion UI."
+  (mapconcat
+   (lambda (iproc)
+     (when (funcall (citar-indicator-compiledfunction iproc) citekey)
+       (propertize
+        (concat " " (citar-indicator-tag iproc))
+        'invisible t)))
+   iprocs ""))
+
+(defun citar--make-indicator-symbols (candidate)
+  "Return indicator string for CANDIDATE display."
+  (seq-reduce
+    (lambda (constructed ispec)
+      ;; first arg is the accumulated string
+      (let* ((matchtext (citar-indicator-tag ispec))
+             (matchtagp (string-match-p matchtext candidate))
+             (sym (citar-indicator-symbol ispec))
+             (emptysym (citar-indicator-emptysymbol ispec))
+             (str (concat
+                   constructed
+                   (if matchtagp sym emptysym)
+                   citar-symbol-separator))
+             (pos (length str)))
+        (put-text-property (- pos 1) pos 'display
+                           (cons 'space (list :align-to (string-width str)))
+                           str)
+        str))
+    citar-indicators ""))
+
 (defun citar--format-candidates ()
   "Format completion candidates for bibliography entries.
 
@@ -781,32 +888,21 @@ Return nil if `citar-bibliographies' returns nil."
   (when-let ((bibs (citar--bibliographies)))
     (let* ((citar--entries (citar-cache--entries bibs))
            (preformatted (citar-cache--preformatted bibs))
-           (hasfilesp (citar-has-files))
-           (hasnotesp (citar-has-notes))
-           (haslinksp (citar-has-links))
-           (hasfilestag (propertize " has:files" 'invisible t))
-           (hasnotestag (propertize " has:notes" 'invisible t))
-           (haslinkstag (propertize " has:links" 'invisible t))
-           (symbolswidth (string-width (citar--symbols-string t t t)))
+           (indicatorprocs (citar--make-indicator-processors citar-indicators))
+           (symbolswidth (string-width
+                          (citar--make-indicator-symbols "")))
            (width (- (frame-width) symbolswidth 2))
            (completions (make-hash-table :test 'equal :size (hash-table-count citar--entries))))
       (prog1 completions
         (maphash
          (lambda (citekey _entry)
-           (let* ((hasfiles (and hasfilesp (funcall hasfilesp citekey)))
-                  (hasnotes (and hasnotesp (funcall hasnotesp citekey)))
-                  (haslinks (and haslinksp (funcall haslinksp citekey)))
-                  (preform (or (gethash citekey preformatted)
+           (let* ((preform (or (gethash citekey preformatted)
                                (error "No preformatted candidate string: %s" citekey)))
                   (display (citar-format--star-widths
                             (- width (car preform)) (cdr preform)
                             t citar-ellipsis))
-                  (tagged (if (not (or hasfiles hasnotes haslinks))
-                              display
-                            (concat display
-                                    (when hasfiles hasfilestag)
-                                    (when hasnotes hasnotestag)
-                                    (when haslinks haslinkstag)))))
+                  (tagged (concat display
+                                  (citar--make-indicator-tags citekey indicatorprocs))))
              (puthash tagged citekey completions)))
          citar--entries)))))
 
@@ -1217,46 +1313,19 @@ replace last comma."
 
 ;;; Affixations and annotations
 
-(defun citar--ref-affix (cands)
-  "Add affixation prefix to CANDS."
+(defun citar--ref-affix (candidates)
+  "Add affixation prefix to CANDIDATES."
   (seq-map
    (lambda (candidate)
-     (let ((symbols (citar--ref-make-symbols candidate)))
+     (let ((symbols
+            (citar--make-indicator-symbols candidate)))
        (list candidate symbols "")))
-   cands))
+   candidates))
 
-(defun citar--ref-make-symbols (cand)
-  "Make CAND annotation or affixation string for has-symbols."
-  (let ((candidate-symbols (citar--symbols-string
-                            (string-match-p "has:files" cand)
-                            (string-match-p "has:notes" cand)
-                            (string-match-p "has:links" cand))))
-    candidate-symbols))
-
-(defun citar--ref-annotate (cand)
-  "Add annotation to CAND."
+(defun citar--ref-annotate (candidate)
+  "Add annotation to CANDIDATE."
   ;; REVIEW/TODO we don't currently use this, but could, for Emacs 27.
-  (citar--ref-make-symbols cand))
-
-(defun citar--symbols-string (has-files has-note has-link)
-  "String for display from booleans HAS-FILES HAS-LINK HAS-NOTE."
-  (cl-flet ((thing-string (has-thing thing-symbol)
-              (if has-thing
-                  (cadr (assoc thing-symbol citar-symbols))
-                (cddr (assoc thing-symbol citar-symbols)))))
-    (seq-reduce (lambda (constructed newpart)
-                  (let* ((str (concat constructed newpart
-                                      citar-symbol-separator))
-                         (pos (length str)))
-                    (put-text-property (- pos 1) pos 'display
-                                       (cons 'space (list :align-to (string-width str)))
-                                       str)
-                    str))
-                (list (thing-string has-files 'file)
-                      (thing-string has-note 'note)
-                      (thing-string has-link 'link)
-                      "")
-                "")))
+  (citar--make-indicator-symbols candidate))
 
 (defun citar--get-template (template-name)
   "Return template string for TEMPLATE-NAME."
