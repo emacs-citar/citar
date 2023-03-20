@@ -81,7 +81,10 @@ accepted.")
                 (lambda (file)
                   (cons (citar-citeproc-csl-metadata file) (file-name-nondirectory file)))
                 files))
-         (style (completing-read "Select CSL style file: " list nil t))
+         (style
+          (if (= (length list) 1)
+            (car list)
+            (completing-read "Select CSL style file: " list nil t)))
          (file (cdr (assoc style list))))
     (setq citar-citeproc-csl-style file)))
 
