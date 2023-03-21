@@ -229,7 +229,7 @@ Here's a screenshot using this configuration, which remove the links indicator, 
 #+name: fig-indicators
 [[images/indicators.png]]
 
-You can create your own indicators, of course, though important to keep in mind the included predicate functions must be performance optimized, since the completion UI runs them on your entire library every time to use it.
+You can create your own indicators, of course, though important to keep in mind the included predicate functions must be performance optimized, since the completion UI runs them on your entire library every time you open it.
 
 ** Test Script
     :PROPERTIES:
