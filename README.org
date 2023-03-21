@@ -160,7 +160,7 @@ None of these should require any configuration, and should load as needed.
 
 The =citar-open-entry= command will open the source data entry.
 You may configure this using ~citar-open-entry-function~.
-By default, this uses ~citar-open-entry-in-file~, which will open the relevant bibliographic file and move point ot the entry.
+By default, this uses ~citar-open-entry-in-file~, which will open the relevant bibliographic file and move point to the entry.
 The other included option is ~citar-open-entry-in-zotero~, which will select the item in Zotero.
 Note that functionality depends on [[https://retorque.re/zotero-better-bibtex/][Better BibTeX]] (which you should be using anyway!).
 
@@ -197,11 +197,12 @@ Here's the default value:
 Note:
 
 1. You may include multiple variables in a field; the formatter will print the first one it finds.
-2. If you plan to use CSL JSON at all, you can and should include CSL JSON variables names where appropriate as such options. The default main template dates field demonstrates this.
+2. If you plan to use CSL JSON at all, you can and should include CSL JSON variables names where appropriate as such options. 
+   The default main template dates field demonstrates this.
 3. The asterisk signals to the formatter to use available space for the column.
 4. The note template does not take widths, as formatting is inline there rather than columnar.
 5. The ~%~ character preceeds a token defined as a key in ~citar-display-transform-functions~, whose value is a list of functions and optional arguments.
-   Note that if you include this, if you include this and a width specification, it must come after the width.
+   Note that if you include this, if you also include a width specification, it must come after the width.
 
 *** Indicators
 
@@ -217,7 +218,7 @@ By default, it includes plain text indicators for:
 
 For other indicators, see the [[https://github.com/emacs-citar/citar/wiki/Indicators][wiki]].
 
-Here's a screenshot using this configuration, which remove the links indicator, and mixes plain text and an icon indicator using ~all-the-icons~.
+Here's a screenshot using this configuration, which removes the links indicator, and mixes plain text and an icon indicator using ~all-the-icons~.
 
 #+begin_src emacs-lisp
 (setq citar-indicators
@@ -229,7 +230,7 @@ Here's a screenshot using this configuration, which remove the links indicator, 
 #+name: fig-indicators
 [[images/indicators.png]]
 
-You can create your own indicators, of course, though important to keep in mind the included predicate functions must be performance optimized, since the completion UI runs them on your entire library every time you open it.
+You can create your own indicators, of course, though keep in mind the included predicate functions must be performance-optimized, since the completion UI runs them on your entire library every time you open it.
 
 ** Test Script
     :PROPERTIES:
