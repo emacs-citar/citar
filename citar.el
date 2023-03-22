@@ -835,7 +835,7 @@ only one resource and `citar-open-prompt' is t or contains
 ;; Indicator functions
 
 (defun citar--make-indicator-processors (ispecs)
-  "Return a list of indicator processors from ISPECS."
+  "Set the compiledfunction slots in ISPECS."
   (mapc
    (lambda (ispec)
      (let ((fnsym (citar-indicator-function ispec)))
