@@ -207,14 +207,11 @@ Note:
 *** Indicators
 
 The UI includes configurable indicators.
-By default, it includes plain text indicators for:
+By default, it includes plain text indicators for, each of which indicates the presence of different resources related to the reference:
 
-- Notes ::
-  Indicates presence of notes related to the reference.
-- Files ::
-  Indicates presence of library files related to the reference.
-- Links ::
-  Indicates present of links associated to the reference.
+- notes
+- library files
+- links
 
 For other indicators, see the [[https://github.com/emacs-citar/citar/wiki/Indicators][wiki]].
 
