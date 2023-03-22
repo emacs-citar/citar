@@ -253,6 +253,12 @@ in some cases when using icons.")
    :function #'citar-has-notes
    :tag "has:notes"))
 
+(defvar citar-indicator-cited
+  (citar-indicator-create
+   :symbol "C"
+   :function #'citar-is-cited
+   :tag "is:cited"))
+
 ;; Indicator config
 
 (defvar citar-indicators
@@ -1310,6 +1316,17 @@ replace last comma."
                      (list citar-crossref-variable))
                  ,@(mapcar (lambda (field) (symbol-name (car field))) citar-link-fields)
                  . ,citar-additional-fields)))
+
+;;; Affixation for currently cited references
+(defvar citar--cited-references (make-hash-table :test #'equal)
+  "Hash table of references cited in current buffer/project.")
+
+(defun citar-is-cited ()
+  "Return a function for checking whether CITEKEY is cited.
+Just looks for CITEKEY in ‘citar--cited-references’."
+  (lambda (citekey)
+    (gethash citekey
+             citar--cited-references)))
 
 ;;; Affixations and annotations
 

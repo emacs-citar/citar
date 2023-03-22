@@ -69,6 +69,15 @@ Each function takes one argument, a citation."
   :group 'citar-org
   :type '(repeat function))
 
+(defcustom citar-org-current-refs-in-widened-buffer t
+  "If non-nil, gathers current references from the widened buffer."
+  :group 'citar-org
+  :type 'boolean)
+
+(defvar-local citar-org-current-refs-in-several-org-buffers nil
+  "When non-nil, gathers current references from given list of files, or from all org-buffers (if t).")
+
+
 ;;; Keymaps
 
 (defvar citar-org-citation-map
@@ -139,6 +148,31 @@ With PROC list, limit to specific processor(s)."
               (push fstyle styles))))))
     styles))
 
+(defun citar-org--current-refs-fetch ()
+  "Fetch refs in current org buffer and store in ‘citar--cited-references’."
+  (when (memq citar-indicator-cited citar-indicators)
+    (clrhash citar--cited-references)
+    (cl-loop for buf in (pcase citar-org-current-refs-in-several-org-buffers
+                          ('t (org-buffer-list 'files t))
+                          ('nil (list (current-buffer)))
+                          ((and (pred listp) files)
+                           (mapcar #'find-file-noselect files)))
+             do
+             (with-current-buffer buf
+               ;; This is slow, would be good to use cache, but ‘org-element-cache-map’ can’t
+               ;; be used with object granularity (for citation-reference).
+               (org-element-map
+                   (if citar-org-current-refs-in-widened-buffer
+                       (save-restriction
+                         (widen)
+                         (org-element-parse-buffer))
+                     (org-element-parse-buffer))
+                   'citation-reference
+                 (lambda (ref) (puthash
+                                (org-element-property :key ref)
+                                t
+                                citar--cited-references)))))))
+
 ;;; Org-cite processors
 
 ;; NOTE I may move some or all of these to a separate project
@@ -146,6 +180,7 @@ With PROC list, limit to specific processor(s)."
 ;;;###autoload
 (defun citar-org-select-key (&optional multiple)
   "Return a list of keys when MULTIPLE, or else a key string."
+  (citar-org--current-refs-fetch)
   (if multiple
       (citar-select-refs)
     (citar-select-ref)))
@@ -153,6 +188,7 @@ With PROC list, limit to specific processor(s)."
 ;;;###autoload
 (defun citar-org-insert-citation (keys &optional style)
   "Insert KEYS in org-cite format, with STYLE."
+  (citar-org--current-refs-fetch)
   (let ((context (org-element-context)))
     (when style
       (let ((raw-style
