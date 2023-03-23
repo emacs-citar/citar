@@ -28,6 +28,7 @@
 
 ;; load the test bib file
 (setq citar-bibliography '("../test.bib"))
+(setq citar-notes-paths '("../"))
 
 (setq vertico-count 20)
 
