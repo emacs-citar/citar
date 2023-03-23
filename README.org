@@ -227,7 +227,22 @@ Here's a screenshot using this configuration, which removes the links indicator,
 #+name: fig-indicators
 [[images/indicators.png]]
 
-You can create your own indicators, of course, though keep in mind the included predicate functions must be performance-optimized, since the completion UI runs them on your entire library every time you open it.
+You can create your own indicators, of course.
+Here's an example indicator definition incorporating icons:
+
+#+begin_src emacs-lisp
+(defvar citar-indicator-notes-icons
+  (citar-indicator-create
+   :symbol (all-the-icons-material
+            "speaker_notes"
+            :face 'all-the-icons-blue
+            :v-adjust -0.3)
+   :function #'citar-has-notes
+   :padding " "
+   :tag "has:notes"))
+#+end_src
+
+Keep in mind, however, the included predicate functions must be performance-optimized, since the completion UI runs them on your entire library every time you open it.
 
 ** Test Script
     :PROPERTIES:

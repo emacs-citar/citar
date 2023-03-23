@@ -217,7 +217,13 @@ candidate predicate function will return non-nil.")
   :type string
   :documentation
   "The symbol string to use in the UI when predicate function returns non-nil.")
+ (padding
+  " "
+  :type string
+  :documentation
+  "String to add to the right side of the indicator, for proper padding and such.")
  (emptysymbol
+  ;; REVIEW we may not need this, so perhaps remove?
   " "
   :documentation
   "The symbol to use in the UI when predicate function returns nil. Can be useful
@@ -279,10 +285,12 @@ the same width."
 
 (defcustom citar-symbol-separator " "
   "The padding between prefix symbols."
+  ;; DEPRECATED
   :group 'citar
   :type 'string)
 
 (make-obsolete 'citar-symbols nil "1.4")
+(make-obsolete 'citar-symbol-separator nil "1.4")
 
 ;;;; Citar actions and other miscellany
 
@@ -866,13 +874,15 @@ visible in the completion UI."
              (matchtagp (string-match-p matchtext candidate))
              (sym (citar-indicator-symbol ispec))
              (emptysym (citar-indicator-emptysymbol ispec))
+             (padding (citar-indicator-padding ispec))
              (str (concat
                    constructed
                    (if matchtagp sym emptysym)
-                   citar-symbol-separator))
+                   padding))
              (pos (length str)))
         (put-text-property (- pos 1) pos 'display
-                           (cons 'space (list :align-to (string-width str)))
+                           (cons 'space
+                                 (list :align-to (string-width str)))
                            str)
         str))
     citar-indicators ""))
