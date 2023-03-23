@@ -238,7 +238,7 @@ Here's an example indicator definition incorporating icons:
             :face 'all-the-icons-blue
             :v-adjust -0.3)
    :function #'citar-has-notes
-   :padding " "
+   :padding "  "
    :tag "has:notes"))
 #+end_src
 
