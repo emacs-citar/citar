@@ -851,10 +851,10 @@ it can be searched against, and to contruct the indicator symbols
 visible in the completion UI."
   (mapconcat
    (lambda (iproc)
-     (when (funcall (citar-indicator-compiledfunction iproc) citekey)
-       (propertize
-        (concat " " (citar-indicator-tag iproc))
-        'invisible t)))
+     (when-let* ((cfun (citar-indicator-compiledfunction iproc))
+                 (tag (citar-indicator-tag iproc)))
+       (when (funcall cfun citekey)
+         (propertize (concat " " tag) 'invisible t))))
    iprocs ""))
 
 (defun citar--make-indicator-symbols (candidate)
