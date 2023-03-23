@@ -326,7 +326,8 @@ extensions in `citar-file-note-extensions'."
 (defun citar-file--has-notes ()
   "Return predicate testing whether cite key has associated notes."
   (let ((notes (citar-file--get-notes)))
-    (unless (hash-table-empty-p notes)
+    (if (hash-table-empty-p notes)
+        (lambda (_citekey) nil)
       (lambda (citekey) (and (gethash citekey notes) t)))))
 
 (defun citar-file--create-note (key entry)
