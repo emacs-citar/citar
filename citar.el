@@ -259,12 +259,19 @@ in some cases when using icons.")
    :function #'citar-has-notes
    :tag "has:notes"))
 
+(defvar citar-indicator-cited
+  (citar-indicator-create
+   :symbol "C"
+   :function #'citar-is-cited
+   :tag "is:cited"))
+
 ;; Indicator config
 
 (defvar citar-indicators
   (list citar-indicator-links
         citar-indicator-files
-        citar-indicator-notes))
+        citar-indicator-notes
+        citar-indicator-cited))
 
 (defcustom citar-symbols
   `((file  .  ("F" . " "))
@@ -1113,6 +1120,13 @@ nil, return nil."
                                    (when-let ((fieldvalue (citar-get-value fieldname entry)))
                                      (push (format urlformat fieldvalue) keylinks))))
                                (nreverse keylinks)))))))
+
+(defun citar-is-cited ()
+  "Return function to check if reference is cited in buffer."
+  (let ((iscited
+         (citar--major-mode-function 'list-keys #'ignore)))
+    (lambda (citekey)
+      (member citekey iscited))))
 
 (defun citar-has-files ()
   "Return predicate testing whether entry has associated files.
