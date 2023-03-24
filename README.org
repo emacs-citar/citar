@@ -212,6 +212,7 @@ By default, it includes plain text indicators for, each of which indicates the p
 - notes
 - library files
 - links
+- cited (for references cited in the current buffer)
 
 For other indicators, see the [[https://github.com/emacs-citar/citar/wiki/Indicators][wiki]].
 
