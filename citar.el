@@ -887,6 +887,15 @@ visible in the completion UI."
                    (if matchtagp sym emptysym)
                    padding))
              (pos (length str)))
+        ;; See https://github.com/emacs-citar/citar/issues/764 for explanation of what this code is doing.
+        ;;
+        ;; We say that the last character of the padding should be replaced by a space which stretches to the
+        ;; position we want to.
+        ;;
+        ;; So for example if the icon has string width 1 but occupies 0.9 the space will stretch to occupy 1.1
+        ;; and if the icon occupies 1.5 it will shrink to occupy 0.5.
+        ;;
+        ;; Emacs 29 has `vtable', which we might use here in the future as well.
         (put-text-property (- pos 1) pos 'display
                            (cons 'space
                                  (list :align-to (string-width str)))
