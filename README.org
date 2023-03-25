@@ -252,8 +252,6 @@ Keep in mind, however, the included predicate functions must be performance-opti
 
 The repository =test= directory also includes a script you can use to run this and associated packages in the =emacs -Q= sandbox.
 To do that, simply run =./run.sh= from the =test= directory.
-By default, this will use selectrum as the completion system.
-If you would like to try vertico instead, just do =M-x vertico-mode=.
 
 ** History and predefined searches
     :PROPERTIES:
