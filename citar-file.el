@@ -87,11 +87,12 @@ separator that does not otherwise occur in citation keys."
 
 (defun citar-file--normalize-paths (file-paths)
   "Return a list of FILE-PATHS normalized with truename."
-  (citar-file--files-exist-p file-paths)
-  (if (stringp file-paths)
-      ;; If path is a string, return as a list.
-      (list (file-truename file-paths))
-    (delete-dups (mapcar #'file-truename file-paths))))
+  ;; REVIEW why hassle with this; just require a list?
+  (let ((paths (if (stringp file-paths)
+                   (list file-paths)
+                 file-paths)))
+  (citar-file--files-exist-p paths)
+  (delete-dups (mapcar #'file-truename paths))))
 
 (defun citar-file--files-exist-p (files)
   "Check each of a list of FILES exists."
