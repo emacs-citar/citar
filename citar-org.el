@@ -352,11 +352,23 @@ or citation-reference."
 
 (defun citar-org-list-keys ()
   "List citation keys in the org buffer."
-  (let ((org-tree (org-element-parse-buffer)))
-    (delete-dups
-     (org-element-map org-tree 'citation-reference
-       (lambda (r) (org-element-property :key r))
-       org-tree))))
+  (let* ((org-tree (org-element-parse-buffer))
+         (citekeys
+          (if (fboundp 'org-element-cache-map)
+              (org-element-cache-map
+               (lambda (ref)
+                 (citar-org--get-ref-citekey ref))
+               :restrict-elements '(citation-reference)
+               :granularity 'element)
+            (org-element-map org-tree 'citation-reference
+              (lambda (ref)
+                (citar-org--get-ref-citekey ref))
+              org-tree))))
+    (delete-dups citekeys)))
+
+(defun citar-org--get-ref-citekey (ref)
+  "Return citekey for org citation REF."
+  (org-element-property :key ref))
 
 ;; most of this section is adapted from org-ref-cite
 
