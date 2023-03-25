@@ -352,11 +352,34 @@ or citation-reference."
 
 (defun citar-org-list-keys ()
   "List citation keys in the org buffer."
-  (let ((org-tree (org-element-parse-buffer)))
-    (delete-dups
-     (org-element-map org-tree 'citation-reference
-       (lambda (r) (org-element-property :key r))
-       org-tree))))
+  (let* ((org-tree (org-element-parse-buffer))
+         (citekeys
+          (if (fboundp 'org-element-cache-map)
+              (org-element-cache-map
+               ;; We can't restrict to citations, so grab paragraphs etc and use `org-element-map' to get the
+               ;; keys from there. TODO doesn't work ATM.
+               ;;
+               ;; From Ihor: The best I can suggest for now is re-search-forward + org-element-context.
+               ;;
+               ;; Will this be much faster?
+               (lambda (p)
+                 (citar-org--list-keys p))
+               :restrict-elements '(paragraph quote-block footnote-definition)
+               :granularity 'element)
+            (citar-org--list-keys org-tree))))
+    (delete-dups citekeys)))
+
+(defun citar-org--list-keys (tree)
+  "List citeksys from TREE."
+  (delete-dups
+   (org-element-map tree 'citation-reference
+    (lambda (ref)
+      (citar-org--get-ref-citekey ref))
+    tree)))
+
+(defun citar-org--get-ref-citekey (ref)
+  "Return citekey for org citation REF."
+  (org-element-property :key ref))
 
 ;; most of this section is adapted from org-ref-cite
 
