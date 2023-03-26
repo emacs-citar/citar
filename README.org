@@ -42,7 +42,7 @@ To see citar in action with org-cite, you can watch [[https://emacsconf.org/2021
 
 There are a variety of ways to install citar:
 
-- Doom Emacs :: The easiest way to install and configure citar and related packages is to use the [[https://github.com/hlissner/doom-emacs/tree/develop/modules/tools/biblio][Doom Emacs biblio module]] with the ~vertico~ completion module.
+- Doom Emacs :: The easiest way to install and configure citar and related packages is to use the [[https://github.com/hlissner/doom-emacs/tree/master/modules/tools/biblio][Doom Emacs biblio module]] with the ~vertico~ completion module.
 - MELPA :: citar is also available via [[https://melpa.org/#/citar][MELPA]].
 - GUIX :: provides the ~emacs-citar~ package.
 
