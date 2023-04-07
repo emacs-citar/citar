@@ -36,6 +36,12 @@
   :group 'citar
   :type '(repeat function))
 
+(defcustom citar-file-scheme-skip
+  '("zotero")
+  "URI file schemes to use as is; without file path normalization."
+  :group 'citar
+  :type '(repeat string))
+
 (defcustom citar-file-open-functions (list (cons "html" #'citar-file-open-external)
                                            (cons t #'find-file))
   "Functions used by `citar-file-open` to open files.
@@ -388,14 +394,24 @@ SEPCHAR."
   "Expand file names in FILES in DIRS and keep the ones that exist."
   (let (foundfiles)
     (dolist (file files)
-      (if (file-name-absolute-p file)
-          (when (file-exists-p file) (push (expand-file-name file) foundfiles))
-        (when-let ((filepath (seq-some (lambda (dir)
-                                         (let ((filepath (expand-file-name file dir)))
-                                           (when (file-exists-p filepath) filepath)))
-                                       dirs)))
+      (let* ((schemerx
+              (mapconcat (lambda (s) (concat s "://")) citar-file-scheme-skip "\\|"))
+             (npath
+              (cond
+               ((string-match schemerx file 0) file)
+               ((and (file-name-absolute-p file)(file-exists-p file))
+                (expand-file-name file)))))
+        (push npath foundfiles)
+        (when-let ((filepath
+                    (seq-some
+                     (lambda (dir)
+                       (let ((filepath (expand-file-name file dir)))
+                         (when (or (file-exists-p filepath)
+                                   (string-match schemerx filepath 0))
+                           filepath)))
+                     dirs)))
           (push filepath foundfiles))))
-    (nreverse foundfiles)))
+    (nreverse (remove 'nil foundfiles))))
 
 (provide 'citar-file)
 ;;; citar-file.el ends here
