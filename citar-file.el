@@ -156,6 +156,11 @@ message."
   (if-let ((files (delete-dups (mapcan (lambda (parser)
                                          (funcall parser fieldvalue))
                                        citar-file-parser-functions))))
+      ;; First, parse whatever files may be included in FIELDVALUE.
+      ;; Next:
+      ;;   1. normalize paths and throw out files that don't exist
+      ;;   2. filter the list based on `citar-library-file-extensions'.
+      ;; Issue: all this code assumes standard filepaths.
       (if-let ((foundfiles (citar-file--find-files-in-dirs files dirs)))
           (if (null citar-library-file-extensions)
               foundfiles
@@ -390,24 +395,32 @@ SEPCHAR."
       (push (buffer-string) strings))
     (nreverse strings)))
 
+(defun citar-file--scheme-skip-rx ()
+  "Return regexp sting from `citar-file-scheme-skip'."
+  (mapconcat (lambda (s) (concat s "://")) citar-file-scheme-skip "\\|"))
+
+(defun citar-file--normalize-path (file)
+  "Return FILE as full path, or if non-file URI schema.
+
+Expand non-absolute file paths, but include as is URI schemes in
+`citar-file-scheme-skip'."
+  (cond
+   ((string-match (citar-file--scheme-skip-rx) file 0) file)
+   ((and (file-name-absolute-p file)(file-exists-p file))
+    (expand-file-name file))))
+
 (defun citar-file--find-files-in-dirs (files dirs)
   "Expand file names in FILES in DIRS and keep the ones that exist."
   (let (foundfiles)
     (dolist (file files)
-      (let* ((schemerx
-              (mapconcat (lambda (s) (concat s "://")) citar-file-scheme-skip "\\|"))
-             (npath
-              (cond
-               ((string-match schemerx file 0) file)
-               ((and (file-name-absolute-p file)(file-exists-p file))
-                (expand-file-name file)))))
+      (let ((npath (citar-file--normalize-path file)))
         (push npath foundfiles)
         (when-let ((filepath
                     (seq-some
                      (lambda (dir)
                        (let ((filepath (expand-file-name file dir)))
                          (when (or (file-exists-p filepath)
-                                   (string-match schemerx filepath 0))
+                                   (string-match (citar-file--scheme-skip-rx) filepath 0))
                            filepath)))
                      dirs)))
           (push filepath foundfiles))))
