@@ -395,9 +395,9 @@ SEPCHAR."
       (push (buffer-string) strings))
     (nreverse strings)))
 
-(defun citar-file--scheme-skip-rx ()
-  "Return regexp sting from `citar-file-scheme-skip'."
-  (mapconcat (lambda (s) (concat s "://")) citar-file-scheme-skip "\\|"))
+(defvar citar-file--scheme-skip-rx
+  (mapconcat (lambda (s) (concat s "://")) citar-file-scheme-skip "\\|")
+  "Return regexp sting from `citar-file-scheme-skip'.")
 
 (defun citar-file--normalize-path (file)
   "Return FILE as full path, or if non-file URI schema.
@@ -405,7 +405,7 @@ SEPCHAR."
 Expand non-absolute file paths, but include as is URI schemes in
 `citar-file-scheme-skip'."
   (cond
-   ((string-match (citar-file--scheme-skip-rx) file 0) file)
+   ((string-match citar-file--scheme-skip-rx file 0) file)
    ((and (file-name-absolute-p file)(file-exists-p file))
     (expand-file-name file))))
 
@@ -420,7 +420,7 @@ Expand non-absolute file paths, but include as is URI schemes in
                      (lambda (dir)
                        (let ((filepath (expand-file-name file dir)))
                          (when (or (file-exists-p filepath)
-                                   (string-match (citar-file--scheme-skip-rx) filepath 0))
+                                   (string-match citar-file--scheme-skip-rx filepath 0))
                            filepath)))
                      dirs)))
           (push filepath foundfiles))))
