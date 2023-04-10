@@ -17,11 +17,16 @@
    :CUSTOM_ID: features
    :END:
 
-This package provides a completing-read front-end to browse and act on BibTeX, BibLaTeX, and CSL JSON bibliographic data, and LaTeX, markdown, and org-cite editing support.
+Citar provides a highly-configurable =completing-read= front-end to browse and act on BibTeX, BibLaTeX, and CSL JSON bibliographic data, and LaTeX, markdown, and org-cite editing support.
 
-When used with vertico, embark, and marginalia, it provides similar functionality to helm-bibtex and ivy-bibtex: quick filtering and selecting of bibliographic entries from the minibuffer, and the option to run different commands against them.
-
-With embark, it also makes available at-point actions in org, markdown, and LaTeX buffers.
+- quick filtering and selection of bibliographic entries from the minibuffer, and various commands to run against them.
+- a small =citar-embark= companion package, that provides contextual actions in the minibuffer, and also at-point in org, markdown, and LaTeX buffers.
+- seamless caching of multiple global and local bibliographic sources
+- configurable APIs for:
+  - indicatars, that signal the presence of related resources in the minibuffer
+  - notes, to integrate with dedicated note packages, with external packages available for =org-roam=, =denote=, and =zk=
+  - major-mode adapters
+  - entry-opening, to go to the original entry data
 
 Here's a screenshot with [[https://github.com/minad/vertico][vertico]] and symbol customization [[https://github.com/bdarcus/citar#icons][noted below]].
 
