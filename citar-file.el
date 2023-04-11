@@ -89,6 +89,10 @@ separator that does not otherwise occur in citation keys."
 (defvar citar-library-file-extensions)
 (defvar citar-note-format-function)
 
+(defvar citar-file--scheme-skip-rx
+  (mapconcat (lambda (s) (concat s "://")) citar-file-scheme-skip "\\|")
+  "Return regexp sting from `citar-file-scheme-skip'.")
+
 ;;;; Convenience functions for files and paths
 
 (defun citar-file--normalize-paths (file-paths)
@@ -160,12 +164,14 @@ message."
       ;; Next:
       ;;   1. normalize paths and throw out files that don't exist
       ;;   2. filter the list based on `citar-library-file-extensions'.
-      ;; Issue: all this code assumes standard filepaths.
+      ;;   3. pass on as is URI scheme paths in `citar-file-scheme-skip'
+      ;;   REVIEW this in general
       (if-let ((foundfiles (citar-file--find-files-in-dirs files dirs)))
           (if (null citar-library-file-extensions)
               foundfiles
             (or (seq-filter (lambda (file)
-                              (member (file-name-extension file) citar-library-file-extensions))
+                              (or (string-match citar-file--scheme-skip-rx file 0)
+                                  (member (file-name-extension file) citar-library-file-extensions)))
                             foundfiles)
                 (ignore
                  (message "No files for `%s' with `citar-library-file-extensions': %S"
@@ -395,10 +401,6 @@ SEPCHAR."
       (push (buffer-string) strings))
     (nreverse strings)))
 
-(defvar citar-file--scheme-skip-rx
-  (mapconcat (lambda (s) (concat s "://")) citar-file-scheme-skip "\\|")
-  "Return regexp sting from `citar-file-scheme-skip'.")
-
 (defun citar-file--normalize-path (file)
   "Return FILE as full path, or if non-file URI schema.
 
@@ -419,12 +421,11 @@ Expand non-absolute file paths, but include as is URI schemes in
                     (seq-some
                      (lambda (dir)
                        (let ((filepath (expand-file-name file dir)))
-                         (when (or (file-exists-p filepath)
-                                   (string-match citar-file--scheme-skip-rx filepath 0))
-                           filepath)))
+                         (when (file-exists-p filepath) filepath)))
                      dirs)))
           (push filepath foundfiles))))
-    (nreverse (remove 'nil foundfiles))))
+    ;; REVIEW not thrilled with deduping and removing the nil here
+    (nreverse (delete-dups (remove 'nil foundfiles)))))
 
 (provide 'citar-file)
 ;;; citar-file.el ends here
