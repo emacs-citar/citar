@@ -447,16 +447,18 @@ DATUM should be a reference, otherwise throw an error."
          (ref (if ref-p datum (error "Not on a reference")))
          (key (org-element-property :key ref))
          (citekey-str (propertize key 'face 'mode-line-emphasis))
-         ;; TODO Unsure if we want to process pre at all
-         (pre (read-string (concat "Prefix for " citekey-str ": ")
-                           (org-element-property :prefix ref)))
-         (post (string-trim-left        ; Remove leading whitespace
-                (read-string (concat "Suffix for " citekey-str ": ")
-                             (org-element-property :suffix ref))))
-         ;; Change post to have one space prior to the user-inputted suffix, unless post is already empty or
-         ;; just whitespace
-         (post-processed
-          (concat (unless (string-empty-p post) " ") post))
+         (pre (org-element-interpret-data (org-element-property :prefix ref)))
+         (post (org-element-interpret-data (org-element-property :suffix ref)))
+         ;; TODO Unsure if we want to process prefix at all
+         (prefix (read-string (concat "Prefix for " citekey-str ": ")
+                              (string-trim pre)))
+         (suffix (string-trim-left        ; Remove leading whitespace
+                  (read-string (concat "Suffix for " citekey-str ": ")
+                               (string-trim post))))
+         ;; Change suffix to have one space prior to the user-inputted suffix, unless suffix is already empty
+         ;; or just whitespace
+         (suffix-processed
+          (concat (unless (string-empty-p suffix) " ") suffix))
          (v1
           (org-element-property :begin ref))
          (v2
@@ -464,7 +466,7 @@ DATUM should be a reference, otherwise throw an error."
     (cl--set-buffer-substring v1 v2
                               (org-element-interpret-data
                                `(citation-reference
-                                 (:key ,key :prefix ,pre :suffix ,post-processed))))))
+                                 (:key ,key :prefix ,prefix :suffix ,suffix-processed))))))
 
 (defun citar-org-update-prefix-suffix (&optional arg)
   "Change the prefix and suffix text of the reference at point.
