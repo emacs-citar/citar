@@ -442,7 +442,9 @@ or citation-reference."
 
 (defun citar-org--update-prefix-suffix ()
   "Change the prefix and suffix text of the reference at point."
-  (let* ((ref (org-element-context))
+  (let* ((datum (org-element-context))
+         (ref-p (eq 'citation-reference (org-element-type datum)))
+         (ref (if ref-p datum (error "Not on a reference")))
          (key (org-element-property :key ref))
          (citekey-str (propertize key 'face 'mode-line-emphasis))
          ;; TODO Unsure if we want to process pre at all
@@ -467,11 +469,17 @@ or citation-reference."
 (defun citar-org-update-prefix-suffix (&optional arg)
   "Change the prefix and suffix text of the reference at point.
 If given ARG, change the prefix and suffix for every reference in
-the citation at point."
+the citation at point.
+
+If point is not on a reference or citation, throw an error."
   (interactive "P")
   (let* ((datum (org-element-context))
          (citation-p (eq 'citation (org-element-type datum)))
-         (current-citation (if citation-p datum (org-element-property :parent datum)))
+         (ref-p (eq 'citation-reference (org-element-type datum)))
+         (current-citation (cond
+                            (citation-p datum)
+                            (ref-p (org-element-property :parent datum))
+                            (t (error "Not on a citation or reference"))))
          (refs (org-cite-get-references current-citation)))
     (save-excursion
       (if (or arg citation-p)
