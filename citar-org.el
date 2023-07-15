@@ -442,14 +442,19 @@ or citation-reference."
 
 (defun citar-org--update-prefix-suffix ()
   "Change the prefix and suffix text of the reference at point."
-  (let* ((datum (org-element-context))
-         (datum-type (org-element-type datum))
-         (ref (if (eq datum-type 'citation-reference) datum
-                (error "Not on a citation reference")))
+  (let* ((ref (org-element-context))
          (key (org-element-property :key ref))
-         ;; TODO handle space delimiter elegantly.
-         (pre (read-string "Prefix text: " (org-element-property :prefix ref)))
-         (post (read-string "Suffix text: " (org-element-property :suffix ref)))
+         (citekey-str (propertize key 'face 'mode-line-emphasis))
+         ;; TODO Unsure if we want to process pre at all
+         (pre (read-string (concat "Prefix for " citekey-str ": ")
+                           (org-element-property :prefix ref)))
+         (post (string-trim-left        ; Remove leading whitespace
+                (read-string (concat "Suffix for " citekey-str ": ")
+                             (org-element-property :suffix ref))))
+         ;; Change post to have one space prior to the user-inputted suffix, unless post is already empty or
+         ;; just whitespace
+         (post-processed
+          (concat (unless (string-empty-p post) " ") post))
          (v1
           (org-element-property :begin ref))
          (v2
@@ -457,7 +462,7 @@ or citation-reference."
     (cl--set-buffer-substring v1 v2
                               (org-element-interpret-data
                                `(citation-reference
-                                 (:key ,key :prefix ,pre :suffix ,post))))))
+                                 (:key ,key :prefix ,pre :suffix ,post-processed))))))
 
 (defun citar-org-update-prefix-suffix (&optional arg)
   "Change the prefix and suffix text of the reference at point.
