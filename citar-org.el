@@ -440,10 +440,10 @@ or citation-reference."
   (let ((datum (org-element-context)))
     (citar-org--shift-reference datum 'right)))
 
-(defun citar-org--update-prefix-suffix ()
-  "Change the prefix and suffix text of the reference at point."
-  (let* ((datum (org-element-context))
-         (ref-p (eq 'citation-reference (org-element-type datum)))
+(defun citar-org--update-prefix-suffix (datum)
+  "Change the prefix and suffix text of the DATUM at point.
+DATUM should be a reference, otherwise throw an error."
+  (let* ((ref-p (eq 'citation-reference (org-element-type datum)))
          (ref (if ref-p datum (error "Not on a reference")))
          (key (org-element-property :key ref))
          (citekey-str (propertize key 'face 'mode-line-emphasis))
@@ -483,14 +483,15 @@ If point is not on a reference or citation, throw an error."
          (refs (org-cite-get-references current-citation)))
     (save-excursion
       (if (or arg citation-p)
+          ;; We use dotimes over dolist because the buffer changes as we iterate through the list, meaning we
+          ;; cannot simply use the initial value of refs all throughout
           (dotimes (ref-index (length refs))
-            (goto-char (org-element-property :begin (nth ref-index refs)))
-            (citar-org--update-prefix-suffix)
+            (citar-org--update-prefix-suffix (nth ref-index refs))
             ;; Update refs since the begins and ends for the following reference could have changed when
             ;; adding a prefix and/or suffix
             (setq refs (org-cite-get-references
                         (org-element-property :parent (org-element-context)))))
-        (citar-org--update-prefix-suffix)))))
+        (citar-org--update-prefix-suffix (org-element-context))))))
 
 ;; Load this last.
 
