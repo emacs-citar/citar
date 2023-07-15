@@ -440,11 +440,8 @@ or citation-reference."
   (let ((datum (org-element-context)))
     (citar-org--shift-reference datum 'right)))
 
-(defun citar-org-update-pre-suffix ()
-  "Change the pre/suffix text of the reference at point."
-  ;; TODO I want this to also work for global affixes on the citation,
-  ;;      but haven't figured that out yet.
-  (interactive)
+(defun citar-org--update-pre-suffix ()
+  "Change the prefix and suffix text of the reference at point."
   (let* ((datum (org-element-context))
          (datum-type (org-element-type datum))
          (ref (if (eq datum-type 'citation-reference) datum
@@ -461,6 +458,26 @@ or citation-reference."
                               (org-element-interpret-data
                                `(citation-reference
                                  (:key ,key :prefix ,pre :suffix ,post))))))
+
+(defun citar-org-update-pre-suffix (&optional arg)
+  "Change the prefix and suffix text of the reference at point.
+If given ARG, change the prefix and suffix for every reference in
+the citation at point."
+  (interactive "P")
+  (let* ((datum (org-element-context))
+         (citation-p (eq 'citation (org-element-type datum)))
+         (current-citation (if citation-p datum (org-element-property :parent datum)))
+         (refs (org-cite-get-references current-citation)))
+    (save-excursion
+      (if (or arg citation-p)
+          (dotimes (ref-index (length refs))
+            (goto-char (org-element-property :begin (nth ref-index refs)))
+            (citar-org--update-pre-suffix)
+            ;; Update refs since the begins and ends for the following reference could have changed when
+            ;; adding a prefix and/or suffix
+            (setq refs (org-cite-get-references
+                        (org-element-property :parent (org-element-context)))))
+        (citar-org--update-pre-suffix)))))
 
 ;; Load this last.
 
