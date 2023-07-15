@@ -80,7 +80,7 @@ Each function takes one argument, a citation."
     (define-key map (kbd "C-c C-x k") (cons "kill citation" #'citar-org-kill-citation))
     (define-key map (kbd "S-<left>") (cons "shift left" #'citar-org-shift-reference-left))
     (define-key map (kbd "S-<right>") (cons "shift right" #'citar-org-shift-reference-right))
-    (define-key map (kbd "M-p") (cons "update prefix/suffix" #'citar-org-update-pre-suffix))
+    (define-key map (kbd "M-p") (cons "update prefix/suffix" #'citar-org-update-prefix-suffix))
     map)
   "Keymap for interacting with org citations at point.")
 
@@ -440,19 +440,25 @@ or citation-reference."
   (let ((datum (org-element-context)))
     (citar-org--shift-reference datum 'right)))
 
-(defun citar-org-update-pre-suffix ()
-  "Change the pre/suffix text of the reference at point."
-  ;; TODO I want this to also work for global affixes on the citation,
-  ;;      but haven't figured that out yet.
-  (interactive)
-  (let* ((datum (org-element-context))
-         (datum-type (org-element-type datum))
-         (ref (if (eq datum-type 'citation-reference) datum
-                (error "Not on a citation reference")))
+(defun citar-org--update-prefix-suffix (datum)
+  "Change the prefix and suffix text of the DATUM at point.
+DATUM should be a reference, otherwise throw an error."
+  (let* ((ref-p (eq 'citation-reference (org-element-type datum)))
+         (ref (if ref-p datum (error "Not on a reference")))
          (key (org-element-property :key ref))
-         ;; TODO handle space delimiter elegantly.
-         (pre (read-string "Prefix text: " (org-element-property :prefix ref)))
-         (post (read-string "Suffix text: " (org-element-property :suffix ref)))
+         (citekey-str (propertize key 'face 'mode-line-emphasis))
+         (pre (org-element-interpret-data (org-element-property :prefix ref)))
+         (post (org-element-interpret-data (org-element-property :suffix ref)))
+         ;; TODO Unsure if we want to process prefix at all
+         (prefix (read-string (concat "Prefix for " citekey-str ": ")
+                              (string-trim pre)))
+         (suffix (string-trim-left        ; Remove leading whitespace
+                  (read-string (concat "Suffix for " citekey-str ": ")
+                               (string-trim post))))
+         ;; Change suffix to have one space prior to the user-inputted suffix, unless suffix is already empty
+         ;; or just whitespace
+         (suffix-processed
+          (concat (unless (string-empty-p suffix) " ") suffix))
          (v1
           (org-element-property :begin ref))
          (v2
@@ -460,7 +466,36 @@ or citation-reference."
     (cl--set-buffer-substring v1 v2
                               (org-element-interpret-data
                                `(citation-reference
-                                 (:key ,key :prefix ,pre :suffix ,post))))))
+                                 (:key ,key :prefix ,prefix :suffix ,suffix-processed))))))
+
+(defun citar-org-update-prefix-suffix (&optional arg)
+  "Change the prefix and suffix text of the reference at point.
+If given ARG, change the prefix and suffix for every reference in
+the citation at point.
+
+If point is not on a reference or citation, throw an error."
+  (interactive "P")
+  (let* ((datum (org-element-context))
+         (citation-p (eq 'citation (org-element-type datum)))
+         (ref-p (eq 'citation-reference (org-element-type datum)))
+         (current-citation (cond
+                            (citation-p datum)
+                            (ref-p (org-element-property :parent datum))
+                            (t (error "Not on a citation or reference"))))
+         (refs (org-cite-get-references current-citation)))
+    (save-excursion
+      (if (or arg citation-p)
+          ;; We use dotimes over dolist because the buffer changes as we iterate through the list, meaning we
+          ;; cannot simply use the initial value of refs all throughout
+          (dotimes (ref-index (length refs))
+            (citar-org--update-prefix-suffix (nth ref-index refs))
+            ;; Update refs since the begins and ends for the following references could have changed when
+            ;; adding a prefix and/or suffix
+            (setq refs (org-cite-get-references
+                        (if citation-p
+                            (org-element-context)
+                          (org-element-property :parent (org-element-context))))))
+        (citar-org--update-prefix-suffix (org-element-context))))))
 
 ;; Load this last.
 
