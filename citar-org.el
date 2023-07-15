@@ -487,10 +487,12 @@ If point is not on a reference or citation, throw an error."
           ;; cannot simply use the initial value of refs all throughout
           (dotimes (ref-index (length refs))
             (citar-org--update-prefix-suffix (nth ref-index refs))
-            ;; Update refs since the begins and ends for the following reference could have changed when
+            ;; Update refs since the begins and ends for the following references could have changed when
             ;; adding a prefix and/or suffix
             (setq refs (org-cite-get-references
-                        (org-element-property :parent (org-element-context)))))
+                        (if citation-p
+                            (org-element-context)
+                          (org-element-property :parent (org-element-context))))))
         (citar-org--update-prefix-suffix (org-element-context))))))
 
 ;; Load this last.
