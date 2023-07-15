@@ -80,7 +80,7 @@ Each function takes one argument, a citation."
     (define-key map (kbd "C-c C-x k") (cons "kill citation" #'citar-org-kill-citation))
     (define-key map (kbd "S-<left>") (cons "shift left" #'citar-org-shift-reference-left))
     (define-key map (kbd "S-<right>") (cons "shift right" #'citar-org-shift-reference-right))
-    (define-key map (kbd "M-p") (cons "update prefix/suffix" #'citar-org-update-pre-suffix))
+    (define-key map (kbd "M-p") (cons "update prefix/suffix" #'citar-org-update-prefix-suffix))
     map)
   "Keymap for interacting with org citations at point.")
 
@@ -440,7 +440,7 @@ or citation-reference."
   (let ((datum (org-element-context)))
     (citar-org--shift-reference datum 'right)))
 
-(defun citar-org--update-pre-suffix ()
+(defun citar-org--update-prefix-suffix ()
   "Change the prefix and suffix text of the reference at point."
   (let* ((datum (org-element-context))
          (datum-type (org-element-type datum))
@@ -459,7 +459,7 @@ or citation-reference."
                                `(citation-reference
                                  (:key ,key :prefix ,pre :suffix ,post))))))
 
-(defun citar-org-update-pre-suffix (&optional arg)
+(defun citar-org-update-prefix-suffix (&optional arg)
   "Change the prefix and suffix text of the reference at point.
 If given ARG, change the prefix and suffix for every reference in
 the citation at point."
@@ -472,12 +472,12 @@ the citation at point."
       (if (or arg citation-p)
           (dotimes (ref-index (length refs))
             (goto-char (org-element-property :begin (nth ref-index refs)))
-            (citar-org--update-pre-suffix)
+            (citar-org--update-prefix-suffix)
             ;; Update refs since the begins and ends for the following reference could have changed when
             ;; adding a prefix and/or suffix
             (setq refs (org-cite-get-references
                         (org-element-property :parent (org-element-context)))))
-        (citar-org--update-pre-suffix)))))
+        (citar-org--update-prefix-suffix)))))
 
 ;; Load this last.
 
