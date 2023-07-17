@@ -370,8 +370,8 @@ or citation-reference."
   "Return index of citation-reference REF within REFS."
   (seq-position refs ref
                 (lambda (r1 r2)
-                  (and (string= (org-element-property :key r1)
-                                (org-element-property :key r2))))))
+                  (and (equal (org-element-property :begin r1)
+                              (org-element-property :begin r2))))))
 
 (defun citar-org-delete-citation ()
   "Delete the citation or citation-reference at point."
