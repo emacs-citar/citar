@@ -362,15 +362,17 @@ For example, if point:
 The "activate processor" runs the list of functions in ~citar-org-activation-functions~, which by default is the ~basic~ processor from ~oc-basic~ to provide fontification, and also a little function that adds a keymap (~citar-org-citation-map~) for editing citations at point.
 The ~citar-org-citation-map~ keymap includes the following bindings that provide additional citation and citation-reference editing options.
 
-| key         | binding                         |
-|-------------+---------------------------------|
-| C-c C-x DEL | citar-org-delete-citation       |
-| C-c C-x k   | citar-org-kill-citation         |
-| S-<left>    | citar-org-shift-reference-left  |
-| S-<right>   | citar-org-shift-reference-right |
-| M-p         | citar-org-update-pre-suffix     |
-| <mouse-1>   | citar-dwim                      |
-| <mouse-3>   | embark-act                      |
+| key         | binding                         | description                                         |
+|-------------+---------------------------------+-----------------------------------------------------|
+| C-c C-x DEL | citar-org-delete-citation       | delete citation or citation-reference at point      |
+| C-c C-x k   | citar-org-kill-citation         | kill citation or citation-reference at point        |
+| S-<left>    | citar-org-shift-reference-left  | move citation-reference at point left               |
+| S-<right>   | citar-org-shift-reference-right | move citation-reference at point right              |
+| M-p         | citar-org-update-prefix-suffix  | update prefix and suffix of reference at point, or, |
+|             |                                 | when called with prefix arg, update all             |
+|             |                                 | citation-references in citation at point            |
+| <mouse-1>   | citar-dwim                      | call the value of =citar-at-point-function= at point  |
+| <mouse-3>   | embark-act                      | call =embark-act= at point                            |
 
 
 The "follow processor" provides at-point functionality accessible via the =org-open-at-point= command.
