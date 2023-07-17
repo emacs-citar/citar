@@ -348,6 +348,7 @@ You have a few different ways to use citar.
 *** Org-cite
 
 Citar includes an org-cite =citar= processor, with "insert," "activate" and "follow" capabilities.
+To read more about org-cite, visit the [[https://orgmode.org/manual/Citations.html][Citations page in the Org Manual]].
 
 The "insert processor" uses =citar-select-refs= to browse your library to insert and edit citations and citation references using the =org-cite-insert= command.
 The command is context-aware, so depending on where point is in the buffer, will behave differently.
