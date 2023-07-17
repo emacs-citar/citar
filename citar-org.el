@@ -414,19 +414,15 @@ or citation-reference."
         ((v1
           (org-element-property :contents-begin current-citation))
          (v2
-          (org-element-property :contents-end current-citation)))
+          (org-element-property :contents-end current-citation))
+         (new-index
+          (if (eq 'left direction) (- index 1) (+ index 1))))
       (cl--set-buffer-substring v1 v2
                                 (org-element-interpret-data
-                                 (org-element-interpret-data
-                                  (citar-org-cite-swap
-                                   index
-                                   (if (eq 'left direction) (- index 1) (+ index 1)) refs)))))
-    ;; Now get on the original ref.
-    (let* ((newrefs (org-cite-get-references current-citation))
-           (index
-            (citar-org--get-ref-index newrefs current-ref)))
-
-      (goto-char (org-element-property :begin (nth index newrefs))))))
+                                 (citar-org-cite-swap index new-index refs)))
+      ;; Now move point to the original ref.
+      (goto-char (org-element-property :begin (nth new-index
+                                                   (org-cite-get-references current-citation)))))))
 
 (defun citar-org-shift-reference-left ()
   "When point is on a citation-reference, shift it left."
