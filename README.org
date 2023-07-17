@@ -348,32 +348,36 @@ You have a few different ways to use citar.
 *** Org-cite
 
 Citar includes an org-cite =citar= processor, with "insert," "activate" and "follow" capabilities.
+When speaking about org-cite, *citations* refer to a set of one or more *references (citation-references)*, each of which may have text that precedes it (prefix) and text that proceeds it (suffix).
+To learn more about org-cite, visit the [[https://orgmode.org/manual/Citations.html][Citations page in the Org Manual]].
 
 The "insert processor" uses =citar-select-refs= to browse your library to insert and edit citations and citation references using the =org-cite-insert= command.
-The command is context-aware, so depending on where point is in the buffer, will behave differently.
+The command is context-aware, so *its behavior depends on the point's location in a citation*.
 For example, if point:
 
-- precedes the colon, you will be prompted to edit the style
+- precedes the colon, you are on the /citation prefix/ and will be prompted to edit the style
 - is on an existing citation-reference, you will be prompted to replace it
 - follows or precedes a citation-reference, you will be prompted to add a new citation-reference
 
-The "activate processor" runs the list of functions in ~citar-org-activation-functions~, which by default is the ~basic~ processor from ~oc-basic~ to provide fontification, and also a little function that adds a keymap for editing citations at point.
-That keymap includes the following bindings that provide additional citation and citation-reference editing options.
+The "activate processor" runs the list of functions in ~citar-org-activation-functions~, which by default is the ~basic~ processor from ~oc-basic~ to provide fontification, and also a little function that adds a keymap (~citar-org-citation-map~) for editing citations at point.
+The ~citar-org-citation-map~ keymap includes the following bindings that provide additional citation and citation-reference editing options.
 
-| key         | binding                        |
-|-------------+--------------------------------|
-| C-c C-x DEL | oc-citar-delete-citation       |
-| C-c C-x k   | oc-citar-kill-citation         |
-| S-<left>    | oc-citar-shift-reference-left  |
-| S-<right>   | oc-citar-shift-reference-right |
-| M-p         | oc-citar-update-pre-suffix     |
-| <mouse-1>   | citar-dwim                     |
-| <mouse-3>   | embark-act                     |
+| key         | binding                         | description                                         |
+|-------------+---------------------------------+-----------------------------------------------------|
+| C-c C-x DEL | citar-org-delete-citation       | delete citation or citation-reference at point      |
+| C-c C-x k   | citar-org-kill-citation         | kill citation or citation-reference at point        |
+| S-<left>    | citar-org-shift-reference-left  | move citation-reference at point left               |
+| S-<right>   | citar-org-shift-reference-right | move citation-reference at point right              |
+| M-p         | citar-org-update-prefix-suffix  | update prefix and suffix of reference at point, or, |
+|             |                                 | when called with prefix arg, update all             |
+|             |                                 | citation-references in citation at point            |
+| <mouse-1>   | citar-dwim                      | call the value of =citar-at-point-function= at point  |
+| <mouse-3>   | embark-act                      | call =embark-act= at point                            |
 
 
 The "follow processor" provides at-point functionality accessible via the =org-open-at-point= command.
-By default, in org-mode with org-cite support, when point is on a citation or citation-reference, and you invoke =org-open-at-point=, it will run the default command, which is =citar-open=.
-Changing this value to =embark-act= with embark installed and configured will provide access to the standard citar commands at point.
+By default, in org-mode with org-cite support, when point is on a citation or citation-reference, and you invoke =org-open-at-point=, it will run the command set in =citar-at-point-function=, which is =citar-open= by default.
+Changing the value of =citar-at-point-function= to =embark-act= with embark installed and configured will provide access to the standard citar commands at point.
 
 Org-cite citations include optional "styles" and "variants" to locally modify the citation rendering.
 When inserting a new citation, calling =org-cite-insert= with a prefix arg will prompt to select a style.
@@ -391,6 +395,7 @@ For example, if you specify =text/f=, and the export processor you use doesn't s
 
 #+CAPTION: citation styles
 [[file:images/oc-styles.png]]
+
 *** =M-x=
     :PROPERTIES:
     :CUSTOM_ID: m-x
