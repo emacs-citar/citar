@@ -370,8 +370,8 @@ or citation-reference."
   "Return index of citation-reference REF within REFS."
   (seq-position refs ref
                 (lambda (r1 r2)
-                  (and (string= (org-element-property :key r1)
-                                (org-element-property :key r2))))))
+                  (and (equal (org-element-property :begin r1)
+                              (org-element-property :begin r2))))))
 
 (defun citar-org-delete-citation ()
   "Delete the citation or citation-reference at point."
@@ -396,6 +396,8 @@ or citation-reference."
   (let*  ((current-citation (if (eq 'citation (org-element-type datum)) datum
                               (org-element-property :parent datum)))
           (current-ref (when (eq 'citation-reference (org-element-type datum)) datum))
+          (point-offset
+           (- (point) (org-element-property :begin current-ref)))
           (refs (org-cite-get-references current-citation))
           (index
            (citar-org--get-ref-index refs current-ref)))
@@ -414,19 +416,16 @@ or citation-reference."
         ((v1
           (org-element-property :contents-begin current-citation))
          (v2
-          (org-element-property :contents-end current-citation)))
+          (org-element-property :contents-end current-citation))
+         (new-index
+          (if (eq 'left direction) (- index 1) (+ index 1))))
       (cl--set-buffer-substring v1 v2
                                 (org-element-interpret-data
-                                 (org-element-interpret-data
-                                  (citar-org-cite-swap
-                                   index
-                                   (if (eq 'left direction) (- index 1) (+ index 1)) refs)))))
-    ;; Now get on the original ref.
-    (let* ((newrefs (org-cite-get-references current-citation))
-           (index
-            (citar-org--get-ref-index newrefs current-ref)))
-
-      (goto-char (org-element-property :begin (nth index newrefs))))))
+                                 (citar-org-cite-swap index new-index refs)))
+      ;; Now move point to the original ref.
+      (goto-char (+ (org-element-property :begin (nth new-index
+                                                      (org-cite-get-references current-citation)))
+                    point-offset)))))
 
 (defun citar-org-shift-reference-left ()
   "When point is on a citation-reference, shift it left."
