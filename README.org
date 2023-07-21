@@ -58,7 +58,9 @@ In addition, the following packages are strongly recommended for the best experi
 3. [[https://github.com/oantolin/embark][Embark]] (contextual actions)
 4. [[https://github.com/minad/marginalia][Marginalia]] (annotations, and also candidate classification for Embark)
 
-We also recommend Emacs 28, as this package relies on two of its features, that greatly enhance the UI.
+In particular, if you want to narrow your search using authors, titles, etc (i.e., not only citation keys), you need to use a completion style that is order independent; for example, [[https://github.com/oantolin/orderless][Orderless]] with ~completion-styles~ set to ~(orderless basic)~ (see example in  https://github.com/oantolin/orderless#overview).
+
+We also recommend Emacs 28 or newer. 
 
 ** Configuration
    :PROPERTIES:
