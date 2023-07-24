@@ -203,6 +203,7 @@ and optional arguments on the string value."
 
 ;; Indicator defstruct
 
+###;;;autoload
 (cl-defstruct
  (citar-indicator (:constructor citar-indicator-create)
                   (:copier nil))
