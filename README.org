@@ -171,6 +171,17 @@ By default, this uses ~citar-open-entry-in-file~, which will open the relevant b
 The other included option is ~citar-open-entry-in-zotero~, which will select the item in Zotero.
 Note that functionality depends on [[https://retorque.re/zotero-better-bibtex/][Better BibTeX]] (which you should be using anyway!).
 
+*** Per-project customization
+
+When collaborating with others, it might be convenient to have a project-specific bibliography file that can be version controlled and shared among collaborators.
+You can set ~citar-bibliography~ with =add-file-local-variable= or =add-dir-local-variable= to add a custom value to ~citar-bibliography~ for just that file or directory respectively.
+
+For example, if you are sharing a =custom_refs.bib= file adjacent to the =cool_new_paper.tex= that you're working on, using the aforementioned functions or adding the following to your =.dir-locals.el= will make citar /only/ search your shared bibliography:
+
+#+begin_src emacs-lisp
+((latex-mode . ((citar-bibliography . '("custom_refs.bib")))))
+#+end_src
+
 ** Rich UI
 :PROPERTIES:
 :CUSTOM_ID: rich-ui
