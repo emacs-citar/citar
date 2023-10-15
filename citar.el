@@ -383,6 +383,54 @@ Should be a list of plists, where each plist has the following properties:
   :group 'citar
   :type '(repeat (plist :value-type function :options (:items :hasitems))))
 
+(defcustom citar-add-file-sources
+  (list (list :name "[b]uffer"
+              :function #'citar-add-file--from-buffer)
+        (list :name "[f]ile"
+              :function #'citar-add-file--from-file)
+        (list :name "[u]rl"
+              :function #'citar-add-file--from-url))
+  "List of backends used to add library files for bibliography references.
+
+These sources are used in `citar-add-file-to-library'.
+Should be a list of plists, where each plist has the following properties:
+
+  :name String that will be displayed when user is prompted for a choice.
+    Exactly one character should be wrapped in brackets. This character
+    should be unique among all sources.
+
+  :function Function that takes a citation key and returns a
+    cons cell containing a function and a plist.
+    The returned values will be passed as the second and third aguments
+    to `citar-save-file-function' respectively."
+  :group 'citar
+  :type '(repeat (plist)))
+
+(defcustom citar-save-file-function #'citar-save-file
+  "The function to run for `citar-add-file-to-library'.
+
+This function must accept three arguments:
+- CITEKEY: the citekey
+- FUN: a function that takes two arguments, described below
+- INFO: a plist containing information about the file
+
+Using CITEKEY and INFO and possibly querying
+the user, this function should decide the appropriate
+destination DESTFILE to save the file.
+It should also decide what to do if DESTFILE already
+exists by choosing OK-IF-ALREADY-EXISTS.
+(See the documentation of `copy-file' for the behavior of
+this variable)
+
+Then it should call FUN with DESTFILE and
+OK-IF-ALREADY-EXISTS, which will save the file."
+  :group 'citar
+  :type '(choice
+          (function-item
+           :tag "Save file as citekey.extension"
+           citar-save-file)
+          (function :tag "Other")))
+
 (defcustom citar-notes-sources
   `((citar-file .
      ,(list :name "Notes"
@@ -1282,6 +1330,51 @@ getters for file, note, and link resources."
           (dolist (citekey citekeys)
             (putresult citekey (citar-get-entry citekey))))))))
 
+(defun citar-save-file (citekey fun info)
+  "Default save function for `citar-save-file-function'."
+  (let* ((directory (if (cdr citar-library-paths)
+                        (completing-read "Directory: " citar-library-paths)
+                      (car citar-library-paths)))
+         (extension (or (plist-get info :extension)
+                        (read-string "File extension: ")))
+         (destfile (expand-file-name citekey directory))
+         (destfile (if (string-empty-p extension)
+                       destfile
+                     (concat destfile "." extension)))
+         ;; an integer means to confirm before overwriting
+         (ok-if-already-exists 1))
+    (funcall fun destfile ok-if-already-exists)))
+
+(defun citar-add-file--from-buffer (citekey)
+  (let* ((buf (get-buffer (read-buffer "Add file buffer: " (current-buffer))))
+         (fun `(lambda (destfile ok-if-already-exists)
+                 (if (and (not ok-if-already-exists)
+                          (file-exists-p destfile))
+                     (signal 'file-already-exists
+                             (list "File already exists" destfile))
+                   (with-current-buffer ,buf
+                     (write-file destfile (integerp ok-if-already-exists))))))
+         (info (list :extension
+                     (when (buffer-file-name buf)
+                       (file-name-extension (buffer-file-name buf))))))
+    (cons fun info)))
+
+(defun citar-add-file--from-file (citekey)
+  (let* ((file (read-file-name "Add file: " nil nil t))
+         (fun `(lambda (destfile ok-if-already-exists)
+                 (copy-file ,file destfile ok-if-already-exists)))
+         (info (list :extension (file-name-extension file))))
+    (cons fun info)))
+
+(defun citar-add-file--from-url (citekey)
+  (let* ((url (read-string "Add file URL: "))
+         (fun `(lambda (destfile ok-if-already-exists)
+                 (url-copy-file ,url destfile ok-if-already-exists)))
+         ;; TODO: Use Content-Type HTTP response header to guess file extension
+         (dot-ext (url-file-extension url))
+         (info (list :extension (when (> (length dot-ext) 1) (substring dot-ext 1)))))
+    (cons fun info)))
+
 ;;; Format and display field values
 
 (defun citar--shorten-name-position (namelist name)
@@ -1547,7 +1640,7 @@ including the citekeys, is maintained in Zotero with Better BibTeX."
 (defun citar-export-local-bib-file ()
   "Create a new bibliography file from citations in current buffer.
 
-The file is titled \"local-bib\", given the same extention as
+The file is titled \"local-bib\", given the same extension as
 the first entry in `citar-bibliography', and created in the same
 directory as current buffer."
   (interactive)
@@ -1638,30 +1731,25 @@ URL."
   (citar--check-configuration 'citar-library-paths)
   (unless citar-library-paths
     (user-error "Make sure `citar-library-paths' is non-nil"))
-  (let* ((directory (if (cdr citar-library-paths)
-                        (completing-read "Directory: " citar-library-paths)
-                      (car citar-library-paths)))
-         (filepath (expand-file-name citekey directory))
-         (withext (lambda (extension)
-                    (let* ((extension (or extension (read-string "File extension: "))))
-                      (if (string-empty-p extension)
-                          filepath
-                        (concat filepath "." extension))))))
-    (pcase (read-char-choice "Add file from [b]uffer, [f]ile, or [u]rl? " '(?b ?f ?u))
-      (?b
-       (with-current-buffer (read-buffer "Add file buffer: " (current-buffer))
-         (let ((destfile (funcall withext (and buffer-file-name (file-name-extension buffer-file-name)))))
-           (write-file destfile 'confirm))))
-      (?f
-       (let* ((file (read-file-name "Add file: " nil nil t))
-              (destfile (funcall withext (file-name-extension file))))
-         (copy-file file destfile 1)))  ; last arg integer means to confirm before overwriting
-      (?u
-       (let* ((url (read-string "Add file URL: "))
-              ;; TODO: Use Content-Type HTTP response header to guess file extension
-              (ext (url-file-extension url))
-              (destfile (funcall withext (when (> (length ext) 1) (substring ext 1)))))
-         (url-copy-file url destfile 1))))))
+  (pcase-let* ((prompt
+                (concat
+                 "Add file from "
+                 (let ((len (length citar-add-file-sources)))
+                   (string-join (mapcar (lambda (it) (plist-get it :name))
+                                        (subseq citar-add-file-sources 0 (- len 1)))
+                                ", "))
+                 ", or " (plist-get (car (last citar-add-file-sources)) :name) "?"))
+               (options (mapcar (lambda (it)
+                                  (let ((name (plist-get it :name)))
+                                    (string-match "\\[\\(.\\)]" name)
+                                    (string-to-char (match-string 1 name))))
+                                citar-add-file-sources))
+               (response (read-char-choice prompt options))
+               (source (nth (seq-position options response)
+                            citar-add-file-sources))
+               (`(,fun . ,info) (funcall (plist-get source :function) citekey)))
+    (message "fun : `%s'" fun)
+    (funcall citar-save-file-function citekey fun info)))
 
 ;;;###autoload
 (defun citar-run-default-action (citekeys)
