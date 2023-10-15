@@ -1743,7 +1743,7 @@ ARG is forwarded to the mode-specific insertion function given in
 The FILE can be added from an open buffer, a file path, or a
 URL."
   (interactive (list (citar-select-ref)))
-  (citar--check-configuration 'citar-library-paths)
+  (citar--check-configuration 'citar-library-paths 'citar-save-file-function)
   (unless citar-library-paths
     (user-error "Make sure `citar-library-paths' is non-nil"))
   (unless citar-add-file-sources
@@ -1802,7 +1802,7 @@ VARIABLES should be the names of Citar customization variables."
         ((or 'citar-has-files-functions 'citar-get-files-functions 'citar-file-parser-functions)
          (unless (and (listp value) (seq-every-p #'functionp value))
            (error "`%s' should be a list of functions: %S" variable `',value)))
-        ((or 'citar-note-format-function)
+        ((or 'citar-note-format-function 'citar-save-file-function)
          (unless (functionp value)
            (error "`%s' should be a function: %S" variable `',value)))
         (_
