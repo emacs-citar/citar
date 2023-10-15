@@ -419,8 +419,8 @@ the user, this function should decide the appropriate
 destination DESTFILE to save the file.
 It should also decide what to do if DESTFILE already
 exists by choosing OK-IF-ALREADY-EXISTS.
-(See the documentation of `copy-file' for the behavior of
-this variable)
+\(See the documentation of `copy-file' for the behavior of
+this variable\)
 
 Then it should call FUN with DESTFILE and
 OK-IF-ALREADY-EXISTS, which will save the file."
@@ -1331,7 +1331,13 @@ getters for file, note, and link resources."
             (putresult citekey (citar-get-entry citekey))))))))
 
 (defun citar-save-file (citekey fun info)
-  "Default save function for `citar-save-file-function'."
+  "Default save function for `citar-save-file-function'.
+
+If there is more than one directory in `citar-library-paths',
+query the use for the directory to save.
+If no extension is provided in INFO, query the user for extension.
+Call FUN to save the file as CITEKEY.EXTENSION and
+if file already exists, confirm before overwriting it."
   (let* ((directory (if (cdr citar-library-paths)
                         (completing-read "Directory: " citar-library-paths)
                       (car citar-library-paths)))
@@ -1345,7 +1351,10 @@ getters for file, note, and link resources."
          (ok-if-already-exists 1))
     (funcall fun destfile ok-if-already-exists)))
 
-(defun citar-add-file--from-buffer (citekey)
+(defun citar-add-file--from-buffer (_citekey)
+  "Add file to library from buffer.
+
+See the documentation for `cita-add-file-sources' for more details."
   (let* ((buf (get-buffer (read-buffer "Add file buffer: " (current-buffer))))
          (fun `(lambda (destfile ok-if-already-exists)
                  (if (and (not ok-if-already-exists)
@@ -1359,14 +1368,20 @@ getters for file, note, and link resources."
                        (file-name-extension (buffer-file-name buf))))))
     (cons fun info)))
 
-(defun citar-add-file--from-file (citekey)
+(defun citar-add-file--from-file (_citekey)
+  "Add an existing file to library by copying it.
+
+See the documentation for `cita-add-file-sources' for more details."
   (let* ((file (read-file-name "Add file: " nil nil t))
          (fun `(lambda (destfile ok-if-already-exists)
                  (copy-file ,file destfile ok-if-already-exists)))
          (info (list :extension (file-name-extension file))))
     (cons fun info)))
 
-(defun citar-add-file--from-url (citekey)
+(defun citar-add-file--from-url (_citekey)
+  "Add file to library from url.
+
+See the documentation for `cita-add-file-sources' for more details."
   (let* ((url (read-string "Add file URL: "))
          (fun `(lambda (destfile ok-if-already-exists)
                  (url-copy-file ,url destfile ok-if-already-exists)))
@@ -1740,7 +1755,7 @@ URL."
                    (concat
                     (let ((len (length citar-add-file-sources)))
                       (string-join (mapcar (lambda (it) (plist-get it :name))
-                                           (subseq citar-add-file-sources 0 (- len 1)))
+                                           (seq-subseq citar-add-file-sources 0 (1- len)))
                                    ", "))
                     ", or "))
                  (plist-get (car (last citar-add-file-sources)) :name) "?"))
