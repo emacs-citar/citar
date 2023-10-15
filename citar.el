@@ -1731,14 +1731,19 @@ URL."
   (citar--check-configuration 'citar-library-paths)
   (unless citar-library-paths
     (user-error "Make sure `citar-library-paths' is non-nil"))
+  (unless citar-add-file-sources
+    (user-error "Make sure `citar-add-file-sources' is non-nil"))
   (pcase-let* ((prompt
                 (concat
                  "Add file from "
-                 (let ((len (length citar-add-file-sources)))
-                   (string-join (mapcar (lambda (it) (plist-get it :name))
-                                        (subseq citar-add-file-sources 0 (- len 1)))
-                                ", "))
-                 ", or " (plist-get (car (last citar-add-file-sources)) :name) "?"))
+                 (when (cdr citar-add-file-sources)
+                   (concat
+                    (let ((len (length citar-add-file-sources)))
+                      (string-join (mapcar (lambda (it) (plist-get it :name))
+                                           (subseq citar-add-file-sources 0 (- len 1)))
+                                   ", "))
+                    ", or "))
+                 (plist-get (car (last citar-add-file-sources)) :name) "?"))
                (options (mapcar (lambda (it)
                                   (let ((name (plist-get it :name)))
                                     (string-match "\\[\\(.\\)]" name)
@@ -1748,7 +1753,6 @@ URL."
                (source (nth (seq-position options response)
                             citar-add-file-sources))
                (`(,fun . ,info) (funcall (plist-get source :function) citekey)))
-    (message "fun : `%s'" fun)
     (funcall citar-save-file-function citekey fun info)))
 
 ;;;###autoload
