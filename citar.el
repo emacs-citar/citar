@@ -384,51 +384,43 @@ Should be a list of plists, where each plist has the following properties:
   :type '(repeat (plist :value-type function :options (:items :hasitems))))
 
 (defcustom citar-add-file-sources
-  (list (list :name "[b]uffer"
-              :function #'citar-add-file--from-buffer)
-        (list :name "[f]ile"
-              :function #'citar-add-file--from-file)
-        (list :name "[u]rl"
-              :function #'citar-add-file--from-url))
+  '((?b "buffer" "Current buffer" citar-add-file-plist--from-buffer)
+    (?f "file" "Existing file" citar-add-file-plist--from-file)
+    (?u "url" "Download from URL" citar-add-file-plist--from-url))
   "List of backends used to add library files for bibliography references.
 
 These sources are used in `citar-add-file-to-library'.
-Should be a list of plists, where each plist has the following properties:
+Should be a list of lists, where each inner list has the following elements:
 
-  :name String that will be displayed when user is prompted for a choice.
-    Exactly one character should be wrapped in brackets. This character
-    should be unique among all sources.
-
-  :function Function that takes a citation key and returns a
-    cons cell containing a function and a plist.
-    The returned values will be passed as the second and third aguments
-    to `citar-save-file-function' respectively."
+  - A character that should be unique among all sources
+  - Name
+  - Description
+  - A function that takes a citation key and returns a plist.
+    The returned value will be passed as the second agument to
+    `citar-add-file-function'.
+    In the default backends, this plist contains 2 properties:
+      :extension The extension of the source file if known or nil
+      :write-file A function that takes 2 arguments, DESTFILE and
+        OK-IF-ALREADY-EXISTS. When called, it should write the source
+        into DESTFILE and if DESTFILE exists, decide what to do according
+        to OK-IF-ALREADY-EXISTS. \(See the documentation of `copy-file'
+        for the behavior of this variable\)"
   :group 'citar
-  :type '(repeat (plist)))
+  :type '(repeat (list character string string function)))
 
-(defcustom citar-save-file-function #'citar-save-file
+(defcustom citar-add-file-function #'citar-save-file-to-library
   "The function to run for `citar-add-file-to-library'.
 
-This function must accept three arguments:
+This function must accept 2 arguments:
 - CITEKEY: the citekey
-- FUN: a function that takes two arguments, described below
-- INFO: a plist containing information about the file
-
-Using CITEKEY and INFO and possibly querying
-the user, this function should decide the appropriate
-destination DESTFILE to save the file.
-It should also decide what to do if DESTFILE already
-exists by choosing OK-IF-ALREADY-EXISTS.
-\(See the documentation of `copy-file' for the behavior of
-this variable\)
-
-Then it should call FUN with DESTFILE and
-OK-IF-ALREADY-EXISTS, which will save the file."
+- SOURCE-PLIST: a plist containing information about the file.
+  See the documentation of `citar-add-file-sources' for the
+  information contained in this argument."
   :group 'citar
   :type '(choice
           (function-item
            :tag "Save file as citekey.extension"
-           citar-save-file)
+           citar-save-file-to-library)
           (function :tag "Other")))
 
 (defcustom citar-notes-sources
@@ -1330,18 +1322,19 @@ getters for file, note, and link resources."
           (dolist (citekey citekeys)
             (putresult citekey (citar-get-entry citekey))))))))
 
-(defun citar-save-file (citekey fun info)
-  "Default save function for `citar-save-file-function'.
+(defun citar-save-file-to-library (citekey source-plist)
+  "Default value for `citar-add-file-function'.
 
 If there is more than one directory in `citar-library-paths',
 query the use for the directory to save.
-If no extension is provided in INFO, query the user for extension.
-Call FUN to save the file as CITEKEY.EXTENSION and
-if file already exists, confirm before overwriting it."
+If no extension is provided in SOURCE-PLIST, query the user
+for extension. Call the :write-file in SOURCE-PLIST to save
+the file as CITEKEY.extesntion and if file already exists,
+confirm before overwriting it."
   (let* ((directory (if (cdr citar-library-paths)
                         (completing-read "Directory: " citar-library-paths)
                       (car citar-library-paths)))
-         (extension (or (plist-get info :extension)
+         (extension (or (plist-get source-plist :extension)
                         (read-string "File extension: ")))
          (destfile (expand-file-name citekey directory))
          (destfile (if (string-empty-p extension)
@@ -1349,46 +1342,47 @@ if file already exists, confirm before overwriting it."
                      (concat destfile "." extension)))
          ;; an integer means to confirm before overwriting
          (ok-if-already-exists 1))
-    (funcall fun destfile ok-if-already-exists)))
+    (funcall (plist-get source-plist :write-file)
+             destfile ok-if-already-exists)))
 
-(defun citar-add-file--from-buffer (_citekey)
-  "Add file to library from buffer.
-
-See the documentation for `cita-add-file-sources' for more details."
-  (let* ((buf (get-buffer (read-buffer "Add file buffer: " (current-buffer))))
-         (fun `(lambda (destfile ok-if-already-exists)
-                 (if (and (not ok-if-already-exists)
-                          (file-exists-p destfile))
-                     (signal 'file-already-exists
-                             (list "File already exists" destfile))
-                   (with-current-buffer ,buf
-                     (write-file destfile (integerp ok-if-already-exists))))))
-         (info (list :extension
-                     (when (buffer-file-name buf)
-                       (file-name-extension (buffer-file-name buf))))))
-    (cons fun info)))
-
-(defun citar-add-file--from-file (_citekey)
-  "Add an existing file to library by copying it.
+(defun citar-add-file-plist--from-buffer (_citekey)
+  "Source plist for adding a file to library from buffer.
 
 See the documentation for `cita-add-file-sources' for more details."
-  (let* ((file (read-file-name "Add file: " nil nil t))
-         (fun `(lambda (destfile ok-if-already-exists)
-                 (copy-file ,file destfile ok-if-already-exists)))
-         (info (list :extension (file-name-extension file))))
-    (cons fun info)))
+  (let* ((buf (get-buffer (read-buffer "Add file buffer: " (current-buffer)))))
+    (list :write-file
+          `(lambda (destfile ok-if-already-exists)
+             (if (and (not ok-if-already-exists)
+                      (file-exists-p destfile))
+                 (signal 'file-already-exists
+                         (list "File already exists" destfile))
+               (with-current-buffer ,buf
+                 (write-file destfile (integerp ok-if-already-exists)))))
+          :extension
+          (when (buffer-file-name buf)
+            (file-name-extension (buffer-file-name buf))))))
 
-(defun citar-add-file--from-url (_citekey)
-  "Add file to library from url.
+(defun citar-add-file-plist--from-file (_citekey)
+  "Source plist for adding an existing file to library by copying it.
+
+See the documentation for `cita-add-file-sources' for more details."
+  (let* ((file (read-file-name "Add file: " nil nil t)))
+    (list :write-file
+          `(lambda (destfile ok-if-already-exists)
+             (copy-file ,file destfile ok-if-already-exists))
+          :extension (file-name-extension file))))
+
+(defun citar-add-file-plist--from-url (_citekey)
+  "Source plist for adding a file to library from url.
 
 See the documentation for `cita-add-file-sources' for more details."
   (let* ((url (read-string "Add file URL: "))
-         (fun `(lambda (destfile ok-if-already-exists)
-                 (url-copy-file ,url destfile ok-if-already-exists)))
          ;; TODO: Use Content-Type HTTP response header to guess file extension
-         (dot-ext (url-file-extension url))
-         (info (list :extension (when (> (length dot-ext) 1) (substring dot-ext 1)))))
-    (cons fun info)))
+         (dot-ext (url-file-extension url)))
+    (list :write-file
+          `(lambda (destfile ok-if-already-exists)
+             (url-copy-file ,url destfile ok-if-already-exists))
+          :extension (when (> (length dot-ext) 1) (substring dot-ext 1)))))
 
 ;;; Format and display field values
 
@@ -1743,32 +1737,15 @@ ARG is forwarded to the mode-specific insertion function given in
 The FILE can be added from an open buffer, a file path, or a
 URL."
   (interactive (list (citar-select-ref)))
-  (citar--check-configuration 'citar-library-paths 'citar-save-file-function)
+  (citar--check-configuration 'citar-library-paths 'citar-add-file-sources
+                              'citar-add-file-function)
   (unless citar-library-paths
     (user-error "Make sure `citar-library-paths' is non-nil"))
   (unless citar-add-file-sources
     (user-error "Make sure `citar-add-file-sources' is non-nil"))
-  (pcase-let* ((prompt
-                (concat
-                 "Add file from "
-                 (when (cdr citar-add-file-sources)
-                   (concat
-                    (let ((len (length citar-add-file-sources)))
-                      (string-join (mapcar (lambda (it) (plist-get it :name))
-                                           (seq-subseq citar-add-file-sources 0 (1- len)))
-                                   ", "))
-                    ", or "))
-                 (plist-get (car (last citar-add-file-sources)) :name) "?"))
-               (options (mapcar (lambda (it)
-                                  (let ((name (plist-get it :name)))
-                                    (string-match "\\[\\(.\\)]" name)
-                                    (string-to-char (match-string 1 name))))
-                                citar-add-file-sources))
-               (response (read-char-choice prompt options))
-               (source (nth (seq-position options response)
-                            citar-add-file-sources))
-               (`(,fun . ,info) (funcall (plist-get source :function) citekey)))
-    (funcall citar-save-file-function citekey fun info)))
+  (let ((source (read-multiple-choice "Add file from" citar-add-file-sources)))
+    (funcall citar-add-file-function
+             citekey (funcall (nth 3 source) citekey))))
 
 ;;;###autoload
 (defun citar-run-default-action (citekeys)
@@ -1802,9 +1779,20 @@ VARIABLES should be the names of Citar customization variables."
         ((or 'citar-has-files-functions 'citar-get-files-functions 'citar-file-parser-functions)
          (unless (and (listp value) (seq-every-p #'functionp value))
            (error "`%s' should be a list of functions: %S" variable `',value)))
-        ((or 'citar-note-format-function 'citar-save-file-function)
+        ((or 'citar-note-format-function 'citar-add-file-function)
          (unless (functionp value)
            (error "`%s' should be a function: %S" variable `',value)))
+        ('citar-add-file-sources
+         (unless (listp value)
+           (error "`%s' should be a list: %S" variable `',value))
+         (unless (seq-every-p (lambda (x)
+                                (and (= 4 (length x))
+                                     (characterp (nth 0 x))
+                                     (stringp (nth 1 x))
+                                     (stringp (nth 2 x))
+                                     (functionp (nth 3 x))))
+                              value)
+           (error "Every element of `%s' should be a list of the type (character string string function): %S" variable `',value)))
         (_
          (error "Unknown variable in citar--check-configuration: %s" variable))))))
 
