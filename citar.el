@@ -1372,15 +1372,15 @@ See the documentation for `citar-add-file-sources' for more details."
                        (file-equal-p destfile buffer-file-name))
                   (if (not (buffer-modified-p))
                       (message "%s exists and the current buffer is visiting it."
-		               (file-name-nondirectory buffer-file-name))
+                               (file-name-nondirectory buffer-file-name))
                     (unless ok-if-already-exists
                       (signal 'file-already-exists
                               (list "File already exists" destfile)))
                     (when (or (not (integerp ok-if-already-exists))
                               (yes-or-no-p
-	                       (format
-		                "%s exists and the current buffer is visiting it.  Save anyway? "
-		                (file-name-nondirectory buffer-file-name))))
+                               (format
+                                "%s exists and the current buffer is visiting it.  Save anyway? "
+                                (file-name-nondirectory buffer-file-name))))
                       (save-buffer)))
                 (write-region nil nil destfile
                               (if ok-if-already-exists
