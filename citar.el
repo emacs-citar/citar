@@ -1807,7 +1807,8 @@ VARIABLES should be the names of Citar customization variables."
                                      (stringp (nth 2 x))
                                      (functionp (nth 3 x))))
                               value)
-           (error "Every element of `%s' should be a list of the type (character string string function): %S" variable `',value)))
+           (error "Every element of `%s' should be a list of the type (character string string function): %S"
+                  variable `',value)))
         (_
          (error "Unknown variable in citar--check-configuration: %s" variable))))))
 
