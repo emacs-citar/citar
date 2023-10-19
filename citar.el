@@ -1364,15 +1364,30 @@ SOURCE-PLIST must be as specified in the documentation of
   "Include in `citar-add-file-sources' to add contents of current buffer.
 
 See the documentation for `citar-add-file-sources' for more details."
-  (let* ((buf (get-buffer (read-buffer "Add file buffer: " (current-buffer)))))
+  (let ((buf (get-buffer (read-buffer "Add file buffer: " (current-buffer)))))
     (list :write-file
           (lambda (destfile ok-if-already-exists)
             (with-current-buffer buf
-              (write-region nil nil destfile (if ok-if-already-exists
-                                                 ;; Confirm if integer, otherwise overwrite silently:
-                                                 (integerp ok-if-already-exists)
-                                               ;; Otherwise signal 'file-already-exists error
-                                               'excl))))
+              (if (and buffer-file-name
+                       (file-equal-p destfile buffer-file-name))
+                  (if (not (buffer-modified-p))
+                      (message "%s exists and the current buffer is visiting it."
+		               (file-name-nondirectory buffer-file-name))
+                    (unless ok-if-already-exists
+                      (signal 'file-already-exists
+                              (list "File already exists" destfile)))
+                    (when (or (not (integerp ok-if-already-exists))
+                              (yes-or-no-p
+	                       (format
+		                "%s exists and the current buffer is visiting it.  Save anyway? "
+		                (file-name-nondirectory buffer-file-name))))
+                      (save-buffer)))
+                (write-region nil nil destfile
+                              (if ok-if-already-exists
+                                  ;; Confirm if integer, otherwise overwrite silently:
+                                  (integerp ok-if-already-exists)
+                                ;; Otherwise signal 'file-already-exists error
+                                'excl)))))
           :extension
           (when (buffer-file-name buf)
             (file-name-extension (buffer-file-name buf))))))
@@ -1381,7 +1396,7 @@ See the documentation for `citar-add-file-sources' for more details."
   "Include in `citar-add-file-sources' to add copy of existing file.
 
 See the documentation for `citar-add-file-sources' for more details."
-  (let* ((file (read-file-name "Add file: " nil nil t)))
+  (let ((file (read-file-name "Add file: " nil nil t)))
     (list :write-file
           (lambda (destfile ok-if-already-exists)
             (copy-file file destfile ok-if-already-exists))
