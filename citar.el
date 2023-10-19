@@ -1367,12 +1367,12 @@ See the documentation for `citar-add-file-sources' for more details."
   (let* ((buf (get-buffer (read-buffer "Add file buffer: " (current-buffer)))))
     (list :write-file
           (lambda (destfile ok-if-already-exists)
-            (if (and (not ok-if-already-exists)
-                     (file-exists-p destfile))
-                (signal 'file-already-exists
-                        (list "File already exists" destfile))
-              (with-current-buffer buf
-                (write-file destfile (integerp ok-if-already-exists)))))
+            (with-current-buffer buf
+              (write-region nil nil destfile (if ok-if-already-exists
+                                                 ;; Confirm if integer, otherwise overwrite silently:
+                                                 (integerp ok-if-already-exists)
+                                               ;; Otherwise signal 'file-already-exists error
+                                               'excl))))
           :extension
           (when (buffer-file-name buf)
             (file-name-extension (buffer-file-name buf))))))
