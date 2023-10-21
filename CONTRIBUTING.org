@@ -6,7 +6,7 @@
 If you would like to contribute, details:
 
 - For more significant potential changes, file an issue first to get feedback on the basic idea.
-- If you do submit a PR, follow the [[https://github.com/bbatsov/emacs-lisp-style-guide][elisp style guide]], and [[https://cbea.ms/git-commit/][these suggestions]] on git commit messages.
+- If you do submit a PR, follow the [[https://github.com/bbatsov/emacs-lisp-style-guide][elisp style guide]], and use [[https://www.conventionalcommits.org/en/v1.0.0/][conventional commits]].
 - For working on lists and such, we primarily use the =seq= functions, and occassionally ~dolist~.
 
 ** Basic Architecture
