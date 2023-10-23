@@ -191,6 +191,7 @@ references as a string."
 (defcustom citar-display-transform-functions
   ;; TODO change this name, as it might be confusing?
   `((sn . (citar--shorten-names))
+    (fn . (citar--full-names))
     (etal . (citar--shorten-names 3 "&")))
   "Configure transformation of field display values from raw values.
 
@@ -1416,9 +1417,37 @@ See the documentation for `citar-add-file-sources' for more details."
 
 ;;; Format and display field values
 
-(defun citar--shorten-name-position (namelist name)
+(defun citar--render-name-position (namelist name)
   "Return NAME position in a NAMELIST."
   (+ (seq-position namelist name) 1))
+
+(defun citar--render-names (namestr name-func &optional truncate andstr)
+  "Return a list of names from a list of full NAMESTR.
+
+Each name will be processed by NAME-FUNC.
+
+With an integer TRUNCATE, will shorten the list, and ANDSTR will
+replace last comma."
+  (let* ((namelist (split-string (or namestr "") " and "))
+         (namelength (length namelist))
+         (tnamelist (seq-take namelist (or truncate namelength)))
+         (tnamelength (length tnamelist)))
+    (mapconcat
+     (lambda (n)
+       (let* ((name (funcall name-func n))
+              (pos (citar--render-name-position tnamelist n))
+              (suffix
+               (cond
+                ;; if last name in the list and we're truncating add et al.; otherwise, no suffix
+                ((equal pos tnamelength)
+                 (if (< tnamelength namelength) " et al." ""))
+                ;; if second to last in the list, and ANDSTR, use that
+                ((and andstr (equal pos (- tnamelength 1)))
+                 (concat " " andstr " "))
+                ;; otherwise, use a comma
+                (t ", "))))
+         (concat name suffix)))
+     tnamelist "")))
 
 (defun citar--shorten-name (name)
   "Return family NAME in `family, given' string.
@@ -1433,26 +1462,23 @@ personal names of the form \"family, given\".
 
 With an integer TRUNCATE, will shorten the list, and ANDSTR will
 replace last comma."
-  (let* ((namelist (split-string (or namestr "") " and "))
-         (namelength (length namelist))
-         (tnamelist (seq-take namelist (or truncate namelength)))
-         (tnamelength (length tnamelist)))
-    (mapconcat
-     (lambda (n)
-       (let* ((shortname (citar--shorten-name n))
-              (pos (citar--shorten-name-position tnamelist n))
-              (suffix
-               (cond
-                ;; if last name in the list and we're truncating add et al.; otherwise, no suffix
-                ((equal pos tnamelength)
-                 (if (< tnamelength namelength) " et al." ""))
-                ;; if second to last in the list, and ANDSTR, use that
-                ((and andstr (equal pos (- tnamelength 1)))
-                 (concat " " andstr " "))
-                ;; otherwise, use a comma
-                (t ", "))))
-         (concat shortname suffix)))
-     tnamelist "")))
+  (citar--render-names namestr #'citar--shorten-name truncate andstr))
+
+(defun citar--full-name (name)
+  "Return `given family' in `family, given' string NAME.
+
+Otherwise, return as is."
+  (let ((split-names (split-string name ", ")))
+    (if (> (length split-names) 1)
+        (concat (cadr split-names) " " (car split-names))
+      name)))
+
+(defun citar--full-names (namestr &optional truncate andstr)
+  "Return a list of full names from a list of full NAMESTR.
+
+With an integer TRUNCATE, will shorten the list, and ANDSTR will
+replace last comma."
+  (citar--render-names namestr #'citar--full-name truncate andstr))
 
 (defun citar--fields-for-format (template)
   "Return list of fields for TEMPLATE."
