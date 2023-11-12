@@ -50,7 +50,16 @@
     (should (equal "foob…baz…" (citar-format--star-widths 3 strings nil "…")))
     (should (ert-equal-including-properties
              #("foobarbazqux" 4 6 (display "…") 9 12 (display "…"))
-             (citar-format--star-widths 3 strings t "…")))))
+             (citar-format--star-widths 3 strings t "…"))))
+
+  (should (equal '((nil "author" "editor") " " (nil "year"))
+                 (citar-format--parse "${author editor} ${year}")))
+  (should (equal '((nil "author" "editor") " " ((:width 4) "year"))
+                 (citar-format--parse "${author editor} ${year:4}")))
+  (should (equal '(((:width *) "author" "editor") " " ((:width 4) "year"))
+                 (citar-format--parse "${author editor:*} ${year:4}")))
+  (should (equal '(((:width * :transform (citar--shorten-names)) "author" "editor") " " ((:width 4) "year"))
+                 (citar-format--parse "${author editor: * % sn} ${year:4}"))))
 
 (provide 'citar-format-test)
 ;;; citar-format-test.el ends here

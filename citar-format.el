@@ -133,11 +133,15 @@ for the meaning of HIDE-ELIDED and ELLIPSIS."
 
 (defun citar-format--parse (format-string)
   "Parse FORMAT-STRING."
-  (let ((regex (concat "\\${"                ; ${
-                       "\\(.*?\\)"           ; field names
-                       "\\(?::[[:blank:]]*"  ; : + space
-                       "\\(.*?\\)"           ; format spec
-                       "[[:blank:]]*\\)?}")) ; space + }
+  (let ((regex (concat "\\${"               ; ${
+                       "\\(.*?\\)"          ; field names
+                       "\\(?::[[:blank:]]*" ; : + space
+                       "\\(.*?\\)\\)?"      ; field width
+                       "[[:blank:]]*"       ; space
+                       "\\(?:%[[:blank:]]*" ; % + space
+                       "\\(.*?\\)\\)?"      ; display transform
+                       "[[:blank:]]*"       ; space
+                       "}"))                ; }
         (position 0)
         (fieldspecs nil))
     (while (string-match regex format-string position)
@@ -145,18 +149,16 @@ for the meaning of HIDE-ELIDED and ELLIPSIS."
              (end (match-end 0))
              (textprops (text-properties-at begin format-string))
              (fieldnames (match-string-no-properties 1 format-string))
-             (spec (match-string-no-properties 2 format-string))
-             (transform
-              (let ((tsym
-                     (when spec
-                       (cadr (split-string spec "%")))))
-                (when tsym
-                  (citar-format--get-transform (intern tsym)))))
+             (fieldwidth (match-string-no-properties 2 format-string))
+             (transformkey (match-string-no-properties 3 format-string))
              (width (cond
-                     ((or (null spec) (string-empty-p spec)
-                          (= 0 (string-to-number spec))) nil)
-                     ((string-equal spec "*") '*)
-                     (t (string-to-number spec)))))
+                     ((string-equal fieldwidth "*") '*)
+                     ((or (null fieldwidth) (string-empty-p fieldwidth)
+                          (= 0 (string-to-number fieldwidth))) nil)
+                     (t (string-to-number fieldwidth))))
+             (transform
+              (when (and transformkey (not (string-empty-p transformkey)))
+                (citar-format--get-transform (intern transformkey)))))
         (when (< position begin)
           (push (substring format-string position begin) fieldspecs))
         (push (cons (nconc (when width `(:width ,width))
