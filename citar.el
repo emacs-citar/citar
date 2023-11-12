@@ -962,7 +962,7 @@ visible in the completion UI."
 Return a hash table with the keys being completion candidate
 strings and values being citation keys.
 
-Return nil if `citar-bibliographies' returns nil."
+Return nil if `citar-bibliography' returns nil."
   ;; Populate bibliography cache.
   (when-let ((bibs (citar--bibliographies)))
     (let* ((citar--entries (citar-cache--entries bibs))
