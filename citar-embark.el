@@ -10,7 +10,7 @@
 ;;
 ;; Version: 1.0
 ;; Keywords: bib extensions
-;; Homepage: https://github.com/emacs-citar/citar-embark
+;; Homepage: https://github.com/emacs-citar/citar
 ;; Package-Requires: ((emacs "27.1") (embark "0.17") (citar "0.9.7"))
 ;;
 ;; This file is not part of GNU Emacs.
