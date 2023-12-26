@@ -83,7 +83,7 @@ accepted.")
                 files))
          (style
           (if (= (length list) 1)
-            (car list)
+              (caar list)
             (completing-read "Select CSL style file: " list nil t)))
          (file (cdr (assoc style list))))
     (setq citar-citeproc-csl-style file)))
