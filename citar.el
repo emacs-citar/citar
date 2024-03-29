@@ -81,13 +81,12 @@ buffer.")
 
 ;;;; Bibliography, file, and note paths
 
-;;;###autoload (put 'citar-bibliography 'safe-local-variable (lambda (val) (cl-every #'stringp val)))
+;;;###autoload (put 'citar-bibliography 'safe-local-variable (lambda (val) (eq val nil)))
 (defcustom citar-bibliography nil
   "A list of bibliography files."
   :group 'citar
   :type '(repeat file))
 
-;;;###autoload (put 'citar-library-paths 'safe-local-variable (lambda (val) (cl-every #'stringp val)))
 (defcustom citar-library-paths nil
   "A list of files paths for related PDFs, etc."
   :group 'citar
@@ -103,7 +102,6 @@ When nil, the function will not filter the list of files."
   :group 'citar
   :type '(repeat string))
 
-;;;###autoload (put 'citar-notes-paths 'safe-local-variable (lambda (val) (cl-every #'stringp val)))
 (defcustom citar-notes-paths nil
   "A list of file paths for bibliographic notes."
   :group 'citar
