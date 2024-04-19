@@ -583,6 +583,7 @@ When nil, all citar commands will use `completing-read'."
 
 (defvar citar-map
   (let ((map (make-sparse-keymap)))
+    (define-key map (kbd "a") #'citar-add-file-to-library)
     (define-key map (kbd "c") #'citar-insert-citation)
     (define-key map (kbd "k") #'citar-insert-keys)
     (define-key map (kbd "r") #'citar-copy-reference)
