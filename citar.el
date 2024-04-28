@@ -84,11 +84,13 @@ buffer.")
 (defcustom citar-bibliography nil
   "A list of bibliography files."
   :group 'citar
+  :safe (lambda (val) (seq-every-p #'stringp val))
   :type '(repeat file))
 
 (defcustom citar-library-paths nil
   "A list of files paths for related PDFs, etc."
   :group 'citar
+  :safe (lambda (val) (seq-every-p #'stringp val))
   :type '(repeat directory))
 
 (defcustom citar-library-file-extensions nil
@@ -104,6 +106,7 @@ When nil, the function will not filter the list of files."
 (defcustom citar-notes-paths nil
   "A list of file paths for bibliographic notes."
   :group 'citar
+  :safe (lambda (val) (seq-every-p #'stringp val))
   :type '(repeat directory))
 
 (defcustom citar-crossref-variable "crossref"
