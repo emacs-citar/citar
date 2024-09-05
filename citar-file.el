@@ -80,6 +80,7 @@ separator that does not otherwise occur in citation keys."
 
 (defvar citar-notes-paths)
 (defvar citar-library-paths)
+(defvar citar-library-paths-recursive)
 (defvar citar-library-file-extensions)
 (defvar citar-note-format-function)
 
