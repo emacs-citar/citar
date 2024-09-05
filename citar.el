@@ -91,6 +91,11 @@ buffer.")
   :group 'citar
   :type '(repeat directory))
 
+(defcustom citar-library-paths-recursive nil
+  "Whether library paths should be searched recursively."
+  :group 'citar
+  :type 'boolean)
+
 (defcustom citar-library-file-extensions nil
   "List of file extensions to filter for related files.
 
