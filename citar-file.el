@@ -180,11 +180,14 @@ whether entries have associated files."
 
 (defun citar--library-dirs ()
   "Return all directories to be searched for library files."
-  (mapcar (lambda (dir)
-            (cons dir (when citar-library-paths-recursive
-                        (directory-files-recursively dir "" :include-directories
-                                                     #'file-directory-p))))
-          citar-library-paths))
+  (apply #'append
+         (mapcar (lambda (dir)
+                   (cons dir (when citar-library-paths-recursive
+                               (seq-filter #'file-directory-p
+                                           (directory-files-recursively dir
+                                                                        ""
+                                                                        :include-directories)))))
+                 citar-library-paths)))
 
 (defun citar-file--get-from-file-field (&optional keys)
   "Return files for KEYS by parsing the `citar-file-variable' field.
@@ -221,7 +224,7 @@ files associated with KEYS."
   "Return list of files for KEYS in ENTRIES."
   (citar--check-configuration 'citar-library-paths 'citar-library-file-extensions)
   (citar-file--directory-files
-   citar-library-paths keys citar-library-file-extensions
+   (citar--library-dirs) keys citar-library-file-extensions
    citar-file-additional-files-separator))
 
 (defun citar-file--make-filename-regexp (keys extensions &optional additional-sep)
