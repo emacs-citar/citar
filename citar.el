@@ -1352,9 +1352,10 @@ it.
 
 SOURCE-PLIST must be as specified in the documentation of
 `citar-add-file-sources'."
-  (let* ((directory (if (cdr citar-library-paths)
-                        (completing-read "Directory: " citar-library-paths)
-                      (car citar-library-paths)))
+  (let* ((dirs (citar-file--library-dirs))
+         (directory (if (cdr dirs)
+                        (completing-read "Directory: " dirs)
+                      (car dirs)))
          (extension (or (plist-get source-plist :extension)
                         (read-string "File extension: ")))
          (destfile (expand-file-name citekey directory))

@@ -178,13 +178,16 @@ whether entries have associated files."
   (when citar-file-variable
     (lambda (citekey) (and (citar-get-value citar-file-variable citekey) t))))
 
-(defun citar--library-dirs ()
+(defun citar-file--library-dirs ()
   "Return all directories to be searched for library files."
-  (mapcar (lambda (dir)
-            (cons dir (when citar-library-paths-recursive
-                        (directory-files-recursively dir "" :include-directories
-                                                     #'file-directory-p))))
-          citar-library-paths))
+  (apply #'append
+         (mapcar (lambda (dir)
+                   (cons dir
+                         (when citar-library-paths-recursive
+                           (seq-filter #'file-directory-p
+                                       (directory-files-recursively dir ""
+                                                                    :include-directories)))))
+                 citar-library-paths)))
 
 (defun citar-file--get-from-file-field (&optional keys)
   "Return files for KEYS by parsing the `citar-file-variable' field.
@@ -200,7 +203,7 @@ files associated with KEYS."
   (when-let ((filefield citar-file-variable))
     (citar--check-configuration 'citar-library-paths 'citar-library-file-extensions
                                 'citar-file-parser-functions)
-    (let ((dirs (append (citar--library-dirs)
+    (let ((dirs (append (citar-file--library-dirs)
                         (mapcar #'file-name-directory (citar--bibliography-files)))))
       (citar--get-resources-using-function
        (lambda (citekey entry)
@@ -221,7 +224,7 @@ files associated with KEYS."
   "Return list of files for KEYS in ENTRIES."
   (citar--check-configuration 'citar-library-paths 'citar-library-file-extensions)
   (citar-file--directory-files
-   citar-library-paths keys citar-library-file-extensions
+   (citar-file--library-dirs) keys citar-library-file-extensions
    citar-file-additional-files-separator))
 
 (defun citar-file--make-filename-regexp (keys extensions &optional additional-sep)
