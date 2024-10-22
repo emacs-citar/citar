@@ -361,7 +361,7 @@ For example, if point:
 - is on an existing citation-reference, you will be prompted to replace it
 - follows or precedes a citation-reference, you will be prompted to add a new citation-reference
 
-The "activate processor" runs the list of functions in ~citar-org-activation-functions~, which by default is the ~basic~ processor from ~oc-basic~ to provide fontification, and also a little function that adds a keymap (~citar-org-citation-map~) for editing citations at point.
+The "activate processor" runs the list of functions in ~citar-org-activation-functions~, which by default uses ~citar-org-cite-basic-activate~, a version of the ~basic~ processor from ~oc-basic~ to provide fontification that leverages citar's performant caching, as well as a little function that adds a keymap (~citar-org-citation-map~) for editing citations at point.
 The ~citar-org-citation-map~ keymap includes the following bindings that provide additional citation and citation-reference editing options.
 
 | key         | binding                         | description                                         |
