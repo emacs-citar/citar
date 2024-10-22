@@ -62,7 +62,7 @@ If nil, use `org-cite-supported-styles'."
   :type '(repeat :tag "org-cite export processor" symbol))
 
 (defcustom citar-org-activation-functions
-  '(org-cite-basic-activate
+  '(citar-org-cite-basic-activate
     citar-org-activate-keymap)
   "List of activation functions for a citation.
 Each function takes one argument, a citation."
