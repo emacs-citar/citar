@@ -21,15 +21,20 @@
 
 (require 'citar)
 (require 'org)
-(require 'org-element)
+(if (not (require 'org-element-ast nil t))
+    ;; they moved the functions we need to this file
+    ;; if it's not present, fallback to the old one
+    (require 'org-element))
 (require 'org-id)
 (require 'oc)
 (require 'oc-basic)
 (require 'oc-csl)
 
 (declare-function org-open-at-point "org")
-(declare-function org-element-property "org-element")
-(declare-function org-element-type "org-element")
+;; we need to account for the move of these functions to a different file
+(declare-function org-element-property nil)
+(declare-function org-element-type nil)
+
 (declare-function org-cite-make-insert-processor "oc")
 (declare-function org-cite-get-references "oc")
 (declare-function embark-act "ext:embark")
