@@ -62,7 +62,7 @@ If nil, use `org-cite-supported-styles'."
   :type '(repeat :tag "org-cite export processor" symbol))
 
 (defcustom citar-org-activation-functions
-  '(org-cite-basic-activate
+  '(citar-org-cite-basic-activate
     citar-org-activate-keymap)
   "List of activation functions for a citation.
 Each function takes one argument, a citation."
@@ -243,6 +243,54 @@ strings by style."
   "Return local bib file paths for org buffer."
   (seq-difference (org-cite-list-bibliography-files)
                   org-cite-global-bibliography))
+
+(defun citar-org-cite-basic-activate (citation)
+  "Set various text properties on CITATION object.
+Fontify whole citation with org-cite face. Fontify key with error face
+when it does not belong to known keys. Otherwise, use org-cite-key face.
+
+Moreover, when mouse is on a known key, display the corresponding
+bibliography. On a wrong key, suggest a list of possible keys, and offer
+to substitute one of them with a mouse click.
+
+This function activation function is meant to be added to
+`citar-org-activation-functions'. It is a modified version of the
+built-in `org-cite-basic-activate' that is more performant by leveraging
+citar's caching."
+  (pcase-let ((`(,beg . ,end) (org-cite-boundaries citation))
+              ;; Use citar to retrieve all entries' keys
+              (keys (let (keys)
+                      (maphash (lambda (key _value) (push key keys))
+                               (citar-get-entries))
+                      keys)))
+    (put-text-property beg end 'font-lock-multiline t)
+    (add-face-text-property beg end 'org-cite)
+    (dolist (reference (org-cite-get-references citation))
+      (pcase-let* ((`(,beg . ,end) (org-cite-key-boundaries reference))
+                   (key (org-element-property :key reference)))
+        ;; Highlight key on mouse over.
+        (put-text-property beg end
+                           'mouse-face
+                           org-cite-basic-mouse-over-key-face)
+        (if (member key keys)
+            ;; Activate a correct key. Face is `org-cite-key' and `help-echo' displays bibliography entry, for
+            ;; reference. <mouse-1> calls `org-open-at-point'.
+            (let* ((entry (string-trim (citar-format-reference (list key)))) ; Use citar
+                   (bibliography-entry
+                    (org-element-interpret-data entry)))
+              (add-face-text-property beg end 'org-cite-key)
+              (put-text-property beg end 'help-echo bibliography-entry)
+              (org-cite-basic--set-keymap beg end nil))
+          ;; Activate a wrong key. Face is `error', `help-echo' displays possible suggestions.
+          (add-face-text-property beg end 'error)
+          (let ((close-keys (org-cite-basic--close-keys key keys)))
+            (when close-keys
+              (put-text-property beg end 'help-echo
+                                 (concat "Suggestions (mouse-1 to substitute): "
+                                         (mapconcat #'identity close-keys " "))))
+            ;; When the are close know keys, <mouse-1> provides completion to fix the current one. Otherwise,
+            ;; call `org-cite-insert'.
+            (org-cite-basic--set-keymap beg end (or close-keys 'all))))))))
 
 ;;; Org note function
 
