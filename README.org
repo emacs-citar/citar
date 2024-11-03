@@ -28,7 +28,7 @@ Citar provides a highly-configurable =completing-read= front-end to browse and a
   - major-mode adapters
   - entry-opening, to go to the original entry data
 
-Here's a screenshot with [[https://github.com/minad/vertico][vertico]] and symbol customization [[https://github.com/bdarcus/citar#icons][noted below]].
+Here's a screenshot with [[https://github.com/minad/vertico][vertico]] and symbol customization [[https://github.com/emacs-citar/citar?tab=readme-ov-file#rich-ui][noted below]].
 
 #+caption: vertico with citar
 [[file:images/vertico.png]]
