@@ -72,7 +72,7 @@ entry when it is enabled."
   "Local bibliographic for latex retrieved using reftex."
   (ignore-errors
     (reftex-access-scan-info t)
-    (reftex-get-bibfile-list)))
+    (copy-sequence (reftex-get-bibfile-list))))
 
 ;;;###autoload
 (defun citar-latex-key-at-point ()
