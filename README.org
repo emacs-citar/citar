@@ -333,6 +333,14 @@ If a bib file changes, the cache will automatically update the next time you run
 Note that cached data preformatted completion candidates are independently tracked by file.
 So, for example, if you have one very large bibliography file that changes a lot, you might consider splitting into one large file that is more stable, and one-or-more smaller ones that change more frequently.
 
+*** Reftex and local bibliographic files in LaTeX
+
+Citar relies on the builtin library reftex to find the bibliographic files included in a LaTeX document.
+Reftex scan the LaTeX document to find these files and caches them.
+If you find that Citar isn't picking up bibliographic entries in the included files it is most likely due to the fact that reftex needs to do a rescan.
+You can use ~reftex-parse-all~ or ~reftex-parse-one~ to do such a scan interactively.
+This should be only rarely needed.
+
 ** Notes
 
 Citar offers configurable note-taking and access integration.
