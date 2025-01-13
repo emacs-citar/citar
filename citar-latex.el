@@ -15,7 +15,6 @@
 
 (require 'citar)
 (require 'tex nil t)
-(require 'reftex-parse)
 (require 'reftex-cite)
 
 (defvar TeX-esc)
@@ -33,7 +32,8 @@
       "citeauthor*" "Citeauthor*" "citetitle" "citetitle*" "citeyear"
       "citeyear*" "citedate" "citedate*" "citeurl" "fullcite"
       "footfullcite" "notecite" "Notecite" "pnotecite" "Pnotecite"
-      "fnotecite") . (["Prenote"] ["Postnote"] t))
+      "fnotecite")
+     . (["Prenote"] ["Postnote"] t))
     (("nocite" "supercite") . nil))
   "Citation commands and their argument specs.
 
@@ -70,9 +70,7 @@ entry when it is enabled."
 ;;;###autoload
 (defun citar-latex-local-bib-files ()
   "Local bibliographic for latex retrieved using reftex."
-  (ignore-errors
-    (reftex-access-scan-info t)
-    (copy-sequence (reftex-get-bibfile-list))))
+  (ignore-errors (copy-sequence (reftex-get-bibfile-list))))
 
 ;;;###autoload
 (defun citar-latex-key-at-point ()
