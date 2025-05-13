@@ -341,6 +341,10 @@ If you find that Citar isn't picking up bibliographic entries in the included fi
 You can use ~reftex-parse-all~ or ~reftex-parse-one~ to do such a scan interactively.
 This should be only rarely needed.
 
+When Citar is using multiple bibliographies, entries in higher-priority bibliographies (the local ones) completely override entries in global bibliographies with the same key. 
+As a consequence, if your local and global bibliographies have the same keys, and the ~file~ field exists only in the global bibliography, you will not have access to the ~file~ field ---e.g., the PDFs. 
+In this case, you might want to remove the local files or advice ~citar-latex-local-bib-files~ to prevent the use of local files ---see details in [[https://github.com/emacs-citar/citar/issues/859][issue 859]].
+
 ** Notes
 
 Citar offers configurable note-taking and access integration.
