@@ -132,6 +132,15 @@ specifies additional fields to include."
   :group 'citar
   :type '(repeat string))
 
+(defcustom citar-cache-preserve-markup nil
+  "When non-nil, preserve TeX markup in bibliography fields.
+
+This can be useful for preserving capitalization in titles, for
+example, but it may have a performance impact when caching large
+bibliographies."
+  :group 'citar
+  :type 'boolean)
+
 ;;;; Displaying completions and formatting
 
 (defcustom citar-templates
