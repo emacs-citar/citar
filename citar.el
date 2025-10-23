@@ -345,6 +345,11 @@ always prompt to select."
                (function-item citar-open-notes)
                (function-item citar-open-note))))
 
+(defcustom citar-bibtex-no-export-fields nil
+  "A list of fields that should be ignored when exporting BibTeX entries."
+  :group 'citar
+  :type '(repeat string))
+
 ;;;; File, note, and URL handling
 
 (defcustom citar-open-resources '(:files :links :notes :create-notes)
