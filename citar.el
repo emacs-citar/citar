@@ -1681,6 +1681,12 @@ including the citekeys, is maintained in Zotero with Better BibTeX."
             (dolist (bib-file bibtex-files)
               (insert-file-contents bib-file))
             (bibtex-search-entry citekey)
+            (dolist (field citar-bibtex-no-export-fields)
+              (let ((position (bibtex-search-forward-field
+                               field t)))
+                (when position
+                  (delete-region (caar position)
+                                 (car (last position))))))
             (let ((beg (bibtex-beginning-of-entry))
                   (end (bibtex-end-of-entry)))
               (buffer-substring-no-properties beg end)))))
