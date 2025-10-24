@@ -854,7 +854,7 @@ CATEGORY is one of:
 
 (defun citar--annotate-note (candidate)
   "Annotate note CANDIDATE."
-  (when-let (((eq 'note (get-text-property 0 'citar--resource candidate)))
+  (when-let* (((eq 'note (get-text-property 0 'citar--resource candidate)))
              (annotate (citar--get-notes-config :annotate)))
     (funcall annotate (substring-no-properties candidate))))
 
@@ -868,10 +868,10 @@ Return nil if there are no resources.
 Use `completing-read' to prompt for a resource, unless there is
 only one resource and `citar-open-prompt' is t or contains
 `this-command'. Return nil if the user declined to choose."
-  (when-let ((resources (citar--get-resource-candidates citekeys :files files :links links
+  (when-let* ((resources (citar--get-resource-candidates citekeys :files files :links links
                                                         :notes notes :create-notes create-notes)))
     (pcase-let ((`(,category . ,cands) resources))
-      (when-let ((selected
+      (when-let* ((selected
                   (if (not (or (cdr cands) (eq t citar-open-prompt) (memq this-command citar-open-prompt)))
                       (car cands)
                     (let* ((metadata `(metadata
@@ -970,7 +970,7 @@ strings and values being citation keys.
 
 Return nil if `citar-bibliography' returns nil."
   ;; Populate bibliography cache.
-  (when-let ((bibs (citar--bibliographies)))
+  (when-let* ((bibs (citar--bibliographies)))
     (let* ((citar--entries (citar-cache--entries bibs))
            (preformatted (citar-cache--preformatted bibs))
            (indicatorprocs (citar--make-indicator-processors citar-indicators))
@@ -1095,7 +1095,7 @@ was found to have a value, and VALUE is its value."
                    (citar-get-entry citekey-or-entry)
                  citekey-or-entry)))
     (seq-some (lambda (field)
-                (when-let ((value (citar-get-value field entry)))
+                (when-let* ((value (citar-get-value field entry)))
                   (cons field value)))
               fields)))
 
@@ -1185,7 +1185,7 @@ nil, return nil."
                              (let (keylinks)
                                (when entry
                                  (pcase-dolist (`(,fieldname . ,urlformat) citar-link-fields)
-                                   (when-let ((fieldvalue (citar-get-value fieldname entry)))
+                                   (when-let* ((fieldvalue (citar-get-value fieldname entry)))
                                      (push (format urlformat fieldvalue) keylinks))))
                                (nreverse keylinks)))))))
 
@@ -1206,7 +1206,7 @@ files.
 
 For example, to test whether CITEKEY has associated files:
 
-  (when-let ((hasfilesp (citar-has-files)))
+  (when-let* ((hasfilesp (citar-has-files)))
     (funcall hasfilesp CITEKEY))
 
 When testing many citekeys, call this function once and use the
@@ -1217,7 +1217,7 @@ check any bibliography entries that are cross-referenced from the
 given CITEKEY; see `citar-crossref-variable'."
   (citar--has-resources
    (mapcar (lambda (source)
-             (when-let ((hasitems (plist-get source :hasitems)))
+             (when-let* ((hasitems (plist-get source :hasitems)))
                (funcall hasitems)))
            citar-file-sources)))
 
@@ -1272,7 +1272,7 @@ the returned predicate is nil.
 When `citar-crossref-variable' is the name of a crossref field,
 the returned predicate also tests if an entry cross-references
 another entry in ENTRIES that has associated resources."
-  (when-let ((hasresourcep (if (functionp predicates)
+  (when-let* ((hasresourcep (if (functionp predicates)
                                predicates
                              (let ((predicates (remq nil predicates)))
                                (if (null (cdr predicates))
@@ -1283,10 +1283,10 @@ another entry in ENTRIES that has associated resources."
                                    (seq-some (lambda (predicate)
                                                (funcall predicate citekey))
                                              predicates)))))))
-    (if-let ((xref citar-crossref-variable))
+    (if-let* ((xref citar-crossref-variable))
         (lambda (citekey)
           (or (funcall hasresourcep citekey)
-              (when-let ((xkey (citar-get-value xref citekey)))
+              (when-let* ((xkey (citar-get-value xref citekey)))
                 (funcall hasresourcep xkey))))
       hasresourcep)))
 
@@ -1316,7 +1316,7 @@ CITEKEYS."
     (cl-flet* ((getreslists (citekey) (delq nil (mapcar (apply-partially #'gethash citekey) resources)))
                (xresources (citekey entry) (apply #'append
                                                   (nconc (getreslists citekey)
-                                                         (when-let ((xkey (and xref
+                                                         (when-let* ((xkey (and xref
                                                                                (citar-get-value xref entry))))
                                                            (getreslists xkey))))))
       (citar--get-resources-using-function #'xresources citekeys))))
@@ -1333,7 +1333,7 @@ Note: This is a helper function to make it easier to write
 getters for file, note, and link resources."
   (let ((resources (make-hash-table :test 'equal)))
     (prog1 resources
-      (cl-flet ((putresult (citekey entry) (when-let ((result (funcall func citekey entry)))
+      (cl-flet ((putresult (citekey entry) (when-let* ((result (funcall func citekey entry)))
                                              (puthash citekey result resources))))
         (if (null citekeys)
             (maphash #'putresult (citar-get-entries))
@@ -1515,7 +1515,7 @@ replace last comma."
   (interactive)
   (unless (minibufferp)
     (user-error "Command can only be used in minibuffer"))
-  (when-let ((enable-recursive-minibuffers t)
+  (when-let* ((enable-recursive-minibuffers t)
              (search (completing-read "Preset: " citar-presets)))
     (insert search)))
 
@@ -1550,7 +1550,7 @@ specifying TYPE."
   ;; it relies on RESOURCE having the `citar--resource' text property to decide which action to take. However,
   ;; `embark-act' strips text properties for interactive commands, for which it injects the target text as
   ;; minibuffer input.
-  (if-let ((opener (pcase (or type (get-text-property 0 'citar--resource resource))
+  (if-let* ((opener (pcase (or type (get-text-property 0 'citar--resource resource))
                      ('file #'citar-file-open)
                      ('url #'browse-url)
                      ('note #'citar-open-note)
@@ -1635,7 +1635,7 @@ to open from a list of all notes."
 (defun citar-open-entry-in-file (citekey)
   "Open entry for CITEKEY."
   ;; Adapted from 'bibtex-completion-show-entry'.
-  (when-let ((bib-files (citar--bibliography-files)))
+  (when-let* ((bib-files (citar--bibliography-files)))
     (catch 'break
       (dolist (bib-file bib-files)
         (let ((buf (or (get-file-buffer bib-file)
@@ -1793,7 +1793,7 @@ URL."
 (defun citar-dwim ()
   "Run the default action on citation keys found at point."
   (interactive)
-  (if-let ((citekeys (or (citar-key-at-point) (citar-citation-at-point))))
+  (if-let* ((citekeys (or (citar-key-at-point) (citar-citation-at-point))))
       (citar-run-default-action (if (listp citekeys) citekeys (list citekeys)))
     (user-error "No citation keys found")))
 
@@ -1842,17 +1842,17 @@ SOURCE must be a plist representing a notes source with NAME. See
   (let ((required '(:items :hasitems :open))
         (optional '(:name :category :create :transform :annotate))
         (keys (map-keys config)))
-    (when-let ((missing (cl-set-difference required keys)))
+    (when-let* ((missing (cl-set-difference required keys)))
       (error "Note source `%s' missing required keys: %s" name missing))
-    (when-let ((extra (cl-set-difference keys (append required optional))))
+    (when-let* ((extra (cl-set-difference keys (append required optional))))
       (warn "Note source `%s' has unknown keys: %s" name extra)))
 
   (pcase-dolist (`(,type . ,props)
                  '((functionp :items :hasitems :open :create :transform :annotate)
                    (stringp :name)
                    (symbolp :category)))
-    (when-let ((wrongtype (seq-filter (lambda (prop)
-                                        (when-let ((value (plist-get config prop)))
+    (when-let* ((wrongtype (seq-filter (lambda (prop)
+                                        (when-let* ((value (plist-get config prop)))
                                           (not (funcall type value)))) props)))
       (error "Note source `%s' keys must be of type %s: %s" name type wrongtype))))
 

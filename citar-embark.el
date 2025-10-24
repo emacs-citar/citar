@@ -63,12 +63,12 @@
 
 (defun citar-embark--key-finder ()
   "Return the citation key at point."
-  (when-let ((key (and (not (minibufferp)) (citar--key-at-point))))
+  (when-let* ((key (and (not (minibufferp)) (citar--key-at-point))))
     (cons 'citar-key key)))
 
 (defun citar-embark--citation-finder ()
   "Return the keys of the citation at point."
-  (when-let ((citation (and (not (minibufferp)) (citar--citation-at-point))))
+  (when-let* ((citation (and (not (minibufferp)) (citar--citation-at-point))))
     `(citar-citation ,(citar--stringify-keys (car citation)) . ,(cdr citation))))
 
 (defun citar-embark--candidate-transformer (_type target)
@@ -78,7 +78,7 @@
 
 (defun citar-embark--selected ()
   "Return selected candidates from `citar--select-multiple' for embark."
-  (when-let (((eq minibuffer-history-variable 'citar-history))
+  (when-let* (((eq minibuffer-history-variable 'citar-history))
              (metadata (embark--metadata))
              (group-function (completion-metadata-get metadata 'group-function))
              (cands (all-completions
@@ -115,7 +115,7 @@
   (cl-callf cl-set-difference embark-keymap-alist citar-embark--keymap-alist :test #'equal)
   (cl-callf cl-set-difference embark-multitarget-actions citar-embark--multitarget-actions)
   (pcase-dolist (`(,action . ,hooks) citar-embark--target-injection-hooks)
-    (when-let ((alistentry (assq action embark-target-injection-hooks)))
+    (when-let* ((alistentry (assq action embark-target-injection-hooks)))
       (cl-callf cl-set-difference (cdr alistentry) hooks)
       (unless (cdr alistentry)          ; if no other hooks, remove alist entry
         (cl-callf2 remq alistentry embark-target-injection-hooks)))))

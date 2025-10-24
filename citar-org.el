@@ -165,8 +165,8 @@ With PROC list, limit to specific processor(s)."
         (setq style
               (if (string-equal raw-style "") raw-style
                 (concat "/" raw-style)))))
-    (if-let ((citation (citar-org--citation-at-point context)))
-        (when-let ((keys (seq-difference keys (org-cite-get-references citation t)))
+    (if-let* ((citation (citar-org--citation-at-point context)))
+        (when-let* ((keys (seq-difference keys (org-cite-get-references citation t)))
                    (keystring (mapconcat (lambda (key) (concat "@" key)) keys "; "))
                    (begin (org-element-property :contents-begin citation)))
           (if (<= (point) begin)
@@ -357,7 +357,7 @@ With optional argument FORCE, force the creation of a new ID."
 
 (defun citar-org--key-at-point ()
   "Return key at point for org-cite citation-reference."
-  (when-let ((reference (citar-org--reference-at-point)))
+  (when-let* ((reference (citar-org--reference-at-point)))
     (cons (org-element-property :key reference)
           (cons (org-element-property :begin reference)
                 (org-element-property :end reference)))))
@@ -375,7 +375,7 @@ Citkey must be formatted as `@key'."
 ;;;###autoload
 (defun citar-org-citation-at-point ()
   "Return org-cite citation keys at point as a list for `embark'."
-  (when-let ((citation (citar-org--citation-at-point)))
+  (when-let* ((citation (citar-org--citation-at-point)))
     (cons (org-cite-get-references citation t)
           (org-cite-boundaries citation))))
 
@@ -386,7 +386,7 @@ Citkey must be formatted as `@key'."
 
 Argument CONTEXT is an org element at point, usually a citation
 or citation-reference."
-  (when-let ((context (or context (org-element-context))))
+  (when-let* ((context (or context (org-element-context))))
     (when (eq 'citation-reference (org-element-type context))
       context)))
 
@@ -398,7 +398,7 @@ or citation-reference."
   (let ((element (or context (org-element-context))))
     (while (and element (not (eq 'citation (org-element-type element))))
       (setq element (org-element-property :parent element)))
-    (when-let ((bounds (and element (org-cite-boundaries element))))
+    (when-let* ((bounds (and element (org-cite-boundaries element))))
       (when (and (>= (point) (car bounds))
                  (<= (point) (cdr bounds)))
         element))))
