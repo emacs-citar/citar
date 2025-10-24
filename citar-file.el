@@ -148,10 +148,10 @@ in which they are found. Omit non-existing absolute file names
 and relative file names not found in DIRS. On failure, print a
 message explaining the cause; CITEKEY is included in this failure
 message."
-  (if-let ((files (delete-dups (mapcan (lambda (parser)
+  (if-let* ((files (delete-dups (mapcan (lambda (parser)
                                          (funcall parser fieldvalue))
                                        citar-file-parser-functions))))
-      (if-let ((foundfiles (citar-file--find-files-in-dirs files dirs)))
+      (if-let* ((foundfiles (citar-file--find-files-in-dirs files dirs)))
           (if (null citar-library-file-extensions)
               foundfiles
             (or (seq-filter (lambda (file)
@@ -200,14 +200,14 @@ entries.
 Note: this function is intended to be used in
 `citar-get-files-functions'. Use `citar-get-files' to get all
 files associated with KEYS."
-  (when-let ((filefield citar-file-variable))
+  (when-let* ((filefield citar-file-variable))
     (citar--check-configuration 'citar-library-paths 'citar-library-file-extensions
                                 'citar-file-parser-functions)
     (let ((dirs (append (citar-file--library-dirs)
                         (mapcar #'file-name-directory (citar--bibliography-files)))))
       (citar--get-resources-using-function
        (lambda (citekey entry)
-         (when-let ((fieldvalue (citar-get-value filefield entry)))
+         (when-let* ((fieldvalue (citar-get-value filefield entry)))
            (citar-file--parse-file-field fieldvalue dirs citekey)))
        keys))))
 
@@ -351,7 +351,7 @@ extensions in `citar-file-note-extensions'."
 
 (defun citar-file--create-note (key entry)
   "Create a note file from KEY and ENTRY."
-  (if-let ((filename (citar-file--get-note-filename key)))
+  (if-let* ((filename (citar-file--get-note-filename key)))
       (prog1 (find-file filename)
         (unless (file-exists-p filename)
           (citar--check-configuration 'citar-note-format-function)
@@ -371,7 +371,7 @@ function that will open a new file if the note is not present."
          (exts citar-file-note-extensions)
          (files (citar-file--directory-files dirs (list key) exts citar-file-additional-files-separator)))
     (or (car (gethash key files))
-        (when-let ((dir (car dirs))
+        (when-let* ((dir (car dirs))
                    (ext (car exts)))
           (expand-file-name (concat key "." ext) dir)))))
 
@@ -402,7 +402,7 @@ SEPCHAR."
     (dolist (file files)
       (if (file-name-absolute-p file)
           (when (file-exists-p file) (push (expand-file-name file) foundfiles))
-        (when-let ((filepath (seq-some (lambda (dir)
+        (when-let* ((filepath (seq-some (lambda (dir)
                                          (let ((filepath (expand-file-name file dir)))
                                            (when (file-exists-p filepath) filepath)))
                                        dirs)))
