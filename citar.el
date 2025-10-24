@@ -8,7 +8,7 @@
 ;; SPDX-License-Identifier: GPL-3.0-or-later
 ;; Version: 1.4.0
 ;; Homepage: https://github.com/emacs-citar/citar
-;; Package-Requires: ((emacs "27.1") (parsebib "4.2") (org "9.5") (citeproc "0.9"))
+;; Package-Requires: ((emacs "27.1") (parsebib "4.2") (org "9.5") (citeproc "0.9") (compat "30"))
 
 ;; This file is not part of GNU Emacs.
 ;;
@@ -20,6 +20,7 @@
 ;;
 ;;; Code:
 
+(require 'compat)
 (eval-when-compile
   (require 'cl-lib)
   (require 'subr-x))
