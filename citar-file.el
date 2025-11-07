@@ -390,7 +390,7 @@ SEPCHAR."
       (goto-char (point-min))
       (while (progn (skip-chars-forward skip) (not (eobp)))
         (if (= ?\\ (following-char))
-            (ignore-error 'end-of-buffer (forward-char 2))
+            (ignore-error end-of-buffer (forward-char 2))
           (push (delete-and-extract-region (point-min) (point)) strings)
           (delete-char 1)))
       (push (buffer-string) strings))
