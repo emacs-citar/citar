@@ -197,16 +197,14 @@ references as a string."
 
 (defcustom citar-display-transform-functions
   ;; TODO change this name, as it might be confusing?
-  `((sn . (citar--shorten-names))
+  '((sn . (citar--shorten-names))
     (etal . (citar--shorten-names 3 "&")))
   "Configure transformation of field display values from raw values.
 
 When the car symbol is associated with a field, run the cdr function
 and optional arguments on the string value."
   :group 'citar
-  :type '(alist :key-type symbol
-          ;; REVIEW is this OK for now?
-          :value-type list))
+  :type '(alist :key-type symbol :value-type sexp))
 
 ;; Indicator defstruct
 
