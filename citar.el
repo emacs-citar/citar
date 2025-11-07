@@ -26,6 +26,7 @@
   (require 'subr-x))
 (require 'seq)
 (require 'map)
+(require 'bibtex)
 (require 'browse-url)
 (require 'citar-cache)
 (require 'citar-format)
