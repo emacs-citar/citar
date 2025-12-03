@@ -101,7 +101,7 @@ When using Embark, the Citar actions are generic, and work the same across org, 
 
 #+begin_src emacs-lisp
 (use-package citar-embark
-  :after citar embark
+  :after (citar embark)
   :no-require
   :config (citar-embark-mode))
 #+end_src

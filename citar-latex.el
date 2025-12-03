@@ -105,7 +105,7 @@ Return (KEYS . BOUNDS), where KEYS is a list of the found
 citation keys and BOUNDS is a pair of buffer positions indicating
 the start and end of the citation macro."
   (save-excursion
-    (when-let ((bounds (citar-latex--macro-bounds)))
+    (when-let* ((bounds (citar-latex--macro-bounds)))
       (let ((keylists nil))
         (goto-char (car bounds))
         (while (re-search-forward "{\\([^{}]*\\)}" (cdr bounds) 'noerror)
@@ -153,7 +153,7 @@ If `citar-latex-prompt-for-extra-arguments' is nil, every
 command is assumed to have a single argument into which keys are
 inserted."
   (when keys
-    (if-let ((bounds (citar-latex--macro-bounds)))
+    (if-let* ((bounds (citar-latex--macro-bounds)))
         (pcase-exhaustive (progn (skip-chars-forward "^,{}" (cdr bounds))
                                  (following-char))
           ((guard (= (point) (cdr bounds))) ; couldn't find any of ",{}"

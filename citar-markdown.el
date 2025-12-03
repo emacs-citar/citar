@@ -103,7 +103,7 @@ citation."
      ((eq ?\] (char-before)) (backward-char)))
     (seq-some                           ; for each opening paren
      (lambda (startpos)                 ; return keys in balanced [ ] expr
-       (when-let ((endpos (and (eq ?\[ (char-after startpos))
+       (when-let* ((endpos (and (eq ?\[ (char-after startpos))
                                (scan-lists startpos 1 0))))
          (let (keys)
            (goto-char startpos)
