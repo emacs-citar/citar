@@ -1668,30 +1668,26 @@ including the citekeys, is maintained in Zotero with Better BibTeX."
 (defun citar-insert-bibtex (citekeys)
   "Insert bibliographic entry associated with the CITEKEYS."
   (interactive (list (citar-select-refs)))
-  (dolist (citekey citekeys)
-    (citar--insert-bibtex citekey)))
-
-(defun citar--insert-bibtex (citekey)
-  "Insert the bibtex entry for CITEKEY at point."
-  (let* ((bibtex-files
-          (citar--bibliography-files))
-         (entry
-          (with-temp-buffer
-            (bibtex-set-dialect)
-            (dolist (bib-file bibtex-files)
-              (insert-file-contents bib-file))
-            (bibtex-search-entry citekey)
-            (dolist (field citar-bibtex-no-export-fields)
-              (let ((position (bibtex-search-forward-field
-                               field t)))
-                (when position
-                  (delete-region (caar position)
-                                 (nth 2 position)))))
-            (let ((beg (bibtex-beginning-of-entry))
-                  (end (bibtex-end-of-entry)))
-              (buffer-substring-no-properties beg end)))))
-    (unless (equal entry "")
-      (insert entry "\n\n"))))
+  (let ((bibtex-files
+         (citar--bibliography-files))
+        (buffer (current-buffer)))
+    (with-temp-buffer
+      (bibtex-set-dialect)
+      (dolist (bib-file bibtex-files)
+        (insert-file-contents bib-file))
+      (dolist (citekey citekeys)
+        (bibtex-search-entry citekey)
+        (dolist (field citar-bibtex-no-export-fields)
+          (let ((position (bibtex-search-forward-field
+                           field t)))
+            (when position
+              (delete-region (caar position) (nth 2 position)))))
+        (let ((beg (bibtex-beginning-of-entry))
+              (end (bibtex-end-of-entry)))
+          (unless (eq beg end)
+            (goto-char end)
+            (insert "\n\n")
+            (insert-into-buffer buffer beg (point))))))))
 
 ;;;###autoload
 (defun citar-export-local-bib-file ()
@@ -1705,8 +1701,7 @@ directory as current buffer."
          (ext (file-name-extension (car citar-bibliography)))
          (file (format "%slocal-bib.%s" (file-name-directory buffer-file-name) ext)))
     (with-temp-file file
-      (dolist (citekey citekeys)
-        (citar--insert-bibtex citekey)))))
+      (citar-insert-bibtex citekeys))))
 
 ;;;###autoload
 (defun citar-insert-citation (citekeys &optional arg)
