@@ -1664,43 +1664,47 @@ including the citekeys, is maintained in Zotero with Better BibTeX."
    (concat "zotero://select/items/@" citekey)))
 
 ;;;###autoload
-(defun citar-insert-bibtex (citekeys)
-  "Insert bibliographic entry associated with the CITEKEYS."
+(defun citar-insert-bibtex (citekeys &optional bib-files)
+  "Insert bibliographic entries associated with the CITEKEYS in current buffer.
+Entries are searched among BIB-FILES. By default BIBFILES includes global
+bib files as well as bib files local to the current document."
   (interactive (list (citar-select-refs)))
-  (let ((bibtex-files
-         (citar--bibliography-files))
+  (let ((bib-files
+         (or bib-files (citar--bibliography-files)))
         (buffer (current-buffer)))
     (with-temp-buffer
       (bibtex-set-dialect)
-      (dolist (bib-file bibtex-files)
+      (dolist (bib-file bib-files)
         (insert-file-contents bib-file))
       (dolist (citekey citekeys)
-        (bibtex-search-entry citekey)
-        (dolist (field citar-bibtex-no-export-fields)
-          (let ((position (bibtex-search-forward-field
-                           field t)))
-            (when position
-              (delete-region (caar position) (nth 2 position)))))
-        (let ((beg (bibtex-beginning-of-entry))
-              (end (bibtex-end-of-entry)))
-          (unless (eq beg end)
-            (goto-char end)
-            (insert "\n\n")
-            (insert-into-buffer buffer beg (point))))))))
+        (when (bibtex-search-entry citekey)
+          (dolist (field citar-bibtex-no-export-fields)
+            (let ((position (bibtex-search-forward-field
+                             field t)))
+              (when position
+                (delete-region (caar position) (nth 2 position)))))
+          (let ((beg (bibtex-beginning-of-entry))
+                (end (bibtex-end-of-entry)))
+            (unless (eq beg end)
+              (goto-char end)
+              (insert "\n\n")
+              (insert-into-buffer buffer beg (point)))))))))
 
 ;;;###autoload
 (defun citar-export-local-bib-file ()
   "Create a new bibliography file from citations in current buffer.
 
 The file is titled \"local-bib\", given the same extension as
-the first entry in `citar-bibliography', and created in the same
-directory as current buffer."
+the first entry in `citar-bibliography', and created in the
+`default-directory'."
   (interactive)
   (let* ((citekeys (citar--major-mode-function 'list-keys #'ignore))
-         (ext (file-name-extension (car citar-bibliography)))
-         (file (format "%slocal-bib.%s" (file-name-directory buffer-file-name) ext)))
+         (bib-files (citar--bibliography-files))
+         (ext (file-name-extension (or (car-safe citar-bibliography)
+                                       citar-bibliography)))
+         (file (expand-file-name (format "local-bib.%s" ext))))
     (with-temp-file file
-      (citar-insert-bibtex citekeys))))
+      (citar-insert-bibtex citekeys bib-files))))
 
 ;;;###autoload
 (defun citar-insert-citation (citekeys &optional arg)
