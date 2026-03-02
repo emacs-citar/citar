@@ -1686,7 +1686,7 @@ including the citekeys, is maintained in Zotero with Better BibTeX."
                                field t)))
                 (when position
                   (delete-region (caar position)
-                                 (car (last position))))))
+                                 (nth 2 position)))))
             (let ((beg (bibtex-beginning-of-entry))
                   (end (bibtex-end-of-entry)))
               (buffer-substring-no-properties beg end)))))
