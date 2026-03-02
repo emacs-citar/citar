@@ -8,7 +8,7 @@
 ;; SPDX-License-Identifier: GPL-3.0-or-later
 ;; Version: 1.4.0
 ;; Homepage: https://github.com/emacs-citar/citar
-;; Package-Requires: ((emacs "27.1") (parsebib "4.2") (org "9.5") (citeproc "0.9") (compat "30"))
+;; Package-Requires: ((emacs "27.1") (parsebib "4.2") (org "9.5") (citeproc "0.9"))
 
 ;; This file is not part of GNU Emacs.
 ;;
@@ -20,9 +20,8 @@
 ;;
 ;;; Code:
 
-(require 'compat)
+(require 'cl-lib)
 (eval-when-compile
-  (require 'cl-lib)
   (require 'subr-x))
 (require 'seq)
 (require 'map)
@@ -154,7 +153,7 @@ for the title field for new notes."
 (defcustom citar-ellipsis nil
   "Ellipsis string to mark ending of truncated display fields.
 
-If t, use the value of `truncate-string-ellipsis'.  If nil, no
+If t, use the value of variable `truncate-string-ellipsis'.  If nil, no
 ellipsis will be used.  Otherwise, this should be a non-empty
 string specifying the ellipsis."
   :group 'citar
@@ -1572,7 +1571,7 @@ specifying TYPE."
 
 ;;;###autoload
 (defun citar-attach-files (citekey-or-citekeys)
-  "Attach library file associated with CITEKEY-OR-CITEKEYS to outgoing MIME message."
+  "Attach library file containing CITEKEY-OR-CITEKEYS to outgoing MIME message."
   (interactive (list (citar-select-ref)))
   (citar--library-file-action citekey-or-citekeys #'mml-attach-file))
 
