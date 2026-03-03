@@ -132,6 +132,8 @@ If you want to use Citar only in Org-Mode, this is the best option.
 You can insert citations with the =org-cite-insert= command, which is bound to =C-c C-x C-@= in Org-Mode buffers.  The
 optional ~:bind~ command above also gives it the shorter =C-c b= binding.
 
+You can insert a citation reference with the =citar-insert-reference= command. Alternatively, put the cursor on the citation, and then execute =embark-act=. This pops up a menu: select =r= to put the citation reference in the kill ring. Move the cursor to where you want to insert the reference, then paste from the kill ring.
+
 If you prefer to have the Embark menu open with =org-open-at-point=, you should set this variable.
 
 #+begin_src emacs-lisp
