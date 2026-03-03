@@ -1664,31 +1664,29 @@ including the citekeys, is maintained in Zotero with Better BibTeX."
    (concat "zotero://select/items/@" citekey)))
 
 ;;;###autoload
-(defun citar-insert-bibtex (citekeys &optional bib-files)
+(defun citar-insert-bibtex (citekeys &optional bibfiles)
   "Insert bibliographic entries associated with the CITEKEYS in current buffer.
-Entries are searched among BIB-FILES. By default BIBFILES includes global
+Entries are searched among BIBFILES. By default BIBFILES includes global
 bib files as well as bib files local to the current document."
   (interactive (list (citar-select-refs)))
-  (let ((bib-files
-         (or bib-files (citar--bibliography-files)))
-        (buffer (current-buffer)))
+  (let ((bibfiles (or bibfiles (citar--bibliography-files)))
+        (target (current-buffer)))
     (with-temp-buffer
-      (bibtex-set-dialect)
-      (dolist (bib-file bib-files)
-        (insert-file-contents bib-file))
+      (bibtex-set-dialect nil t)
+      (dolist (bibfile bibfiles)
+        (insert-file-contents bibfile))
       (dolist (citekey citekeys)
-        (when (bibtex-search-entry citekey)
+        (when-let* ((beg (bibtex-search-entry citekey)))
           (dolist (field citar-bibtex-no-export-fields)
-            (let ((position (bibtex-search-forward-field
-                             field t)))
-              (when position
-                (delete-region (caar position) (nth 2 position)))))
-          (let ((beg (bibtex-beginning-of-entry))
-                (end (bibtex-end-of-entry)))
-            (unless (eq beg end)
-              (goto-char end)
-              (insert "\n\n")
-              (insert-into-buffer buffer beg (point)))))))))
+            (when-let* ((position (bibtex-search-forward-field
+                                   field t)))
+              (delete-region (caar position) (nth 2 position))))
+          (when-let* ((end (bibtex-end-of-entry))
+                      ((not (eq beg end)))
+                      (source (current-buffer)))
+            (with-current-buffer target
+              (insert-buffer-substring-no-properties source beg end)
+              (insert "\n\n"))))))))
 
 ;;;###autoload
 (defun citar-export-local-bib-file ()
