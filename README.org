@@ -505,6 +505,12 @@ These small packages provide citar notes sources, and so tighter integration wit
 - [[https://github.com/pprevos/citar-denote][citar-denote]]
 - [[https://github.com/localauthor/zk][zk-citar]]
 
+*** Alternate Document Types
+
+These packages allow citar to work with document formats besides markdown, org-mode, and LaTeX.
+
+- [[https://codeberg.org/ashton314/citar-typst][citar-typst]]
+
 ** Comparisons
    :PROPERTIES:
    :CUSTOM_ID: comparisons
