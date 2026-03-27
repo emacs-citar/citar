@@ -21,6 +21,7 @@
 (declare-function citar--prepend-candidate-citekey "citar" (citekey candidate))
 
 (defvar citar-ellipsis)
+(defvar citar-cache-preserve-markup)
 
 ;;; Variables:
 
@@ -189,11 +190,11 @@ needed by any other buffer."
 
 (defun citar-cache--get-bibliography-props (filename &optional oldprops)
   "Return attributes to decide if bibliography FILENAME needs to be updated.
-Return a plist with keys :size, :mtime, :hash, and :fields.
-OLDPROPS, if given, should be a plist with the same keys. If
-FILENAME has the same size and modification time as in OLDPROPS,
-then assume that the hash value is also the same without
-re-hashing the file contents."
+Return a plist with keys :size, :mtime, :hash, :fields, and
+:preserve-markup. OLDPROPS, if given, should be a plist with the
+same keys. If FILENAME has the same size and modification time
+as in OLDPROPS, then assume that the hash value is also the same
+without re-hashing the file contents."
   (let* ((remote-file-name-inhibit-cache t)
          (attr (file-attributes filename 'integer))
          (size (file-attribute-size attr))
@@ -207,7 +208,8 @@ re-hashing the file contents."
                  (with-temp-buffer
                    (insert-file-contents filename)
                    (buffer-hash)))))
-    `(:size ,size :mtime ,mtime :hash ,hash :fields ,fields)))
+    `(:size ,size :mtime ,mtime :hash ,hash :fields ,fields
+      :preserve-markup ,citar-cache-preserve-markup)))
 
 (defun citar-cache--update-bibliography-p (oldprops newprops)
   "Return whether bibliography needs to be updated.
@@ -216,7 +218,8 @@ contents have changed or the list of bibliography fields to be
 parsed is different."
   (not (and (equal (plist-get oldprops :size) (plist-get newprops :size))
             (equal (plist-get oldprops :hash) (plist-get newprops :hash))
-            (equal (plist-get oldprops :fields) (plist-get newprops :fields)))))
+            (equal (plist-get oldprops :fields) (plist-get newprops :fields))
+            (equal (plist-get oldprops :preserve-markup) (plist-get newprops :preserve-markup)))))
 
 (defun citar-cache--update-bibliography (bib &optional props)
   "Update the bibliography BIB from the original file.
@@ -236,7 +239,7 @@ After updating, the `props' slot of BIB is set to PROPS."
     (message "%s..." messagestr)
     (redisplay)                         ; Make sure message is displayed before Emacs gets busy parsing
     (clrhash entries)
-    (parsebib-parse filename :entries entries)
+    (parsebib-parse filename :entries entries :display (not citar-cache-preserve-markup))
     (setf (citar-cache--bibliography-props bib) props)
     (citar-cache--preformat-bibliography bib)
     (message "%s...done (%.3f seconds)" messagestr (float-time (time-since starttime)))))
