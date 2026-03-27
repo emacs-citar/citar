@@ -235,8 +235,11 @@ After updating, the `props' slot of BIB is set to PROPS."
          (starttime (current-time)))
     (message "%s..." messagestr)
     (redisplay)                         ; Make sure message is displayed before Emacs gets busy parsing
-    (clrhash entries)
-    (parsebib-parse filename :entries entries)
+    ;; Parse into a temp table so a failed parse does not leave
+    ;; the cache in a partially-updated state.
+    (let ((new-entries (parsebib-parse filename)))
+      (clrhash entries)
+      (maphash (lambda (k v) (puthash k v entries)) new-entries))
     (setf (citar-cache--bibliography-props bib) props)
     (citar-cache--preformat-bibliography bib)
     (message "%s...done (%.3f seconds)" messagestr (float-time (time-since starttime)))))
