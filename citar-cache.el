@@ -230,17 +230,12 @@ its return value can be reused.
 After updating, the `props' slot of BIB is set to PROPS."
   (let* ((filename (citar-cache--bibliography-filename bib))
          (props (or props (citar-cache--get-bibliography-props filename)))
-         (entries (citar-cache--bibliography-entries bib))
          (messagestr (format "Updating bibliography %s" (abbreviate-file-name filename)))
          (starttime (current-time)))
     (message "%s..." messagestr)
     (redisplay)                         ; Make sure message is displayed before Emacs gets busy parsing
-    ;; Parse into a temp table so a failed parse does not leave
-    ;; the cache in a partially-updated state.
-    (let ((new-entries (parsebib-parse filename)))
-      (clrhash entries)
-      (maphash (lambda (k v) (puthash k v entries)) new-entries))
-    (setf (citar-cache--bibliography-props bib) props)
+    (setf (citar-cache--bibliography-entries bib) (parsebib-parse filename)
+          (citar-cache--bibliography-props bib) props)
     (citar-cache--preformat-bibliography bib)
     (message "%s...done (%.3f seconds)" messagestr (float-time (time-since starttime)))))
 
