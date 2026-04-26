@@ -87,6 +87,13 @@ buffer.")
   :group 'citar
   :type '(repeat file))
 
+(defcustom citar-exported-bib-file-name "local-bib"
+  "The file name (without extension) used by `citar-export-local-bib-file'.
+If it is not an absolute file name it is expanded relative to the
+`default-directory' of the buffer from which entries are being exported."
+  :group 'citar
+  :type 'file)
+
 (defcustom citar-library-paths nil
   "A list of files paths for related PDFs, etc."
   :group 'citar
@@ -1671,38 +1678,49 @@ bib files as well as bib files local to the current document."
   (interactive (list (citar-select-refs)))
   (let ((bibfiles (or bibfiles (citar--bibliography-files)))
         (target (current-buffer)))
+    (unless bibfiles
+      (user-error "There are no bibliographic files to export from"))
     (with-temp-buffer
       (bibtex-set-dialect nil t)
       (dolist (bibfile bibfiles)
         (insert-file-contents bibfile))
       (dolist (citekey citekeys)
-        (when-let* ((beg (bibtex-search-entry citekey)))
-          (dolist (field citar-bibtex-no-export-fields)
-            (when-let* ((position (bibtex-search-forward-field
-                                   field t)))
-              (delete-region (caar position) (nth 2 position))))
-          (when-let* ((end (bibtex-end-of-entry))
-                      ((not (eq beg end)))
-                      (source (current-buffer)))
-            (with-current-buffer target
-              (insert-buffer-substring-no-properties source beg end)
-              (insert "\n\n"))))))))
+        (goto-char (point-min))
+        (if-let* ((beg (bibtex-search-entry citekey)))
+            (progn
+              (dolist (field citar-bibtex-no-export-fields)
+                (when-let* ((position (bibtex-search-forward-field
+                                       field t)))
+                  (delete-region (caar position) (nth 2 position))))
+              (when-let* ((end (bibtex-end-of-entry))
+                          ((not (eq beg end)))
+                          (source (current-buffer)))
+                (with-current-buffer target
+                  (insert-buffer-substring-no-properties source beg end)
+                  (insert "\n\n"))))
+          (message "Citkey %s not found among %S" citekey bibfiles))))))
 
 ;;;###autoload
-(defun citar-export-local-bib-file ()
-  "Create a new bibliography file from citations in current buffer.
+(defun citar-export-local-bib-file (&optional file)
+  "Create a new bibliography FILE file from citations in current buffer.
 
-The file is titled \"local-bib\", given the same extension as
-the first entry in `citar-bibliography', and created in the
-`default-directory'."
+By default, FILE is created in `default-directory' based on the value of
+`citar-exported-bib-file-name' with extension determined by the bibliographies
+of current buffer. If `citar-exported-bib-file-name' is nil or extension can't
+be determined, user is prompted for a filename."
   (interactive)
-  (let* ((citekeys (citar--major-mode-function 'list-keys #'ignore))
-         (bib-files (citar--bibliography-files))
-         (ext (file-name-extension (or (car-safe citar-bibliography)
-                                       citar-bibliography)))
-         (file (expand-file-name (format "local-bib.%s" ext))))
+  (let* ((citekeys (sort (citar--major-mode-function 'list-keys #'ignore)
+                         :in-place t))
+         (bibfiles (citar--bibliography-files))
+         (file (expand-file-name
+                (or file
+                    (if-let* ((citar-exported-bib-file-name)
+                              (bib (car bibfiles))
+                              (ext (file-name-extension bib)))
+                        (format "%s.%s" citar-exported-bib-file-name ext)
+                      (read-file-name "Export to file: "))))))
     (with-temp-file file
-      (citar-insert-bibtex citekeys bib-files))))
+      (citar-insert-bibtex citekeys bibfiles))))
 
 ;;;###autoload
 (defun citar-insert-citation (citekeys &optional arg)
