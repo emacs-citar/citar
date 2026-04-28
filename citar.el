@@ -1734,16 +1734,30 @@ user option."
       "references"))
 
 ;;;###autoload
-(defun citar-export-local-bib-file ()
-  "Create a new bibliography file from citations in current buffer.
+(defun citar-export-local-bibtex-file (filename)
+  "Create a new BibTeX file FILENAME from citations in the current buffer.
 
-The file is titled \"local-bib\", given the same extension as
-the first entry in `citar-bibliography', and created in the same
-directory as current buffer."
-  (interactive)
+When called interactively without a prefix argument, FILENAME is
+derived from `citar-export-local-bibtex-base-name'; with a prefix
+argument, prompt for FILENAME.
+
+The file extension is taken from the first entry of
+`citar-bibliography'; if FILENAME already carries an extension, it is
+replaced.  The file is created in `default-directory' (the current
+buffer's directory in typical usage)."
+  (interactive
+   (list
+    (cond
+      (current-prefix-arg
+       (read-file-name "File name: "))
+      ((functionp citar-export-local-bibtex-base-name)
+       (funcall citar-export-local-bibtex-base-name))
+      ((stringp citar-export-local-bibtex-base-name)
+       citar-export-local-bibtex-base-name)
+      (t (citar-local-bibtex-base-name)))))
   (let* ((citekeys (citar--major-mode-function 'list-keys #'ignore))
          (ext (file-name-extension (car citar-bibliography)))
-         (file (format "%slocal-bib.%s" (file-name-directory buffer-file-name) ext)))
+         (file (expand-file-name (file-name-with-extension filename ext))))
     (with-temp-file file
       (dolist (citekey citekeys)
         (citar--insert-bibtex citekey)))))
