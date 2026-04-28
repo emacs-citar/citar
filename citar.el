@@ -654,14 +654,14 @@ these contexts.
 
 When BUFFERS is nil, return local bibliographies for the current
 buffer and global bibliographies."
-  (citar-file--normalize-paths
-   (mapcan (lambda (buffer)
-             (if (eq buffer 'global)
-                 (if (listp citar-bibliography) citar-bibliography
-                   (list citar-bibliography))
-               (with-current-buffer buffer
-                 (citar--major-mode-function 'local-bib-files #'ignore))))
-           (or buffers (list (current-buffer) 'global)))))
+  (let* ((buffers (or buffers (list (current-buffer) 'global)))
+         (globals (when (memq 'global buffers)
+                    (citar--global-bibliography-files)))
+         (locals (seq-filter #'file-exists-p
+                             (mapcan #'citar--local-bibliography-files
+                                     (delq 'global buffers)))))
+    (delete-dups
+     (mapcar #'file-truename (append globals locals)))))
 
 (defun citar--bibliographies (&rest buffers)
   "Return bibliographies for BUFFERS."
