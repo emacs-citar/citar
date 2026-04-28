@@ -623,6 +623,29 @@ When nil, all citar commands will use `completing-read'."
 
 ;;; Bibliography cache
 
+(defun citar--global-bibliography-files ()
+  "Return `citar-bibliography', validated.
+Signal a `user-error' if `citar-bibliography' is not a list, or if any
+of its entries does not name an existing file."
+  (unless (listp citar-bibliography)
+    (user-error "`citar-bibliography' must be a list"))
+  (dolist (file citar-bibliography)
+    (unless (file-exists-p file)
+      (user-error "Cannot find file: %s" file)))
+  citar-bibliography)
+
+(defun citar--local-bibliography-files (&optional buffer)
+  "Return a list of local bibliography files for BUFFER.
+BUFFER defaults to the current buffer. Local bibliography files are
+those declared by per-mode mechanisms (e.g. Org `#+bibliography:', TeX
+`\\bibliography{}' / `\\addbibresource{}'), excluding the global
+`citar-bibliography'.
+
+Files that do not exist are not filtered or validated; callers can do
+so as needed."
+  (with-current-buffer (or buffer (current-buffer))
+    (citar--major-mode-function 'local-bib-files #'ignore)))
+
 (defun citar--bibliography-files (&rest buffers)
   "Bibliography file names for BUFFERS.
 The elements of BUFFERS are either buffers or the symbol global.
