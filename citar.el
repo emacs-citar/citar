@@ -1762,6 +1762,13 @@ buffer's directory in typical usage)."
       (dolist (citekey citekeys)
         (citar--insert-bibtex citekey)))))
 
+(define-obsolete-function-alias
+  'citar-export-local-bib-file
+  'citar-export-local-bibtex-file
+  "1.5"
+  "Renamed for clarity: the function writes BibTeX, not a generic
+\"bib file\".")
+
 ;;;###autoload
 (defun citar-insert-citation (citekeys &optional arg)
   "Insert citation for the CITEKEYS.
