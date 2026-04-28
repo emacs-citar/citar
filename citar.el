@@ -350,6 +350,24 @@ always prompt to select."
   :group 'citar
   :type '(repeat string))
 
+(defcustom citar-export-local-bibtex-base-name "local-bib"
+  "Basename (without extension) for `citar-export-local-bibtex-file'.
+
+The value may be:
+
+  - a string — used as the literal basename;
+  - a function — called with no arguments, expected to return a
+    basename string;
+  - nil — defer to `citar-local-bibtex-base-name'.
+
+The file extension is taken from the first entry of
+`citar-bibliography'."
+  :type '(choice
+          (const    :tag "Mode-aware default (`citar-local-bibtex-base-name')" nil)
+          (string   :tag "Literal basename")
+          (function :tag "Function returning basename"))
+  :group 'citar)
+
 ;;;; File, note, and URL handling
 
 (defcustom citar-open-resources '(:files :links :notes :create-notes)
@@ -623,6 +641,18 @@ When nil, all citar commands will use `completing-read'."
 
 ;;; Bibliography cache
 
+(defun citar--local-bibliography-files (&optional buffer)
+  "Return a list of local bibliography files for BUFFER.
+BUFFER defaults to the current buffer. Local bibliography files are
+those declared by per-mode mechanisms (e.g. Org `#+bibliography:', TeX
+`\\bibliography{}' / `\\addbibresource{}'), excluding the global
+`citar-bibliography'.
+
+Files that do not exist are not filtered or validated; callers can do
+so as needed."
+  (with-current-buffer (or buffer (current-buffer))
+    (citar--major-mode-function 'local-bib-files #'ignore)))
+
 (defun citar--bibliography-files (&rest buffers)
   "Bibliography file names for BUFFERS.
 The elements of BUFFERS are either buffers or the symbol global.
@@ -634,10 +664,8 @@ buffer and global bibliographies."
   (citar-file--normalize-paths
    (mapcan (lambda (buffer)
              (if (eq buffer 'global)
-                 (if (listp citar-bibliography) citar-bibliography
-                   (list citar-bibliography))
-               (with-current-buffer buffer
-                 (citar--major-mode-function 'local-bib-files #'ignore))))
+                 (ensure-list citar-bibliography)
+               (citar--local-bibliography-files)))
            (or buffers (list (current-buffer) 'global)))))
 
 (defun citar--bibliographies (&rest buffers)
@@ -1693,20 +1721,53 @@ including the citekeys, is maintained in Zotero with Better BibTeX."
     (unless (equal entry "")
       (insert entry "\n\n"))))
 
-;;;###autoload
-(defun citar-export-local-bib-file ()
-  "Create a new bibliography file from citations in current buffer.
+(defun citar-local-bibtex-base-name ()
+  "Derive bibtex basename from buffer's local bibliography file.
+Tries to extract the basename (no directory or extension) from the
+current buffer's bibliography file declaration, falling back to
+\"references\".
 
-The file is titled \"local-bib\", given the same extension as
-the first entry in `citar-bibliography', and created in the same
-directory as current buffer."
-  (interactive)
+Intended for use as a value of the `citar-export-local-bibtex-base-name'
+user option."
+  (or (when-let ((bibs (citar--local-bibliography-files)))
+        (file-name-base (car bibs)))
+      "references"))
+
+;;;###autoload
+(defun citar-export-local-bibtex-file (filename)
+  "Create a new BibTeX file FILENAME from citations in the current buffer.
+
+When called interactively without a prefix argument, FILENAME is
+derived from `citar-export-local-bibtex-base-name'; with a prefix
+argument, prompt for FILENAME.
+
+The file extension is taken from the first entry of
+`citar-bibliography'; if FILENAME already carries an extension, it is
+replaced.  The file is created in `default-directory' (the current
+buffer's directory in typical usage)."
+  (interactive
+   (list
+    (cond
+      (current-prefix-arg
+       (read-file-name "File name: "))
+      ((functionp citar-export-local-bibtex-base-name)
+       (funcall citar-export-local-bibtex-base-name))
+      ((stringp citar-export-local-bibtex-base-name)
+       citar-export-local-bibtex-base-name)
+      (t (citar-local-bibtex-base-name)))))
   (let* ((citekeys (citar--major-mode-function 'list-keys #'ignore))
          (ext (file-name-extension (car citar-bibliography)))
-         (file (format "%slocal-bib.%s" (file-name-directory buffer-file-name) ext)))
+         (file (expand-file-name (file-name-with-extension filename ext))))
     (with-temp-file file
       (dolist (citekey citekeys)
         (citar--insert-bibtex citekey)))))
+
+(define-obsolete-function-alias
+  'citar-export-local-bib-file
+  'citar-export-local-bibtex-file
+  "1.5"
+  "Renamed for clarity: the function writes BibTeX, not a generic
+\"bib file\".")
 
 ;;;###autoload
 (defun citar-insert-citation (citekeys &optional arg)
