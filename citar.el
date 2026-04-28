@@ -350,6 +350,24 @@ always prompt to select."
   :group 'citar
   :type '(repeat string))
 
+(defcustom citar-export-local-bibtex-base-name "local-bib"
+  "Basename (without extension) for `citar-export-local-bibtex-file'.
+
+The value may be:
+
+  - a string — used as the literal basename;
+  - a function — called with no arguments, expected to return a
+    basename string;
+  - nil — defer to `citar-local-bibtex-base-name'.
+
+The file extension is taken from the first entry of
+`citar-bibliography'."
+  :type '(choice
+          (const    :tag "Mode-aware default (`citar-local-bibtex-base-name')" nil)
+          (string   :tag "Literal basename")
+          (function :tag "Function returning basename"))
+  :group 'citar)
+
 ;;;; File, note, and URL handling
 
 (defcustom citar-open-resources '(:files :links :notes :create-notes)
