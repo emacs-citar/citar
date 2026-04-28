@@ -8,7 +8,7 @@
 ;; SPDX-License-Identifier: GPL-3.0-or-later
 ;; Version: 1.4.0
 ;; Homepage: https://github.com/emacs-citar/citar
-;; Package-Requires: ((emacs "27.1") (parsebib "4.2") (org "9.5") (citeproc "0.9") (compat "30"))
+;; Package-Requires: ((emacs "27.1") (parsebib "4.2") (org "9.5") (citeproc "0.9"))
 
 ;; This file is not part of GNU Emacs.
 ;;
@@ -20,9 +20,8 @@
 ;;
 ;;; Code:
 
-(require 'compat)
+(require 'cl-lib)
 (eval-when-compile
-  (require 'cl-lib)
   (require 'subr-x))
 (require 'seq)
 (require 'map)
@@ -87,6 +86,13 @@ buffer.")
   "A list of bibliography files."
   :group 'citar
   :type '(repeat file))
+
+(defcustom citar-exported-bib-file-name "local-bib"
+  "The file name (without extension) used by `citar-export-local-bib-file'.
+If it is not an absolute file name it is expanded relative to the
+`default-directory' of the buffer from which entries are being exported."
+  :group 'citar
+  :type 'file)
 
 (defcustom citar-library-paths nil
   "A list of files paths for related PDFs, etc."
@@ -154,7 +160,7 @@ for the title field for new notes."
 (defcustom citar-ellipsis nil
   "Ellipsis string to mark ending of truncated display fields.
 
-If t, use the value of `truncate-string-ellipsis'.  If nil, no
+If t, use the value of variable `truncate-string-ellipsis'.  If nil, no
 ellipsis will be used.  Otherwise, this should be a non-empty
 string specifying the ellipsis."
   :group 'citar
@@ -1572,7 +1578,7 @@ specifying TYPE."
 
 ;;;###autoload
 (defun citar-attach-files (citekey-or-citekeys)
-  "Attach library file associated with CITEKEY-OR-CITEKEYS to outgoing MIME message."
+  "Attach library file containing CITEKEY-OR-CITEKEYS to outgoing MIME message."
   (interactive (list (citar-select-ref)))
   (citar--library-file-action citekey-or-citekeys #'mml-attach-file))
 
@@ -1665,48 +1671,56 @@ including the citekeys, is maintained in Zotero with Better BibTeX."
    (concat "zotero://select/items/@" citekey)))
 
 ;;;###autoload
-(defun citar-insert-bibtex (citekeys)
-  "Insert bibliographic entry associated with the CITEKEYS."
+(defun citar-insert-bibtex (citekeys &optional bibfiles)
+  "Insert bibliographic entries associated with the CITEKEYS in current buffer.
+Entries are searched among BIBFILES. By default BIBFILES includes global
+bib files as well as bib files local to the current document."
   (interactive (list (citar-select-refs)))
-  (dolist (citekey citekeys)
-    (citar--insert-bibtex citekey)))
-
-(defun citar--insert-bibtex (citekey)
-  "Insert the bibtex entry for CITEKEY at point."
-  (let* ((bibtex-files
-          (citar--bibliography-files))
-         (entry
-          (with-temp-buffer
-            (bibtex-set-dialect)
-            (dolist (bib-file bibtex-files)
-              (insert-file-contents bib-file))
-            (bibtex-search-entry citekey)
-            (dolist (field citar-bibtex-no-export-fields)
-              (let ((position (bibtex-search-forward-field
-                               field t)))
-                (when position
-                  (delete-region (caar position)
-                                 (car (last position))))))
-            (let ((beg (bibtex-beginning-of-entry))
-                  (end (bibtex-end-of-entry)))
-              (buffer-substring-no-properties beg end)))))
-    (unless (equal entry "")
-      (insert entry "\n\n"))))
+  (let ((bibfiles (or bibfiles (citar--bibliography-files)))
+        (target (current-buffer)))
+    (unless bibfiles
+      (user-error "There are no bibliographic files to export from"))
+    (with-temp-buffer
+      (bibtex-set-dialect nil t)
+      (dolist (bibfile bibfiles)
+        (insert-file-contents bibfile))
+      (dolist (citekey citekeys)
+        (goto-char (point-min))
+        (if-let* ((beg (bibtex-search-entry citekey)))
+            (progn
+              (dolist (field citar-bibtex-no-export-fields)
+                (when-let* ((position (bibtex-search-forward-field
+                                       field t)))
+                  (delete-region (caar position) (nth 2 position))))
+              (when-let* ((end (bibtex-end-of-entry))
+                          ((not (eq beg end)))
+                          (source (current-buffer)))
+                (with-current-buffer target
+                  (insert-buffer-substring-no-properties source beg end)
+                  (insert "\n\n"))))
+          (message "Citkey %s not found among %S" citekey bibfiles))))))
 
 ;;;###autoload
-(defun citar-export-local-bib-file ()
-  "Create a new bibliography file from citations in current buffer.
+(defun citar-export-local-bib-file (&optional file)
+  "Create a new bibliography FILE file from citations in current buffer.
 
-The file is titled \"local-bib\", given the same extension as
-the first entry in `citar-bibliography', and created in the same
-directory as current buffer."
+By default, FILE is created in `default-directory' based on the value of
+`citar-exported-bib-file-name' with extension determined by the bibliographies
+of current buffer. If `citar-exported-bib-file-name' is nil or extension can't
+be determined, user is prompted for a filename."
   (interactive)
-  (let* ((citekeys (citar--major-mode-function 'list-keys #'ignore))
-         (ext (file-name-extension (car citar-bibliography)))
-         (file (format "%slocal-bib.%s" (file-name-directory buffer-file-name) ext)))
+  (let* ((citekeys (sort (citar--major-mode-function 'list-keys #'ignore)
+                         :in-place t))
+         (bibfiles (citar--bibliography-files))
+         (file (expand-file-name
+                (or file
+                    (if-let* ((citar-exported-bib-file-name)
+                              (bib (car bibfiles))
+                              (ext (file-name-extension bib)))
+                        (format "%s.%s" citar-exported-bib-file-name ext)
+                      (read-file-name "Export to file: "))))))
     (with-temp-file file
-      (dolist (citekey citekeys)
-        (citar--insert-bibtex citekey)))))
+      (citar-insert-bibtex citekeys bibfiles))))
 
 ;;;###autoload
 (defun citar-insert-citation (citekeys &optional arg)
