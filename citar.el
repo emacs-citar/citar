@@ -1721,6 +1721,18 @@ including the citekeys, is maintained in Zotero with Better BibTeX."
     (unless (equal entry "")
       (insert entry "\n\n"))))
 
+(defun citar-local-bibtex-base-name ()
+  "Derive bibtex basename from buffer's local bibliography file.
+Tries to extract the basename (no directory or extension) from the
+current buffer's bibliography file declaration, falling back to
+\"references\".
+
+Intended for use as a value of the `citar-export-local-bibtex-base-name'
+user option."
+  (or (when-let ((bibs (citar--local-bibliography-files)))
+        (file-name-base (car bibs)))
+      "references"))
+
 ;;;###autoload
 (defun citar-export-local-bib-file ()
   "Create a new bibliography file from citations in current buffer.
