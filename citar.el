@@ -623,6 +623,29 @@ When nil, all citar commands will use `completing-read'."
 
 ;;; Bibliography cache
 
+(defun citar--global-bibliography-files ()
+  "Return `citar-bibliography', validated.
+Signal a `user-error' if `citar-bibliography' is not a list, or if any
+of its entries does not name an existing file."
+  (unless (listp citar-bibliography)
+    (user-error "`citar-bibliography' must be a list"))
+  (dolist (file citar-bibliography)
+    (unless (file-exists-p file)
+      (user-error "Cannot find file: %s" file)))
+  citar-bibliography)
+
+(defun citar--local-bibliography-files (&optional buffer)
+  "Return a list of local bibliography files for BUFFER.
+BUFFER defaults to the current buffer. Local bibliography files are
+those declared by per-mode mechanisms (e.g. Org `#+bibliography:', TeX
+`\\bibliography{}' / `\\addbibresource{}'), excluding the global
+`citar-bibliography'.
+
+Files that do not exist are not filtered or validated; callers can do
+so as needed."
+  (with-current-buffer (or buffer (current-buffer))
+    (citar--major-mode-function 'local-bib-files #'ignore)))
+
 (defun citar--bibliography-files (&rest buffers)
   "Bibliography file names for BUFFERS.
 The elements of BUFFERS are either buffers or the symbol global.
@@ -631,14 +654,14 @@ these contexts.
 
 When BUFFERS is nil, return local bibliographies for the current
 buffer and global bibliographies."
-  (citar-file--normalize-paths
-   (mapcan (lambda (buffer)
-             (if (eq buffer 'global)
-                 (if (listp citar-bibliography) citar-bibliography
-                   (list citar-bibliography))
-               (with-current-buffer buffer
-                 (citar--major-mode-function 'local-bib-files #'ignore))))
-           (or buffers (list (current-buffer) 'global)))))
+  (let* ((buffers (or buffers (list (current-buffer) 'global)))
+         (globals (when (memq 'global buffers)
+                    (citar--global-bibliography-files)))
+         (locals (seq-filter #'file-exists-p
+                             (mapcan #'citar--local-bibliography-files
+                                     (delq 'global buffers)))))
+    (delete-dups
+     (mapcar #'file-truename (append globals locals)))))
 
 (defun citar--bibliographies (&rest buffers)
   "Return bibliographies for BUFFERS."
