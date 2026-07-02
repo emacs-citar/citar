@@ -87,10 +87,10 @@ buffer.")
   :group 'citar
   :type '(repeat file))
 
-(defcustom citar-exported-bib-file-name "local-bib"
-  "The file name (without extension) used by `citar-export-local-bib-file'.
-If it is not an absolute file name it is expanded relative to the
-`default-directory' of the buffer from which entries are being exported."
+(defcustom citar-exported-bibtex-base-name "local-bib"
+  "The file name (without extension) used by `citar-export-local-bibtex-file'.
+It is expanded relative to the `default-directory' of the buffer from which
+entries are being exported."
   :group 'citar
   :type 'file)
 
@@ -1701,26 +1701,32 @@ bib files as well as bib files local to the current document."
           (message "Citkey %s not found among %S" citekey bibfiles))))))
 
 ;;;###autoload
-(defun citar-export-local-bib-file (&optional file)
-  "Create a new bibliography FILE file from citations in current buffer.
+(defun citar-export-local-bibtex-file (&optional file)
+  "Create a new bibliography file from citations in current buffer.
 
-By default, FILE is created in `default-directory' based on the value of
-`citar-exported-bib-file-name' with extension determined by the bibliographies
-of current buffer. If `citar-exported-bib-file-name' is nil or extension can't
-be determined, user is prompted for a filename."
+The new bibliography will be named FILE, which if specified must
+be in an existing directory.  If FILE is nil, then the bibliography
+will be created in `default-directory' with base name
+`citar-exported-bibtex-base-name' and the extension of the first
+bibliography associated with the current buffer.  If
+`citar-exported-bibtex-base-name' is nil or extension can't be
+determined, prompt the user for a filename."
   (interactive)
   (let* ((citekeys (sort (citar--major-mode-function 'list-keys #'ignore)
                          #'string-lessp))
          (bibfiles (citar--bibliography-files))
          (file (expand-file-name
                 (or file
-                    (if-let* ((citar-exported-bib-file-name)
+                    (if-let* ((citar-exported-bibtex-base-name)
                               (bib (car bibfiles))
                               (ext (file-name-extension bib)))
-                        (format "%s.%s" citar-exported-bib-file-name ext)
+                        (format "%s.%s" citar-exported-bibtex-base-name ext)
                       (read-file-name "Export to file: "))))))
     (with-temp-file file
       (citar-insert-bibtex citekeys bibfiles))))
+
+(define-obsolete-function-alias 'citar-export-local-bib-file 'citar-export-local-bibtex-file
+  "1.5.0")
 
 ;;;###autoload
 (defun citar-insert-citation (citekeys &optional arg)
