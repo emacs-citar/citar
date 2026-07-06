@@ -245,8 +245,8 @@ After updating, the `props' slot of BIB is set to PROPS."
   (let* ((entries (citar-cache--bibliography-entries bib))
          (formatstr (citar-cache--bibliography-format-string bib))
          (fieldspecs (citar-format--parse formatstr))
-         (preformatted (citar-cache--bibliography-preformatted bib)))
-    (clrhash preformatted)
+         (preformatted (make-hash-table :test 'equal
+                                        :size (hash-table-count entries))))
     (maphash
      (lambda (citekey entry)
        (let* ((preformat (citar-format--preformat fieldspecs entry
@@ -254,7 +254,8 @@ After updating, the `props' slot of BIB is set to PROPS."
               (withkey (citar--prepend-candidate-citekey citekey (cadr preformat))))
          (setcdr preformat (cons withkey (cddr preformat)))
          (puthash citekey preformat preformatted)))
-     entries)))
+     entries)
+    (setf (citar-cache--bibliography-preformatted bib) preformatted)))
 
 
 ;;; Utility functions:
