@@ -752,7 +752,13 @@ is used for exiting the minibuffer during completing read.")
 (defun citar--multiple-exit ()
   "Exit with the currently selected candidates."
   (interactive)
-  (setq unread-command-events (listify-key-sequence (kbd (car citar--multiple-setup)))))
+  (setq unread-command-events
+        (mapcar (lambda (event)
+                  (alist-get event '((?\t . tab)
+                                     (?\r . return)
+                                     (?\e . escape))
+                             event))
+                (listify-key-sequence (kbd (car citar--multiple-setup))))))
 
 (defun citar--setup-multiple-keymap ()
   "Make a keymap suitable for `citar--select-multiple'."
