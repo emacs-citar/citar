@@ -22,9 +22,9 @@ jobs:
       fail-fast: false
       matrix:
         emacs_version:
-          - 30.2        
+          - 31.1
+          - 30.2
           - 29.2
-          - 28.2
           - snapshot
         action:
           - compile
@@ -33,11 +33,11 @@ jobs:
         exclude:
           - emacs_version: snapshot
             action: compile
+          - emacs_version: 31.1
+            action: lint
           - emacs_version: 30.2
             action: lint
           - emacs_version: 29.2
-            action: lint
-          - emacs_version: 28.2
             action: lint
     steps:
     - name: Set up Emacs ${{matrix.emacs_version}}
