@@ -27,11 +27,6 @@
 (require 'oc-basic)
 (require 'oc-csl)
 
-(declare-function org-open-at-point "org")
-(declare-function org-element-property "org-element")
-(declare-function org-element-type "org-element")
-(declare-function org-cite-make-insert-processor "oc")
-(declare-function org-cite-get-references "oc")
 (declare-function embark-act "ext:embark")
 (declare-function evil-insert "ext:evil")
 (declare-function org-roam-ref-add "ext:org-roam-node")
