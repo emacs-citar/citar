@@ -723,6 +723,14 @@ Call `citar-select-ref' with optional FILTER; see its
 documentation for the return value."
   (car (citar-select-refs :multiple nil :filter filter)))
 
+(defvar citar--multiple-setup '("TAB" . "RET")
+  "Variable whose value should be a cons (SEL . EXIT)
+SEL is the key which should be used for selection. EXIT is the key which
+is used for exiting the minibuffer during completing read.")
+
+(defvar citar--multiple-last-input nil
+  "Variable used to track the input so that it can be restored subsequently.")
+
 (defun citar--multiple-completion-table (selected-hash candidates filter)
   "Return a completion table for multiple selection.
 SELECTED-HASH is the hash-table containing selected candidates.
@@ -730,9 +738,9 @@ CANDIDATES is the list of completion candidates, FILTER is the function
 to filter them."
   (citar--completion-table
    candidates filter
-   `(group-function . (lambda (cand transform)
+   `(group-function . ,(lambda (cand transform)
                         (pcase (list (not (not transform))
-                                     (gethash (substring-no-properties cand) ,selected-hash))
+                                     (gethash (substring-no-properties cand) selected-hash))
                           ('(nil nil) (concat "Select Multiple ["
                                               (propertize (car citar--multiple-setup)
                                                           'font-lock-face 'help-key-binding
@@ -742,14 +750,6 @@ to filter them."
                           ('(t t)
                            (add-face-text-property 0 (length cand) 'citar-selection nil (copy-sequence cand))
                            cand))))))
-
-(defvar citar--multiple-setup '("TAB" . "RET")
-  "Variable whose value should be a cons (SEL . EXIT)
-SEL is the key which should be used for selection. EXIT is the key which
-is used for exiting the minibuffer during completing read.")
-
-(defvar citar--multiple-last-input nil
-  "Variable used to track the input so that it can be restored subsequently.")
 
 (defun citar--multiple-exit ()
   "Exit with the currently selected candidates."
