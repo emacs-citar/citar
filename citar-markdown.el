@@ -28,7 +28,7 @@
           "\\(?:"
           "{\\(?1:.*?\\)}"              ; brace-delimited key
           "\\|"
-          "\\(?1:[[:alnum:]_]\+\\(?:[:.#$%&+?<>~/-][[:alnum:]_]+\\)*\\)"
+          "\\(?1:[[:alnum:]_]+\\(?:[:.#$%&+?<>~/-][[:alnum:]_]+\\)*\\)"
           "\\)")
   "Regular expression for a Pandoc citation key.
 Captures the actual key in group 1.  Implements the syntax
