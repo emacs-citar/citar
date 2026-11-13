@@ -30,14 +30,7 @@
 (defun citar-capf ()
   "Complete citation key at point for org, markdown, or latex."
   (let ((citar-capf-latex-regexp
-         "\\(?:cite\\(?:\\(?:[pt]\\*\\|[pt]\\)?{\\)\\)\\([[:alnum:]_-]*,\\)*\\([[:alnum:]_-]*\\)")
-        (citar-capf-markdown-regexp
-         (concat "-?@"                         ; @ preceded by optional -
-                 "\\(?:"
-                 "{\\(?1:.*?\\)}"              ; brace-delimited key
-                 "\\|"
-                 "\\(?1:[[:alnum:]_][[:alnum:]]*\\(?:[:.#$%&+?<>~/-][[:alnum:]]+\\)*\\)"
-                 "\\)")))
+         "\\(?:cite\\(?:\\(?:[pt]\\*\\|[pt]\\)?{\\)\\)\\([[:alnum:]_-]*,\\)*\\([[:alnum:]_-]*\\)"))
     ;; only list candidates in certain contexts
     (when
         ;; conditional recognition of citation key by mode
@@ -62,11 +55,14 @@
          ;; markdown-mode
          ((and (derived-mode-p 'markdown-mode)
                (or (eq ?@ (char-before))
-                   (looking-back citar-capf-markdown-regexp
+                   (looking-back citar-markdown-citation-key-regexp
                                  (line-beginning-position))))))
       ;; Get and insert candidate
       (let* ((candidates (citar-get-entries))
-             (bounds (bounds-of-thing-at-point 'word)))
+             (bounds (progn
+                       (thing-at-point-looking-at
+                        citar-markdown-citation-key-regexp)
+                       (cons (match-beginning 1) (match-end 1)))))
         (when bounds
           (list (car bounds)
                 (cdr bounds)
