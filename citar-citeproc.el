@@ -33,6 +33,12 @@
 ;;  CSL style can also be set by calling 'citar-insert-reference' or
 ;;  'citar-copy-reference' with a prefix-argument.
 
+;;  If the selected CSL style has no default locale set in its style file,
+;;  "en-US" will be used. If a different locale is preferred when the style
+;;  itself does not specify one, customize the option
+;;  'citar-citeproc-csl-preferred-locale'. Also be sure to first set
+;;  'citar-citeproc-csl-locales-dir' as recommended above.
+
 ;;  Once these settings are in place, call either 'citar-insert-reference' or
 ;;  'citar-copy-reference' and select the key or keys to be rendered in the
 ;;  selected CSL style.
@@ -61,6 +67,21 @@ If file is located in the directory set to
 `citar-citeproc-csl-styles-dir', only the filename itself is
 necessary, e.g., \"chicago-author-date.csl\". Full path is also
 accepted.")
+
+(defcustom citar-citeproc-csl-preferred-locale "en-US"
+  "Preferred locale to be used with `citar-citeproc-format-reference'.
+
+If the style set by `citar-citeproc-csl-style' has no default locale,
+`citar-citeproc-format-reference' will use this. In the case that this
+is option is set to nil and the style has no default locale, `citeproc'
+uses \"en-US\" as a fallback.
+
+This option should be set to a string denoting the locale in the same
+form as \"en-GB\", \"fr-FR\", etc. Note, however, that for any locale
+other than \"en-US\" to work `citar-citeproc-csl-locales-dir' must be
+set to a directory containing the desired locale's xml file."
+  :group 'citar
+  :type 'string)
 
 (defun citar-citeproc-csl-metadata (file)
   "Return metadata value from csl FILE."
@@ -111,7 +132,7 @@ STYLE is a CSL style as a path or a string."
               (proc (citeproc-create style
                                      #'citar-citeproc--itemgetter
                                      (citeproc-locale-getter-from-dir localesdir)
-                                     "en-US"))
+                                     citar-citeproc-csl-preferred-locale))
               (references (car (progn
                                  (citeproc-add-uncited keys proc)
                                  (citeproc-render-bib proc 'plain)))))
