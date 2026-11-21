@@ -84,23 +84,6 @@ separator that does not otherwise occur in citation keys."
 (defvar citar-library-file-extensions)
 (defvar citar-note-format-function)
 
-;;;; Convenience functions for files and paths
-
-(defun citar-file--normalize-paths (file-paths)
-  "Return a list of FILE-PATHS normalized with truename."
-  ;; REVIEW why hassle with this; just require a list?
-  (let ((paths (if (stringp file-paths)
-                   (list file-paths)
-                 file-paths)))
-  (citar-file--files-exist-p paths)
-  (delete-dups (mapcar #'file-truename paths))))
-
-(defun citar-file--files-exist-p (files)
-  "Check each of a list of FILES exists."
-  (dolist (file files)
-     (unless (file-exists-p file)
-       (user-error "Cannot find file: %s" file))))
-
 ;;;; Parsing file fields
 
 (defun citar-file--parser-default (file-field)
