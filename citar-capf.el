@@ -13,6 +13,8 @@
 ;;
 ;;; Code:
 (require 'citar)
+;; For `citar-markdown-citation-key-regexp', used below in every major mode.
+(require 'citar-markdown)
 
 ;;;; Utility Vars & Functions
 ;; Declare org-element related vars & functions
